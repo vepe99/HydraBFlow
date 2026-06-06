@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import os
 
+import numpy as np
+
 from hydraflow.augmentation.registry import build_augmentations
 from hydraflow.pipeline import io
 from hydraflow.pipeline._app import make_cli
@@ -41,8 +43,10 @@ def run_training(cfg):
     # 3. Build the BayesFlow workflow (adapter + summary net + inference net).
     workflow = build_workflow(cfg)
 
-    # 4. Per-batch augmentations (stochastic, re-drawn each epoch).
-    augmentations = build_augmentations(cfg.augmentation)
+    # 4. Per-batch augmentations (stochastic, re-drawn each epoch). They get their own generator
+    #    seeded from cfg.seed so augmentation randomness is reproducible yet independent of the
+    #    draws preprocessing already consumed from `rng`.
+    augmentations = build_augmentations(cfg.augmentation, np.random.default_rng(cfg.seed))
 
     # 5. Offline training on the in-memory dataset.
     history = workflow.fit_offline(

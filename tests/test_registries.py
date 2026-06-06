@@ -32,7 +32,8 @@ def test_preprocess_registry():
 def test_augmentation_registry_builds(cfg):
     from hydraflow.augmentation.registry import build_augmentations
 
-    assert build_augmentations(cfg.augmentation) == []  # empty by default
+    rng = np.random.default_rng(0)
+    assert build_augmentations(cfg.augmentation, rng) == []  # empty by default
 
 
 def test_unknown_simulator_errors(cfg):

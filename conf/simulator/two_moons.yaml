@@ -1,0 +1,13 @@
+# Two Moons benchmark (bimodal posterior). Forward model:
+# src/hydraflow/simulators/two_moons.py. Observable `x` has shape (n, n_obs, 2).
+# Pair with `adapter=two_moons` so the parameter names / observable key are wired correctly.
+defaults:
+  - base_simulator
+
+name: two_moons
+params:
+  prior_low: -1.0       # uniform prior bounds for theta1, theta2
+  prior_high: 1.0
+  n_obs: 1              # i.i.d. observations per parameter == summary-network set size
+  mean_radius: 0.1      # intrinsic-noise radius distribution
+  std_radius: 0.01

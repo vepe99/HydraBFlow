@@ -1,0 +1,13 @@
+# Adapter wiring for the Two Moons simulator. `x` (shape (n, n_obs, 2)) is the single observable
+# fed to the summary network; theta1/theta2 are the inferred parameters. Select with
+# `adapter=two_moons` (alongside `simulator=two_moons`).
+defaults:
+  - base_adapter
+
+inference_variables:
+  - theta1
+  - theta2
+summary_variables:
+  - x
+inference_conditions: []
+drop: []
