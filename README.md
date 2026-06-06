@@ -28,8 +28,11 @@ Everything else is fixed infrastructure you should not need to touch.
   `model`, `training`, `data`, `preprocessing`, `augmentation`, `adapter`, `inference`, `eval`,
   `tuning`) has a typed dataclass schema registered in Hydra's `ConfigStore`. Networks and
   simulators are built by **factory functions** that read these dataclasses (no `_target_`).
-- **JAX backend.** `KERAS_BACKEND` is pinned to `jax` before keras/bayesflow are imported (see
-  `hydraflow.utils.backend`).
+- **JAX backend + GPU pin.** Before keras/bayesflow/JAX are imported, `hydraflow.utils.backend`
+  pins `KERAS_BACKEND=jax` and uses [`autocvd`](https://pypi.org/project/autocvd) to limit the
+  visible GPUs (picking available/free ones). Defaults to one GPU; override with `HYDRAFLOW_NUM_GPUS`
+  (`0` = CPU-only), or set `CUDA_VISIBLE_DEVICES` yourself to take full control (autocvd is then
+  skipped). Falls back gracefully when there are no NVIDIA GPUs.
 - **Preprocessing vs augmentation split.**
   - *Preprocessing* = deterministic, whole-dataset transforms applied **once** (NaN cleaning,
     train/val split, z-score standardization). Fitted on train, saved to the run dir, reused at
