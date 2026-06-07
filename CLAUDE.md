@@ -110,6 +110,10 @@ Hydra's `hydra.run.dir` is set to:
 
 Every run saves:
 - `.hydra/` folder with full config (Hydra does this automatically)
+- `simulate`: dataset `.npz` in `data.data_dir`, plus a `<dataset_stem>.hydra/` config snapshot
+  next to it (copied from Hydra's `.hydra/` via `utils.paths.save_config_snapshot`) so each
+  dataset is traceable to the config that generated it. Keyed by the dataset filename so
+  training and test sets in the same `data_dir` don't overwrite each other's snapshot.
 - `train`: `approximator.keras`, `preprocessing_state.npz`, `loss.png`
 - `evaluate`: `posterior.npz`, `metrics.json`, diagnostic plots
 - `evaluate_real`: `posterior.npz`, posterior pair plots

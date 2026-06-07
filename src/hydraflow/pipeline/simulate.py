@@ -16,6 +16,7 @@ from hydraflow.pipeline import io
 from hydraflow.pipeline._app import make_cli
 from hydraflow.simulators.registry import get_simulator
 from hydraflow.utils.logging import get_logger
+from hydraflow.utils.paths import save_config_snapshot
 from hydraflow.utils.seed import seed_everything
 
 log = get_logger(__name__)
@@ -42,6 +43,13 @@ def run_simulation(cfg) -> str:
     data = io.concatenate_chunks(chunks)
     out_path = os.path.join(cfg.data.data_dir, cfg.data.dataset_name)
     io.save_dataset(out_path, data)
+
+    # Traceability: copy Hydra's `.hydra/` config snapshot next to the dataset, keyed by the
+    # dataset filename so training and test sets in the same data_dir don't clobber each other.
+    stem = os.path.splitext(cfg.data.dataset_name)[0]
+    snapshot = save_config_snapshot(cfg.data.data_dir, stem)
+    if snapshot:
+        log.info("Saved config snapshot -> %s", snapshot)
     return out_path
 
 
