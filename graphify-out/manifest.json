@@ -1,0 +1,852 @@
+{
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/settings.json": {
+    "mtime": 1780812645.5913708,
+    "ast_hash": "bfee062c3962c14264fd704e975a6b38",
+    "semantic_hash": "bfee062c3962c14264fd704e975a6b38"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/notebooks/explore.py": {
+    "mtime": 1780749608.0521348,
+    "ast_hash": "5e767970cb607cf80de6699b991fcebd",
+    "semantic_hash": "5e767970cb607cf80de6699b991fcebd"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/EvalConfig.py": {
+    "mtime": 1780745663.0785167,
+    "ast_hash": "e440b7dc413948cae78cd7ae5344ded1",
+    "semantic_hash": "e440b7dc413948cae78cd7ae5344ded1"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/SimulatorConfig.py": {
+    "mtime": 1780745663.0785704,
+    "ast_hash": "91eed2f89214c229d293c650e669a445",
+    "semantic_hash": "91eed2f89214c229d293c650e669a445"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/TrainConfig.py": {
+    "mtime": 1780745663.0787528,
+    "ast_hash": "3c32db282296c4facd8d9909d58ad8f8",
+    "semantic_hash": "3c32db282296c4facd8d9909d58ad8f8"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval.py": {
+    "mtime": 1780745663.0819178,
+    "ast_hash": "03bcb0592ffbe203c5c783db0fca5587",
+    "semantic_hash": "03bcb0592ffbe203c5c783db0fca5587"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_gaiastreams_local_new_jonas_streamnorm.py": {
+    "mtime": 1780745663.0824037,
+    "ast_hash": "f287860834d13b8387f579a2f5cc57a4",
+    "semantic_hash": "f287860834d13b8387f579a2f5cc57a4"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_gaiastreams_new.py": {
+    "mtime": 1780745663.0827007,
+    "ast_hash": "cc5d79b6ff93dff72c9bff867fcc0ee8",
+    "semantic_hash": "cc5d79b6ff93dff72c9bff867fcc0ee8"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_gaiastreams_new_rotationcurve_agama.py": {
+    "mtime": 1780745663.082898,
+    "ast_hash": "c9a672ff19a6fb0419ea9ceaacc3d0ec",
+    "semantic_hash": "c9a672ff19a6fb0419ea9ceaacc3d0ec"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_local.py": {
+    "mtime": 1780745663.0831394,
+    "ast_hash": "0856cbb52e51314dbd5463dce2194d69",
+    "semantic_hash": "0856cbb52e51314dbd5463dce2194d69"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_local_jonas_streamnorm.py": {
+    "mtime": 1780745663.0833592,
+    "ast_hash": "109d6ee7cee5cc561644987c04f40f85",
+    "semantic_hash": "109d6ee7cee5cc561644987c04f40f85"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_local_nocomposition_new_jonas_streamnorm_rotationcurve_agama.py": {
+    "mtime": 1780745663.0841584,
+    "ast_hash": "27967112772935bcc4ced4e8846a8a1a",
+    "semantic_hash": "27967112772935bcc4ced4e8846a8a1a"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_new_constrain.py": {
+    "mtime": 1780745663.0843368,
+    "ast_hash": "7f9734fbc26195bd445119d69c9c0f93",
+    "semantic_hash": "7f9734fbc26195bd445119d69c9c0f93"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_new_rotationcurve_agama.py": {
+    "mtime": 1780745663.0845113,
+    "ast_hash": "35111f700f16a134e625a60744c0c0bc",
+    "semantic_hash": "35111f700f16a134e625a60744c0c0bc"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_eval_nocomposition_new_rotationacurve_agama.py": {
+    "mtime": 1780745663.0849504,
+    "ast_hash": "05d115e4a246201884502ab1cf1d26b0",
+    "semantic_hash": "05d115e4a246201884502ab1cf1d26b0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_hyperparameter_tuning_nocompositional_rotationcurve_agama.py": {
+    "mtime": 1780745663.085467,
+    "ast_hash": "5ee2d05c230512a6c3c6dd26063a139e",
+    "semantic_hash": "5ee2d05c230512a6c3c6dd26063a139e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_train_local_jonas_streamnorm_rotationcurve_agama.py": {
+    "mtime": 1780745663.086129,
+    "ast_hash": "8ce41ce4206279ad050f4c4d1d97d05b",
+    "semantic_hash": "8ce41ce4206279ad050f4c4d1d97d05b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/main_train_new_rotationcurve_agama.py": {
+    "mtime": 1780745663.0865858,
+    "ast_hash": "3cdb072543c705e5f164601d43fbe9c6",
+    "semantic_hash": "3cdb072543c705e5f164601d43fbe9c6"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/model_mispecification_rotationcurve_agama.py": {
+    "mtime": 1780745663.0868983,
+    "ast_hash": "54266a39d1940127d47bfb743e1e1178",
+    "semantic_hash": "54266a39d1940127d47bfb743e1e1178"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/notebooks/agama_load_sim.py": {
+    "mtime": 1780745663.087194,
+    "ast_hash": "6cf814499ee8b2654599c1ea9e8e9856",
+    "semantic_hash": "6cf814499ee8b2654599c1ea9e8e9856"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/notebooks/agama_plotrcurv.py": {
+    "mtime": 1780745663.087252,
+    "ast_hash": "7e104ab365268d530ca8cb81fa3154e8",
+    "semantic_hash": "7e104ab365268d530ca8cb81fa3154e8"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/notebooks/optuna_visaulize.py": {
+    "mtime": 1780745663.1027048,
+    "ast_hash": "6ce9ead9a8d4c8639db3bb67f4550a00",
+    "semantic_hash": "6ce9ead9a8d4c8639db3bb67f4550a00"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/notebooks/paper_plots.py": {
+    "mtime": 1780745663.1029103,
+    "ast_hash": "77a0bcd5163112be48b72eb1d172747d",
+    "semantic_hash": "77a0bcd5163112be48b72eb1d172747d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/notebooks/read_GaiaD3.py": {
+    "mtime": 1780745663.108529,
+    "ast_hash": "96c67f585b4a3cfd160354380eae1e41",
+    "semantic_hash": "96c67f585b4a3cfd160354380eae1e41"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/posterior_predictive_checks.py": {
+    "mtime": 1780745663.114056,
+    "ast_hash": "81f1cac9a154880d82462610cebc9731",
+    "semantic_hash": "81f1cac9a154880d82462610cebc9731"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/prior_predictive_check.py": {
+    "mtime": 1780745663.1142955,
+    "ast_hash": "31750dece34a54bc59ab9aeeb47a19ee",
+    "semantic_hash": "31750dece34a54bc59ab9aeeb47a19ee"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/simulate_main.py": {
+    "mtime": 1780745663.114569,
+    "ast_hash": "c9861f310d30fe0ab12f6e747c9431e3",
+    "semantic_hash": "c9861f310d30fe0ab12f6e747c9431e3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/simulate_multistream_main.py": {
+    "mtime": 1780745663.1146324,
+    "ast_hash": "39647c81d1ff332c2560c03dd71995b7",
+    "semantic_hash": "39647c81d1ff332c2560c03dd71995b7"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/custom_summary_network.py": {
+    "mtime": 1780745663.1147556,
+    "ast_hash": "4eff950e4cceee3e352fc3dbc0943248",
+    "semantic_hash": "4eff950e4cceee3e352fc3dbc0943248"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_StreaMax_simulator.py": {
+    "mtime": 1780745663.1148198,
+    "ast_hash": "0e8b6e0df98a1fd665b22cceccd200dd",
+    "semantic_hash": "0e8b6e0df98a1fd665b22cceccd200dd"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_agama_simulator.py": {
+    "mtime": 1780745663.1149075,
+    "ast_hash": "c7cb37d280d6bb1fa4d293792ba0fd9b",
+    "semantic_hash": "c7cb37d280d6bb1fa4d293792ba0fd9b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_gala_simulator.py": {
+    "mtime": 1780745663.1149817,
+    "ast_hash": "4b656e09b1444554458ab462eea24939",
+    "semantic_hash": "4b656e09b1444554458ab462eea24939"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_galax_simulator.py": {
+    "mtime": 1780745663.1152866,
+    "ast_hash": "6d6c26a0693ba2652de0182e67fcdb0e",
+    "semantic_hash": "6d6c26a0693ba2652de0182e67fcdb0e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_galax_simulator_generalized.py": {
+    "mtime": 1780745663.1153502,
+    "ast_hash": "44b6f9d87fbbd6715587fb883723a62d",
+    "semantic_hash": "44b6f9d87fbbd6715587fb883723a62d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_odisseo_simulator.py": {
+    "mtime": 1780745663.1154084,
+    "ast_hash": "6b4d74cf5930b159c5e9cd8a0c77f6f0",
+    "semantic_hash": "6b4d74cf5930b159c5e9cd8a0c77f6f0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_plot.py": {
+    "mtime": 1780745663.1154625,
+    "ast_hash": "cee9b65adb0175f3b8dd61f4f6bed28e",
+    "semantic_hash": "cee9b65adb0175f3b8dd61f4f6bed28e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_simulate.py": {
+    "mtime": 1780745663.1156359,
+    "ast_hash": "df8e23a72269398eadc2c7bbd1162ace",
+    "semantic_hash": "df8e23a72269398eadc2c7bbd1162ace"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train.py": {
+    "mtime": 1780745663.1157563,
+    "ast_hash": "1846619e645523909386a2d3e7e361dc",
+    "semantic_hash": "1846619e645523909386a2d3e7e361dc"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train_jax.py": {
+    "mtime": 1780745663.1158292,
+    "ast_hash": "daaf34010766bce8714eefebea7b6c5d",
+    "semantic_hash": "daaf34010766bce8714eefebea7b6c5d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train_jax_hyperparam.py": {
+    "mtime": 1780745663.115916,
+    "ast_hash": "d6ff943d048d85728a7b6d64a5370358",
+    "semantic_hash": "d6ff943d048d85728a7b6d64a5370358"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train_jax_new.py": {
+    "mtime": 1780745663.1160083,
+    "ast_hash": "455332dae614cb4351733f1bc2c567ed",
+    "semantic_hash": "455332dae614cb4351733f1bc2c567ed"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train_jax_new_rotationcurve.py": {
+    "mtime": 1780745663.1161053,
+    "ast_hash": "6795ae71d1815db0bd929735d240684d",
+    "semantic_hash": "6795ae71d1815db0bd929735d240684d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train_jax_new_rotationcurve_fixedvlosmask.py": {
+    "mtime": 1780745663.1161954,
+    "ast_hash": "eeb8cf57ad2efbe3d4d24a772b22d780",
+    "semantic_hash": "eeb8cf57ad2efbe3d4d24a772b22d780"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/utils/utils_train_jax_old.py": {
+    "mtime": 1780745663.116264,
+    "ast_hash": "b0798f314693dc494b80a25319b93343",
+    "semantic_hash": "b0798f314693dc494b80a25319b93343"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/__init__.py": {
+    "mtime": 1780745528.4368966,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/abc_inverse_kinematics.py": {
+    "mtime": 1780745528.436964,
+    "ast_hash": "7f3e9eeec62b1e6a9eaf003b85eb6a38",
+    "semantic_hash": "7f3e9eeec62b1e6a9eaf003b85eb6a38"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/generate_data.py": {
+    "mtime": 1780745528.437018,
+    "ast_hash": "cfdddaed050d8f707f0ec03c42af5611",
+    "semantic_hash": "cfdddaed050d8f707f0ec03c42af5611"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/inverse_kinematics.py": {
+    "mtime": 1780745663.1207478,
+    "ast_hash": "58f3e02e3ed5a1ecb21c0d71f2951a05",
+    "semantic_hash": "58f3e02e3ed5a1ecb21c0d71f2951a05"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/plot_results.py": {
+    "mtime": 1780745663.120825,
+    "ast_hash": "f3fafa7fd627fa31ea646d56e8c1ed6a",
+    "semantic_hash": "f3fafa7fd627fa31ea646d56e8c1ed6a"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/train_models.py": {
+    "mtime": 1780745663.1209054,
+    "ast_hash": "ca6c15ee912e07041eb78cd58b055507",
+    "semantic_hash": "ca6c15ee912e07041eb78cd58b055507"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/tutorial.py": {
+    "mtime": 1780745663.2794063,
+    "ast_hash": "f3e569209fa2a622ea06cf333c6c24d7",
+    "semantic_hash": "f3e569209fa2a622ea06cf333c6c24d7"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/scripts/evaluate.py": {
+    "mtime": 1780749513.7767262,
+    "ast_hash": "8bc3703d7e252fee31b6be0876b7889e",
+    "semantic_hash": "8bc3703d7e252fee31b6be0876b7889e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/scripts/evaluate_real.py": {
+    "mtime": 1780749518.1260252,
+    "ast_hash": "7e60d6c683de157e13cd69bcbd8713ff",
+    "semantic_hash": "7e60d6c683de157e13cd69bcbd8713ff"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/scripts/simulate.py": {
+    "mtime": 1780749493.213495,
+    "ast_hash": "832bc036b5e10a417ce7bec3878ab7c7",
+    "semantic_hash": "832bc036b5e10a417ce7bec3878ab7c7"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/scripts/train.py": {
+    "mtime": 1780749507.755533,
+    "ast_hash": "2fef1e04af0fd382986aa7b3a2fedbe0",
+    "semantic_hash": "2fef1e04af0fd382986aa7b3a2fedbe0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/scripts/tune.py": {
+    "mtime": 1780749523.7517457,
+    "ast_hash": "7df29392adc9e87241e29bc76eaa862a",
+    "semantic_hash": "7df29392adc9e87241e29bc76eaa862a"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/__init__.py": {
+    "mtime": 1780755753.575054,
+    "ast_hash": "15260a985f58a9e3dd84b8c7c4e73082",
+    "semantic_hash": "15260a985f58a9e3dd84b8c7c4e73082"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/augmentation/__init__.py": {
+    "mtime": 1780749152.5244706,
+    "ast_hash": "1cebc8c7d6c5b4b59868ba32f15779e3",
+    "semantic_hash": "1cebc8c7d6c5b4b59868ba32f15779e3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/augmentation/examples.py": {
+    "mtime": 1780752530.9491394,
+    "ast_hash": "d4395376f0fdfc2a885c71aaf524c26f",
+    "semantic_hash": "d4395376f0fdfc2a885c71aaf524c26f"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/augmentation/registry.py": {
+    "mtime": 1780752514.32829,
+    "ast_hash": "477ca12e62791df43e9928072b2d7309",
+    "semantic_hash": "477ca12e62791df43e9928072b2d7309"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/config/__init__.py": {
+    "mtime": 1780748817.5575957,
+    "ast_hash": "94c2c91221fcb431b2efd7190e204cb3",
+    "semantic_hash": "94c2c91221fcb431b2efd7190e204cb3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/config/schema.py": {
+    "mtime": 1780756421.8359454,
+    "ast_hash": "34464a53b981570c69f58c5fb252f351",
+    "semantic_hash": "34464a53b981570c69f58c5fb252f351"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/networks/__init__.py": {
+    "mtime": 1780749189.556482,
+    "ast_hash": "029a0c5cccf3202830629dc8958ea510",
+    "semantic_hash": "029a0c5cccf3202830629dc8958ea510"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/networks/factory.py": {
+    "mtime": 1780749235.336376,
+    "ast_hash": "b0e1453991555a498bc02eec47abf1bb",
+    "semantic_hash": "b0e1453991555a498bc02eec47abf1bb"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/__init__.py": {
+    "mtime": 1780749249.1479735,
+    "ast_hash": "6071dd992446a795a0aab7941c6a0a40",
+    "semantic_hash": "6071dd992446a795a0aab7941c6a0a40"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/_app.py": {
+    "mtime": 1780749375.2765539,
+    "ast_hash": "f41fd8b2d99cdfc4341d83ce0fa78364",
+    "semantic_hash": "f41fd8b2d99cdfc4341d83ce0fa78364"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/adapter.py": {
+    "mtime": 1780749273.6344328,
+    "ast_hash": "5d4b67f6ad78380c59e4880930239bcc",
+    "semantic_hash": "5d4b67f6ad78380c59e4880930239bcc"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/checkpoint.py": {
+    "mtime": 1780749292.87066,
+    "ast_hash": "8a365294336cbda06d60597206c6521e",
+    "semantic_hash": "8a365294336cbda06d60597206c6521e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/evaluate.py": {
+    "mtime": 1780749431.8145216,
+    "ast_hash": "2a62f615d49ca6684ed1840c324f367d",
+    "semantic_hash": "2a62f615d49ca6684ed1840c324f367d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/evaluate_real.py": {
+    "mtime": 1780750414.7913368,
+    "ast_hash": "6345556600a105d6f8dbbdcf14a2702b",
+    "semantic_hash": "6345556600a105d6f8dbbdcf14a2702b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/io.py": {
+    "mtime": 1780749258.6969938,
+    "ast_hash": "c2b3206eee1fbb061be267479f5b46cf",
+    "semantic_hash": "c2b3206eee1fbb061be267479f5b46cf"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/simulate.py": {
+    "mtime": 1780749385.0715055,
+    "ast_hash": "374fd57da12c551e51910d07c7c07795",
+    "semantic_hash": "374fd57da12c551e51910d07c7c07795"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/train.py": {
+    "mtime": 1780752542.0320733,
+    "ast_hash": "3ed39746c2ebfa00a26d3ccc18e01ec9",
+    "semantic_hash": "3ed39746c2ebfa00a26d3ccc18e01ec9"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/tune.py": {
+    "mtime": 1780756542.3736517,
+    "ast_hash": "505a27dcf25869029538928799574ec5",
+    "semantic_hash": "505a27dcf25869029538928799574ec5"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/pipeline/workflow.py": {
+    "mtime": 1780749281.20897,
+    "ast_hash": "301fda156b76736fd33e5d02ad66ca70",
+    "semantic_hash": "301fda156b76736fd33e5d02ad66ca70"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/preprocessing/__init__.py": {
+    "mtime": 1780749047.5275385,
+    "ast_hash": "84b8bcf1d11205fb753f816f693c9527",
+    "semantic_hash": "84b8bcf1d11205fb753f816f693c9527"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/preprocessing/base.py": {
+    "mtime": 1780749100.0585127,
+    "ast_hash": "be5e298c3129e70a2f0be0049ed68344",
+    "semantic_hash": "be5e298c3129e70a2f0be0049ed68344"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/preprocessing/registry.py": {
+    "mtime": 1780749110.2008586,
+    "ast_hash": "1270538398a522241c23961d2972c1c3",
+    "semantic_hash": "1270538398a522241c23961d2972c1c3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/preprocessing/standardize.py": {
+    "mtime": 1780749122.6640093,
+    "ast_hash": "72b6593f83f4296ccc2afb29121cc4fa",
+    "semantic_hash": "72b6593f83f4296ccc2afb29121cc4fa"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/preprocessing/steps.py": {
+    "mtime": 1780749137.6903744,
+    "ast_hash": "0a192844aa668dcc7abdc7922a9148ea",
+    "semantic_hash": "0a192844aa668dcc7abdc7922a9148ea"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/simulators/__init__.py": {
+    "mtime": 1780752481.2795794,
+    "ast_hash": "4c9a82ebc7869d1bc3af36c7d44ae19a",
+    "semantic_hash": "4c9a82ebc7869d1bc3af36c7d44ae19a"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/simulators/base.py": {
+    "mtime": 1780749006.884621,
+    "ast_hash": "815891d25446e1fdd9a3b62cb1b09a28",
+    "semantic_hash": "815891d25446e1fdd9a3b62cb1b09a28"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/simulators/registry.py": {
+    "mtime": 1780749020.3402798,
+    "ast_hash": "bd9097269199ee981b6a3b08cfd2c431",
+    "semantic_hash": "bd9097269199ee981b6a3b08cfd2c431"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/simulators/skeleton.py": {
+    "mtime": 1780749030.4410133,
+    "ast_hash": "b9259fa2a6cafef3c65e0784549a61e6",
+    "semantic_hash": "b9259fa2a6cafef3c65e0784549a61e6"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/simulators/two_moons.py": {
+    "mtime": 1780752476.520691,
+    "ast_hash": "e501e3faca1960e7255c16102f7ec3b7",
+    "semantic_hash": "e501e3faca1960e7255c16102f7ec3b7"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/utils/__init__.py": {
+    "mtime": 1780748752.0177448,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/utils/backend.py": {
+    "mtime": 1780755808.006026,
+    "ast_hash": "e507361dc82186ab186616f88ffa7c78",
+    "semantic_hash": "e507361dc82186ab186616f88ffa7c78"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/utils/logging.py": {
+    "mtime": 1780748772.9352353,
+    "ast_hash": "76f42e187f6cb011b1f7cf1bc95a916b",
+    "semantic_hash": "76f42e187f6cb011b1f7cf1bc95a916b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/utils/paths.py": {
+    "mtime": 1780749338.1446848,
+    "ast_hash": "02f91d70d4670513b9bd677c22418e5f",
+    "semantic_hash": "02f91d70d4670513b9bd677c22418e5f"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/src/hydraflow/utils/seed.py": {
+    "mtime": 1780748767.1337326,
+    "ast_hash": "54c39605866c031fc9de6629f5e609ff",
+    "semantic_hash": "54c39605866c031fc9de6629f5e609ff"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/tests/conftest.py": {
+    "mtime": 1780750175.6491342,
+    "ast_hash": "9eee7a859b0f47d861cffbb878e4f6ed",
+    "semantic_hash": "9eee7a859b0f47d861cffbb878e4f6ed"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/tests/test_augmentation.py": {
+    "mtime": 1780752618.9837196,
+    "ast_hash": "cf0a8eee41e52b4f8e4387ffbeb8b293",
+    "semantic_hash": "cf0a8eee41e52b4f8e4387ffbeb8b293"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/tests/test_config.py": {
+    "mtime": 1780750181.4366412,
+    "ast_hash": "03150cce12a66099f6fadcaf448b8897",
+    "semantic_hash": "03150cce12a66099f6fadcaf448b8897"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/tests/test_preprocessing.py": {
+    "mtime": 1780749588.9666162,
+    "ast_hash": "c6c4ae494118032f0bd669cde354611b",
+    "semantic_hash": "c6c4ae494118032f0bd669cde354611b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/tests/test_registries.py": {
+    "mtime": 1780752547.2876456,
+    "ast_hash": "b3b4b72ba170a0a2c28b9d5b13387d00",
+    "semantic_hash": "b3b4b72ba170a0a2c28b9d5b13387d00"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/tests/test_workflow.py": {
+    "mtime": 1780749597.166915,
+    "ast_hash": "45c88a6750f11d7152a3a06db55128c3",
+    "semantic_hash": "45c88a6750f11d7152a3a06db55128c3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/CLAUDE.md": {
+    "mtime": 1780812645.5908525,
+    "ast_hash": "db73b0edd7ffbc61ceac177130730865",
+    "semantic_hash": "db73b0edd7ffbc61ceac177130730865"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/SKILL.md": {
+    "mtime": 1780812645.5906823,
+    "ast_hash": "1acfc5e3ff91c92373909c5c11f55769",
+    "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/add-watch.md": {
+    "mtime": 1780812525.529595,
+    "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/exports.md": {
+    "mtime": 1780812525.529733,
+    "ast_hash": "7fb1a81aca17a462db70684a324fcfb0",
+    "semantic_hash": "7fb1a81aca17a462db70684a324fcfb0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/extraction-spec.md": {
+    "mtime": 1780812525.529908,
+    "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
+    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/github-and-merge.md": {
+    "mtime": 1780812525.5300593,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/hooks.md": {
+    "mtime": 1780812525.530196,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/query.md": {
+    "mtime": 1780812525.5303676,
+    "ast_hash": "8b40ed8c9e9060fc215219a8fc964091",
+    "semantic_hash": "8b40ed8c9e9060fc215219a8fc964091"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/transcribe.md": {
+    "mtime": 1780812525.530514,
+    "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/.claude/skills/graphify/references/update.md": {
+    "mtime": 1780812525.5524569,
+    "ast_hash": "735932eaa4f0c8fef9566c538ae3e5f8",
+    "semantic_hash": "735932eaa4f0c8fef9566c538ae3e5f8"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/CLAUDE.md": {
+    "mtime": 1780812645.5912304,
+    "ast_hash": "1c796f4b6527c29a9c8db21ddab6ca2c",
+    "semantic_hash": "1c796f4b6527c29a9c8db21ddab6ca2c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/README.md": {
+    "mtime": 1780756677.249278,
+    "ast_hash": "455df99f9e11a47fb2e22535af21aa1e",
+    "semantic_hash": "455df99f9e11a47fb2e22535af21aa1e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/adapter/default.yaml": {
+    "mtime": 1780748950.9287941,
+    "ast_hash": "f806bf3a4a39be325290a780271d07cb",
+    "semantic_hash": "f806bf3a4a39be325290a780271d07cb"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/adapter/two_moons.yaml": {
+    "mtime": 1780752493.1834166,
+    "ast_hash": "15cebfed604fb064400816abc36a0761",
+    "semantic_hash": "15cebfed604fb064400816abc36a0761"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/augmentation/default.yaml": {
+    "mtime": 1780748943.3945615,
+    "ast_hash": "e72fb9baae988406a89f8a12e1bb8312",
+    "semantic_hash": "e72fb9baae988406a89f8a12e1bb8312"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/config.yaml": {
+    "mtime": 1780810881.828605,
+    "ast_hash": "39dc4296a9439b4fa168f5c78cd3252b",
+    "semantic_hash": "39dc4296a9439b4fa168f5c78cd3252b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/eval/default.yaml": {
+    "mtime": 1780748963.8114424,
+    "ast_hash": "a8712422fe55669de4da019208ba1c11",
+    "semantic_hash": "a8712422fe55669de4da019208ba1c11"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/inference/default.yaml": {
+    "mtime": 1780748955.2165923,
+    "ast_hash": "6844c171832cea5f76f07de40ebdf8ae",
+    "semantic_hash": "6844c171832cea5f76f07de40ebdf8ae"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/model/default.yaml": {
+    "mtime": 1780748886.3567526,
+    "ast_hash": "4b578aeec824c54ab66099bcbdbc65af",
+    "semantic_hash": "4b578aeec824c54ab66099bcbdbc65af"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/model/inference_network/diffusion.yaml": {
+    "mtime": 1780748914.2036602,
+    "ast_hash": "9c57dc716b705843d9b2a0b12f071a6d",
+    "semantic_hash": "9c57dc716b705843d9b2a0b12f071a6d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/model/inference_network/flow_matching.yaml": {
+    "mtime": 1780748909.7789302,
+    "ast_hash": "5d1068b5b597140c9d70433cdbd43d67",
+    "semantic_hash": "5d1068b5b597140c9d70433cdbd43d67"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/model/summary_network/deep_set.yaml": {
+    "mtime": 1780748900.6546867,
+    "ast_hash": "c877bafb4491a2a2db5252d5d95f4579",
+    "semantic_hash": "c877bafb4491a2a2db5252d5d95f4579"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/model/summary_network/set_transformer.yaml": {
+    "mtime": 1780748893.9485555,
+    "ast_hash": "e842a2695c070b5509d2ff7026deba6b",
+    "semantic_hash": "e842a2695c070b5509d2ff7026deba6b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/model/summary_network/time_series_transformer.yaml": {
+    "mtime": 1780748905.1351805,
+    "ast_hash": "ed5541c79aa2617545b5fb64351f572d",
+    "semantic_hash": "ed5541c79aa2617545b5fb64351f572d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/preprocessing/default.yaml": {
+    "mtime": 1780748936.0122173,
+    "ast_hash": "b789655a6851eb3e10925b818e7ea45c",
+    "semantic_hash": "b789655a6851eb3e10925b818e7ea45c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/simulator/skeleton.yaml": {
+    "mtime": 1780748881.9120317,
+    "ast_hash": "cc347358dceb922dd5808941d3475d9f",
+    "semantic_hash": "cc347358dceb922dd5808941d3475d9f"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/simulator/two_moons.yaml": {
+    "mtime": 1780752487.4136586,
+    "ast_hash": "8212066d239506e3dd3e5ea9777fa69d",
+    "semantic_hash": "8212066d239506e3dd3e5ea9777fa69d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/training/default.yaml": {
+    "mtime": 1780748925.4885526,
+    "ast_hash": "a5d4ac06543a2e03fe97a5b897a088a4",
+    "semantic_hash": "a5d4ac06543a2e03fe97a5b897a088a4"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/conf/tuning/default.yaml": {
+    "mtime": 1780756429.1941147,
+    "ast_hash": "c17856da3066b6d4eb99e9211a822634",
+    "semantic_hash": "c17856da3066b6d4eb99e9211a822634"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/docs/bring_your_own_data.md": {
+    "mtime": 1780755167.788549,
+    "ast_hash": "d18511737fb7f0c38a8798bd01e6a0e5",
+    "semantic_hash": "d18511737fb7f0c38a8798bd01e6a0e5"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/docs/end_to_end_guide.md": {
+    "mtime": 1780751680.5045228,
+    "ast_hash": "6f1d202dd5f68b49434c40f2cdc57e7d",
+    "semantic_hash": "6f1d202dd5f68b49434c40f2cdc57e7d"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/docs/hyperparameter_tuning.md": {
+    "mtime": 1780756668.8584173,
+    "ast_hash": "b7e2debd81585f8067c0cf626f65c54c",
+    "semantic_hash": "b7e2debd81585f8067c0cf626f65c54c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/docs/two_moons_pipeline.md": {
+    "mtime": 1780752893.4540167,
+    "ast_hash": "29f5331e9bd28394f61a9621847941f0",
+    "semantic_hash": "29f5331e9bd28394f61a9621847941f0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/README.md": {
+    "mtime": 1780745663.0559852,
+    "ast_hash": "576772369694f271686c3f7764234ffe",
+    "semantic_hash": "576772369694f271686c3f7764234ffe"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config.yaml": {
+    "mtime": 1780745663.078829,
+    "ast_hash": "df868a1a044b9965c72148bbd2619248",
+    "semantic_hash": "df868a1a044b9965c72148bbd2619248"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia.yaml": {
+    "mtime": 1780745663.0788844,
+    "ast_hash": "dd6960c7999ed209730c72d0b899f584",
+    "semantic_hash": "dd6960c7999ed209730c72d0b899f584"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_local.yaml": {
+    "mtime": 1780745663.078935,
+    "ast_hash": "b276e55a22e9290fddc4ac0c65d81d21",
+    "semantic_hash": "b276e55a22e9290fddc4ac0c65d81d21"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_local_new.yaml": {
+    "mtime": 1780745663.0789735,
+    "ast_hash": "a35e67ddf8e0d6d9d29c8f7c5f475b1c",
+    "semantic_hash": "a35e67ddf8e0d6d9d29c8f7c5f475b1c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_local_new_rotationcurve.yaml": {
+    "mtime": 1780745663.0790224,
+    "ast_hash": "dd11373f5f415c4cec5d41283778f0d3",
+    "semantic_hash": "dd11373f5f415c4cec5d41283778f0d3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_local_new_rotationcurve_agama.yaml": {
+    "mtime": 1780745663.0790694,
+    "ast_hash": "2c3f2f776d6708ea6a8a23b02a23251e",
+    "semantic_hash": "2c3f2f776d6708ea6a8a23b02a23251e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_new.yaml": {
+    "mtime": 1780745663.0791166,
+    "ast_hash": "a4a99f795a6e941344008cac27095f5e",
+    "semantic_hash": "a4a99f795a6e941344008cac27095f5e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_new_rotationcurve.yaml": {
+    "mtime": 1780745663.0791736,
+    "ast_hash": "d4d3790cd1c2b30d2ea306588c13e381",
+    "semantic_hash": "d4d3790cd1c2b30d2ea306588c13e381"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_new_rotationcurve_agama.yaml": {
+    "mtime": 1780745663.0792313,
+    "ast_hash": "b42b8113b5be91247f21eec6c54d56b1",
+    "semantic_hash": "b42b8113b5be91247f21eec6c54d56b1"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_gaia_streamax.yaml": {
+    "mtime": 1780745663.0793953,
+    "ast_hash": "e05be2263504db05fd6e6f336e38ceaa",
+    "semantic_hash": "e05be2263504db05fd6e6f336e38ceaa"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_local.yaml": {
+    "mtime": 1780745663.0794535,
+    "ast_hash": "23ea1d762c98712868b0657e0fad50e9",
+    "semantic_hash": "23ea1d762c98712868b0657e0fad50e9"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_local_new.yaml": {
+    "mtime": 1780745663.0794983,
+    "ast_hash": "bcab610397f328a09aa509d0ab85217b",
+    "semantic_hash": "bcab610397f328a09aa509d0ab85217b"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_local_new_rotationcurve.yaml": {
+    "mtime": 1780745663.0795472,
+    "ast_hash": "29a3733d9b1b4e9ade267deddce790b0",
+    "semantic_hash": "29a3733d9b1b4e9ade267deddce790b0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_local_new_rotationcurve_agama.yaml": {
+    "mtime": 1780745663.079603,
+    "ast_hash": "8ace8cdb5ba3efdd2c7c534ffe2a42d9",
+    "semantic_hash": "8ace8cdb5ba3efdd2c7c534ffe2a42d9"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_new.yaml": {
+    "mtime": 1780745663.079659,
+    "ast_hash": "029b80ac26cad1204cec12bcf27accf8",
+    "semantic_hash": "029b80ac26cad1204cec12bcf27accf8"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_new_constrain.yaml": {
+    "mtime": 1780745663.0797055,
+    "ast_hash": "4346b44edf40bc4db124021ae7a63f5e",
+    "semantic_hash": "4346b44edf40bc4db124021ae7a63f5e"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_new_rotationcurve.yaml": {
+    "mtime": 1780745663.0797555,
+    "ast_hash": "c15c2414b0ce50823a3ec600a37db2fe",
+    "semantic_hash": "c15c2414b0ce50823a3ec600a37db2fe"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_new_rotationcurve_agama.yaml": {
+    "mtime": 1780745663.0798197,
+    "ast_hash": "89fe300a09b4e087367c7de10e213d31",
+    "semantic_hash": "89fe300a09b4e087367c7de10e213d31"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_streamax_5D.yaml": {
+    "mtime": 1780745663.0799744,
+    "ast_hash": "0567a08d9e40114b2b73be947486d38c",
+    "semantic_hash": "0567a08d9e40114b2b73be947486d38c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/eval_config_streamax_6D.yaml": {
+    "mtime": 1780745663.0800266,
+    "ast_hash": "20bb0b4c04990fe61824a10aa810583f",
+    "semantic_hash": "20bb0b4c04990fe61824a10aa810583f"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/posterior_predictive_check_config.yaml": {
+    "mtime": 1780745663.0801044,
+    "ast_hash": "36dda8af5a80139f0dd6a930495b68e3",
+    "semantic_hash": "36dda8af5a80139f0dd6a930495b68e3"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/posterior_predictive_check_config_agama.yaml": {
+    "mtime": 1780745663.0801606,
+    "ast_hash": "38c228cfd8b67f5749782c96801c2444",
+    "semantic_hash": "38c228cfd8b67f5749782c96801c2444"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/prior_local.yaml": {
+    "mtime": 1780745663.0802157,
+    "ast_hash": "5a928875e8470e072a3142ab93e9d8ea",
+    "semantic_hash": "5a928875e8470e072a3142ab93e9d8ea"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/simulate_config.yaml": {
+    "mtime": 1780745663.08028,
+    "ast_hash": "db28322c3c4471ba755714fff0501d90",
+    "semantic_hash": "db28322c3c4471ba755714fff0501d90"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/simulate_config_old.yaml": {
+    "mtime": 1780745663.0803366,
+    "ast_hash": "dd57efea45d02a872838f544d58f6b1c",
+    "semantic_hash": "dd57efea45d02a872838f544d58f6b1c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/simulate_multistream_config.yaml": {
+    "mtime": 1780745663.0803874,
+    "ast_hash": "7caff0b52e0af3c80af351b010a43cb9",
+    "semantic_hash": "7caff0b52e0af3c80af351b010a43cb9"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config.yaml": {
+    "mtime": 1780745663.0804503,
+    "ast_hash": "6309ee24a14940e39526c4b44dadc533",
+    "semantic_hash": "6309ee24a14940e39526c4b44dadc533"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_local.yaml": {
+    "mtime": 1780745663.0805104,
+    "ast_hash": "ed611235197c64ccd1e01f2537b60fec",
+    "semantic_hash": "ed611235197c64ccd1e01f2537b60fec"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_local_new.yaml": {
+    "mtime": 1780745663.0805798,
+    "ast_hash": "0cde0e63822cc103441b881600f0e673",
+    "semantic_hash": "0cde0e63822cc103441b881600f0e673"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_local_new_rotationcurve.yaml": {
+    "mtime": 1780745663.080633,
+    "ast_hash": "bdc35adefd9a7ede69f8ab403220383f",
+    "semantic_hash": "bdc35adefd9a7ede69f8ab403220383f"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_local_new_rotationcurve_agama.yaml": {
+    "mtime": 1780745663.0806851,
+    "ast_hash": "643d7cc57346a2ebb26ef24fefe6c5d0",
+    "semantic_hash": "643d7cc57346a2ebb26ef24fefe6c5d0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_local_streamax.yaml": {
+    "mtime": 1780745663.0808423,
+    "ast_hash": "ec68934392161779e812d3c4b7e88f83",
+    "semantic_hash": "ec68934392161779e812d3c4b7e88f83"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_new.yaml": {
+    "mtime": 1780745663.0809028,
+    "ast_hash": "f5e644848b3427f39c6cc7ef789f2657",
+    "semantic_hash": "f5e644848b3427f39c6cc7ef789f2657"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_new_rotationcurve.yaml": {
+    "mtime": 1780745663.0809562,
+    "ast_hash": "ec16b6773f7c464178d76f1f1b5ed8d5",
+    "semantic_hash": "ec16b6773f7c464178d76f1f1b5ed8d5"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_new_rotationcurve_agama.yaml": {
+    "mtime": 1780745663.0810099,
+    "ast_hash": "8fe5d8ab0604a06975c5d3fd7eadaac5",
+    "semantic_hash": "8fe5d8ab0604a06975c5d3fd7eadaac5"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_onlyhalo.yaml": {
+    "mtime": 1780745663.0812097,
+    "ast_hash": "bb54cd39ce61935cc62ad689d9b92fb0",
+    "semantic_hash": "bb54cd39ce61935cc62ad689d9b92fb0"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_streamax_5D.yaml": {
+    "mtime": 1780745663.0813656,
+    "ast_hash": "cf4cb7e74da35a2e11d6f1cda21b3c0c",
+    "semantic_hash": "cf4cb7e74da35a2e11d6f1cda21b3c0c"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_streamax_6D.yaml": {
+    "mtime": 1780745663.0814185,
+    "ast_hash": "a465a73bd241d18b40c64f6451e6d487",
+    "semantic_hash": "a465a73bd241d18b40c64f6451e6d487"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/case_study5/project_stream/config/train_config_val.yaml": {
+    "mtime": 1780745663.0815854,
+    "ast_hash": "1645aa7af7cf66ed20bf4fc73016e552",
+    "semantic_hash": "1645aa7af7cf66ed20bf4fc73016e552"
+  },
+  "/Users/giuseppeviterbo/PhD/HydraFlow/references/intro_example/inv_kinematics_samples.pdf": {
+    "mtime": 1780745663.1206028,
+    "ast_hash": "b233a4a728ac5a022559174b54d4aa83",
+    "semantic_hash": "b233a4a728ac5a022559174b54d4aa83"
+  }
+}

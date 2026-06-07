@@ -3,13 +3,13 @@
 # values set here win over group defaults.
 defaults:
   - base_config
-  - simulator: skeleton
+  - simulator: two_moons
   - model: default
   - data: default
   - training: default
   - preprocessing: default
   - augmentation: default
-  - adapter: default
+  - adapter: two_moons
   - inference: default
   - eval: default
   - tuning: default
@@ -21,7 +21,8 @@ seed: 42
 # writes the resolved config into its `.hydra/` subfolder automatically.
 hydra:
   run:
-    dir: outputs/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    # dir: outputs/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: outputs/${simulator.name}/${model.name}/test_twomoons_name
   sweep:
     dir: multirun/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
     subdir: ${hydra.job.num}

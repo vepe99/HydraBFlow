@@ -28,3 +28,6 @@ dist/
 # Keras / weights artifacts left at repo root by accident
 *.keras
 *.weights.h5
+
+# Reference projects (embedded git repo, not part of this project)
+references/
