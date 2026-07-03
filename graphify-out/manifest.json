@@ -44,11 +44,6 @@
     "ast_hash": "c9a672ff19a6fb0419ea9ceaacc3d0ec",
     "semantic_hash": "c9a672ff19a6fb0419ea9ceaacc3d0ec"
   },
-  "references/case_study5/project_stream/main_eval_local.py": {
-    "mtime": 1780745663.0831394,
-    "ast_hash": "0856cbb52e51314dbd5463dce2194d69",
-    "semantic_hash": "0856cbb52e51314dbd5463dce2194d69"
-  },
   "references/case_study5/project_stream/main_eval_local_jonas_streamnorm.py": {
     "mtime": 1780745663.0833592,
     "ast_hash": "109d6ee7cee5cc561644987c04f40f85",
@@ -58,11 +53,6 @@
     "mtime": 1780745663.0841584,
     "ast_hash": "27967112772935bcc4ced4e8846a8a1a",
     "semantic_hash": "27967112772935bcc4ced4e8846a8a1a"
-  },
-  "references/case_study5/project_stream/main_eval_new_constrain.py": {
-    "mtime": 1780745663.0843368,
-    "ast_hash": "7f9734fbc26195bd445119d69c9c0f93",
-    "semantic_hash": "7f9734fbc26195bd445119d69c9c0f93"
   },
   "references/case_study5/project_stream/main_eval_new_rotationcurve_agama.py": {
     "mtime": 1780745663.0845113,
@@ -850,8 +840,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783066509.4291363,
-    "ast_hash": "9ab37793ed69414f5e47d52b4ebeb696",
+    "mtime": 1783068497.6067262,
+    "ast_hash": "81c3be40cfb09fb8595ceb2186fe54bb",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
