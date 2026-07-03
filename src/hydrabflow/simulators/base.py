@@ -56,3 +56,43 @@ class BaseSimulator(ABC):
         params = self.sample_prior(n, rng)
         observables = self.simulate(params, rng)
         return {**params, **observables}
+
+    # --------------------------------------------------------------------------------------- #
+    # Hierarchical (compositional) seam. A hierarchical simulator has *global* parameters
+    # shared by a group of exchangeable observations (e.g. one galactic potential constraining
+    # several stellar streams) and *local* parameters specific to each group member. The flat
+    # defaults below mean existing single-level simulators need no changes; a hierarchical
+    # simulator overrides the three properties and `sample_compositional`.
+    # --------------------------------------------------------------------------------------- #
+
+    @property
+    def global_parameter_names(self) -> list[str]:
+        """Inferred parameters shared across group members. Default: all parameters (flat)."""
+        return list(self.parameter_names)
+
+    @property
+    def local_parameter_names(self) -> list[str]:
+        """Inferred per-member parameters. Empty for single-level simulators."""
+        return []
+
+    @property
+    def context_keys(self) -> list[str]:
+        """Dataset keys that condition inference but are neither inferred parameters nor
+        observables (e.g. the member index identifying which stream an observation is)."""
+        return []
+
+    def sample_compositional(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
+        """Draw ``n`` grouped datasets: one shared global draw + one local draw per member.
+
+        Shape convention (``m`` = number of group members):
+          * global parameters: ``(n, 1)``
+          * local parameters / context keys: ``(n, m, 1)``
+          * observables: ``(n, m, *event_shape)`` (member-independent observables may stay
+            ``(n, *event_shape)``)
+
+        Used by the ``simulate_multistream`` stage to build compositional test sets.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement sample_compositional(); it is a "
+            "single-level simulator. Hierarchical simulators must override it."
+        )

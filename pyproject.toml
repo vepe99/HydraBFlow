@@ -18,19 +18,34 @@ dependencies = [
     "marimo>=0.9",
     "tqdm>=4.66",
     "gpustat",
+    "astropy>=8.0.0",
+    "joblib>=1.5.3",
+    "scipy>=1.17.1",
+    "pandas>=3.0.3",
+    "agama>=1.0.0",
 ]
 
 # `uv sync` installs the dev group by default, so a fresh clone can run pytest immediately.
+# setuptools/wheel are needed in the project env because agama builds without isolation (below).
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff>=0.6", "setuptools", "wheel"]
 
 # Console entry points mirror the scripts/ Hydra apps.
 [project.scripts]
 hydrabflow-simulate = "hydrabflow.pipeline.simulate:cli"
+hydrabflow-simulate-multistream = "hydrabflow.pipeline.simulate_multistream:cli"
 hydrabflow-train = "hydrabflow.pipeline.train:cli"
 hydrabflow-evaluate = "hydrabflow.pipeline.evaluate:cli"
 hydrabflow-evaluate-real = "hydrabflow.pipeline.evaluate_real:cli"
 hydrabflow-tune = "hydrabflow.pipeline.tune:cli"
+
+# agama's setup.py imports numpy at build time, so it cannot build in an isolated env, and its
+# interactive build prompts (download GSL/Eigen, reuse Makefile.local) need auto-confirmation.
+[tool.uv]
+no-build-isolation-package = ["agama"]
+
+[tool.uv.config-settings-package]
+agama = { "--build-option" = "--yes" }
 
 [build-system]
 requires = ["hatchling"]
