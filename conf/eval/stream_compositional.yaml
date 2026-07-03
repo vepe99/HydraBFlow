@@ -1,0 +1,12 @@
+# Evaluation preset for compositional stream models. sample_kwargs go to the diffusion sampler;
+# compositional_bridge_d1 = 1/6 reproduces the reference inverse_compositional_bridge_d1: 6.
+defaults:
+  - base_eval
+
+test_dataset_name: test_multistream_${data.n_simulations}.npz
+num_samples: 1000
+batch_size: 30
+sample_kwargs:
+  method: two_step_adaptive
+  steps: adaptive
+  compositional_bridge_d1: 0.166667

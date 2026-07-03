@@ -31,11 +31,15 @@ from hydrabflow.simulators.stream_common import OBS_R_KPC, inferred_names
 
 
 def _stream_index(data: Dataset, stream_key: str, like: np.ndarray) -> np.ndarray:
-    """Integer stream ids broadcastable against ``like`` (handles the posterior-samples case
-    where ``j`` is ``(n, 1)`` but the array is ``(n, num_samples, 1)``)."""
+    """Integer stream ids broadcastable against ``like``.
+
+    ``j``'s leading axes always match ``like``'s (rows, or (datasets, members)); posterior
+    samples add trailing axes (num_samples, 1), so ``j`` is padded with trailing singleton
+    dimensions until the ranks agree.
+    """
     j = np.asarray(data[stream_key]).astype(int)
-    if j.ndim < like.ndim:
-        j = j.reshape(j.shape[0], *([1] * (like.ndim - 1)))
+    while j.ndim < like.ndim:
+        j = j[..., None]
     return j
 
 
@@ -164,6 +168,32 @@ class StreamObservationStats(PreprocessStep):
         self.obs_std = np.asarray(state["obs_std"])
         self.vcirc_mean = np.asarray(state["vcirc_mean"])
         self.vcirc_std = np.asarray(state["vcirc_std"])
+
+
+@register_step("attach_observed_vcirc")
+class AttachObservedVcirc(PreprocessStep):
+    """Attach the *observed* Milky Way rotation curve to a real dataset that lacks one.
+
+    Simulated datasets carry their model ``vcirc_kms``; real observations use the measured
+    curve (Eilers-style values on the same radii grid). One copy per row, on the full grid —
+    trim afterwards with ``mask_vcirc_radii`` exactly like the training data.
+    """
+
+    name = "attach_observed_vcirc"
+
+    def __init__(self, vcirc_key: str = "vcirc_kms", values: Iterable[float] | None = None) -> None:
+        from hydrabflow.simulators.stream_common import OBS_VC_KMS
+
+        self.vcirc_key = vcirc_key
+        self.values = np.asarray(values if values is not None else OBS_VC_KMS, dtype=float)
+
+    def transform(self, data: Dataset) -> Dataset:
+        if self.vcirc_key in data:
+            return data
+        out = dict(data)
+        n = len(next(iter(data.values())))
+        out[self.vcirc_key] = np.tile(self.values[None, :, None], (n, 1, 1))
+        return out
 
 
 @register_step("mask_vcirc_radii")

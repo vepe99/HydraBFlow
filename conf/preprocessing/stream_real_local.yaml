@@ -1,0 +1,18 @@
+# Real-data preprocessing (local level): as stream_real_global, plus the two per-stream
+# normalization steps — per_stream_parameter_standardize so posterior samples can be mapped back
+# to physical units (inverse), and stream_observation_stats so the per_stream_standardize
+# augmentation finds its fitted stats (loaded from the training run's preprocessing state).
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: attach_observed_vcirc
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: per_stream_parameter_standardize
+    priors: ${simulator.params.priors_local}
+    target_streams: ${simulator.params.target_streams}
+    keys: ${adapter.inference_variables}
+  - name: stream_observation_stats
+    observable: sim_data_projected
+    vcirc_key: vcirc_kms

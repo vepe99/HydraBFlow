@@ -219,6 +219,9 @@ class EvalConfig:
     diagnostics: List[str] = field(
         default_factory=lambda: ["metrics", "recovery", "calibration_ecdf", "z_score_contraction"]
     )
+    # Free-form kwargs forwarded to the sampler — used by compositional sampling, e.g.
+    # {method: two_step_adaptive, steps: adaptive, compositional_bridge_d1: 0.1667}.
+    sample_kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------------------------- #

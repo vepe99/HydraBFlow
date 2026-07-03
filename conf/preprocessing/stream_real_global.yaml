@@ -1,0 +1,11 @@
+# Real-data preprocessing (global level): the observations already carry the instrument's
+# selection and noise, so only the representation steps are replayed — attach the *observed*
+# rotation curve and trim it like the training data. Fitted state still loads from the training
+# run (state keys match by step name, not position).
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: attach_observed_vcirc
+  - name: mask_vcirc_radii
+    r_min: 5.5

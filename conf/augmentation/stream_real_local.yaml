@@ -1,0 +1,13 @@
+# Real-data augmentation chain (local level): as stream_real_global plus the per-stream
+# standardization of observations, using the stats fitted on the training split.
+defaults:
+  - stream_global
+
+steps:
+  - sample_obs_error
+  - log10_vcirc
+  - per_stream_standardize
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

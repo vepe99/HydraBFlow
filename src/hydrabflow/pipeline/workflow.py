@@ -27,7 +27,13 @@ def build_workflow(cfg) -> Any:
     standardize = list(OmegaConf.to_container(cfg.training.standardize, resolve=True))
 
     level = str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
-    workflow_cls = bf.BasicWorkflow if level == "none" else bf.CompositionalWorkflow
+    if level == "none":
+        workflow_cls = bf.BasicWorkflow
+    else:
+        from hydrabflow.pipeline._bf_patches import apply_bayesflow_patches
+
+        apply_bayesflow_patches()
+        workflow_cls = bf.CompositionalWorkflow
 
     return workflow_cls(
         adapter=adapter,

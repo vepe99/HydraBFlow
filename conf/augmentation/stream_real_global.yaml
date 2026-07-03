@@ -1,0 +1,14 @@
+# Real-data augmentation chain (global level): no synthetic selection or noise — the data is
+# already observed. Only the representation steps run: measurement-uncertainty features from the
+# member magnitudes, log10 of the observed rotation curve, and the feature concatenations the
+# network was trained with. Params inherit from stream_global.
+defaults:
+  - stream_global
+
+steps:
+  - sample_obs_error
+  - log10_vcirc
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
