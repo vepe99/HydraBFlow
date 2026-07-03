@@ -74,6 +74,16 @@ def build_inference_network(cfg) -> Any:
 # --------------------------------------------------------------------------------------------- #
 
 
+def _embed_dim(cfg) -> int:
+    """Attention embedding width. ``params.embed_dim_multiplier`` (per attention head) takes
+    precedence over ``embed_dim`` — attention requires embed_dim % num_heads == 0, so tuning
+    searches the multiplier instead of the raw width."""
+    multiplier = cfg.params.get("embed_dim_multiplier") if cfg.params else None
+    if multiplier:
+        return int(cfg.num_heads) * int(multiplier)
+    return int(cfg.embed_dim)
+
+
 @register_summary_network("set_transformer")
 def _set_transformer(cfg) -> Any:
     import bayesflow as bf
@@ -81,7 +91,7 @@ def _set_transformer(cfg) -> Any:
     blocks = int(cfg.num_blocks)
     return bf.networks.SetTransformer(
         summary_dim=int(cfg.summary_dim),
-        embed_dims=(int(cfg.embed_dim),) * blocks,
+        embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
         mlp_depths=(int(cfg.mlp_depth),) * blocks,
         mlp_widths=(int(cfg.mlp_width),) * blocks,
@@ -96,7 +106,7 @@ def _time_series_transformer(cfg) -> Any:
     blocks = int(cfg.num_blocks)
     return bf.networks.TimeSeriesTransformer(
         summary_dim=int(cfg.summary_dim),
-        embed_dims=(int(cfg.embed_dim),) * blocks,
+        embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
     )
 

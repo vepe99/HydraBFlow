@@ -1,0 +1,199 @@
+"""Stream-project components: config composition, hierarchy derivation, per-stream
+normalization, and compositional helpers. No forward simulation (agama-free)."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+STREAM_OVERRIDES = [
+    "simulator=stream_agama",
+    "model=stream_fusion",
+    "adapter=stream",
+    "preprocessing=stream_local",
+    "augmentation=stream_local",
+    "training=stream_local",
+]
+
+GLOBALS = [
+    "rho_TwoPowerTriaxial_halo",
+    "gamma_TwoPowerTriaxial_halo",
+    "a_TwoPowerTriaxial_halo",
+    "q_TwoPowerTriaxial_halo",
+    "r_Disk",
+    "z_Disk",
+    "Sigma_Disk",
+]
+LOCALS = ["vr", "r", "mu_ra_cosdec", "mu_dec"]
+
+
+def test_stream_config_composes(compose):
+    cfg = compose(STREAM_OVERRIDES)
+    assert cfg.simulator.name == "stream_agama"
+    assert cfg.model.summary_network.type == "fusion"
+    assert cfg.adapter.attention_mask_key == "attention_mask"
+    assert cfg.composition.level == "none"  # default group value
+
+
+def test_simulator_declares_hierarchy(compose):
+    from hydrabflow.simulators.registry import get_simulator
+
+    cfg = compose(STREAM_OVERRIDES, fill=False)
+    sim = get_simulator(cfg.simulator)
+    assert sim.global_parameter_names == GLOBALS
+    assert sim.local_parameter_names == LOCALS
+    assert sim.context_keys == ["j"]
+    assert sim.observable_keys == ["sim_data_projected", "vcirc_kms"]
+    assert set(sim.prior_spec_global) == set(GLOBALS)
+    assert set(sim.prior_spec_local) == {"Pal5", "NGC3201", "M68"}
+
+
+def test_adapter_derivation_follows_composition_level(compose):
+    cfg = compose(STREAM_OVERRIDES + ["composition=global"])
+    assert list(cfg.adapter.inference_variables) == GLOBALS
+    assert list(cfg.adapter.inference_conditions) == ["j"]
+
+    cfg = compose(STREAM_OVERRIDES + ["composition=local"])
+    assert list(cfg.adapter.inference_variables) == LOCALS
+    assert list(cfg.adapter.inference_conditions) == GLOBALS + ["j"]
+
+
+def test_stream_prior_sampling_shapes():
+    from hydrabflow.simulators.stream_common import (
+        sample_stream_prior,
+        sample_stream_prior_shared_global,
+    )
+
+    priors_global = {"a": {"type": "uniform", "prior_parameters": [0, 1]}}
+    priors_local = {
+        "s0": {"v": {"type": "normal", "prior_parameters": [0.0, 1.0]}},
+        "s1": {"v": {"type": "normal", "prior_parameters": [5.0, 2.0]}},
+    }
+    streams = {"s0": 0, "s1": 1}
+    rng = np.random.default_rng(0)
+
+    flat = sample_stream_prior(priors_global, priors_local, streams, 8, rng)
+    assert flat["a"].shape == (8, 1) and flat["j"].shape == (8, 1) and flat["v"].shape == (8, 1)
+
+    grouped = sample_stream_prior_shared_global(priors_global, priors_local, streams, 4, rng)
+    assert grouped["a"].shape == (4, 1)
+    assert grouped["j"].shape == (4, 2, 1) and grouped["v"].shape == (4, 2, 1)
+    assert (grouped["j"][:, 0, 0] == 0).all() and (grouped["j"][:, 1, 0] == 1).all()
+
+
+def test_per_stream_parameter_standardize_roundtrip():
+    from hydrabflow.preprocessing.streams import PerStreamParameterStandardize
+
+    priors = {
+        "s0": {"v": {"type": "normal", "prior_parameters": [10.0, 2.0]}},
+        "s1": {"v": {"type": "normal", "prior_parameters": [-5.0, 0.5]}},
+    }
+    step = PerStreamParameterStandardize(priors, {"s0": 0, "s1": 1}, keys=["v"])
+
+    data = {"v": np.array([[12.0], [-5.5]]), "j": np.array([[0.0], [1.0]])}
+    out = step.transform(dict(data))
+    np.testing.assert_allclose(out["v"], [[1.0], [-1.0]])
+    back = step.inverse_transform(out)
+    np.testing.assert_allclose(back["v"], data["v"])
+
+    # Posterior-samples layout: (rows, num_samples, 1) with j (rows, 1).
+    posterior = {"v": np.zeros((2, 5, 1)), "j": data["j"]}
+    phys = step.inverse_transform(posterior)
+    np.testing.assert_allclose(phys["v"][0], 10.0)
+    np.testing.assert_allclose(phys["v"][1], -5.0)
+
+
+def test_stream_observation_stats_fit_and_state_roundtrip():
+    from hydrabflow.preprocessing.streams import StreamObservationStats
+
+    rng = np.random.default_rng(1)
+    data = {
+        "sim_data_projected": rng.normal(3.0, 2.0, size=(10, 7, 6)),
+        "vcirc_kms": 10 ** rng.normal(2.3, 0.05, size=(10, 4, 1)),
+        "j": np.repeat([[0.0], [1.0]], 5, axis=0),
+    }
+    step = StreamObservationStats()
+    step.fit(data)
+    assert step.obs_mean.shape == (2, 6)
+    assert step.vcirc_mean.shape == (4, 1)
+
+    reloaded = StreamObservationStats()
+    reloaded.load_state({k: v for k, v in step.state().items()})
+    np.testing.assert_allclose(reloaded.obs_std, step.obs_std)
+
+
+def test_flatten_and_group_members_roundtrip():
+    from hydrabflow.pipeline.compositional import flatten_members, group_members
+
+    n, m = 4, 3
+    data = {
+        "obs": np.arange(n * m * 5 * 2, dtype=float).reshape(n, m, 5, 2),
+        "j": np.tile(np.arange(m, dtype=float).reshape(1, m, 1), (n, 1, 1)),
+        "global_p": np.arange(n, dtype=float).reshape(n, 1),
+        "vcirc": np.ones((n, 7, 1)),
+    }
+    flat = flatten_members(data, m)
+    assert flat["obs"].shape == (n * m, 5, 2)
+    assert flat["j"].shape == (n * m, 1)
+    assert flat["global_p"].shape == (n * m, 1)  # repeated per member
+    assert flat["vcirc"].shape == (n * m, 7, 1)
+
+    grouped = group_members({"obs": flat["obs"]}, n, m)
+    np.testing.assert_allclose(grouped["obs"], data["obs"])
+
+
+def test_prior_score_from_spec():
+    from hydrabflow.pipeline.compositional import prior_score_from_spec
+
+    score = prior_score_from_spec(
+        {
+            "u": {"type": "uniform", "prior_parameters": [0, 1]},
+            "g": {"type": "normal", "prior_parameters": [2.0, 0.5]},
+        }
+    )
+    out = score({"u": np.ones((3, 1)), "g": np.full((3, 1), 3.0)})
+    np.testing.assert_allclose(np.asarray(out["u"]), 0.0)
+    np.testing.assert_allclose(np.asarray(out["g"]), -(3.0 - 2.0) / 0.25)
+
+
+def test_mask_vcirc_radii_trims_grid():
+    from hydrabflow.preprocessing.streams import MaskVcircRadii
+    from hydrabflow.simulators.stream_common import OBS_R_KPC
+
+    step = MaskVcircRadii(r_min=5.5)
+    data = {"vcirc_kms": np.ones((2, OBS_R_KPC.size, 1))}
+    out = step.transform(data)
+    assert out["vcirc_kms"].shape == (2, (OBS_R_KPC >= 5.5).sum(), 1)
+
+
+def test_registries_contain_stream_components():
+    import hydrabflow.augmentation  # noqa: F401  (discovery)
+    import hydrabflow.preprocessing  # noqa: F401
+    from hydrabflow.augmentation.registry import available_augmentations
+    from hydrabflow.preprocessing.registry import available_steps
+    from hydrabflow.simulators.registry import available_simulators
+
+    assert "stream_agama" in available_simulators()
+    for step in (
+        "per_stream_parameter_standardize",
+        "stream_observation_stats",
+        "mask_vcirc_radii",
+        "attach_observed_vcirc",
+    ):
+        assert step in available_steps()
+    for aug in (
+        "observational_window",
+        "sample_magnitudes",
+        "mask_vlos",
+        "per_stream_standardize",
+        "concatenate_stream_index",
+    ):
+        assert aug in available_augmentations()
+
+
+def test_per_stream_parameter_standardize_rejects_non_normal():
+    from hydrabflow.preprocessing.streams import PerStreamParameterStandardize
+
+    priors = {"s0": {"v": {"type": "uniform", "prior_parameters": [0, 1]}}}
+    with pytest.raises(ValueError, match="normal priors"):
+        PerStreamParameterStandardize(priors, {"s0": 0}, keys=["v"])

@@ -30,8 +30,10 @@ import os
 
 import numpy as np
 
+from hydrabflow.augmentation.registry import build_augmentations
 from hydrabflow.pipeline import io
 from hydrabflow.pipeline._app import make_cli
+from hydrabflow.pipeline.adapter import select_adapter_keys
 from hydrabflow.pipeline.checkpoint import save_approximator
 from hydrabflow.pipeline.evaluate import _run_diagnostics
 from hydrabflow.pipeline.train import _save_loss_plot
@@ -79,7 +81,7 @@ def _save_shared_preprocessing(pipeline, artifacts_dir: str) -> str:
     return path
 
 
-def _objective(trial, base_cfg, train_data, val_data, param_names):
+def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations):
     from omegaconf import OmegaConf
 
     cfg = copy.deepcopy(base_cfg)
@@ -92,6 +94,7 @@ def _objective(trial, base_cfg, train_data, val_data, param_names):
         validation_data=val_data,
         epochs=int(cfg.tuning.n_epochs),
         batch_size=int(cfg.training.batch_size),
+        augmentations=augmentations if augmentations else None,
         verbose=0,
     )
 
@@ -143,7 +146,19 @@ def run_tuning(cfg):
     data = io.load_dataset(os.path.join(cfg.data.data_dir, cfg.data.dataset_name))
     pipeline = build_pipeline(cfg.preprocessing)
     train_data, val_data = pipeline.fit_transform(data, rng)
+    train_data = select_adapter_keys(train_data, cfg)
+    val_data = select_adapter_keys(val_data, cfg) if val_data is not None else None
     param_names = list(cfg.adapter.inference_variables)
+
+    # Per-batch augmentations are part of the model being tuned: applied inside every trial's
+    # fit, and replayed once (fixed draw) on the validation split used for scoring.
+    augmentations = build_augmentations(
+        cfg.augmentation, np.random.default_rng(cfg.seed), context={"pipeline": pipeline}
+    )
+    if augmentations and val_data is not None:
+        for aug in augmentations:
+            val_data = aug(val_data)
+        val_data = {k: np.asarray(v) for k, v in val_data.items()}
 
     if bool(cfg.tuning.save_artifacts):
         ensure_dir(cfg.tuning.artifacts_dir)
@@ -164,7 +179,7 @@ def run_tuning(cfg):
     log.info("Study '%s' storage=%s artifacts=%s", cfg.tuning.study_name, log_path,
              cfg.tuning.artifacts_dir if bool(cfg.tuning.save_artifacts) else "(disabled)")
     study.optimize(
-        lambda trial: _objective(trial, cfg, train_data, val_data, param_names),
+        lambda trial: _objective(trial, cfg, train_data, val_data, param_names, augmentations),
         n_trials=int(cfg.tuning.n_trials),
     )
 

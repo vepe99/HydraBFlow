@@ -176,9 +176,15 @@ def _fusion(cfg):
     head = None
     head_spec = params.get("head")
     if head_spec:
+        # `widths` is an explicit list; `width` + `depth` scalars are the tunable alternative
+        # (Optuna search spaces address scalar config fields, not lists).
+        if "width" in head_spec or "depth" in head_spec:
+            widths = [int(head_spec.get("width", 64))] * int(head_spec.get("depth", 2))
+        else:
+            widths = [int(w) for w in head_spec.get("widths", [64, 64])]
         head = keras.Sequential(
             [
-                bf.networks.MLP(widths=[int(w) for w in head_spec.get("widths", [64, 64])]),
+                bf.networks.MLP(widths=widths),
                 keras.layers.Dense(units=int(head_spec.get("output_dim", 32))),
             ]
         )

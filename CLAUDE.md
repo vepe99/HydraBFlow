@@ -33,9 +33,15 @@ Everything else — config management, output tracing, reproducibility — is fi
 - **Separation of concerns**: infrastructure code (training loop, logging, checkpointing)
   is never modified by the end user. User-facing code lives in clearly marked locations
   (`src/hydrabflow/simulators/`, plus optional custom `networks`/`preprocessing`/`augmentation`).
-- **Single-level inference only**: one summary network + one inference network via
-  `bf.BasicWorkflow`. The reference project's hierarchical global/local split and compositional
-  vs non-compositional score modeling are deliberately removed.
+- **Single-level inference by default, compositional as an opt-in level** (stream_project
+  branch): `composition=none` keeps the original `bf.BasicWorkflow` path. `composition=global` /
+  `composition=local` switch to `bf.CompositionalWorkflow` and train/evaluate one level of a
+  hierarchical simulator (global parameters shared by exchangeable group members vs per-member
+  local parameters). The simulator declares the split (`global_parameter_names`,
+  `local_parameter_names`, `context_keys`, `sample_compositional`); the adapter derivation
+  follows `composition.level`. Evaluation: global = `compositional_sample` with the simulator's
+  prior score; local = per-member sampling on simulated data and `ancestral_sample` on real data
+  (globals drawn from a saved global posterior, `composition.global_run_dir`).
 - **Preprocessing vs augmentation are distinct stages**: preprocessing is deterministic,
   whole-dataset, applied once and fitted on the train split (`src/hydrabflow/preprocessing/`);
   augmentation is stochastic and per-batch, applied inside `fit_offline`
@@ -81,8 +87,11 @@ HydraBFlow/
 ├── outputs/                     # Hydra run dirs (gitignored)
 └── CLAUDE.md
 
-### Run stages (5 entry points)
+### Run stages (6 entry points)
 - `simulate`  — sample prior + run forward model in chunks -> aggregated `.npz`.
+- `simulate_multistream` — compositional datasets: one shared global draw per row, one
+                observation per group member (`sample_compositional`) -> grouped `.npz`
+                (globals `(n,1)`, member arrays `(n,m,...)`); used by compositional evaluation.
 - `train`     — load `.npz` -> preprocessing (fit on train, save state) -> `fit_offline` with
                 augmentations -> save approximator + loss curve.
 - `evaluate`  — load model + preprocessing state from `model_dir`, sample posterior on a
@@ -151,6 +160,40 @@ Every run saves:
   (`@register_summary_network` / `@register_inference_network`) with free-form `params` in both
   network schemas for custom builders; dev deps moved to `[dependency-groups]` so `uv sync`
   installs pytest/ruff by default.
+- Session 2026-07-03 (stream_project branch — compositional stream port): reference =
+  `/export/data/vgiusepp/latest_bayesflow/diffusion-experiments/case_study5/project_stream`
+  (read-only; the `*_agama`/`rotationcurve` variants are the current generation; the
+  prototyping names — `jonas_streamnorm`, `_gaiastreams_`, `nocomposition`, `_new` — do not
+  survive here). Ported so far:
+  - `stream_agama` simulator (particle-spray streams + model rotation curve `vcirc_kms` as a
+    second observable; CPU/joblib; hierarchical global potential / local per-stream phase-space
+    parameters; `identity` prior entries = fixed constants; inferred = non-identity). Other
+    stream simulators (gala CPU, odisseo/galax/StreaMax GPU) still to port on this seam.
+  - `composition` config group (none|global|local) + `bf.CompositionalWorkflow`; adapter
+    derivation is level-aware; `simulate_multistream` stage for grouped test sets.
+  - Fusion: `MaskedFusionNetwork` (summary type `fusion`, one backbone per grouped observable,
+    attention mask routed to `mask_backbone` only); stock bf SetTransformer is mask-aware, only
+    the fusion wrapper is custom. `adapter.attention_mask_key` renames the batch mask to
+    BayesFlow's `summary_attention_mask` role.
+  - "jonas_streamnorm" split into preprocessing: `per_stream_parameter_standardize` (local
+    params z-scored by their stream's prior mean/std; invertible, replayed on posteriors) +
+    `stream_observation_stats` (per-stream obs stats + log10-vcirc bin stats fitted on train,
+    applied per batch by the `per_stream_standardize` augmentation *after* the physical-unit
+    augmentations). Preprocessing state keys are name+occurrence based so training state loads
+    under the `stream_real_*` presets.
+  - Gaia observation model as registered augmentations (`augmentation/streams.py`, NumPy port
+    of AugmentationsClass); resources (member magnitudes, DR3 error tables, id mapping) read
+    from `data/` (a symlink to shared storage — never modify existing `.npz` there; simulator
+    tests write to `data/hydrabflow_testsimulator/`).
+  - Eval: global = `compositional_sample` (+ prior score from the simulator's prior spec,
+    `eval.sample_kwargs` for method/steps/compositional_bridge_d1); local simulated =
+    per-member conditioned on true globals with per-stream diagnostics; real data = global
+    posterior then local `ancestral_sample` via `composition.global_run_dir`.
+    `pipeline/_bf_patches.py` fixes the bayesflow 2.0.12 compositional-conditions reshape bug.
+  - Tuning searches nested fusion params via dotted paths; `embed_dim_multiplier` keeps
+    attention widths divisible by head counts; trials train with the augmentation chain.
+  - agama dependency builds without isolation and with auto-yes prompts (`[tool.uv]` settings);
+    `.gitignore` `data/` pattern root-anchored (it was swallowing `conf/data/`).
 
 ## graphify
 
