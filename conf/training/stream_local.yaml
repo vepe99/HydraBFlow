@@ -1,0 +1,11 @@
+# Training preset for the local (per-stream) compositional model. Observations are standardized
+# per stream by the preprocessing/augmentation chain, so BayesFlow only standardizes the targets
+# and the (global-parameter) conditions — matching the reference local model.
+defaults:
+  - base_training
+
+n_epochs: 50
+batch_size: 512
+standardize:
+  - inference_variables
+  - inference_conditions

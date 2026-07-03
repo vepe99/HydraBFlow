@@ -1,0 +1,26 @@
+# Fusion of the stream particle set (SetTransformer, attention-mask aware) with the model
+# rotation curve (TimeSeriesTransformer), matching the reference global/local stream models.
+# Backbone keys are the observable keys the adapter groups into summary_variables.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: sim_data_projected
+  backbones:
+    sim_data_projected:
+      type: set_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      embed_dim: 64
+      dropout: 0.05
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 2
+      embed_dim: 40
+  head:
+    widths: [128, 128, 128]
+    output_dim: 32

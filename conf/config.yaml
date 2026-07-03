@@ -10,6 +10,7 @@ defaults:
   - preprocessing: default
   - augmentation: default
   - adapter: default
+  - composition: none
   - inference: default
   - eval: default
   - tuning: default

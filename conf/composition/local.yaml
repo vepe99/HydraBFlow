@@ -1,0 +1,8 @@
+# Compositional score modeling, local level: infer the simulator's per-member (local) parameters
+# conditioned on the global parameters + context keys. Real-data evaluation draws the globals
+# from a previously computed global posterior (set composition.global_run_dir).
+defaults:
+  - base_composition
+
+level: local
+global_run_dir: null

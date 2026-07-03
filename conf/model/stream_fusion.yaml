@@ -1,0 +1,9 @@
+# Stream model: fusion summary network (particle set + rotation curve) + diffusion posterior,
+# as in the reference project's agama/rotationcurve models.
+defaults:
+  - base_model
+  - summary_network: stream_fusion
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion

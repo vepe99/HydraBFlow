@@ -145,6 +145,32 @@ class AugmentationConfig:
 
 
 # --------------------------------------------------------------------------------------------- #
+# Composition (hierarchical global/local score modeling)
+# --------------------------------------------------------------------------------------------- #
+
+
+@dataclass
+class CompositionConfig:
+    """Compositional score modeling: train/evaluate the global or the local level separately.
+
+    ``level``:
+      * ``none`` (default) — single-level inference via ``bf.BasicWorkflow`` (unchanged).
+      * ``global`` — infer the simulator's ``global_parameter_names`` conditioned on its
+        ``context_keys``; uses ``bf.CompositionalWorkflow`` so evaluation can pool the
+        exchangeable group members (e.g. streams) with compositional sampling.
+      * ``local`` — infer ``local_parameter_names`` conditioned on the global parameters +
+        ``context_keys``; evaluation on real data draws globals from a previously computed
+        global posterior (ancestral sampling).
+
+    ``global_run_dir`` points local-level evaluation at the *global* model's evaluation run
+    (the directory containing its saved posterior) for ancestral sampling.
+    """
+
+    level: str = "none"
+    global_run_dir: Optional[str] = None
+
+
+# --------------------------------------------------------------------------------------------- #
 # Adapter (BayesFlow structural transform)
 # --------------------------------------------------------------------------------------------- #
 
@@ -168,6 +194,10 @@ class AdapterConfig:
     summary_variables: List[str] = field(default_factory=list)
     inference_conditions: List[str] = field(default_factory=list)
     drop: List[str] = field(default_factory=list)
+    # Dataset/batch key holding a boolean attention mask for set-valued observables (e.g. produced
+    # by an observational-window augmentation). It is renamed to BayesFlow's
+    # ``summary_attention_mask`` role, which the approximator forwards to the summary network.
+    attention_mask_key: Optional[str] = None
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -230,6 +260,7 @@ class RootConfig:
     preprocessing: PreprocessingConfig = field(default_factory=PreprocessingConfig)
     augmentation: AugmentationConfig = field(default_factory=AugmentationConfig)
     adapter: AdapterConfig = field(default_factory=AdapterConfig)
+    composition: CompositionConfig = field(default_factory=CompositionConfig)
     inference: InferenceConfig = field(default_factory=InferenceConfig)
     eval: EvalConfig = field(default_factory=EvalConfig)
     tuning: TuningConfig = field(default_factory=TuningConfig)
@@ -258,6 +289,7 @@ def register_configs() -> None:
     cs.store(group="preprocessing", name="base_preprocessing", node=PreprocessingConfig)
     cs.store(group="augmentation", name="base_augmentation", node=AugmentationConfig)
     cs.store(group="adapter", name="base_adapter", node=AdapterConfig)
+    cs.store(group="composition", name="base_composition", node=CompositionConfig)
     cs.store(group="inference", name="base_inference", node=InferenceConfig)
     cs.store(group="eval", name="base_eval", node=EvalConfig)
     cs.store(group="tuning", name="base_tuning", node=TuningConfig)

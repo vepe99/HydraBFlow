@@ -1,7 +1,10 @@
-"""Assemble a single-level BayesFlow workflow from config.
+"""Assemble the BayesFlow workflow from config.
 
-Uses ``bf.BasicWorkflow`` (a ``ContinuousApproximator`` under the hood) — no compositional /
-hierarchical machinery. Combines the adapter, the summary network, and the inference network.
+Single-level inference (the default, ``composition.level=none``) uses ``bf.BasicWorkflow``.
+Compositional score modeling (``level=global`` / ``level=local``) uses
+``bf.CompositionalWorkflow``: training is identical (rows are treated independently), but the
+workflow exposes ``compositional_sample`` / ``ancestral_sample`` so evaluation can pool the
+exchangeable group members (e.g. several streams constraining one galactic potential).
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ from hydrabflow.pipeline.adapter import build_adapter
 
 
 def build_workflow(cfg) -> Any:
-    """Build a ``bf.BasicWorkflow`` from the root ``cfg``."""
+    """Build a ``bf.BasicWorkflow`` (or ``bf.CompositionalWorkflow``) from the root ``cfg``."""
     import bayesflow as bf
     from omegaconf import OmegaConf
 
@@ -23,7 +26,10 @@ def build_workflow(cfg) -> Any:
 
     standardize = list(OmegaConf.to_container(cfg.training.standardize, resolve=True))
 
-    return bf.BasicWorkflow(
+    level = str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
+    workflow_cls = bf.BasicWorkflow if level == "none" else bf.CompositionalWorkflow
+
+    return workflow_cls(
         adapter=adapter,
         summary_network=summary_network,
         inference_network=inference_network,

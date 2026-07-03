@@ -1,0 +1,7 @@
+# Compositional score modeling, global level: infer the simulator's global parameters
+# (conditioned on its context keys, e.g. the stream index j). Uses bf.CompositionalWorkflow so
+# evaluation pools the exchangeable group members via compositional sampling.
+defaults:
+  - base_composition
+
+level: global

@@ -14,6 +14,7 @@ import numpy as np
 from hydrabflow.augmentation.registry import build_augmentations
 from hydrabflow.pipeline import io
 from hydrabflow.pipeline._app import make_cli
+from hydrabflow.pipeline.adapter import select_adapter_keys
 from hydrabflow.pipeline.checkpoint import save_approximator
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.preprocessing.registry import build_pipeline
@@ -40,6 +41,10 @@ def run_training(cfg):
     log.info("Preprocessing done: %d train / %d val rows",
              _n(train_data), _n(val_data) if val_data else 0)
 
+    # Keep only the keys the adapter consumes (simulator datasets carry extra arrays).
+    train_data = select_adapter_keys(train_data, cfg)
+    val_data = select_adapter_keys(val_data, cfg) if val_data is not None else None
+
     # 3. Build the BayesFlow workflow (adapter + summary net + inference net).
     workflow = build_workflow(cfg)
 
@@ -47,6 +52,13 @@ def run_training(cfg):
     #    seeded from cfg.seed so augmentation randomness is reproducible yet independent of the
     #    draws preprocessing already consumed from `rng`.
     augmentations = build_augmentations(cfg.augmentation, np.random.default_rng(cfg.seed))
+
+    # Augmentations can change the observation layout (masks, feature concatenations), so the
+    # validation split must pass through the same chain — once, with a fixed draw.
+    if augmentations and val_data is not None:
+        for aug in augmentations:
+            val_data = aug(val_data)
+        val_data = {k: np.asarray(v) for k, v in val_data.items()}
 
     # 5. Offline training on the in-memory dataset.
     history = workflow.fit_offline(

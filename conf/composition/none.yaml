@@ -1,0 +1,5 @@
+# Single-level inference (bf.BasicWorkflow) — the template default.
+defaults:
+  - base_composition
+
+level: none

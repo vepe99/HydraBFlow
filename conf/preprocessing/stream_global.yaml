@@ -1,0 +1,11 @@
+# Preprocessing for the global stream model: NaN cleanup + split only. Observation scaling is
+# left to BayesFlow's internal standardization (training.standardize includes summary_variables),
+# exactly like the reference global model.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys: ${adapter.summary_variables}
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
