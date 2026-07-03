@@ -14,6 +14,15 @@ def test_build_adapter(cfg):
     assert adapter is not None
 
 
+def test_build_adapter_unconfigured_raises(compose):
+    from hydrabflow.pipeline.adapter import build_adapter
+
+    # No registered simulator to derive from and no explicit config: actionable error.
+    cfg = compose(["simulator.name=does_not_exist"])
+    with pytest.raises(ValueError, match="bring_your_own_data"):
+        build_adapter(cfg.adapter)
+
+
 def test_build_networks(cfg):
     from hydrabflow.networks.factory import build_inference_network, build_summary_network
 

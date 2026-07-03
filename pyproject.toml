@@ -19,7 +19,8 @@ dependencies = [
     "tqdm>=4.66",
 ]
 
-[project.optional-dependencies]
+# `uv sync` installs the dev group by default, so a fresh clone can run pytest immediately.
+[dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 
 # Console entry points mirror the scripts/ Hydra apps.

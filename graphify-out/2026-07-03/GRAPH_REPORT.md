@@ -1,16 +1,16 @@
-# Graph Report - HydraBFlow  (2026-07-03)
+# Graph Report - HydraBFlow  (2026-06-07)
 
 ## Corpus Check
-- 58 files · ~28,072 words
+- 56 files · ~22,748 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 599 nodes · 808 edges · 58 communities (45 shown, 13 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 88 edges (avg confidence: 0.72)
+- 531 nodes · 723 edges · 56 communities (44 shown, 12 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 76 edges (avg confidence: 0.71)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `952f55c8`
+- Built from commit: `32b4fac0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -38,7 +38,6 @@
 - [[_COMMUNITY_Pipeline Package Init|Pipeline Package Init]]
 - [[_COMMUNITY_Preprocessing Package Init|Preprocessing Package Init]]
 - [[_COMMUNITY_Simulators Package Init|Simulators Package Init]]
-- [[_COMMUNITY_PackageInit cluster 24|Package/Init cluster 24]]
 - [[_COMMUNITY_Community 31|Community 31]]
 - [[_COMMUNITY_Community 32|Community 32]]
 - [[_COMMUNITY_Community 33|Community 33]]
@@ -56,8 +55,6 @@
 - [[_COMMUNITY_Community 45|Community 45]]
 - [[_COMMUNITY_Community 46|Community 46]]
 - [[_COMMUNITY_Community 47|Community 47]]
-- [[_COMMUNITY_Community 56|Community 56]]
-- [[_COMMUNITY_Community 57|Community 57]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `PreprocessStep` - 20 edges
@@ -66,59 +63,59 @@
 4. `TwoMoonsSimulator` - 12 edges
 5. `run_training()` - 11 edges
 6. `SplitStep` - 11 edges
-7. `compose()` - 11 edges
-8. `/graphify` - 11 edges
-9. `What You Must Do When Invoked` - 11 edges
-10. `3. Config groups, one by one` - 11 edges
+7. `/graphify` - 11 edges
+8. `What You Must Do When Invoked` - 11 edges
+9. `HydraBFlow — End-to-End Pipeline Guide` - 11 edges
+10. `build_pipeline()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `test_augmentation_registry_builds()` --calls--> `build_augmentations()`  [INFERRED]
+  tests/test_registries.py → src/hydrabflow/augmentation/registry.py
 - `compose_cfg()` --calls--> `register_configs()`  [INFERRED]
   tests/conftest.py → src/hydrabflow/config/schema.py
-- `test_build_networks()` --calls--> `build_summary_network()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/networks/factory.py
-- `test_build_networks()` --calls--> `build_inference_network()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/networks/factory.py
-- `compose_cfg()` --calls--> `fill_adapter_from_simulator()`  [INFERRED]
-  tests/conftest.py → src/hydrabflow/pipeline/adapter.py
-- `test_build_workflow()` --calls--> `build_workflow()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/pipeline/workflow.py
+- `test_preprocess_registry()` --calls--> `available_steps()`  [INFERRED]
+  tests/test_registries.py → src/hydrabflow/preprocessing/registry.py
+- `test_two_moons_shapes_and_reproducibility()` --calls--> `get_simulator()`  [INFERRED]
+  tests/test_augmentation.py → src/hydrabflow/simulators/registry.py
+- `test_two_moons_registered()` --calls--> `available_simulators()`  [INFERRED]
+  tests/test_augmentation.py → src/hydrabflow/simulators/registry.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (58 total, 13 thin omitted)
+## Communities (56 total, 12 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
-Cohesion: 0.07
-Nodes (31): PreprocessPipeline, PreprocessStep, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty, Return a transformed copy/view of ``data``., Arrays to persist so the fitted transform can be reloaded. Default: nothing., Restore arrays produced by :meth:`state`. (+23 more)
+Cohesion: 0.08
+Nodes (27): PreprocessPipeline, PreprocessStep, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty, Return a transformed copy/view of ``data``., Arrays to persist so the fitted transform can be reloaded. Default: nothing., Restore arrays produced by :meth:`state`. (+19 more)
 
 ### Community 1 - "Eval / Checkpoint Stages"
 Cohesion: 0.33
 Nodes (6): Diffusion Inference Network Config, Flow Matching Inference Network Config, Model Default Config, DeepSet Summary Network Config, SetTransformer Summary Network Config, TimeSeriesTransformer Summary Network Config
 
 ### Community 2 - "Design Principles & Configs"
-Cohesion: 0.06
-Nodes (42): fix_keras_model(), load_approximator(), Model save/load helpers, including the BayesFlow ``.keras`` deserialization work, Return a path to a load-safe copy of ``model_path`` (patching the ArrayImpl tag), Load a saved approximator, applying the ArrayImpl fix first., save_approximator(), Stage 3: evaluation on a simulated test set (with known ground truth).  Loads th, Stage 5: application to real (observed) data.  Like :mod:`evaluate`, but the inp (+34 more)
+Cohesion: 0.09
+Nodes (30): Stage 3: evaluation on a simulated test set (with known ground truth).  Loads th, _require_model_dir(), _run_diagnostics(), run_evaluation(), Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), _n() (+22 more)
 
 ### Community 3 - "Augmentation Registry & Tests"
-Cohesion: 0.12
-Nodes (24): AdapterConfig, DataConfig, EvalConfig, InferenceConfig, InferenceNetworkConfig, ModelConfig, PreprocessingConfig, Structured (dataclass) config schemas for every Hydra config group.  The whole p (+16 more)
+Cohesion: 0.10
+Nodes (30): feature_dropout(), gaussian_noise(), multiplicative_noise(), Example augmentations. Use as templates for problem-specific ones.  Augmentation, Add zero-mean Gaussian noise to one observable key (additive observational noise, Scale an observable by ``(1 + N(0, mult_scale))`` — multiplicative / gain jitter, Randomly zero out entries of an observable with probability ``dropout_prob`` (Be, AdapterConfig (+22 more)
 
 ### Community 4 - "Simulate Stage & Registries"
 Cohesion: 0.12
-Nodes (29): available_augmentations(), build_augmentations(), Name -> augmentation-factory registry and builder.  An augmentation factory rece, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, register_augmentation(), Augmentation, _batch(), _build_one() (+21 more)
+Nodes (28): available_augmentations(), build_augmentations(), Name -> augmentation-factory registry and builder.  An augmentation factory rece, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, register_augmentation(), Augmentation, _batch(), _build_one() (+20 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
-Cohesion: 0.20
-Nodes (12): _as_list(), build_adapter(), fill_adapter_from_simulator(), Build the BayesFlow ``Adapter`` from ``AdapterConfig``.  The adapter is the stru, Fill empty adapter variable lists from the simulator's own declaration (in place, Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``)., Any, Adapter / network / workflow construction. Skipped if bayesflow isn't installed. (+4 more)
+Cohesion: 0.11
+Nodes (19): build_inference_network(), build_summary_network(), Build BayesFlow networks from structured dataclass configs (no ``_target_``).  T, Return a single BayesFlow summary network for ``cfg`` (a ``SummaryNetworkConfig`, Return a BayesFlow inference (posterior) network for ``cfg`` (an ``InferenceNetw, _as_list(), build_adapter(), Build the BayesFlow ``Adapter`` from ``AdapterConfig``.  The adapter is the stru (+11 more)
 
 ### Community 6 - "Config Schemas"
 Cohesion: 0.10
 Nodes (7): BaseSimulator, Skeleton simulator: the intentional stub shipped with the template.  It declares, SkeletonSimulator, Two Moons: the classic bimodal SBI benchmark, as a worked example simulator.  Th, TwoMoonsSimulator, ndarray, ndarray
 
 ### Community 7 - "Network Factory & Adapter"
-Cohesion: 0.05
-Nodes (35): 0. Prerequisites & install, 1. The five stages at a glance, 2. Changing the simulator, 2a. Write the simulator class, 2b. Make it self-register, 2b. Registration is automatic, 2c. Add the simulator config, 2d. The adapter wires itself (+27 more)
+Cohesion: 0.07
+Nodes (28): 0. Prerequisites & install, 1. The five stages at a glance, 2. Changing the simulator, 2a. Write the simulator class, 2b. Make it self-register, 2c. Add the simulator config, 2d. Wire the adapter to your parameter / observable names, 2e. Shape contract cheat-sheet (+20 more)
 
 ### Community 8 - "Graphify Tooling"
 Cohesion: 0.12
@@ -129,12 +126,12 @@ Cohesion: 0.16
 Nodes (10): ABC, BaseSimulator, Base interface every forward model implements.  A simulator is the ONLY piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Ordered names of the inferred parameters (become ``inference_variables``)., Keys of the observable arrays. One key = single observable; >1 enables fusion., Draw ``n`` prior samples. Returns ``{param_name: (n, 1)}``., Run the forward model on a batch of parameters. Returns ``{observable_key: (n, . (+2 more)
 
 ### Community 10 - "Config Composition Tests"
-Cohesion: 0.18
-Nodes (14): cfg(), compose(), compose_cfg(), Shared test fixtures., Compose the root config with the structured schemas registered.      ``fill=True, Expose the composer so tests can build configs with custom overrides., Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests. (+6 more)
+Cohesion: 0.22
+Nodes (11): cfg(), compose(), compose_cfg(), Shared test fixtures., Compose the root config with the structured schemas registered.      Provides th, Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., test_group_override() (+3 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.14
-Nodes (15): Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), available_simulators(), get_simulator(), Name -> simulator-class registry.  New simulators self-register with the ``@regi, Class decorator registering a :class:`BaseSimulator` subclass under ``name``., Instantiate the simulator selected by ``cfg.simulator`` (a ``SimulatorConfig``). (+7 more)
+Cohesion: 0.19
+Nodes (13): available_simulators(), get_simulator(), Name -> simulator-class registry.  New simulators self-register with the ``@regi, Class decorator registering a :class:`BaseSimulator` subclass under ``name``., Instantiate the simulator selected by ``cfg.simulator`` (a ``SimulatorConfig``)., register_simulator(), BaseSimulator, Registry resolution + skeleton-simulator behavior. (+5 more)
 
 ### Community 12 - "Dataset IO"
 Cohesion: 0.43
@@ -173,16 +170,16 @@ Cohesion: 0.17
 Nodes (10): 1. Prerequisites, 2. Run a study, 3. What gets saved, 4. Run many processes at once (parallel tuning), 5. Reading the results, 6. Changing what is tuned (the search space), 7. Key config reference (`tuning` group), 8. Command recap (+2 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.06
-Nodes (30): 1. How the config system works, 2. The root master config — `config.yaml`, 3.10 `tuning/`, 3.1 `simulator/`, 3.2 `model/`, 3.3 `data/`, 3.4 `training/`, 3.5 `preprocessing/` (+22 more)
+Cohesion: 0.21
+Nodes (11): fix_keras_model(), load_approximator(), Model save/load helpers, including the BayesFlow ``.keras`` deserialization work, Return a path to a load-safe copy of ``model_path`` (patching the ArrayImpl tag), Load a saved approximator, applying the ArrayImpl fix first., save_approximator(), Stage 5: application to real (observed) data.  Like :mod:`evaluate`, but the inp, Save a posterior pair plot per observation (real data has no ground truth). (+3 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.17
 Nodes (11): Core Design Principles, Decisions Log, Folder Structure (finalized), Goal, graphify, HydraBFlow: SBI Pipeline Template with BayesFlow, Output Directory Convention, Run stages (5 entry points) (+3 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.22
-Nodes (11): available_steps(), build_pipeline(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``., Build a :class:`PreprocessPipeline` from ``cfg.preprocessing`` (a ``Preprocessin, register_step(), Preprocessing pipeline: fit/transform/split + state save/load round-trip., test_pipeline_fit_transform_and_split() (+3 more)
+Cohesion: 0.24
+Nodes (10): available_steps(), build_pipeline(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``., Build a :class:`PreprocessPipeline` from ``cfg.preprocessing`` (a ``Preprocessin, register_step(), Preprocessing pipeline: fit/transform/split + state save/load round-trip., test_pipeline_fit_transform_and_split() (+2 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.40
@@ -193,35 +190,27 @@ Cohesion: 0.67
 Nodes (3): Adapter Default Config, Preprocessing Default Config, Training Default Config
 
 ### Community 46 - "Community 46"
-Cohesion: 0.14
-Nodes (19): build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _flow_matching(), Build BayesFlow networks from structured dataclass configs (no ``_target_``).  B, Return a single BayesFlow summary network for ``cfg`` (a ``SummaryNetworkConfig`, Decorator registering a summary-network builder under ``name`` (the config ``typ (+11 more)
+Cohesion: 0.23
+Nodes (4): Per-feature z-score standardization step.  Generalizes the reference project's `, Standardizer, Dataset, ndarray
 
 ### Community 47 - "Community 47"
 Cohesion: 0.40
 Nodes (4): Adding your own simulator, Design at a glance, HydraBFlow, Quickstart
 
-### Community 56 - "Community 56"
-Cohesion: 0.24
-Nodes (11): feature_dropout(), gaussian_noise(), multiplicative_noise(), Example augmentations. Use as templates for problem-specific ones.  Augmentation, Add zero-mean Gaussian noise to one observable key (additive observational noise, Scale an observable by ``(1 + N(0, mult_scale))`` — multiplicative / gain jitter, Randomly zero out entries of an observable with probability ``dropout_prob`` (Be, AugmentationConfig (+3 more)
-
-### Community 57 - "Community 57"
-Cohesion: 0.50
-Nodes (3): import_submodules(), Auto-import the modules of a package so ``@register_*`` decorators run.  The reg, Import every non-underscore module directly inside a package.      Call from a p
-
 ## Knowledge Gaps
-- **151 isolated node(s):** `PreToolUse`, `allow`, `Any`, `Any`, `Any` (+146 more)
+- **120 isolated node(s):** `PreToolUse`, `allow`, `Any`, `Any`, `Any` (+115 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `build_pipeline()` connect `Community 39` to `Preprocessing Pipeline & Steps`, `Design Principles & Configs`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
-- **Why does `PreprocessPipeline` connect `Preprocessing Pipeline & Steps` to `Community 39`?**
-  _High betweenness centrality (0.098) - this node is a cross-community bridge._
-- **Why does `PreprocessStep` connect `Preprocessing Pipeline & Steps` to `Base Simulator Interface`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+- **Why does `build_pipeline()` connect `Community 39` to `Preprocessing Pipeline & Steps`, `Design Principles & Configs`, `Community 37`?**
+  _High betweenness centrality (0.132) - this node is a cross-community bridge._
+- **Why does `run_training()` connect `Design Principles & Configs` to `Example Simulators (Skeleton/TwoMoons)`, `Simulate Stage & Registries`, `Community 37`, `Community 39`?**
+  _High betweenness centrality (0.125) - this node is a cross-community bridge._
+- **Why does `build_augmentations()` connect `Simulate Stage & Registries` to `Design Principles & Configs`, `Community 11`?**
+  _High betweenness centrality (0.112) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `PreprocessStep` (e.g. with `Standardizer` and `CastDtype`) actually correct?**
   _`PreprocessStep` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 8 inferred relationships involving `Dataset` (e.g. with `Standardizer` and `CastDtype`) actually correct?**

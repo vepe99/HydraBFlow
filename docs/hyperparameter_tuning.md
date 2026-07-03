@@ -30,7 +30,7 @@ into train/validation). Generate one exactly as for normal training:
 
 ```bash
 uv sync
-uv run python scripts/simulate.py simulator=two_moons adapter=two_moons data.n_simulations=10000
+uv run python scripts/simulate.py simulator=two_moons data.n_simulations=10000
 ```
 
 This writes `data/two_moons/training_data_10000.npz`. (`adapter.inference_variables` must list your
@@ -42,7 +42,7 @@ parameter keys — it ships set for `two_moons`.)
 
 ```bash
 uv run python scripts/tune.py \
-  simulator=two_moons adapter=two_moons \
+  simulator=two_moons \
   data.n_simulations=10000 \
   tuning.n_trials=50 tuning.n_epochs=10
 ```
@@ -117,11 +117,11 @@ they extend one study and divide the trials between them:
 
 ```bash
 # terminal 1
-uv run python scripts/tune.py simulator=two_moons adapter=two_moons \
+uv run python scripts/tune.py simulator=two_moons \
   data.n_simulations=10000 tuning.n_trials=25 &
 
 # terminal 2 (identical) — joins the SAME study
-uv run python scripts/tune.py simulator=two_moons adapter=two_moons \
+uv run python scripts/tune.py simulator=two_moons \
   data.n_simulations=10000 tuning.n_trials=25 &
 ```
 
@@ -171,7 +171,7 @@ for t in study.best_trials:           # Pareto front (multi-objective)
 them as overrides to `train.py`, e.g.:
 
 ```bash
-uv run python scripts/train.py simulator=two_moons adapter=two_moons \
+uv run python scripts/train.py simulator=two_moons \
   data.n_simulations=10000 training.n_epochs=100 \
   model.summary_network.summary_dim=48 training.learning_rate=0.0021
 ```
@@ -258,13 +258,13 @@ trial; with two it returns `(rmse, calibration_error)` and holds the Pareto fron
 uv sync
 
 # 1. dataset to tune on
-uv run python scripts/simulate.py simulator=two_moons adapter=two_moons data.n_simulations=10000
+uv run python scripts/simulate.py simulator=two_moons data.n_simulations=10000
 
 # 2. run the study (repeat the SAME command in parallel to share it)
-uv run python scripts/tune.py simulator=two_moons adapter=two_moons \
+uv run python scripts/tune.py simulator=two_moons \
   data.n_simulations=10000 tuning.n_trials=50 tuning.n_epochs=10
 
 # 3. inspect data/two_moons/tuning/hydrabflow_study/best_trials.json, then retrain the winner fully
-uv run python scripts/train.py simulator=two_moons adapter=two_moons \
+uv run python scripts/train.py simulator=two_moons \
   data.n_simulations=10000 training.n_epochs=100 <best params as overrides>
 ```

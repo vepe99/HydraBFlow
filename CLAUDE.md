@@ -18,12 +18,18 @@ Everything else — config management, output tracing, reproducibility — is fi
   from its output folder.
 - **Hydra-native**: all entry points are Hydra apps. No argparse. Config composition via
   config groups covers all axes of variation (model, simulator, training, data).
-- **Modularity via structured configs + factories** (NOT `_target_`): every config group has a
+- **Modularity via structured configs + registries** (NOT `_target_`): every config group has a
   typed dataclass schema registered in Hydra's `ConfigStore`; YAML files fill in values. Factory
-  functions read those dataclasses to build the objects (`networks.factory`,
+  functions read those dataclasses and resolve names through registries (`networks.factory`,
   `simulators.registry`, `preprocessing.registry`, `augmentation.registry`, `pipeline.adapter`).
-  Components self-register by name (e.g. `@register_simulator("name")`). Adding a new simulator =
-  a config file + a registered Python class, no changes to infrastructure code.
+  Components self-register by name (`@register_simulator`, `@register_step`,
+  `@register_augmentation`, `@register_summary_network`, `@register_inference_network`), and each
+  package auto-imports its modules (`utils.discovery`), so adding a component = dropping a file +
+  a config entry, no infrastructure edits (not even `__init__.py`).
+- **The simulator is the single source of truth for variable names**: empty
+  `adapter.inference_variables` / `summary_variables` are derived from the simulator's
+  `parameter_names` / `observable_keys` at CLI entry (`pipeline.adapter.fill_adapter_from_simulator`).
+  Explicit adapter config overrides (required for bring-your-own-data, where no class exists).
 - **Separation of concerns**: infrastructure code (training loop, logging, checkpointing)
   is never modified by the end user. User-facing code lives in clearly marked locations
   (`src/hydrabflow/simulators/`, plus optional custom `networks`/`preprocessing`/`augmentation`).
@@ -88,12 +94,12 @@ HydraBFlow/
 ## What the User Modifies
 
 - `conf/simulator/<name>.yaml` + `src/hydrabflow/simulators/<name>.py`: the forward model
-  (a `@register_simulator`-decorated `BaseSimulator` subclass).
-- `conf/adapter/default.yaml`: set `inference_variables` to the simulator's parameter names and
-  `summary_variables` to its observable key(s). (`inference_variables` is mandatory — `???`.)
+  (a `@register_simulator`-decorated `BaseSimulator` subclass; auto-imported, self-registers).
+- `conf/adapter/*`: normally untouched — variables derive from the simulator. Explicit config
+  only for bring-your-own-data or to override the derivation (subset inference, fusion).
 - `conf/model/...`: choose/configure summary + inference networks.
-- Optionally: custom preprocessing steps, augmentations, or summary architectures (each
-  self-registers; no infra edits).
+- Optionally: custom preprocessing steps, augmentations, or network architectures (drop a module
+  in the package; each self-registers; no infra edits).
 - Nothing else should need to change for a new problem.
 
 ## What Is Fixed Infrastructure (do not modify)
@@ -136,6 +142,15 @@ Every run saves:
 - Session 1 decisions: JAX backend; structured-dataclass configs (overrides original `_target_`
   plan); skeleton-only example simulator; single-observable summary, fusion-ready; single-level
   inference (no global/local, no compositional scoring).
+- Session 2026-07-03 (user-friendliness pass): default simulator = `two_moons` (first run succeeds
+  out of the box; skeleton stays as the copyable stub); restored timestamped `hydra.run.dir`
+  (removed leftover debug value); packages auto-import their modules via `utils.discovery` so
+  dropped components self-register without `__init__.py` edits; adapter variables derive from the
+  simulator when left empty (`fill_adapter_from_simulator` in `pipeline/_app.py`), explicit config
+  wins; summary/inference network builders moved from if/elif to registries
+  (`@register_summary_network` / `@register_inference_network`) with free-form `params` in both
+  network schemas for custom builders; dev deps moved to `[dependency-groups]` so `uv sync`
+  installs pytest/ruff by default.
 
 ## graphify
 

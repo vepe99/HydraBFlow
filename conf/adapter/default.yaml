@@ -1,11 +1,13 @@
-# Maps raw dataset keys to BayesFlow roles. With a single observable, `summary_variables` has one
-# entry (fed to the summary network); list multiple keys to enable fusion (see pipeline/adapter).
-# `inference_variables` should be your simulator's parameter_names.
+# Maps raw dataset keys to BayesFlow roles. Empty lists (the default) are filled automatically
+# from the selected simulator: `inference_variables` <- parameter_names, `summary_variables` <-
+# observable_keys. You only set them explicitly to override — e.g. training on data that no
+# registered simulator produced (docs/bring_your_own_data.md), or to enable multi-observable
+# fusion by listing several summary keys (see pipeline/adapter). conf/adapter/two_moons.yaml is
+# a fully explicit example.
 defaults:
   - base_adapter
 
-inference_variables: ???   # e.g. [theta1, theta2] — set per simulator (override on the CLI/config)
-summary_variables:
-  - x
+inference_variables: []   # [] = use simulator.parameter_names
+summary_variables: []     # [] = use simulator.observable_keys
 inference_conditions: []
 drop: []

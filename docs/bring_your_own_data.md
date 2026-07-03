@@ -86,6 +86,11 @@ inference_conditions: []
 drop: []
 ```
 
+The explicit adapter is **required** here: with a registered simulator the empty default adapter
+derives these lists from the class, but `mydata` is only a label with no class behind it, so
+there is nothing to derive from. Skip this file and the run fails fast with an error pointing
+back to this document.
+
 > You can skip the two YAML files and pass everything on the CLI
 > (`simulator.name=mydata 'adapter.inference_variables=[theta1,theta2]' 'adapter.summary_variables=[x]'`),
 > but version-controlled config files keep the run reproducible and self-documenting.

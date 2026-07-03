@@ -23,12 +23,47 @@ def _as_list(x) -> List[str]:
     return list(x)
 
 
+def fill_adapter_from_simulator(cfg) -> None:
+    """Fill empty adapter variable lists from the simulator's own declaration (in place).
+
+    The simulator class is the single source of truth for its parameter names and observable
+    keys, so by default the adapter derives ``inference_variables`` / ``summary_variables`` from
+    it and the user never repeats them in config. Explicit (non-empty) config values win — that
+    is the escape hatch for datasets not produced by a registered simulator (bring-your-own-data),
+    where no simulator may exist: in that case the lists are left empty here and
+    :func:`build_adapter` raises with instructions.
+    """
+    from hydrabflow.simulators.registry import get_simulator
+
+    needs_inference = not _as_list(cfg.adapter.inference_variables)
+    needs_summary = not _as_list(cfg.adapter.summary_variables)
+    if not (needs_inference or needs_summary):
+        return
+    try:
+        simulator = get_simulator(cfg.simulator)
+    except KeyError:
+        return  # no registered simulator: adapter must be configured explicitly
+    if needs_inference:
+        cfg.adapter.inference_variables = list(simulator.parameter_names)
+    if needs_summary:
+        cfg.adapter.summary_variables = list(simulator.observable_keys)
+
+
 def build_adapter(cfg) -> Any:
     """Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``)."""
     import bayesflow as bf
 
     inference_variables = _as_list(cfg.inference_variables)
     summary_variables = _as_list(cfg.summary_variables)
+
+    if not inference_variables:
+        raise ValueError(
+            "adapter.inference_variables is empty and could not be derived from the simulator. "
+            "Either select a registered simulator (they declare parameter_names/observable_keys) "
+            "or set adapter.inference_variables / adapter.summary_variables explicitly "
+            "(see conf/adapter/two_moons.yaml for an explicit example and "
+            "docs/bring_your_own_data.md for the no-simulator workflow)."
+        )
     inference_conditions = _as_list(cfg.inference_conditions)
     drop = _as_list(cfg.drop)
 

@@ -15,9 +15,10 @@ By the end you will know how to:
 
 > **Mental model.** You write a *simulator* and pick/configure *SBI components*. Everything
 > else — config composition, training loop, checkpointing, diagnostics, traceability — is fixed
-> infrastructure you never touch. The two extension styles are: **self-registering** components
-> (simulators) that need *no* infrastructure edits, and **factory-backed** components (summary /
-> inference networks) where you add one branch to a factory plus a typed config field.
+> infrastructure you never touch. Every extensible component family (simulators, preprocessing
+> steps, augmentations, summary / inference networks) works the same way: drop a module in the
+> right package, decorate it with the family's `@register_*` decorator, and select it by name in
+> YAML. No infrastructure edits.
 
 ---
 
@@ -141,18 +142,17 @@ class GaussianSimulator(BaseSimulator):
 > The base class already provides `sample(n, rng)`, which merges `sample_prior` + `simulate` into
 > one dataset chunk — infrastructure calls it, you normally don't override it.
 
-### 2b. Make it self-register
+### 2b. Registration is automatic
 
-Components only register when their module is imported. Add the import to
-[src/hydrabflow/simulators/\_\_init\_\_.py](../src/hydrabflow/simulators/__init__.py):
+Components register when their module is imported, and the `simulators` package auto-imports
+every module in its folder (see
+[src/hydrabflow/simulators/\_\_init\_\_.py](../src/hydrabflow/simulators/__init__.py)). Dropping
+`gaussian.py` into `src/hydrabflow/simulators/` is all it takes — no `__init__.py` edit, no
+import wiring.
 
-```python
-from hydrabflow.simulators import skeleton   # noqa: F401  (existing)
-from hydrabflow.simulators import gaussian    # noqa: F401  (self-registers "gaussian")  <-- add
-```
-
-Skip this and you get a clear error from `get_simulator`:
-`Unknown simulator 'gaussian'. Registered: [...]. Did you import the module that defines it?`
+If you instead put the class somewhere unusual (outside the package), you get a clear error from
+`get_simulator`: `Unknown simulator 'gaussian'. Registered: [...]. Did you import the module that
+defines it?` — importing your module (e.g. from a notebook) before running fixes it.
 
 ### 2c. Add the simulator config
 
@@ -174,24 +174,30 @@ params:                 # passed verbatim to the constructor as self.params
 `params` is a free-form mapping — declare whatever your forward model needs (particle counts,
 integrator settings, prior bounds) without ever touching the schema.
 
-### 2d. Wire the adapter to your parameter / observable names
+### 2d. The adapter wires itself
 
-The adapter maps raw dataset keys to BayesFlow roles. Edit
-[conf/adapter/default.yaml](../conf/adapter/default.yaml):
+The adapter maps raw dataset keys to BayesFlow roles. You already declared everything it needs on
+the class: `inference_variables` defaults to `parameter_names` (`[mu1, mu2]`) and
+`summary_variables` to `observable_keys` (`[x]`). With the shipped
+[conf/adapter/default.yaml](../conf/adapter/default.yaml) (empty lists = "derive from the
+simulator") there is **nothing to do in this step**.
+
+Set the adapter fields explicitly only to override that default — the two cases that need it:
 
 ```yaml
 defaults:
   - base_adapter
 
-inference_variables: [mu1, mu2]   # == GaussianSimulator.parameter_names  (MANDATORY)
-summary_variables: [x]            # == GaussianSimulator.observable_keys
+inference_variables: [mu1, mu2]   # e.g. infer only a subset of the parameters
+summary_variables: [x]            # e.g. multiple keys -> multi-observable fusion
 inference_conditions: []          # direct, non-summarized conditions (rarely needed)
 drop: []                          # keys to discard
 ```
 
-> `inference_variables` ships as `???` (Hydra's "mandatory value"). Until you set it — in this file
-> or on the CLI (`adapter.inference_variables=[mu1,mu2]`) — every stage fails fast with
-> `MissingMandatoryValue`. This is intentional: the targets are simulator-specific.
+> Training on a dataset that no registered simulator produced (there is nothing to derive from)
+> also requires the explicit form — see [bring your own data](./bring_your_own_data.md). If both
+> the config and the simulator are unavailable, the pipeline fails fast with an error pointing
+> you here.
 
 ### 2e. Shape contract cheat-sheet
 
@@ -292,61 +298,48 @@ For real observations, set `data.real_data_path` and run `scripts/evaluate_real.
 
 ## 4. Adding a SummaryNetwork that isn't shipped
 
-Summary and inference networks are **factory-backed**, not registry-backed: the builder is an
-explicit `if/elif` on `cfg.type`. Adding one is a focused 3-step change — one factory branch, one
-(optional) schema edit, one YAML.
+Summary and inference networks are **registry-backed**, exactly like simulators: builders are
+looked up by `cfg.type` in a name → builder registry
+([src/hydrabflow/networks/factory.py](../src/hydrabflow/networks/factory.py)), and every module
+you drop into `src/hydrabflow/networks/` is auto-imported so its `@register_summary_network` /
+`@register_inference_network` decorators run. Adding one is: one dropped module + one YAML.
 
 Worked example: a recurrent **GRU** summary network for ordered/time-series observables.
 
-### Step 1 — add a branch to the factory
+### Step 1 — drop a builder module into the networks package
 
-Edit [`build_summary_network`](../src/hydrabflow/networks/factory.py):
+Create **`src/hydrabflow/networks/gru.py`**:
 
 ```python
-    if t == "deep_set":
-        return bf.networks.DeepSet(
-            summary_dim=int(cfg.summary_dim),
-            dropout=float(cfg.dropout),
-        )
-    # --- new branch ---
-    if t == "gru":
-        return bf.networks.RecurrentNetwork(          # check the exact class in your bayesflow
-            summary_dim=int(cfg.summary_dim),
-            cell_type="gru",
-            num_layers=int(cfg.num_blocks),           # reuse an existing field...
-            hidden_dim=int(cfg.embed_dim),
-        )
-    raise ValueError(
-        f"Unknown summary_network.type '{t}'. "
-        "Expected one of: set_transformer, time_series_transformer, deep_set, gru."
+"""A recurrent (GRU) summary network for ordered observables."""
+
+from hydrabflow.networks.factory import register_summary_network
+
+
+@register_summary_network("gru")
+def build_gru(cfg):
+    import bayesflow as bf                            # lazy, like the shipped builders
+
+    return bf.networks.RecurrentNetwork(              # check the exact class in your bayesflow
+        summary_dim=int(cfg.summary_dim),
+        cell_type="gru",
+        num_layers=int(cfg.num_blocks),               # reuse existing config fields...
+        hidden_dim=int(cfg.embed_dim),
+        bidirectional=bool(cfg.params.get("bidirectional", False)),  # ...or free-form extras
     )
 ```
 
 > Check your installed BayesFlow for the exact summary-network class and kwargs
 > (`python -c "import bayesflow as bf; print(dir(bf.networks))"`). The pattern is what matters:
-> read scalar fields off `cfg` and pass them to the constructor.
+> read fields off `cfg` and pass them to the constructor.
 
-### Step 2 — (only if you need new hyperparameters) extend the schema
+### Step 2 — hyperparameters: reuse typed fields, or use `params`
 
 `SummaryNetworkConfig` in [src/hydrabflow/config/schema.py](../src/hydrabflow/config/schema.py)
-already exposes `summary_dim, num_blocks, num_heads, embed_dim, mlp_depth, mlp_width, dropout`. If
-your network needs a knob none of those cover, add a typed field with a default:
-
-```python
-@dataclass
-class SummaryNetworkConfig:
-    type: str = "set_transformer"
-    summary_dim: int = 32
-    num_blocks: int = 2
-    num_heads: int = 4
-    embed_dim: int = 64
-    mlp_depth: int = 2
-    mlp_width: int = 128
-    dropout: float = 0.05
-    bidirectional: bool = False     # <-- new optional field, consumed by the "gru" branch
-```
-
-Reusing existing fields (as the GRU branch above does) means you can skip this step entirely.
+exposes `summary_dim, num_blocks, num_heads, embed_dim, mlp_depth, mlp_width, dropout` — reuse
+whatever fits. For knobs none of those cover, the free-form `params` mapping is passed through
+untouched (like `simulator.params`), so **no schema edit is needed**. Add a typed schema field
+only when you want Hydra-side type checking for it.
 
 ### Step 3 — add a selectable config file
 
@@ -357,11 +350,12 @@ Create **`conf/model/summary_network/gru.yaml`** (mirror
 defaults:
   - base_summary_network
 
-type: gru          # must match the factory branch
+type: gru          # must match the registered name
 summary_dim: 32
 num_blocks: 2      # -> num_layers
 embed_dim: 64      # -> hidden_dim
-dropout: 0.05
+params:
+  bidirectional: false
 ```
 
 ### Use it
@@ -370,39 +364,38 @@ dropout: 0.05
 uv run python scripts/train.py simulator=gaussian model/summary_network=gru
 ```
 
+A typo'd `type` fails fast with the list of registered names:
+`Unknown summary_network.type 'gru2'. Available: ['deep_set', 'gru', 'set_transformer', ...]`.
+
 ---
 
 ## 5. Adding an InferenceNetwork that isn't shipped
 
-Identical 3-step pattern, against the inference side. Shipped types are `flow_matching` and
+Identical pattern, against the inference side. Shipped types are `flow_matching` and
 `diffusion`. Example: add a **coupling-flow** posterior network.
 
-### Step 1 — branch in the factory
+### Step 1 — drop a builder module
 
-Edit [`build_inference_network`](../src/hydrabflow/networks/factory.py):
+Create **`src/hydrabflow/networks/coupling_flow.py`**:
 
 ```python
-    if t == "diffusion":
-        return bf.networks.DiffusionModel(
-            subnet_kwargs={"widths": widths, "time_embedding_dim": int(cfg.time_embedding_dim)},
-        )
-    # --- new branch ---
-    if t == "coupling_flow":
-        return bf.networks.CouplingFlow(
-            subnet_kwargs={"widths": widths, "dropout": float(cfg.dropout)},
-        )
-    raise ValueError(
-        f"Unknown inference_network.type '{t}'. "
-        "Expected one of: flow_matching, diffusion, coupling_flow."
+from hydrabflow.networks.factory import register_inference_network
+
+
+@register_inference_network("coupling_flow")
+def build_coupling_flow(cfg):
+    import bayesflow as bf
+
+    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
+    return bf.networks.CouplingFlow(
+        subnet_kwargs={"widths": widths, "dropout": float(cfg.dropout)},
     )
 ```
 
-`widths` is already derived in the factory as `[mlp_width] * mlp_depth`.
+### Step 2 — hyperparameters
 
-### Step 2 — extend `InferenceNetworkConfig` if needed
-
-Fields available out of the box: `mlp_depth, mlp_width, dropout, time_embedding_dim`. Add a typed
-field with a default only if your network needs something new (same pattern as §4 step 2).
+Typed fields available out of the box: `mlp_depth, mlp_width, dropout, time_embedding_dim`; the
+free-form `params` mapping covers anything else (same pattern as §4 step 2).
 
 ### Step 3 — selectable config
 
@@ -538,10 +531,9 @@ Example categorical entry:
 # 0. install
 uv sync
 
-# 1. (one-time code) add src/hydrabflow/simulators/gaussian.py,
-#    import it in simulators/__init__.py,
-#    add conf/simulator/gaussian.yaml,
-#    set adapter.inference_variables=[mu1,mu2] in conf/adapter/default.yaml
+# 1. (one-time code) add src/hydrabflow/simulators/gaussian.py  (auto-registered)
+#    and conf/simulator/gaussian.yaml — the adapter derives its variables
+#    from the simulator class, nothing else to wire
 
 # 2. generate training data
 uv run python scripts/simulate.py simulator=gaussian
@@ -571,5 +563,5 @@ Inspect any run interactively with the Marimo notebook:
 uv run marimo edit notebooks/explore.py
 ```
 
-That's the whole loop. To move to a new problem you only repeat §2 (a new simulator + its config +
-the adapter keys); the networks, tuning, and diagnostics infrastructure carry over unchanged.
+That's the whole loop. To move to a new problem you only repeat §2 (a new simulator + its config);
+the adapter wiring, networks, tuning, and diagnostics infrastructure carry over unchanged.

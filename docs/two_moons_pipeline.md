@@ -2,8 +2,8 @@
 
 This is a copy-pasteable walkthrough of a **complete HydraBFlow run — training *and* evaluation —**
 on the shipped [`two_moons`](../src/hydrabflow/simulators/two_moons.py) simulator (the classic
-bimodal SBI benchmark). Nothing here needs code changes: the simulator, its config, and a matching
-adapter all ship with the template. You only run the stages.
+bimodal SBI benchmark). Nothing here needs code changes: `two_moons` is the template's default
+simulator, so you only run the stages.
 
 For the conceptual background (config system, adding your own simulator / networks, tuning) see the
 [end-to-end guide](end_to_end_guide.md). This document is the concrete "press these buttons" recipe.
@@ -16,19 +16,21 @@ The Two Moons forward model has two parameters `theta1`, `theta2` (uniform prior
 produces a 2-D observation whose posterior is famously crescent-shaped / bimodal — a good stress
 test for the inference network.
 
-Two config groups make it work, both already in the repo:
-
-| File | Role |
-|------|------|
-| [`conf/simulator/two_moons.yaml`](../conf/simulator/two_moons.yaml) | selects the `two_moons` forward model + its prior / noise knobs |
-| [`conf/adapter/two_moons.yaml`](../conf/adapter/two_moons.yaml) | maps `theta1,theta2` → inference variables and `x` → summary variable |
+One config file makes it work, already in the repo:
+[`conf/simulator/two_moons.yaml`](../conf/simulator/two_moons.yaml) selects the `two_moons`
+forward model and its prior / noise knobs. The adapter wiring (`theta1,theta2` → inference
+variables, `x` → summary variable) is derived automatically from the simulator class — no adapter
+config needed ([`conf/adapter/two_moons.yaml`](../conf/adapter/two_moons.yaml) exists only as a
+worked example of the explicit form).
 
 Observable shape is `(n, n_obs, 2)`: `n_obs` is the number of i.i.d. observations per parameter
 (the summary-network "set size", default `1`). The default model
 ([`conf/model/default.yaml`](../conf/model/default.yaml)) — a SetTransformer summary network + a
 FlowMatching inference network — consumes that directly.
 
-Every command below selects both groups with `simulator=two_moons adapter=two_moons`.
+`two_moons` is already the default simulator in [`conf/config.yaml`](../conf/config.yaml); the
+commands below still pass `simulator=two_moons` explicitly so they keep working if you change
+that default.
 
 ---
 
@@ -57,7 +59,7 @@ The pipeline is **simulate (train set) → simulate (test set) → train → eva
 
 ```bash
 uv run python scripts/simulate.py \
-  simulator=two_moons adapter=two_moons \
+  simulator=two_moons \
   data.n_simulations=10000
 ```
 
@@ -70,7 +72,7 @@ Same simulator, but a **different output name** (`eval` looks for `test_data_<N>
 
 ```bash
 uv run python scripts/simulate.py \
-  simulator=two_moons adapter=two_moons \
+  simulator=two_moons \
   data.n_simulations=10000 \
   data.dataset_name=test_data_10000.npz \
   seed=123
@@ -82,7 +84,7 @@ Writes `data/two_moons/test_data_10000.npz`.
 
 ```bash
 uv run python scripts/train.py \
-  simulator=two_moons adapter=two_moons \
+  simulator=two_moons \
   data.n_simulations=10000 \
   training.n_epochs=50
 ```
@@ -113,7 +115,7 @@ truth-aware diagnostics:
 
 ```bash
 uv run python scripts/evaluate.py \
-  simulator=two_moons adapter=two_moons \
+  simulator=two_moons \
   data.n_simulations=10000 \
   model_dir="$RUN_DIR"
 ```
@@ -139,19 +141,19 @@ dataset, few epochs, and few posterior samples:
 
 ```bash
 # small train + test sets
-uv run python scripts/simulate.py simulator=two_moons adapter=two_moons \
+uv run python scripts/simulate.py simulator=two_moons \
   data.n_simulations=2000 data.chunk_size=1000
-uv run python scripts/simulate.py simulator=two_moons adapter=two_moons \
+uv run python scripts/simulate.py simulator=two_moons \
   data.n_simulations=2000 data.chunk_size=1000 \
   data.dataset_name=test_data_2000.npz seed=123
 
 # quick train
-uv run python scripts/train.py simulator=two_moons adapter=two_moons \
+uv run python scripts/train.py simulator=two_moons \
   data.n_simulations=2000 training.n_epochs=3
 
 # evaluate against the run just produced
 RUN_DIR=$(ls -dt outputs/two_moons/default/*/ | head -1)
-uv run python scripts/evaluate.py simulator=two_moons adapter=two_moons \
+uv run python scripts/evaluate.py simulator=two_moons \
   data.n_simulations=2000 eval.num_samples=200 model_dir="$RUN_DIR"
 ```
 
@@ -167,7 +169,7 @@ observational noise on `x`, enable a step and set its strength on the CLI:
 
 ```bash
 uv run python scripts/train.py \
-  simulator=two_moons adapter=two_moons \
+  simulator=two_moons \
   data.n_simulations=10000 training.n_epochs=50 \
   'augmentation.steps=[gaussian_noise]' \
   +augmentation.params.noise_scale=0.02
@@ -186,7 +188,7 @@ The simulator exposes its knobs through `simulator.params`. For example, turn th
 benchmark into a 10-observation set (sharper posterior) by overriding `n_obs` on **every** stage:
 
 ```bash
-... simulator=two_moons adapter=two_moons simulator.params.n_obs=10 ...
+... simulator=two_moons simulator.params.n_obs=10 ...
 ```
 
 The observable then has shape `(n, 10, 2)` and the SetTransformer pools over the 10 observations.
@@ -204,16 +206,16 @@ For Optuna hyperparameter search over network / training settings, see
 uv sync
 
 # 1. train set
-uv run python scripts/simulate.py simulator=two_moons adapter=two_moons data.n_simulations=10000
+uv run python scripts/simulate.py simulator=two_moons data.n_simulations=10000
 # 2. test set (different name + seed)
-uv run python scripts/simulate.py simulator=two_moons adapter=two_moons data.n_simulations=10000 \
+uv run python scripts/simulate.py simulator=two_moons data.n_simulations=10000 \
   data.dataset_name=test_data_10000.npz seed=123
 # 3. train
-uv run python scripts/train.py simulator=two_moons adapter=two_moons data.n_simulations=10000 \
+uv run python scripts/train.py simulator=two_moons data.n_simulations=10000 \
   training.n_epochs=50
 # 4. evaluate
 RUN_DIR=$(ls -dt outputs/two_moons/default/*/ | head -1)
-uv run python scripts/evaluate.py simulator=two_moons adapter=two_moons data.n_simulations=10000 \
+uv run python scripts/evaluate.py simulator=two_moons data.n_simulations=10000 \
   model_dir="$RUN_DIR"
 ```
 
