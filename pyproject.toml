@@ -8,7 +8,7 @@ authors = [{ name = "Giuseppe Viterbo", email = "viterbogiuseppe99@gmail.com" }]
 dependencies = [
     "bayesflow>=2.0",
     "keras>=3.5",
-    "jax>=0.4.30",
+    "jax[cuda12]>=0.4.30",
     "hydra-core>=1.3",
     "omegaconf>=2.3",
     "optuna>=3.6",
