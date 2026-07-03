@@ -1,0 +1,11 @@
+# Adapter for stream runs: variables still derive from the simulator (global/local split follows
+# composition.level); the only explicit bit is the per-particle attention mask the observational
+# window augmentation creates, routed to the summary network.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables: []
+inference_conditions: []
+drop: []
+attention_mask_key: attention_mask

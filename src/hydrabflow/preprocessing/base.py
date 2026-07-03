@@ -41,6 +41,11 @@ class PreprocessStep(ABC):
     def load_state(self, state: Dict[str, np.ndarray]) -> None:  # noqa: B027
         """Restore arrays produced by :meth:`state`."""
 
+    def inverse_transform(self, data: Dataset) -> Dataset:
+        """Undo :meth:`transform` where meaningful (e.g. map normalized posterior samples back
+        to physical units). Steps without a meaningful inverse return ``data`` unchanged."""
+        return data
+
 
 class SplitStep(PreprocessStep):
     """Marker base for the train/validation split (handled specially by the pipeline)."""
@@ -80,6 +85,22 @@ class PreprocessPipeline:
                 continue
             data = step.transform(data)
         return data
+
+    def inverse_transform(self, data: Dataset) -> Dataset:
+        """Undo the fitted element-wise steps in reverse order (posterior samples -> physical
+        units). Steps without an inverse pass through unchanged."""
+        for step in reversed(self.steps):
+            if isinstance(step, SplitStep):
+                continue
+            data = step.inverse_transform(data)
+        return data
+
+    def get_step(self, name: str) -> Optional[PreprocessStep]:
+        """First step registered under ``name`` (augmentations use this to read fitted state)."""
+        for step in self.steps:
+            if step.name == name:
+                return step
+        return None
 
     # ----------------------------------------------------------------------------------------- #
     # Persistence: one flat .npz, keys prefixed by step index + name to stay unambiguous.

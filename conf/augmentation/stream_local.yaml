@@ -1,0 +1,22 @@
+# Local-level augmentation chain: identical to stream_global plus per-stream standardization of
+# the observations ("streamnorm"), applied after log10_vcirc and before the concatenations, with
+# stats fitted by the stream_observation_stats preprocessing step.
+defaults:
+  - stream_global
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - per_stream_standardize
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

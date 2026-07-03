@@ -7,5 +7,7 @@ defaults:
 steps:
   - name: drop_nan
     keys: ${adapter.summary_variables}
+  - name: mask_vcirc_radii
+    r_min: 5.5
   - name: train_val_split
     validation_fraction: ${training.validation_fraction}

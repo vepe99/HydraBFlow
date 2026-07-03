@@ -50,8 +50,11 @@ def run_training(cfg):
 
     # 4. Per-batch augmentations (stochastic, re-drawn each epoch). They get their own generator
     #    seeded from cfg.seed so augmentation randomness is reproducible yet independent of the
-    #    draws preprocessing already consumed from `rng`.
-    augmentations = build_augmentations(cfg.augmentation, np.random.default_rng(cfg.seed))
+    #    draws preprocessing already consumed from `rng`. The fitted preprocessing pipeline is
+    #    passed as context (per-stream standardization applies stats fitted on the train split).
+    augmentations = build_augmentations(
+        cfg.augmentation, np.random.default_rng(cfg.seed), context={"pipeline": pipeline}
+    )
 
     # Augmentations can change the observation layout (masks, feature concatenations), so the
     # validation split must pass through the same chain — once, with a fixed draw.

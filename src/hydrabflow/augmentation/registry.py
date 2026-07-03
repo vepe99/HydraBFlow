@@ -34,13 +34,22 @@ def register_augmentation(name: str):
     return _wrap
 
 
-def build_augmentations(cfg, rng: np.random.Generator | None = None) -> List[Augmentation]:
+def build_augmentations(
+    cfg, rng: np.random.Generator | None = None, context: dict | None = None
+) -> List[Augmentation]:
     """Build the ordered augmentation list from ``cfg.augmentation`` (an ``AugmentationConfig``).
 
     ``rng`` seeds every augmentation's randomness. Pass the run's seeded generator (the train
     stage uses ``np.random.default_rng(cfg.seed)``) for reproducible-yet-stochastic behavior.
     If omitted, a default-seeded generator is used so the call still works in config-only contexts.
+
+    ``context`` carries run-level objects an augmentation may need beyond its config params —
+    notably the fitted :class:`~hydrabflow.preprocessing.base.PreprocessPipeline` under
+    ``"pipeline"`` (e.g. per-stream standardization reads stats fitted on the train split).
+    Factories that declare a third parameter receive it; two-parameter factories are unaffected.
     """
+    import inspect
+
     from omegaconf import OmegaConf
 
     params = OmegaConf.to_container(cfg.params, resolve=True) if OmegaConf.is_config(cfg.params) else dict(cfg.params)
@@ -55,7 +64,11 @@ def build_augmentations(cfg, rng: np.random.Generator | None = None) -> List[Aug
     for name, child in zip(steps, child_rngs):
         if name not in _REGISTRY:
             raise KeyError(f"Unknown augmentation '{name}'. Registered: {sorted(_REGISTRY)}")
-        augs.append(_REGISTRY[name](params, child))
+        factory = _REGISTRY[name]
+        if len(inspect.signature(factory).parameters) >= 3:
+            augs.append(factory(params, child, context or {}))
+        else:
+            augs.append(factory(params, child))
     return augs
 
 

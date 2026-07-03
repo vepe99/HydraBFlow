@@ -1,0 +1,73 @@
+# Gaia-like observation model for stream training batches (global level). Order matters:
+# coordinates -> window/subsample/compact -> photometry/errors -> v_los masking -> rotation
+# curve -> feature concatenations. Values ported from the reference agama train configs.
+defaults:
+  - base_augmentation
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  observable: sim_data_projected
+  vcirc_key: vcirc_kms
+  resources_dir: data
+  member_table: apjad382dt1_mrt.txt
+  stream_id_table: gaia_stream_id.csv
+  error_table: gaia_DR3_erorr_6D.txt
+  max_particles: 300
+  vcirc_r_min: 5.5
+
+  target_streams: ${simulator.params.target_streams}
+
+  gaia_id:
+    Pal5: "Pal-5"
+    NGC3201: "Gjoll"
+    M68: "Fjorm"
+
+  observational_window:
+    Pal5:
+      ra_min: 220.98008280733634
+      ra_max: 250.0
+      dec_min: -13.0
+      dec_max: 10.0
+    NGC3201:
+      ra_min: 42.29847920913508
+      ra_max: 140.0
+      dec_min: -47.79545565626234
+      dec_max: 20.812029301121846
+    M68:
+      ra_min: 189.73694638139526
+      ra_max: 280.0
+      dec_min: -47.32109546202406
+      dec_max: 70.0
+
+  observed_n_stars:
+    Pal5: 129
+    NGC3201: 195
+    M68: 297
+
+  min_star_with_vlos:
+    Pal5: 69
+    NGC3201: 37
+    M68: 29
+
+  error_keys:
+    - ra
+    - dec
+    - parallax
+    - mu_ra
+    - mu_dec
+    - v_los

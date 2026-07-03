@@ -1,0 +1,23 @@
+# Preprocessing for the local (per-stream) compositional model:
+#   - NaN cleanup + rotation-curve trimming + split (as for the global model), then
+#   - "jonas": z-score each stream's local parameters with its own prior mean/std (invertible,
+#     replayed on posterior samples at evaluation), and
+#   - "streamnorm": fit per-stream observation stats + log10(vcirc) bin stats on the train
+#     split; applied per batch by the per_stream_standardize augmentation.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys: ${adapter.summary_variables}
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: per_stream_parameter_standardize
+    priors: ${simulator.params.priors_local}
+    target_streams: ${simulator.params.target_streams}
+    keys: ${adapter.inference_variables}
+  - name: stream_observation_stats
+    observable: sim_data_projected
+    vcirc_key: vcirc_kms
