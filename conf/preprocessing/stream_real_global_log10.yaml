@@ -1,0 +1,19 @@
+# As stream_real_global, plus declaring the log10_transform step so `log10_keys_from_pipeline`
+# reports the right keys to `prior_score_from_spec` at real-data eval time — the network still
+# operates in log10 space regardless of data source. Real observations have no global-parameter
+# truth columns, so the step itself is a no-op transform here (nothing to log10); its only job on
+# this preset is to make the reparametrized keys discoverable.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: attach_observed_vcirc
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk

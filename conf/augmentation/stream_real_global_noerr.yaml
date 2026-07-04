@@ -1,0 +1,11 @@
+# Real-data counterpart of stream_global_noerr: same representation steps as stream_real_global,
+# minus the concatenated error-sigma feature (must match the training-time feature layout).
+defaults:
+  - stream_global
+
+steps:
+  - sample_obs_error
+  - log10_vcirc
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

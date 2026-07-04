@@ -66,6 +66,39 @@ class SelectKeys(PreprocessStep):
         return {k: data[k] for k in self.keys if k in data}
 
 
+@register_step("log10_transform")
+class Log10Transform(PreprocessStep):
+    """log10 the listed (strictly positive) keys in place; ``inverse_transform`` applies
+    ``10**x``, so posterior samples come back in physical units. Reparametrizing a positive
+    quantity this way also guarantees any real-valued network output maps back to a positive
+    physical value — a cheap way to enforce positivity for parameters like a disk scale radius
+    that a normal prior alone does not constrain to be positive.
+
+    Downstream compositional-sampling prior scores must account for this change of variables
+    (see ``pipeline.compositional.prior_score_from_spec``'s ``log10_keys`` argument) — the prior
+    in ``conf/simulator/*.yaml`` is specified in physical units, not log10 space.
+    """
+
+    name = "log10_transform"
+
+    def __init__(self, keys: Iterable[str]) -> None:
+        self.keys = list(keys)
+
+    def transform(self, data: Dataset) -> Dataset:
+        out = dict(data)
+        for key in self.keys:
+            if key in out:
+                out[key] = np.log10(np.asarray(out[key]))
+        return out
+
+    def inverse_transform(self, data: Dataset) -> Dataset:
+        out = dict(data)
+        for key in self.keys:
+            if key in out:
+                out[key] = 10.0 ** np.asarray(out[key])
+        return out
+
+
 @register_step("train_val_split")
 class TrainValSplit(SplitStep):
     """Random hold-out split. Steps listed after this one are fit on the train split only."""

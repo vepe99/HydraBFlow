@@ -1,0 +1,14 @@
+# Full "model_5" architecture (fusion summary network + diffusion inference network), reproducing
+# data/hyperparameter_tuning/agama/rotationcurve/optuna_diffusionmodel_agama_rotationcurve.log
+# trial_id 5. See conf/model/summary_network/stream_fusion_model5.yaml for provenance details.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_model5
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_model5
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

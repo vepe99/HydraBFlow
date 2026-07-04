@@ -111,3 +111,147 @@ That's all: the module is auto-imported (no `__init__.py` edit), and the adapter
 variables from `parameter_names` / `observable_keys` (no adapter config). No infrastructure code
 changes are required. The [end-to-end guide §2](docs/end_to_end_guide.md#2-changing-the-simulator)
 walks through a complete example including the shape contract for each summary network.
+
+## Stream project (compositional score modeling)
+
+The `stream_project` branch adds an opt-in **compositional** inference mode on top of the
+single-level template above, ported from a hierarchical stellar-stream inference study
+(particle-spray tidal streams around the Milky Way, simulated with
+[AGAMA](https://github.com/GalacticDynamics-Oxford/Agama)). It infers two levels of parameters
+from a group of streams that share a global Galactic potential:
+
+- **Global**: potential parameters shared by all streams (halo `rho`/`gamma`/`a`/`q`, disk
+  `r`/`z`/`Sigma`), conditioned only on the stream index.
+- **Local**: per-stream phase-space parameters (`vr`, `r`, `mu_ra_cosdec`, `mu_dec`), conditioned
+  on the global parameters (fixed at the truth during training, or a previously-inferred posterior
+  at real-data evaluation time).
+
+Each level is trained and evaluated as a **separate model** (`bf.CompositionalWorkflow` instead of
+`bf.BasicWorkflow`); the config group `composition` (`none` / `global` / `local`) switches which
+one you're building. `composition=none` is the template default and leaves single-level SBI
+untouched.
+
+Two observables are fused per stream: the observed particle set (sky position, proper motion,
+parallax, radial velocity — `sim_data_projected`) and a model rotation curve (`vcirc_kms`), summarized
+by a `SetTransformer` + `TimeSeriesTransformer` combined with `MaskedFusionNetwork`
+(`model=stream_fusion`). Observations are standardized **per stream** (not globally) — parameters
+via preprocessing (`per_stream_parameter_standardize`, z-scored by each stream's own prior
+mean/std, invertible so posteriors come back in physical units), observations via a per-batch
+augmentation (`per_stream_standardize`) fed by stats fitted once in preprocessing
+(`stream_observation_stats`).
+
+### Configuration used explicitly
+
+Every stream run composes the same six overrides on top of `conf/config.yaml`'s defaults, plus one
+of the `composition` levels:
+
+| Config group | Value | What it selects |
+|---|---|---|
+| `simulator` | `stream_agama` | AGAMA particle-spray simulator; declares the global/local/context split and both observables |
+| `model` | `stream_fusion` | `MaskedFusionNetwork` (SetTransformer + TimeSeriesTransformer) + `DiffusionModel` |
+| `adapter` | `stream` | Routes the particle attention mask to `summary_attention_mask`; variables still derive from the simulator, gated by `composition.level` |
+| `composition` | `global` \| `local` | Which level's workflow/adapter derivation to build (see table below) |
+| `preprocessing` | `stream_global` \| `stream_local` | NaN cleanup, rotation-curve trim, split, (+ per-stream parameter/observation stats for `local`) |
+| `augmentation` | `stream_global` \| `stream_local` | Gaia-like observation model (selection window, photometric errors, DR3 astrometric errors, `v_los` masking) run per batch during training |
+| `training` | `base_training` (global) \| `stream_local` (local) | `stream_local` standardizes only targets + conditions (observations are already per-stream normalized) |
+| `eval` | `stream_compositional` | `compositional_sample` / `ancestral_sample` kwargs (`method: two_step_adaptive`, `compositional_bridge_d1: 0.166667`) |
+
+`composition.level` changes what the adapter derives automatically:
+
+| `composition.level` | `inference_variables` | `inference_conditions` |
+|---|---|---|
+| `global` | global parameters (halo + disk) | `j` (stream index) |
+| `local` | local parameters (`vr`, `r`, `mu_ra_cosdec`, `mu_dec`) | global parameters + `j` |
+
+### Data generation
+
+Two dataset shapes are needed: a flat training set (one draw per row, used by both levels) and a
+grouped multistream set (one shared global draw + one member per stream, used for compositional
+evaluation and for the real-data flow):
+
+```bash
+uv run hydrabflow-simulate simulator=stream_agama data.n_simulations=100000
+uv run hydrabflow-simulate-multistream simulator=stream_agama data.n_simulations=2000
+```
+
+### Training
+
+Train the global and local models separately (they are different networks with different adapters):
+
+```bash
+uv run hydrabflow-train simulator=stream_agama model=stream_fusion adapter=stream \
+  composition=global preprocessing=stream_global augmentation=stream_global
+
+uv run hydrabflow-train simulator=stream_agama model=stream_fusion adapter=stream \
+  composition=local preprocessing=stream_local augmentation=stream_local training=stream_local
+```
+
+Each prints its `outputs/stream_agama/stream_fusion/<timestamp>/` run dir — the `model_dir` used
+below.
+
+### Evaluation (plots + metrics)
+
+**On simulated test data** (truth available, per-level diagnostics):
+
+```bash
+uv run hydrabflow-evaluate model_dir=<global_run_dir> simulator=stream_agama model=stream_fusion \
+  adapter=stream composition=global preprocessing=stream_global augmentation=stream_global \
+  eval=stream_compositional
+
+uv run hydrabflow-evaluate model_dir=<local_run_dir> simulator=stream_agama model=stream_fusion \
+  adapter=stream composition=local preprocessing=stream_local augmentation=stream_local \
+  training=stream_local eval=stream_compositional
+```
+
+Global evaluation loads the grouped multistream test set and runs `compositional_sample` (pooling
+exchangeable stream members with the simulator's prior score); local evaluation samples each
+stream separately, conditioned on its true globals, and writes one set of diagnostics **per
+stream** (filename-prefixed). Both write into the run's `.hydra/`-adjacent output dir:
+
+- `posterior.npz` — posterior samples
+- `metrics.json` (local: `<stream>_metrics.json`) — RMSE + calibration error
+- `recovery.png`, `calibration_ecdf.png`, `z_score_contraction.png` (local: `<stream>_*.png`)
+
+**On real (observed) data** — no truth, chained global → local:
+
+```bash
+uv run hydrabflow-evaluate-real model_dir=<global_run_dir> data.real_data_path=<real.npz> \
+  simulator=stream_agama model=stream_fusion adapter=stream composition=global \
+  preprocessing=stream_real_global augmentation=stream_real_global eval=stream_compositional
+
+uv run hydrabflow-evaluate-real model_dir=<local_run_dir> data.real_data_path=<real.npz> \
+  simulator=stream_agama model=stream_fusion adapter=stream composition=local \
+  preprocessing=stream_real_local augmentation=stream_real_local training=stream_local \
+  eval=stream_compositional composition.global_run_dir=<global_eval_run_dir>
+```
+
+The real-data preprocessing/augmentation presets (`stream_real_*`) drop the synthetic
+selection/noise steps (the real data is already observed) but keep the per-stream normalization,
+loading its fitted stats from the training run's `preprocessing_state.npz`. The local pass needs
+`composition.global_run_dir` — the *evaluation* run dir of a completed global real-data pass — to
+draw the ancestral global conditions its posterior sampling needs. Output: `posterior.npz` +
+`posterior_pairs.png` (local: one pair plot per stream).
+
+### Hyperparameter tuning
+
+`conf/tuning/stream.yaml` searches both fusion backbones (dotted paths into
+`model.summary_network.params.backbones.<observable>.*`, including
+`params.embed_dim_multiplier` so attention widths stay divisible by `num_heads`), the fusion head,
+and the diffusion subnet:
+
+```bash
+uv run hydrabflow-tune simulator=stream_agama model=stream_fusion adapter=stream \
+  composition=global preprocessing=stream_global augmentation=stream_global tuning=stream
+```
+
+Every trial's model, posterior samples, and diagnostics are saved under
+`${tuning.artifacts_dir}/trials/trial_<number>/`; `best_trials.json` lists the Pareto-optimal
+trials (RMSE + calibration error, multi-objective by default). Swap `composition=local
+preprocessing=stream_local augmentation=stream_local training=stream_local` to tune the local
+model instead.
+
+### GPU
+
+The AGAMA simulator is CPU-only (joblib-parallel across rows); training/evaluation/tuning run on
+GPU if available — `jax[cuda12]` is a project dependency, and `hydrabflow.utils.backend` pins one
+free GPU by default (`HYDRABFLOW_NUM_GPUS` to change).

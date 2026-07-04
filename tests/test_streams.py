@@ -197,3 +197,112 @@ def test_per_stream_parameter_standardize_rejects_non_normal():
     priors = {"s0": {"v": {"type": "uniform", "prior_parameters": [0, 1]}}}
     with pytest.raises(ValueError, match="normal priors"):
         PerStreamParameterStandardize(priors, {"s0": 0}, keys=["v"])
+
+
+def test_log10_transform_roundtrip():
+    from hydrabflow.preprocessing.steps import Log10Transform
+
+    step = Log10Transform(keys=["rho", "untouched_missing"])
+    data = {"rho": np.array([[1.0], [100.0], [1000.0]]), "other": np.array([[1.0], [2.0], [3.0]])}
+    out = step.transform(dict(data))
+    np.testing.assert_allclose(out["rho"], [[0.0], [2.0], [3.0]])
+    np.testing.assert_allclose(out["other"], data["other"])  # untouched key passes through
+
+    back = step.inverse_transform(out)
+    np.testing.assert_allclose(back["rho"], data["rho"])
+
+    # Posterior-samples layout (rows, num_samples, 1) round-trips too.
+    posterior = {"rho": np.zeros((3, 5, 1))}
+    phys = step.inverse_transform(posterior)
+    np.testing.assert_allclose(phys["rho"], 1.0)
+
+
+def test_prior_score_log10_jacobian_correction():
+    """d/dy log p_Y(y) for y=log10(x) must include the +ln(10) Jacobian term, not just the
+    change-of-variables-scaled physical score — this is exactly the correction the user asked
+    to double check before compositional-sampling evaluation of a log10-reparametrized prior."""
+    import math
+
+    from hydrabflow.pipeline.compositional import prior_score_from_spec
+
+    ln10 = math.log(10.0)
+    spec = {
+        "u": {"type": "uniform", "prior_parameters": [0, 1]},
+        "g": {"type": "normal", "prior_parameters": [2.0, 0.5]},
+    }
+    score = prior_score_from_spec(spec, log10_keys=["u", "g"])
+
+    y_u = np.array([[0.3]])  # x = 10**0.3
+    out_u = np.asarray(score({"u": y_u})["u"])
+    np.testing.assert_allclose(out_u, ln10)  # uniform: base score 0 -> only the Jacobian term
+
+    y_g = np.array([[0.5]])
+    x_g = 10.0**y_g
+    expected = x_g * ln10 * (-(x_g - 2.0) / 0.25) + ln10
+    out_g = np.asarray(score({"g": y_g})["g"])
+    np.testing.assert_allclose(out_g, expected)
+
+    # Keys not in log10_keys are scored exactly as before (no Jacobian term).
+    score_plain = prior_score_from_spec(spec)
+    out_plain = np.asarray(score_plain({"u": y_u})["u"])
+    np.testing.assert_allclose(out_plain, 0.0)
+
+
+def test_stream_global_log10_and_nolos_presets_compose(compose):
+    cfg = compose(
+        [
+            "simulator=stream_agama",
+            "model=stream_fusion",
+            "adapter=stream",
+            "composition=global",
+            "preprocessing=stream_global_log10",
+            "augmentation=stream_global_nolos",
+        ]
+    )
+    step_names = [s["name"] if hasattr(s, "get") else s.name for s in cfg.preprocessing.steps]
+    assert "log10_transform" in step_names
+    assert "rho_TwoPowerTriaxial_halo" in cfg.preprocessing.steps[-1]["keys"]
+
+    aug_steps = list(cfg.augmentation.steps)
+    assert "remove_los_velocity" in aug_steps
+    assert "mask_vlos" not in aug_steps
+    assert "concatenate_sigma_errors" not in aug_steps
+    assert "concatenate_vlos_mask" not in aug_steps
+    assert list(cfg.augmentation.params.error_keys) == ["ra", "dec", "parallax", "mu_ra", "mu_dec"]
+
+
+def test_stream_noerr_and_nolos_variants_compose(compose):
+    cfg = compose(
+        [
+            "simulator=stream_agama",
+            "model=stream_fusion",
+            "adapter=stream",
+            "composition=global",
+            "preprocessing=stream_global",
+            "augmentation=stream_global_noerr",
+        ]
+    )
+    steps = list(cfg.augmentation.steps)
+    assert "concatenate_sigma_errors" not in steps
+    assert "mask_vlos" in steps and "concatenate_vlos_mask" in steps  # LOS untouched
+
+    cfg_real_noerr = compose(
+        [
+            "simulator=stream_agama", "model=stream_fusion", "adapter=stream",
+            "composition=global", "preprocessing=stream_real_global",
+            "augmentation=stream_real_global_noerr",
+        ]
+    )
+    assert "concatenate_sigma_errors" not in list(cfg_real_noerr.augmentation.steps)
+
+    cfg_real_nolos = compose(
+        [
+            "simulator=stream_agama", "model=stream_fusion", "adapter=stream",
+            "composition=global", "preprocessing=stream_real_global",
+            "augmentation=stream_real_global_nolos",
+        ]
+    )
+    real_nolos_steps = list(cfg_real_nolos.augmentation.steps)
+    assert "remove_los_velocity" in real_nolos_steps
+    assert "concatenate_sigma_errors" not in real_nolos_steps
+    assert "concatenate_vlos_mask" not in real_nolos_steps

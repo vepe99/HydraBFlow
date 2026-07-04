@@ -33,6 +33,7 @@ from hydrabflow.pipeline.compositional import (
     condition_keys,
     flatten_members,
     group_members,
+    log10_keys_from_pipeline,
     prior_score_from_spec,
 )
 from hydrabflow.pipeline.workflow import build_workflow
@@ -99,7 +100,16 @@ def run_evaluation(cfg):
 
 
 def _evaluate_compositional_global(cfg):
-    """Global-level compositional evaluation on a grouped (multistream) test set."""
+    """Global-level evaluation on a grouped (multistream) test set, both ways:
+
+    * **base** — ordinary ``workflow.sample()`` on each group member independently (no pooling
+      across the exchangeable members of a group); generalizes the reference's "nocomposition"
+      eval script.
+    * **compositional** — ``compositional_sample()`` pooling all members of a group with the
+      simulator's prior score; generalizes the reference's compositional eval script.
+
+    Both read the same grouped test set; outputs are prefixed accordingly.
+    """
     from hydrabflow.simulators.registry import get_simulator
 
     seed_everything(cfg.seed)
@@ -113,13 +123,37 @@ def _evaluate_compositional_global(cfg):
     context = next(iter(cfg.adapter.inference_conditions), "j")
     n, m = np.asarray(test_data[context]).shape[:2]
 
-    # Augment flat member rows once (fixed draw), then regroup to (n, m, ...) conditions.
+    # Augment flat member rows once (fixed draw); reused for both eval modes.
     flat = apply_augmentations_once(flatten_members(test_data, m), cfg, pipeline, int(cfg.seed))
+    param_names = list(cfg.adapter.inference_variables)
+    # log10_transform (if configured) is undone only for diagnostics/plots below — the *saved*
+    # posterior.npz stays in the model's native space, since a real-data local-level evaluation
+    # may chain off it as ancestral conditions (which must match training-time units).
+    log10_keys = log10_keys_from_pipeline(pipeline)
+
+    # --- base: ordinary per-member sampling, no pooling ---
+    flat_conditions = {k: flat[k] for k in condition_keys(cfg) if k in flat}
+    log.info("Base (non-compositional) sampling: %d rows", n * m)
+    base_posterior = workflow.sample(
+        num_samples=int(cfg.eval.num_samples),
+        conditions=flat_conditions,
+        batch_size=int(cfg.eval.batch_size),
+    )
+    _save_posterior(base_posterior, run_dir, name=f"base_{POSTERIOR_SAMPLES}")
+    base_targets = {k: np.asarray(flat[k]) for k in param_names}
+    _run_diagnostics(
+        cfg,
+        pipeline.inverse_transform(dict(base_posterior)),
+        pipeline.inverse_transform(dict(base_targets)),
+        param_names, run_dir, prefix="base_",
+    )
+
+    # --- compositional: pool members of each group with the simulator's prior score ---
     grouped = group_members(flat, n, m)
     conditions = {k: grouped[k] for k in condition_keys(cfg) if k in grouped}
 
     simulator = get_simulator(cfg.simulator)
-    prior_score = prior_score_from_spec(simulator.prior_spec_global)
+    prior_score = prior_score_from_spec(simulator.prior_spec_global, log10_keys=log10_keys)
 
     log.info("Compositional (global) sampling: %d datasets x %d members", n, m)
     posterior = workflow.compositional_sample(
@@ -129,13 +163,17 @@ def _evaluate_compositional_global(cfg):
         batch_size=int(cfg.eval.batch_size),
         **_sample_kwargs(cfg),
     )
-    _save_posterior(posterior, run_dir)
+    _save_posterior(posterior, run_dir, name=f"compositional_{POSTERIOR_SAMPLES}")
 
-    param_names = list(cfg.adapter.inference_variables)
     targets = {k: np.asarray(test_data[k]) for k in param_names}
-    _run_diagnostics(cfg, posterior, targets, param_names, run_dir)
-    log.info("Compositional evaluation complete. Artifacts in %s", run_dir)
-    return posterior
+    _run_diagnostics(
+        cfg,
+        pipeline.inverse_transform(dict(posterior)),
+        pipeline.inverse_transform(dict(targets)),
+        param_names, run_dir, prefix="compositional_",
+    )
+    log.info("Global evaluation (base + compositional) complete. Artifacts in %s", run_dir)
+    return {"base": base_posterior, "compositional": posterior}
 
 
 def _evaluate_local(cfg):
@@ -195,9 +233,9 @@ def _evaluate_local(cfg):
     return posterior
 
 
-def _save_posterior(posterior, run_dir: str) -> None:
+def _save_posterior(posterior, run_dir: str, name: str = POSTERIOR_SAMPLES) -> None:
     np.savez(
-        os.path.join(run_dir, POSTERIOR_SAMPLES),
+        os.path.join(run_dir, name),
         **{k: np.asarray(v) for k, v in posterior.items()},
     )
 

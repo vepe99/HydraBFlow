@@ -1,0 +1,23 @@
+# As stream_global, plus log10-reparametrizing the global parameters with the widest dynamic
+# range / that must stay positive: halo density and scale radius, disk surface density, and the
+# disk scale radius/height (whose normal priors alone don't constrain them to be positive).
+# `pipeline.compositional.prior_score_from_spec` must be told about these keys (via
+# `log10_keys_from_pipeline`) so compositional sampling's prior score accounts for the resulting
+# change-of-variables Jacobian — see preprocessing.steps.Log10Transform's docstring.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys: ${adapter.summary_variables}
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk

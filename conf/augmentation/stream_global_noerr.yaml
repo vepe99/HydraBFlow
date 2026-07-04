@@ -1,0 +1,20 @@
+# As stream_global, but without the concatenated error-sigma feature: measurement noise is still
+# injected into sim_data via apply_obs_error, it's just not appended as an auxiliary feature.
+# v_los and its boolean mask are otherwise untouched (unlike stream_global_nolos).
+defaults:
+  - stream_global
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

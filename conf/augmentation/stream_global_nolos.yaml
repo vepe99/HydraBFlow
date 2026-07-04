@@ -1,0 +1,31 @@
+# Global-level augmentation chain without line-of-sight velocity, its boolean mask, or the
+# concatenated error-sigma feature:
+#   - `remove_los_velocity` drops v_los before anything else touches it (must run first);
+#   - `mask_vlos` / `concatenate_vlos_mask` are dropped — there is no v_los left to mask;
+#   - `concatenate_sigma_errors` is dropped — measurement noise is still injected into sim_data
+#     via `apply_obs_error`, it's just not appended as an auxiliary feature;
+#   - `error_keys` drops v_los to match sim_data's now-5-feature width.
+defaults:
+  - stream_global
+
+steps:
+  - remove_los_velocity
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - concatenate_magnitudes
+  - concatenate_stream_index
+
+params:
+  error_keys:
+    - ra
+    - dec
+    - parallax
+    - mu_ra
+    - mu_dec

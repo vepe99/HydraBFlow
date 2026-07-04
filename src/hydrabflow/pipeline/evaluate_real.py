@@ -36,6 +36,7 @@ from hydrabflow.pipeline.compositional import (
     composition_level,
     condition_keys,
     group_members,
+    log10_keys_from_pipeline,
     prior_score_from_spec,
 )
 from hydrabflow.pipeline.workflow import build_workflow
@@ -149,7 +150,10 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     if level == "global":
         from hydrabflow.simulators.registry import get_simulator
 
-        prior_score = prior_score_from_spec(get_simulator(cfg.simulator).prior_spec_global)
+        log10_keys = log10_keys_from_pipeline(pipeline)
+        prior_score = prior_score_from_spec(
+            get_simulator(cfg.simulator).prior_spec_global, log10_keys=log10_keys
+        )
         log.info("Compositional (global) sampling on the observed group of %d members", m)
         posterior = workflow.compositional_sample(
             num_samples=int(cfg.inference.num_samples),
@@ -158,8 +162,13 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
             batch_size=int(cfg.inference.batch_size),
             **sample_kwargs,
         )
+        # Saved in the model's native (possibly log10) space — the local level's ancestral
+        # sampling reloads this file as conditions and expects training-time units. The pair
+        # plot below is for humans, so it gets the physical-unit inverse instead.
         _save_posterior(posterior, run_dir)
-        _save_posterior_plot(posterior, list(cfg.adapter.inference_variables), run_dir)
+        _save_posterior_plot(
+            pipeline.inverse_transform(dict(posterior)), list(cfg.adapter.inference_variables), run_dir
+        )
         log.info("Global posterior saved. Point composition.global_run_dir here for the "
                  "local level. Artifacts in %s", run_dir)
         return posterior

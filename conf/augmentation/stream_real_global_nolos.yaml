@@ -1,0 +1,15 @@
+# Real-data counterpart of stream_global_nolos: strip v_los first (to match the training-time
+# 5-feature sim_data), then only the representation steps that chain still uses — no
+# concatenate_sigma_errors (sample_obs_error/mask_vlos are dropped too, since nothing downstream
+# consumes sigma_errors once concatenate_sigma_errors and concatenate_vlos_mask are gone) and no
+# concatenate_vlos_mask. Reused by both the log10-reparametrized and plain "no error, no LOS"
+# experiments — the augmentation chain doesn't know or care whether the global parameters are
+# log10-transformed.
+defaults:
+  - stream_global
+
+steps:
+  - remove_los_velocity
+  - log10_vcirc
+  - concatenate_magnitudes
+  - concatenate_stream_index

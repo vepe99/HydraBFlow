@@ -8,7 +8,8 @@ evaluation flattens the member axis, augments once, and regroups before sampling
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Mapping
+import math
+from typing import Callable, Container, Dict, Mapping
 
 import numpy as np
 
@@ -17,27 +18,57 @@ def composition_level(cfg) -> str:
     return str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
 
 
-def prior_score_from_spec(prior_spec: Mapping[str, Mapping]) -> Callable[[dict], dict]:
+def prior_score_from_spec(
+    prior_spec: Mapping[str, Mapping], log10_keys: Container[str] = ()
+) -> Callable[[dict], dict]:
     """Score of the log prior for compositional sampling, from a prior-spec mapping.
 
     Returns a time-less callable (BayesFlow multiplies by ``(1 - t)`` itself): uniform priors
     contribute zero score, normal priors ``-(x - mean) / std**2``. The function is traced
     inside the sampler's integration loop, so it uses backend ops, not NumPy.
+
+    ``log10_keys`` lists parameters the ``log10_transform`` preprocessing step reparametrized
+    (see ``preprocessing.steps.Log10Transform``): the prior in ``prior_spec`` (from the
+    simulator's config) is defined in physical units ``x``, but the network — and hence this
+    score, evaluated during compositional sampling — operates on ``y = log10(x)``. By the
+    change-of-variables rule, for ``x = g(y) = 10**y`` (so ``g'(y) = g(y) * ln(10)``):
+
+        d/dy log p_Y(y) = g'(y) * [d/dx log p_X(x)]|_{x=g(y)} + d/dy log(g'(y))
+                         = x * ln(10) * score_X(x) + ln(10)
+
+    (the ``+ln(10)`` term is the Jacobian's own contribution and is nonzero even for a uniform
+    prior in ``x`` — omitting it silently biases the compositional posterior.)
     """
     from keras import ops
+
+    ln10 = math.log(10.0)
 
     def score(x: Dict[str, np.ndarray], time=None) -> Dict[str, np.ndarray]:
         out = {}
         for key, arr in x.items():
             spec = prior_spec[key]
+            is_log10 = key in log10_keys
+            x_phys = 10.0**arr if is_log10 else arr
+
             if spec["type"] == "normal":
                 mean, std = (float(p) for p in spec["prior_parameters"])
-                out[key] = -(arr - mean) / std**2
+                base_score = -(x_phys - mean) / std**2
             else:  # uniform (flat inside the support)
-                out[key] = ops.zeros_like(arr)
+                base_score = ops.zeros_like(arr)
+
+            if is_log10:
+                out[key] = x_phys * ln10 * base_score + ln10
+            else:
+                out[key] = base_score
         return out
 
     return score
+
+
+def log10_keys_from_pipeline(pipeline) -> list:
+    """Keys the ``log10_transform`` preprocessing step reparametrized, if present (else empty)."""
+    step = pipeline.get_step("log10_transform") if pipeline is not None else None
+    return list(step.keys) if step is not None else []
 
 
 def flatten_members(data: Mapping[str, np.ndarray], m: int) -> Dict[str, np.ndarray]:
