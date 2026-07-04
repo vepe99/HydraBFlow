@@ -9,4 +9,5 @@ diagnostics:
   - metrics            # RMSE + calibration error (bayesflow.diagnostics.metrics)
   - recovery           # truth vs estimate scatter
   - calibration_ecdf   # simulation-based calibration (rank ECDF)
+  - coverage           # credible-interval coverage vs. nominal
   - z_score_contraction

@@ -95,6 +95,7 @@ def run_evaluation(cfg):
 
     param_names = list(cfg.adapter.inference_variables)
     _run_diagnostics(cfg, posterior, test_data, param_names, run_dir)
+    _write_report(cfg, run_dir, model_dir, "none")
     log.info("Evaluation complete. Artifacts in %s", run_dir)
     return posterior
 
@@ -172,6 +173,7 @@ def _evaluate_compositional_global(cfg):
         pipeline.inverse_transform(dict(targets)),
         param_names, run_dir, prefix="compositional_",
     )
+    _write_report(cfg, run_dir, model_dir, "global")
     log.info("Global evaluation (base + compositional) complete. Artifacts in %s", run_dir)
     return {"base": base_posterior, "compositional": posterior}
 
@@ -229,8 +231,24 @@ def _evaluate_local(cfg):
         est = {k: np.asarray(posterior[k])[rows] for k in param_names}
         targ = {k: np.asarray(targets[k])[rows] for k in param_names}
         _run_diagnostics(cfg, est, targ, param_names, run_dir, prefix=f"{name}_")
+    _write_report(cfg, run_dir, model_dir, "local")
     log.info("Local evaluation complete. Artifacts in %s", run_dir)
     return posterior
+
+
+def _write_report(cfg, run_dir: str, model_dir: str, level: str) -> None:
+    """Best-effort ``report.md`` from the metrics/figures just written; never aborts a run."""
+    try:
+        from hydrabflow.utils.reporting import write_report
+
+        write_report(
+            run_dir,
+            param_names=list(cfg.adapter.inference_variables),
+            model_dir=model_dir,
+            title=f"Evaluation report (composition={level})",
+        )
+    except Exception as exc:  # report generation must never abort an evaluation
+        log.warning("Could not write report.md: %s", exc)
 
 
 def _save_posterior(posterior, run_dir: str, name: str = POSTERIOR_SAMPLES) -> None:
@@ -271,6 +289,7 @@ def _run_diagnostics(cfg, posterior, test_data, param_names, run_dir, prefix: st
     plot_specs = [
         ("recovery", getattr(bf.diagnostics, "recovery", None)),
         ("calibration_ecdf", getattr(bf.diagnostics, "calibration_ecdf", None)),
+        ("coverage", getattr(bf.diagnostics, "coverage", None)),
         ("z_score_contraction", getattr(bf.diagnostics, "z_score_contraction", None)),
     ]
     for name, fn in plot_specs:

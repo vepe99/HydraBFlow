@@ -76,8 +76,39 @@ def run_training(cfg):
     # 6. Persist the trained approximator and a loss curve.
     save_approximator(workflow, run_dir)
     _save_loss_plot(history, run_dir)
+
+    # 7. Save the raw training history and a convergence report (NaN / overfitting /
+    #    under-training). Good training loss does not imply good inference, but a diverged or
+    #    overfit run is worth flagging before the (chained) evaluation stage runs.
+    _save_history_and_convergence(history, run_dir)
+
     log.info("Training complete. Artifacts in %s", run_dir)
     return workflow, history
+
+
+def _save_history_and_convergence(history, run_dir: str) -> None:
+    """Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run."""
+    try:
+        import json
+
+        from hydrabflow.utils.paths import CONVERGENCE_JSON, HISTORY_JSON
+        from hydrabflow.utils.reporting import inspect_history
+
+        hist = getattr(history, "history", None) or {}
+        with open(os.path.join(run_dir, HISTORY_JSON), "w") as f:
+            json.dump({k: [float(x) for x in v] for k, v in hist.items()}, f, indent=2)
+
+        report = inspect_history(hist)
+        with open(os.path.join(run_dir, CONVERGENCE_JSON), "w") as f:
+            json.dump(report, f, indent=2)
+
+        if report["overall"]["ok"]:
+            log.info("Training convergence: OK (no NaN / overfitting / under-training).")
+        else:
+            for issue in report["overall"]["issues"]:
+                log.warning("Convergence check: %s", issue)
+    except Exception as exc:  # inspection must never fail a training run
+        log.warning("Could not save history/convergence report: %s", exc)
 
 
 def _save_loss_plot(history, run_dir: str) -> None:
