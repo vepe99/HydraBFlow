@@ -156,6 +156,25 @@ def test_prior_score_from_spec():
     np.testing.assert_allclose(np.asarray(out["g"]), -(3.0 - 2.0) / 0.25)
 
 
+def test_prior_score_applies_time_decay():
+    """The callable's signature names a ``time`` parameter, so BayesFlow's
+    ``prior_has_time`` inspection (bayesflow.approximators.helpers.compositional) skips its own
+    ``(1 - t)`` weighting and expects this function to apply it -- otherwise the raw prior score
+    leaks in undamped at every diffusion step (the bug behind z_Disk's miscalibration)."""
+    from hydrabflow.pipeline.compositional import prior_score_from_spec
+
+    score = prior_score_from_spec(
+        {"g": {"type": "normal", "prior_parameters": [2.0, 0.5]}}
+    )
+    raw = -(3.0 - 2.0) / 0.25
+    out_t0 = score({"g": np.full((3, 1), 3.0)}, time=np.zeros((3, 1)))
+    out_t1 = score({"g": np.full((3, 1), 3.0)}, time=np.ones((3, 1)))
+    out_t_half = score({"g": np.full((3, 1), 3.0)}, time=np.full((3, 1), 0.5))
+    np.testing.assert_allclose(np.asarray(out_t0["g"]), raw)
+    np.testing.assert_allclose(np.asarray(out_t1["g"]), 0.0)
+    np.testing.assert_allclose(np.asarray(out_t_half["g"]), 0.5 * raw)
+
+
 def test_mask_vcirc_radii_trims_grid():
     from hydrabflow.preprocessing.streams import MaskVcircRadii
     from hydrabflow.simulators.stream_common import OBS_R_KPC

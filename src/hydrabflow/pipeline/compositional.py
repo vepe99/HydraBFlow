@@ -23,9 +23,19 @@ def prior_score_from_spec(
 ) -> Callable[[dict], dict]:
     """Score of the log prior for compositional sampling, from a prior-spec mapping.
 
-    Returns a time-less callable (BayesFlow multiplies by ``(1 - t)`` itself): uniform priors
-    contribute zero score, normal priors ``-(x - mean) / std**2``. The function is traced
-    inside the sampler's integration loop, so it uses backend ops, not NumPy.
+    BayesFlow decides whether to apply its own ``(1 - t)`` time-decay by inspecting this
+    callable's signature (``bayesflow.approximators.helpers.compositional``:
+    ``prior_has_time = "time" in inspect.signature(compute_prior_score).parameters``): if the
+    callable accepts a ``time`` argument, BayesFlow assumes the callable handles the decay
+    itself and skips its own multiplication. Since this function's signature names a ``time``
+    parameter, it MUST apply the ``(1 - t)`` factor explicitly here (matching the compositional
+    formula ``(1-n)(1-t) grad log p(theta) + sum_i s_i``) — otherwise the raw, undecayed prior
+    score is injected at every diffusion step (including near t=1, pure noise), which showed up
+    as severe under-confidence for tight normal priors (e.g. z_Disk) while uniform priors were
+    unaffected (their raw score is 0 regardless of decay).
+
+    Uniform priors contribute zero score, normal priors ``-(x - mean) / std**2``. The function
+    is traced inside the sampler's integration loop, so it uses backend ops, not NumPy.
 
     ``log10_keys`` lists parameters the ``log10_transform`` preprocessing step reparametrized
     (see ``preprocessing.steps.Log10Transform``): the prior in ``prior_spec`` (from the
@@ -57,9 +67,11 @@ def prior_score_from_spec(
                 base_score = ops.zeros_like(arr)
 
             if is_log10:
-                out[key] = x_phys * ln10 * base_score + ln10
+                score_val = x_phys * ln10 * base_score + ln10
             else:
-                out[key] = base_score
+                score_val = base_score
+
+            out[key] = score_val if time is None else (1.0 - time) * score_val
         return out
 
     return score
