@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1783105818.1397789,
-    "ast_hash": "5e73d5e842cf23b61c38e26f2e72a626",
+    "mtime": 1783069136.7622774,
+    "ast_hash": "7e9a6e0d6fdf299425b3c5356a3ff38f",
     "semantic_hash": ""
   },
   "conf/adapter/default.yaml": {
@@ -105,9 +105,9 @@
     "semantic_hash": ""
   },
   "conf/eval/default.yaml": {
-    "mtime": 1783164235.0359702,
-    "ast_hash": "2014b8af3d7f03a36a23b36074684f0b",
-    "semantic_hash": ""
+    "mtime": 1783069192.2867045,
+    "ast_hash": "a8712422fe55669de4da019208ba1c11",
+    "semantic_hash": "a8712422fe55669de4da019208ba1c11"
   },
   "conf/inference/default.yaml": {
     "mtime": 1783069192.3387048,
@@ -215,8 +215,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/config/schema.py": {
-    "mtime": 1783164154.4512663,
-    "ast_hash": "45e6d40826a91c74ad0334ef3934f0f8",
+    "mtime": 1783083877.651223,
+    "ast_hash": "fdfd3e814f8fbd11493650bbb07911ad",
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/__init__.py": {
@@ -250,13 +250,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate.py": {
-    "mtime": 1783164173.695436,
-    "ast_hash": "622d3f7fe8b55fa4e0f6a76a575fc6f6",
+    "mtime": 1783083934.5196376,
+    "ast_hash": "71abb920d50f34e6f554484493b82d39",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate_real.py": {
-    "mtime": 1783164181.0835009,
-    "ast_hash": "1183c4e0bf3024e4085a7df3eb0e6d7c",
+    "mtime": 1783084034.5563667,
+    "ast_hash": "2e4ceef853f9bf0c83a8fd2df0d3b486",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/io.py": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/train.py": {
-    "mtime": 1783157153.2801504,
-    "ast_hash": "c3e34432004bb438b2e8527dbc4fd884",
+    "mtime": 1783083292.9669628,
+    "ast_hash": "c4dd34a43ee857bc388ee6c30ff8089e",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/tune.py": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/preprocessing/steps.py": {
-    "mtime": 1783148861.8471446,
-    "ast_hash": "e3bdac73c66d6cc82291de3a77a7997b",
+    "mtime": 1783069136.7902775,
+    "ast_hash": "2b34f74b117068360f76a51a3940502d",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/__init__.py": {
@@ -350,8 +350,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/paths.py": {
-    "mtime": 1783164151.2832382,
-    "ast_hash": "18b2c87fb1ad759f74ca0287d536ead0",
+    "mtime": 1783069136.8222778,
+    "ast_hash": "177b51f4b008456adc4605f0f1c3152c",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/seed.py": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783164712.8438942,
-    "ast_hash": "1a41f4a4f64b5537914a490f745e4541",
+    "mtime": 1783085583.9701953,
+    "ast_hash": "10d00ba14390dc295a33b803f202b326",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "pyproject.toml": {
-    "mtime": 1783085787.2278416,
-    "ast_hash": "ac7eb0df5eb836750546fcb907b925a2",
+    "mtime": 1783082243.063335,
+    "ast_hash": "6dae653d73dbb4c19179326fdb94b9b8",
     "semantic_hash": ""
   },
   "scripts/simulate_multistream.py": {
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/augmentation/streams.py": {
-    "mtime": 1783146913.9382005,
-    "ast_hash": "3470016c7111069c28e08eff6a7508d3",
+    "mtime": 1783083210.0023587,
+    "ast_hash": "035f9e71f776405257e0b8f0cec3e14b",
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/fusion.py": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/compositional.py": {
-    "mtime": 1783148881.4192789,
-    "ast_hash": "2836f94f50111189a8071eb83aebc593",
+    "mtime": 1783084257.1859992,
+    "ast_hash": "3b02bbbff282aa5660059e5092ee6960",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/simulate_multistream.py": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "tests/test_streams.py": {
-    "mtime": 1783152686.799324,
-    "ast_hash": "e8d3eeea8a965d2c11e2aa29f09ab277",
+    "mtime": 1783085094.574116,
+    "ast_hash": "c970f2430d297bbafff941e657ab7d80",
     "semantic_hash": ""
   },
   "conf/adapter/stream.yaml": {
@@ -522,66 +522,6 @@
   "conf/tuning/stream.yaml": {
     "mtime": 1783084875.0681908,
     "ast_hash": "a8695369a24f74d03e394302d1fa2769",
-    "semantic_hash": ""
-  },
-  "scripts/report_cross_model_tension.py": {
-    "mtime": 1783164265.4962323,
-    "ast_hash": "637e541bb56fdf30a50dc2127357c8c5",
-    "semantic_hash": ""
-  },
-  "src/hydrabflow/pipeline/misspecification.py": {
-    "mtime": 1783164218.1598241,
-    "ast_hash": "963345b772263577045103ff5fec9570",
-    "semantic_hash": ""
-  },
-  "src/hydrabflow/utils/reporting.py": {
-    "mtime": 1783157132.4159837,
-    "ast_hash": "601bda40be429d29a579807d57165268",
-    "semantic_hash": ""
-  },
-  "tests/test_misspecification.py": {
-    "mtime": 1783164275.7123196,
-    "ast_hash": "de7d470809ac466398019cab67d60ce6",
-    "semantic_hash": ""
-  },
-  "conf/augmentation/stream_global_noerr.yaml": {
-    "mtime": 1783152655.647002,
-    "ast_hash": "1763d104d765cbe485c6af7b9b465a8e",
-    "semantic_hash": ""
-  },
-  "conf/augmentation/stream_global_nolos.yaml": {
-    "mtime": 1783149007.7121518,
-    "ast_hash": "71c473c558330fa921e15ecbaaeaca9a",
-    "semantic_hash": ""
-  },
-  "conf/augmentation/stream_real_global_noerr.yaml": {
-    "mtime": 1783152659.415041,
-    "ast_hash": "567e212d86f282c73645a996ed90d35c",
-    "semantic_hash": ""
-  },
-  "conf/augmentation/stream_real_global_nolos.yaml": {
-    "mtime": 1783152675.551208,
-    "ast_hash": "daac24e1bfd28e1da97e5f869623cdca",
-    "semantic_hash": ""
-  },
-  "conf/model/stream_fusion_model5.yaml": {
-    "mtime": 1783115884.0769985,
-    "ast_hash": "af30dfaefba4e182b8e197b2026bbfba",
-    "semantic_hash": ""
-  },
-  "conf/model/summary_network/stream_fusion_model5.yaml": {
-    "mtime": 1783115874.8849313,
-    "ast_hash": "12ff89f0c181e47aa61ef08d1f171ce6",
-    "semantic_hash": ""
-  },
-  "conf/preprocessing/stream_global_log10.yaml": {
-    "mtime": 1783148945.835723,
-    "ast_hash": "b9a3a791eb5a4cc3984b857a706629c4",
-    "semantic_hash": ""
-  },
-  "conf/preprocessing/stream_real_global_log10.yaml": {
-    "mtime": 1783148974.1999192,
-    "ast_hash": "5787234045ba23d37277340bc58a8462",
     "semantic_hash": ""
   }
 }

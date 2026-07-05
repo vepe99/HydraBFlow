@@ -255,3 +255,37 @@ model instead.
 The AGAMA simulator is CPU-only (joblib-parallel across rows); training/evaluation/tuning run on
 GPU if available — `jax[cuda12]` is a project dependency, and `hydrabflow.utils.backend` pins one
 free GPU by default (`HYDRABFLOW_NUM_GPUS` to change).
+
+## Future work (TODO)
+
+*Roadmap from the 2026-07-04 misspecification-diagnosis session (see the `CLAUDE.md` Decisions
+Log): cross-model posteriors agree on simulated test sets but diverge on the real Gaia streams —
+the upgrades below address the suspected model misspecification, and should be promoted into
+training only as the synthetic misspecification tests warrant.*
+
+Both questions now have solid, evidence-grounded answers — and there's a neat closure: the member table you already use (`apjad382dt1_mrt.txt`) *is* the Ibata et al. 2024 STREAMFINDER atlas table, and their fit with essentially **your current family** (double power law, β fixed at −3) gives q = 0.75±0.03 — consistent with model_5's oblate solution, while your other models land at 1.1–1.3.
+
+### 1. What more flexible potential family
+
+Staged, so each step is falsifiable with the diagnostics we built:
+
+**Stage A — free what's pinned, same family (YAML + prior edits only).** Free `beta_halo` (outer slope; Ibata+24 pinned it too, but your vcirc channel reaches ~25 kpc and has some grip on it), free the halo transition sharpness `alpha`, and give the **bulge one free amplitude** with a tight literature prior instead of pinning all five parameters — the bulge–disk trade-off at R ≈ 5–8 kpc feeds directly into Sigma_Disk and r_Disk, two of your three worst-tension parameters. Add R0/v_sun as **marginalized nuisances** (varied in simulation, excluded from `inference_variables` via the explicit adapter override — supported today). Priors can be centered on the shipped `McMillan17.ini` / `Cautun20.ini`.
+
+**Stage B — radius-dependent halo flattening: the q-tension killer.** q is your most discordant parameter (6.7σ, oblate↔prolate), and a constant-q ellipsoid is the strongest rigidity in the model: if the real halo goes from oblate inside to rounder/tilted outside (as several analyses suggest, and as the [tilted-halo GD-1 result](https://arxiv.org/pdf/2504.07187) dramatizes), each stream at its own radius wants a different q, and no constant-q model satisfies all three streams + the curve — precisely your pathology. Two agama-native implementations: (i) **two Spheroid halo components** (inner/outer with independent q and scale radii — their sum gives a smooth q(r) at +2 parameters), or (ii) a user-defined Python density with q(r) = q₀ + (q∞−q₀)·r/(r+r_q) fed to `agama.Potential(type='Multipole', density=...)` — agama builds multipole potentials from arbitrary densities fast enough for dataset generation. I'd stop here before anything like free basis-expansion coefficients: with 3 streams the data can't constrain dozens of coefficients (Ibata needed 87 streams for a global fit), and morphology-based shape inference has known degeneracies ([the 2026 "illusion of morphology" analysis](https://arxiv.org/pdf/2604.06585)).
+
+**Stage C — non-axisymmetric & time-dependent, as test-set physics first.** Agama ships three ready-made bars: `example_mw_bar_potential.py` (Portail+17/Sormani+22 CylSpline), `example_mw_potential_hunter24.py` (same bar, tuned MW-wide), and `example_mw_potential_khalil25.py` (bar **plus spiral arms with growth histories**, fitted to Gaia DR3-RVS; Khalil et al. 2025, A&A 699, 263) — plus the LMC rewind machinery in `example_lmc_mw_interaction.py` (rigid moving MW+LMC, reflex included). Pal5 is the known bar victim; the LMC matters at the few-km/s coherent-PM level for the outer stream parts. Don't put these in training yet — generate **misspecified test sets** with them and measure whether your trained models' posteriors actually move (the new misspecification stage + tension script give you the numbers). Promote to marginalized training physics only what bites.
+
+### 2. More realistic stream simulation with agama — straight from their bundled examples
+
+Your installed agama 1.0.157 ships `py/tutorial_streams.ipynb` + `example_tidal_stream.py`, which together give you a full realism ladder:
+
+1. **Chen+25 spray instead of Fardal15** — the tutorial's spray section implements both variants (gala-style initial conditions). The [improved algorithm](https://arxiv.org/abs/2408.01496) ([ApJS 276, 32](https://iopscience.iop.org/article/10.3847/1538-4365/ad9904), [code](https://github.com/ybillchen/particle_spray)) is calibrated on N-body and reproduces stream morphology/kinematics to ~10%. Cheap drop-in for the `stream_agama` worker — and you can **mix recipes across training rows** so the network can't key on recipe-specific micro-structure.
+2. **Progenitor self-gravity during stripping** — tutorial section "Include additional potential components during stream generation": add the moving progenitor potential to the host while integrating stripped particles. Changes width/epicyclic structure — exactly the small-scale features your SetTransformer sees.
+3. **Self-consistent mass loss (restricted N-body)** — `example_tidal_stream.py`: progenitor represented by test particles, bound mass and its potential recomputed on the fly (dynamical friction included, negligible for GC masses). Seconds-to-minutes per stream — too slow for the 1M training set, ideal for **synthetic misspecification test sets** and for calibrating how wrong the spray recipe is at your S/N.
+4. **Perturbation-theory upsampling** (tutorial, adopted from galax) — densify a coarse stream cheaply if the 1000-particle budget ever binds.
+5. **Full N-body rung** — pyfalcon inside `example_tidal_stream.py`, or the gadget4/arepo patches in `example_nbody_simulation.py`: a handful of gold-standard streams for final validation.
+6. **Time-dependent hosts** — all of the above compose with Khalil+25's growing bar+arms, the LMC rewind, and agama's Tilted/Rotating/Evolving modifiers, since agama potentials stack.
+
+**How I'd sequence it:** leave-one-stream-out on real data (free) → synthetic misspecification test sets, one per component: Chen-vs-Fardal recipe, progenitor self-gravity, bulge/β/solar perturbations, bar (Khalil25), LMC (each is a small `simulate_multistream` config variant + one evaluation with the new stage) → rank by posterior shift and MMD → regenerate the 1M training set once with Stage A + whatever bit, plus Stage B's q(r) → retrain and re-run the real-data battery. That turns "new simulator?" into a ranked, measured shopping list instead of a leap of faith.
+
+Sources: [Chen et al. 2025, ApJS 276, 32](https://iopscience.iop.org/article/10.3847/1538-4365/ad9904) ([arXiv:2408.01496](https://arxiv.org/abs/2408.01496), [code](https://github.com/ybillchen/particle_spray)) · [Ibata et al. 2024, ApJ 967, 89](https://iopscience.iop.org/article/10.3847/1538-4357/ad382d) · [tilted-halo GD-1 accelerations](https://arxiv.org/pdf/2504.07187) · [non-spherical-halo morphology degeneracies](https://arxiv.org/pdf/2604.06585) · [Bonaca & Price-Whelan, streams-in-the-Gaia-era review](https://www.sciencedirect.com/science/article/pii/S1387647324000204) · Khalil+25 / Hunter+24 / Sormani+22 / LMC examples: shipped in your `agama/py/`.

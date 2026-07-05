@@ -36,6 +36,7 @@ from hydrabflow.pipeline.compositional import (
     log10_keys_from_pipeline,
     prior_score_from_spec,
 )
+from hydrabflow.pipeline.misspecification import save_member_summaries
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.preprocessing.registry import build_pipeline
 from hydrabflow.utils.logging import get_logger
@@ -126,6 +127,8 @@ def _evaluate_compositional_global(cfg):
 
     # Augment flat member rows once (fixed draw); reused for both eval modes.
     flat = apply_augmentations_once(flatten_members(test_data, m), cfg, pipeline, int(cfg.seed))
+    # Best-effort reference set for evaluate_real's misspecification test (never aborts).
+    save_member_summaries(workflow.approximator, flat, run_dir)
     param_names = list(cfg.adapter.inference_variables)
     # log10_transform (if configured) is undone only for diagnostics/plots below — the *saved*
     # posterior.npz stays in the model's native space, since a real-data local-level evaluation

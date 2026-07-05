@@ -11,3 +11,9 @@ diagnostics:
   - calibration_ecdf   # simulation-based calibration (rank ECDF)
   - coverage           # credible-interval coverage vs. nominal
   - z_score_contraction
+
+# Summary-space misspecification test (evaluate_real, composition=global): point at an
+# `evaluate composition=global` run dir that saved summaries.npz (or a direct .npz path).
+# Empty = skip. See pipeline/misspecification.py.
+misspecification_reference: ""
+misspecification_num_null: 200

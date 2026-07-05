@@ -39,6 +39,10 @@ from hydrabflow.pipeline.compositional import (
     log10_keys_from_pipeline,
     prior_score_from_spec,
 )
+from hydrabflow.pipeline.misspecification import (
+    run_misspecification_test,
+    save_member_summaries,
+)
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.preprocessing.registry import build_pipeline
 from hydrabflow.utils.logging import get_logger
@@ -168,6 +172,13 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
         _save_posterior(posterior, run_dir)
         _save_posterior_plot(
             pipeline.inverse_transform(dict(posterior)), list(cfg.adapter.inference_variables), run_dir
+        )
+        # Summary-space misspecification diagnostics (both best-effort, never abort the run):
+        # save the observed members' summaries, then MMD-test them against the reference
+        # summaries of a simulated `evaluate` run (eval.misspecification_reference).
+        observed_summaries = save_member_summaries(workflow.approximator, flat, run_dir)
+        run_misspecification_test(
+            cfg, workflow.approximator, flat, run_dir, observed_summaries=observed_summaries
         )
         log.info("Global posterior saved. Point composition.global_run_dir here for the "
                  "local level. Artifacts in %s", run_dir)

@@ -16,6 +16,9 @@ LOSS_PLOT = "loss.png"
 HISTORY_JSON = "history.json"          # raw Keras history.history dict
 CONVERGENCE_JSON = "convergence.json"  # inspect_history() report for the training run
 REPORT_MD = "report.md"                # human-readable evaluation report
+SUMMARIES = "summaries.npz"            # summary-network outputs of the (augmented) member rows
+MISSPECIFICATION_JSON = "misspecification.json"  # summary-space MMD test results
+MMD_PLOT = "mmd_hypothesis_test.png"   # observed MMD vs bootstrap null
 
 
 def get_run_dir() -> str:

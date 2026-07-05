@@ -224,6 +224,11 @@ class EvalConfig:
     # Free-form kwargs forwarded to the sampler — used by compositional sampling, e.g.
     # {method: two_step_adaptive, steps: adaptive, compositional_bridge_d1: 0.1667}.
     sample_kwargs: Dict[str, Any] = field(default_factory=dict)
+    # Summary-space misspecification test (evaluate_real, composition=global): an
+    # `evaluate composition=global` run dir holding summaries.npz (or a direct .npz path).
+    # Empty = skip the test.
+    misspecification_reference: str = ""
+    misspecification_num_null: int = 200
 
 
 # --------------------------------------------------------------------------------------------- #

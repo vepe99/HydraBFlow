@@ -194,6 +194,18 @@ Every run saves:
     attention widths divisible by head counts; trials train with the augmentation chain.
   - agama dependency builds without isolation and with auto-yes prompts (`[tool.uv]` settings);
     `.gitignore` `data/` pattern root-anchored (it was swallowing `conf/data/`).
+- Session 2026-07-04 (misspecification diagnostics): quantified that the reference tuned models
+  agree on shared simulated test sets (pairwise tension z≲0.2 median) but diverge on the real Gaia
+  streams (q_halo up to 6.7σ, Sigma_Disk 5.7σ, r_Disk 3.9σ) — misspecification-driven
+  extrapolation, not training instability. Added a summary-space misspecification stage
+  (`pipeline/misspecification.py`, Schmitt+21 MMD): `evaluate composition=global` saves
+  `summaries.npz` (reference set, best-effort hook), `evaluate_real composition=global` MMD-tests
+  the observed members against it when `eval.misspecification_reference` points at that run dir —
+  with a stratified-by-`j` bootstrap null (uniform trios distort the null since summaries encode
+  stream identity) and per-stream Mahalanobis percentiles that localize which member is OOD.
+  Artifacts: `misspecification.json` + `mmd_hypothesis_test.png`; all hooks defensive (never abort
+  chained runs). `scripts/report_cross_model_tension.py` = offline cross-run posterior tension
+  report (real vs sim). Verified end-to-end on the 2026-07-03 smoke model (GPU 1).
 
 ## graphify
 

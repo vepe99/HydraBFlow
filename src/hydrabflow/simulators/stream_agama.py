@@ -207,7 +207,10 @@ def _simulate_one(p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed
     """joblib worker: one stream realization + the rotation curve of its potential."""
     agama = _agama()
     rng = np.random.default_rng(seed)
-    time_unit_gyr = agama.getUnits()["time"] / 1e3
+    # getUnits()['time'] is a float [Myr] normally, but an astropy Quantity once astropy has
+    # been imported in this process (agama >= 1.0.157) — take .value in that case.
+    tu = agama.getUnits()["time"]
+    time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
 
     pot_host = _host_potential(agama, p)
 
