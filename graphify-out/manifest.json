@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783442921.0355299,
-    "ast_hash": "ac69570c54bfc4a6b0f747b32dedc67b",
+    "mtime": 1783444613.1393213,
+    "ast_hash": "d5456004c0058afbc34275daf305ed47",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -592,6 +592,11 @@
   "conf/simulator/stream_agama_rnbody.yaml": {
     "mtime": 1783440348.8831124,
     "ast_hash": "ad7869d8fa522af16f85657761a2975a",
+    "semantic_hash": ""
+  },
+  "scripts/ppc_prior_predictive.py": {
+    "mtime": 1783444796.6568704,
+    "ast_hash": "8b81e9c541f923e8b46a6e963d63bb02",
     "semantic_hash": ""
   }
 }
