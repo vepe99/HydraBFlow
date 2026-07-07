@@ -1,16 +1,16 @@
-# Graph Report - HydraBFlow  (2026-07-07)
+# Graph Report - HydraBFlow  (2026-07-05)
 
 ## Corpus Check
-- 74 files · ~49,475 words
+- 74 files · ~48,615 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 839 nodes · 1184 edges · 104 communities (69 shown, 35 thin omitted)
-- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 188 edges (avg confidence: 0.73)
+- 831 nodes · 1167 edges · 107 communities (71 shown, 36 thin omitted)
+- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 189 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c0eb85d7`
+- Built from commit: `4164d203`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -51,12 +51,14 @@
 - [[_COMMUNITY_Community 42|Community 42]]
 - [[_COMMUNITY_Community 43|Community 43]]
 - [[_COMMUNITY_Community 44|Community 44]]
+- [[_COMMUNITY_Community 46|Community 46]]
 - [[_COMMUNITY_MaskedFusionNetwork|MaskedFusionNetwork]]
 - [[_COMMUNITY_compositional.py|compositional.py]]
 - [[_COMMUNITY_Community 56|Community 56]]
 - [[_COMMUNITY_Community 57|Community 57]]
 - [[_COMMUNITY_run_tuning|run_tuning]]
 - [[_COMMUNITY_build_workflow|build_workflow]]
+- [[_COMMUNITY_apply_bayesflow_patches|apply_bayesflow_patches]]
 - [[_COMMUNITY_Run stages (5 entry points)|Run stages (5 entry points)]]
 - [[_COMMUNITY_hooks|hooks]]
 - [[_COMMUNITY_PreToolUse|PreToolUse]]
@@ -87,14 +89,15 @@
 - [[_COMMUNITY_Running a full pipeline with the Two Moons simulator|Running a full pipeline with the Two Moons simulator]]
 - [[_COMMUNITY__load_clean|_load_clean]]
 - [[_COMMUNITY_prior_score_from_spec|prior_score_from_spec]]
+- [[_COMMUNITY_configuration|configuration.md]]
 - [[_COMMUNITY_StreamObservationStats|StreamObservationStats]]
 - [[_COMMUNITY_compose_cfg|compose_cfg]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `_jax()` - 24 edges
-2. `AgamaStreamSimulator` - 24 edges
-3. `PreprocessStep` - 23 edges
-4. `_evaluate_compositional_global()` - 21 edges
+2. `PreprocessStep` - 23 edges
+3. `_evaluate_compositional_global()` - 21 edges
+4. `AgamaStreamSimulator` - 21 edges
 5. `register_configs()` - 17 edges
 6. `_evaluate_local()` - 17 edges
 7. `BaseSimulator` - 17 edges
@@ -109,15 +112,15 @@
   tests/test_registries.py → src/hydrabflow/augmentation/registry.py
 - `compose_cfg()` --calls--> `register_configs()`  [INFERRED]
   tests/conftest.py → src/hydrabflow/config/schema.py
-- `test_build_networks()` --calls--> `build_summary_network()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/networks/factory.py
-- `test_build_networks()` --calls--> `build_inference_network()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/networks/factory.py
+- `compose_cfg()` --calls--> `fill_adapter_from_simulator()`  [INFERRED]
+  tests/conftest.py → src/hydrabflow/pipeline/adapter.py
+- `test_build_adapter()` --calls--> `build_adapter()`  [INFERRED]
+  tests/test_workflow.py → src/hydrabflow/pipeline/adapter.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (104 total, 35 thin omitted)
+## Communities (107 total, 36 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
 Cohesion: 0.06
@@ -128,8 +131,8 @@ Cohesion: 0.33
 Nodes (6): Model Default Config, Diffusion Inference Network Config, Flow Matching Inference Network Config, DeepSet Summary Network Config, SetTransformer Summary Network Config, TimeSeriesTransformer Summary Network Config
 
 ### Community 2 - "Design Principles & Configs"
-Cohesion: 0.21
-Nodes (10): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Train the approximator and return (workflow, history)., Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., run_training(), _save_history_and_convergence(), _save_loss_plot(), Seeding helpers for reproducible runs. (+2 more)
+Cohesion: 0.36
+Nodes (7): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Train the approximator and return (workflow, history)., Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., run_training(), _save_history_and_convergence(), _save_loss_plot()
 
 ### Community 3 - "Augmentation Registry & Tests"
 Cohesion: 0.09
@@ -152,8 +155,8 @@ Cohesion: 0.07
 Nodes (28): 0. Prerequisites & install, 1. The five stages at a glance, 2. Changing the simulator, 2a. Write the simulator class, 2b. Registration is automatic, 2c. Add the simulator config, 2d. The adapter wires itself, 2e. Shape contract cheat-sheet (+20 more)
 
 ### Community 10 - "Config Composition Tests"
-Cohesion: 0.09
-Nodes (25): Logger, adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), Any, Build the BayesFlow ``Adapter`` from ``AdapterConfig``.  The adapter is the stru, Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``). (+17 more)
+Cohesion: 0.06
+Nodes (44): Logger, build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any (+36 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.15
@@ -172,16 +175,16 @@ Cohesion: 0.13
 Nodes (23): _bf_mmd(), member_summaries(), mmd_test(), _null_mmd(), per_member_scores(), ndarray, Summary-space model misspecification test (observed group vs simulated reference, Mahalanobis OOD score of each observed member vs its own stream's reference clou (+15 more)
 
 ### Community 15 - "Logging Helper"
-Cohesion: 0.15
-Nodes (19): build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, Build BayesFlow networks from structured dataclass configs (no ``_target_``).  B (+11 more)
+Cohesion: 0.16
+Nodes (17): _agama(), _host_potential(), _ic_particle_spray(), ndarray, Stellar-stream forward model built on AGAMA (CPU, parallelized with joblib).  Po, Fardal+2015 initial conditions for particles escaping through the Lagrange point, Particle-spray stream including the progenitor's own (moving Plummer) potential., Model circular velocity [km/s] at the observed radii; NaN where v^2 < 0. (+9 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
 Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.07
-Nodes (28): _agama(), AgamaStreamSimulator, _host_potential(), _ic_particle_spray(), ndarray, Stellar-stream forward model built on AGAMA (CPU, parallelized with joblib).  Po, Jacobi radius, velocity offset, and host->satellite rotation matrices along the, Fardal+2015 initial conditions for particles escaping through the Lagrange point (+20 more)
+Cohesion: 0.15
+Nodes (4): AgamaStreamSimulator, Stellar streams in a parametrized Milky Way potential, simulated with AGAMA., Prior spec of the inferred global parameters (used for compositional prior score, Per-stream prior spec of the inferred local parameters (drives their normalizati
 
 ### Community 33 - "Community 33"
 Cohesion: 0.06
@@ -208,8 +211,12 @@ Cohesion: 0.60
 Nodes (4): Preprocessing pipeline: fit/transform/split + state save/load round-trip., test_pipeline_fit_transform_and_split(), test_state_roundtrip(), _toy_data()
 
 ### Community 40 - "Community 40"
-Cohesion: 0.26
-Nodes (16): condition_keys(), Raw batch keys that act as sampling conditions (everything the adapter consumes, _evaluate_compositional_global(), _evaluate_local(), _load_test_data(), Stage 3: evaluation on a simulated test set (with known ground truth).  Loads th, Global-level evaluation on a grouped (multistream) test set, both ways:      * *, Local-level evaluation: per-member sampling conditioned on the true globals. (+8 more)
+Cohesion: 0.20
+Nodes (19): condition_keys(), Raw batch keys that act as sampling conditions (everything the adapter consumes, _evaluate_compositional_global(), _evaluate_local(), _load_test_data(), Stage 3: evaluation on a simulated test set (with known ground truth).  Loads th, Global-level evaluation on a grouped (multistream) test set, both ways:      * *, Local-level evaluation: per-member sampling conditioned on the true globals. (+11 more)
+
+### Community 46 - "Community 46"
+Cohesion: 0.23
+Nodes (11): ndarray, Shared helpers for the stellar-stream simulators (agama, gala, ...).  Ports the, Project Galactocentric phase-space coordinates to observed ICRS quantities., Draw ``(n, 1)`` samples from one prior spec (uniform / normal / identity)., Single-stream draw: global parameters, a random stream index ``j``, and that str, Compositional draw: one global draw shared by *all* streams of each dataset., sample_prior_value(), sample_stream_prior() (+3 more)
 
 ### Community 47 - "MaskedFusionNetwork"
 Cohesion: 0.16
@@ -232,8 +239,12 @@ Cohesion: 0.29
 Nodes (10): _objective(), Stage 4: hyperparameter tuning with Optuna.  Runs a (by default multi-objective), Per-trial artifact directory, keyed by the study-global Optuna trial number., Save the fit-once preprocessing state, shared by every trial/model.      Written, _report(), run_tuning(), _save_shared_preprocessing(), _suggest() (+2 more)
 
 ### Community 59 - "build_workflow"
-Cohesion: 0.20
-Nodes (9): apply_bayesflow_patches(), _patch_compositional_condition_reshape(), Targeted runtime fixes for known BayesFlow bugs (version-checked, applied once)., Idempotently install the fixes. Called when a compositional workflow is built., build_workflow(), Any, Assemble the BayesFlow workflow from config.  Single-level inference (the defaul, Build a ``bf.BasicWorkflow`` from the root ``cfg``. (+1 more)
+Cohesion: 0.33
+Nodes (5): build_workflow(), Any, Assemble the BayesFlow workflow from config.  Single-level inference (the defaul, Build a ``bf.BasicWorkflow`` from the root ``cfg``., Build a ``bf.BasicWorkflow`` (or ``bf.CompositionalWorkflow``) from the root ``c
+
+### Community 60 - "apply_bayesflow_patches"
+Cohesion: 0.50
+Nodes (4): apply_bayesflow_patches(), _patch_compositional_condition_reshape(), Targeted runtime fixes for known BayesFlow bugs (version-checked, applied once)., Idempotently install the fixes. Called when a compositional workflow is built.
 
 ### Community 96 - "test_streams.py"
 Cohesion: 0.33
@@ -252,8 +263,8 @@ Cohesion: 0.25
 Nodes (5): PerStreamParameterStandardize, ndarray, z-score each stream's local parameters with that stream's prior mean/std., test_per_stream_parameter_standardize_rejects_non_normal(), test_per_stream_parameter_standardize_roundtrip()
 
 ### Community 100 - "load_approximator"
-Cohesion: 0.12
-Nodes (21): _plummer_sample(), ndarray, Restricted N-body stellar-stream forward model on AGAMA (CPU, joblib).  Same pri, joblib worker: one restricted-N-body stream + the rotation curve of its potentia, Stellar streams via restricted N-body (agama example_tidal_stream method)., Positions/velocities (relative to the center) of an isotropic Plummer sphere., Restricted N-body stream: forward-integrate Plummer particles from the rewound o, RestrictedNbodyStreamSimulator (+13 more)
+Cohesion: 0.24
+Nodes (10): _plummer_sample(), ndarray, Restricted N-body stellar-stream forward model on AGAMA (CPU, joblib).  Same pri, joblib worker: one restricted-N-body stream + the rotation curve of its potentia, Stellar streams via restricted N-body (agama example_tidal_stream method)., Positions/velocities (relative to the center) of an isotropic Plummer sphere., Restricted N-body stream: forward-integrate Plummer particles from the rewound o, RestrictedNbodyStreamSimulator (+2 more)
 
 ### Community 101 - "Running a full pipeline with the Two Moons simulator"
 Cohesion: 0.29
@@ -278,15 +289,15 @@ Nodes (4): cfg(), compose_cfg(), Shared test fixtures., Compose the root config 
 ## Knowledge Gaps
 - **144 isolated node(s):** `hydrabflow`, `graphify`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)` (+139 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `get_simulator()` connect `Simulate Stage & Registries` to `test_streams.py`, `Config Schemas`, `Community 40`, `Config Composition Tests`, `Community 11`, `JAX Backend Pin`, `Community 56`?**
-  _High betweenness centrality (0.122) - this node is a cross-community bridge._
-- **Why does `BaseSimulator` connect `Config Schemas` to `Community 32`, `Simulate Stage & Registries`?**
   _High betweenness centrality (0.120) - this node is a cross-community bridge._
+- **Why does `BaseSimulator` connect `Config Schemas` to `Community 32`, `Simulate Stage & Registries`?**
+  _High betweenness centrality (0.115) - this node is a cross-community bridge._
 - **Why does `PreprocessStep` connect `Preprocessing Pipeline & Steps` to `PerStreamParameterStandardize`, `Community 35`, `Example Simulators (Skeleton/TwoMoons)`, `Config Schemas`, `StreamObservationStats`?**
   _High betweenness centrality (0.094) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `PreprocessStep` (e.g. with `PreprocessPipeline` and `Standardizer`) actually correct?**
@@ -296,4 +307,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 15 inferred relationships involving `register_configs()` (e.g. with `AdapterConfig` and `AugmentationConfig`) actually correct?**
   _`register_configs()` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Marimo notebook: inspect a training run's posterior samples and diagnostics.  Ru`, `hydrabflow`, `Cross-model posterior tension report (offline analysis helper — not a Hydra run` to the rest of the system?**
-  _342 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _338 weakly-connected nodes found - possible documentation gaps or missing edges._

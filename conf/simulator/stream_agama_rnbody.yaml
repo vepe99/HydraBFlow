@@ -14,6 +14,21 @@ params:
   traj_per_update: 16  # center-trajectory knots per update interval
   accuracy: 1.0e-8     # particle orbit integration accuracy (rewind/center always 1e-10)
 
+  # Rotation-curve rejection prior (2026-07-07): reject prior draws whose model circular-velocity
+  # curve is grossly incompatible with the observed Zhou et al. (2023) curve, so the expensive
+  # restricted N-body integrator is never spent on wildly wrong galaxies. A hard indicator cut ->
+  # the compositional prior score stays valid unchanged inside the accepted region.
+  #   stat=median over the r>5.5 kpc bins (the bins the network sees after mask_vcirc_radii),
+  #   max_frac_dev=0.20 -> accept iff median_r |vc_model - vc_obs| / vc_obs < 20%.
+  # PPC over 100k prior draws: median-20% acceptance ~24.7% (~40k draws screen a 10k set, ~13 min
+  # of potential builds at 16 workers); of accepted draws the max-radius deviation stays <=~46% at
+  # the 90th pct, so no single bin runs away. Strict 5-sigma of the Zhou errors accepts 0/100k
+  # (inner-disk sigma ~0.2 km/s demands <1 km/s agreement), hence the physical fractional cut.
+  vcirc_rejection:
+    stat: median
+    max_frac_dev: 0.20
+    r_min_kpc: 5.5
+
   # Prior-predictive finding (2026-07-05): under self-consistent (restricted N-body) stripping,
   # the spray-era t_end=1.5 Gyr cannot grow the observed ~100-degree arms — real-locus reach
   # 13% (NGC 3201) / 8% (M 68) vs spray's 93% / 56%, median 0 in-window particles for NGC 3201.

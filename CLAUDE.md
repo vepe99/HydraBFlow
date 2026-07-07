@@ -220,6 +220,28 @@ Every run saves:
   `data/streams/data_agama_rnbody_hydrabflow/training_data_30000.npz` (20 nice'd workers).
   agama>=1.0.157 gotcha: `getUnits()` returns astropy Quantities once astropy is imported in the
   process — both simulators' workers harden `time_unit_gyr` against it.
+- Session 2026-07-07 (rotation-curve rejection prior): optional `params.vcirc_rejection` on the
+  `stream_agama` BASE class truncates the global-potential prior by rejecting draws whose model
+  rotation curve is grossly incompatible with the observed **Zhou et al. (2023)** curve
+  (== `stream_common.OBS_VC_KMS`; its header comment previously mislabeled "Eilers", now fixed).
+  Accept iff `stat`(median|max) of `|vc_model - vc_obs|/vc_obs` over the r>`r_min_kpc` bins is <
+  `max_frac_dev`. Screens only the potential (~18 ms/draw), so the expensive stream integrator is
+  never spent on wild galaxies. Impl in `simulators/stream_agama.py`: `_vcirc_accept_worker`
+  (joblib), `_vcirc_accept_mask`, `_rejection_sample` (adaptive batch, aborts >5M draws); wired
+  into `sample_prior` + `sample_compositional`, both no-op when the key is absent (spray/two_moons/
+  base configs unaffected; all tests pass). `conf/simulator/stream_agama_rnbody.yaml` sets
+  `stat: median, max_frac_dev: 0.20, r_min_kpc: 5.5`. **Why this criterion**: strict 5σ of the Zhou
+  observational errors accepts 0/100k prior draws (inner-disk σ~0.2 km/s demands <1 km/s agreement);
+  a physical fractional cut is required. PPC (100k draws): median-20% acceptance ~24.7%; accepted
+  draws' max-radius deviation ≤46% at the 90th pct. **Compositional-score validity**: a hard
+  indicator cut contributes zero score inside the accepted region, so the compositional
+  `prior_score_from_spec` stays correct UNCHANGED — the networks learn the truncation implicitly
+  from rejection-sampled training data (no change to `pipeline/compositional.py`; optional future
+  add: post-hoc filter + report the fraction of compositional draws that leak outside the cut).
+  Stream-level PPC (30 accepted potentials, rnbody, seed=2026): real-locus reach 100%/93%/90%
+  (Pal5/NGC3201/M68), 0% NaN — the cut REMOVES wild potentials that threw M68 off-locus, lifting
+  its reach above the unconstrained t_end=4 check (~60%). Planned rejection-prior datasets (30k flat
+  + 333 multistream) and model_5 training were scoped this session but NOT run yet.
 
 ## graphify
 

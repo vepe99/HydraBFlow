@@ -39,6 +39,7 @@ from hydrabflow.simulators.base import BaseSimulator
 from hydrabflow.simulators.registry import register_simulator
 from hydrabflow.simulators.stream_common import (
     OBS_R_KPC,
+    OBS_VC_KMS,
     inferred_names,
     sample_stream_prior,
     sample_stream_prior_shared_global,
@@ -203,6 +204,35 @@ def _vcirc(pot_host, obs_r: np.ndarray) -> np.ndarray:
     return np.sqrt(np.where(v2 > 0, v2, np.nan))
 
 
+def _vcirc_accept_worker(
+    rows: list,
+    obs_r: np.ndarray,
+    use_bin: np.ndarray,
+    vc_ref: np.ndarray,
+    max_frac_dev: float,
+    stat: str,
+) -> np.ndarray:
+    """joblib worker: does each parameter row's model rotation curve pass the rejection cut?
+
+    A row is accepted when ``stat`` (median or max) of the fractional deviation
+    ``|vc_model - vc_ref| / vc_ref`` over the selected radial bins is below ``max_frac_dev``.
+    Rows whose potential fails to build or yields NaN circular velocities are rejected.
+    """
+    agama = _agama()
+    agama.setNumThreads(1)
+    reduce = np.median if stat == "median" else np.max
+    out = np.zeros(len(rows), dtype=bool)
+    for i, p in enumerate(rows):
+        try:
+            vc = _vcirc(_host_potential(agama, p), obs_r)[use_bin]
+        except Exception:
+            continue
+        fdev = np.abs(vc - vc_ref) / vc_ref
+        if not np.isnan(fdev).any():
+            out[i] = bool(reduce(fdev) < max_frac_dev)
+    return out
+
+
 def _simulate_one(p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int):
     """joblib worker: one stream realization + the rotation curve of its potential."""
     agama = _agama()
@@ -314,10 +344,77 @@ class AgamaStreamSimulator(BaseSimulator):
     # Sampling
     # ------------------------------------------------------------------------------------- #
 
-    def sample_prior(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
-        return sample_stream_prior(
-            self._priors_global, self._priors_local, self.target_streams, n, rng
+    @property
+    def _vcirc_rejection(self) -> dict | None:
+        """Optional rotation-curve rejection prior (``params.vcirc_rejection``), else None.
+
+        Keys: ``max_frac_dev`` (required), ``stat`` (median|max over radial bins, default
+        median), ``r_min_kpc`` (default 5.5, matching the ``mask_vcirc_radii`` preprocessing).
+        The cut truncates the prior with a hard indicator, which leaves the compositional
+        prior score (``prior_score_from_spec``) valid unchanged inside the accepted region.
+        """
+        node = self.params.get("vcirc_rejection", None)
+        return self._as_dict(node) if node else None
+
+    def _vcirc_accept_mask(self, draws: Mapping[str, np.ndarray]) -> np.ndarray:
+        """Screen each draw's global potential against the observed rotation curve."""
+        from joblib import Parallel, delayed
+
+        cfg = self._vcirc_rejection
+        obs_r = self.obs_r_kpc
+        use_bin = obs_r > float(cfg.get("r_min_kpc", 5.5))
+        vc_ref = np.asarray(cfg.get("vc_ref_kms", OBS_VC_KMS), dtype=float)[use_bin]
+        max_frac_dev = float(cfg["max_frac_dev"])
+        stat = str(cfg.get("stat", "median"))
+
+        n = len(np.asarray(next(iter(draws.values()))))
+        gkeys = list(self._priors_global)
+        rows = [
+            {k: float(np.asarray(draws[k]).reshape(n, -1)[i, 0]) for k in gkeys}
+            for i in range(n)
+        ]
+        n_jobs = min(self._n_workers, len(rows))
+        chunks = [rows[i::n_jobs] for i in range(n_jobs)]
+        res = Parallel(n_jobs=n_jobs)(
+            delayed(_vcirc_accept_worker)(c, obs_r, use_bin, vc_ref, max_frac_dev, stat)
+            for c in chunks
         )
+        mask = np.zeros(n, dtype=bool)
+        for i, r in enumerate(res):
+            mask[i::n_jobs] = r
+        return mask
+
+    def _rejection_sample(self, n: int, rng: np.random.Generator, sample_fn) -> Dict[str, np.ndarray]:
+        """Draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut."""
+        parts: list[Dict[str, np.ndarray]] = []
+        accepted = drawn = 0
+        while accepted < n:
+            # Size the next batch from the measured acceptance rate (pessimistic start).
+            rate = max(accepted / drawn if drawn else 0.1, 0.005)
+            k = min(int(np.ceil((n - accepted) / rate * 1.2)), 100_000)
+            draws = sample_fn(k, rng)
+            mask = self._vcirc_accept_mask(draws)
+            drawn += k
+            accepted += int(mask.sum())
+            if mask.any():
+                parts.append({key: arr[mask] for key, arr in draws.items()})
+            if drawn >= 5_000_000 and accepted < n:
+                raise RuntimeError(
+                    f"vcirc_rejection accepted only {accepted}/{n} rows after {drawn} prior "
+                    "draws — the cut is too tight for this prior."
+                )
+        out = {key: np.concatenate([p[key] for p in parts], axis=0)[:n] for key in parts[0]}
+        return out
+
+    def sample_prior(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
+        def draw(k: int, r: np.random.Generator) -> Dict[str, np.ndarray]:
+            return sample_stream_prior(
+                self._priors_global, self._priors_local, self.target_streams, k, r
+            )
+
+        if self._vcirc_rejection is None:
+            return draw(n, rng)
+        return self._rejection_sample(n, rng, draw)
 
     def simulate(
         self, params: Mapping[str, np.ndarray], rng: np.random.Generator
@@ -351,9 +448,15 @@ class AgamaStreamSimulator(BaseSimulator):
         ``(n, n_streams, n_particles, 6)``. The rotation curve depends only on the shared
         potential, so it stays ``(n, n_radii, 1)``.
         """
-        draws = sample_stream_prior_shared_global(
-            self._priors_global, self._priors_local, self.target_streams, n, rng
-        )
+        def draw(k: int, r: np.random.Generator) -> Dict[str, np.ndarray]:
+            return sample_stream_prior_shared_global(
+                self._priors_global, self._priors_local, self.target_streams, k, r
+            )
+
+        if self._vcirc_rejection is None:
+            draws = draw(n, rng)
+        else:
+            draws = self._rejection_sample(n, rng, draw)
         m = len(self.target_streams)
 
         # Flatten (dataset, stream) pairs into rows and reuse the row-parallel simulate().

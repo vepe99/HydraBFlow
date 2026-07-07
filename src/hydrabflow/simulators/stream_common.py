@@ -18,9 +18,10 @@ from typing import Dict, Mapping
 
 import numpy as np
 
-# Observed Milky Way circular-velocity curve (Eilers et al. 2019 style table, as used by the
-# reference project): radii [kpc], Vc [km/s], and its 1-sigma uncertainty [km/s]. The simulators
-# evaluate their model rotation curve on OBS_R_KPC; the noise augmentation uses OBS_SIGMA_VC.
+# Observed Milky Way circular-velocity curve (Zhou et al. 2023 table, as used and labeled by
+# the reference project): radii [kpc], Vc [km/s], and its 1-sigma uncertainty [km/s]. The
+# simulators evaluate their model rotation curve on OBS_R_KPC; the noise augmentation uses
+# OBS_SIGMA_VC; the optional ``vcirc_rejection`` prior cut compares against OBS_VC_KMS.
 OBS_R_KPC = np.array([
     5.24, 5.74, 6.25, 6.77, 7.23, 7.83, 8.21, 8.78, 9.26, 9.75,
     10.25, 10.75, 11.25, 11.75, 12.24, 12.74, 13.25, 13.74, 14.23, 14.74,
