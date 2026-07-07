@@ -45,7 +45,6 @@
   "43": "Community 43",
   "44": "Community 44",
   "45": "Community 45",
-  "46": "Community 46",
   "47": "MaskedFusionNetwork",
   "48": "Community 48",
   "49": "Community 49",
@@ -59,7 +58,6 @@
   "57": "Community 57",
   "58": "run_tuning",
   "59": "build_workflow",
-  "60": "apply_bayesflow_patches",
   "61": "Run stages (5 entry points)",
   "62": "hooks",
   "63": "PreToolUse",
@@ -103,7 +101,6 @@
   "101": "Running a full pipeline with the Two Moons simulator",
   "102": "_load_clean",
   "103": "prior_score_from_spec",
-  "104": "configuration.md",
   "106": "StreamObservationStats",
   "109": "compose_cfg"
 }

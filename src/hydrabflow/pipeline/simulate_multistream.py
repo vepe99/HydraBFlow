@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import os
 
-from tqdm import tqdm
-
 from hydrabflow.pipeline import io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.simulators.registry import get_simulator
@@ -28,7 +26,7 @@ log = get_logger(__name__)
 
 def run_multistream_simulation(cfg) -> str:
     """Generate the compositional dataset described by ``cfg`` and return its path."""
-    rng = seed_everything(cfg.seed)
+    seed_everything(cfg.seed)
     simulator = get_simulator(cfg.simulator)
     log.info(
         "Simulator '%s' (compositional): global=%s local=%s context=%s observables=%s",
@@ -39,16 +37,17 @@ def run_multistream_simulation(cfg) -> str:
         simulator.observable_keys,
     )
 
-    n_total = int(cfg.data.n_simulations)
-    chunk = int(cfg.data.chunk_size)
-    chunks = []
-    for start in tqdm(range(0, n_total, chunk), desc="simulating (compositional)"):
-        n = min(chunk, n_total - start)
-        chunks.append(simulator.sample_compositional(n, rng))
-
-    data = io.concatenate_chunks(chunks)
+    # Checkpoint each chunk to disk as it completes (resumable): a crash only costs the in-flight
+    # chunk, and re-running skips the chunks already on disk. See io.run_chunked.
     out_path = os.path.join(cfg.data.data_dir, cfg.data.dataset_name)
-    io.save_dataset(out_path, data)
+    io.run_chunked(
+        out_path,
+        n_total=int(cfg.data.n_simulations),
+        chunk=int(cfg.data.chunk_size),
+        sample_fn=simulator.sample_compositional,
+        base_seed=int(cfg.seed),
+        desc="simulating (compositional)",
+    )
 
     stem = os.path.splitext(cfg.data.dataset_name)[0]
     snapshot = save_config_snapshot(cfg.data.data_dir, stem)
