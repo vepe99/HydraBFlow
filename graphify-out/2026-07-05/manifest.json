@@ -75,13 +75,13 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1783164731.6600425,
-    "ast_hash": "8acf8842ce9e511d3f7b60ab84d70667",
+    "mtime": 1783085565.6860461,
+    "ast_hash": "6b4bed85f1cd64eab1cc2bf9a694cf27",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1783168136.3205016,
-    "ast_hash": "2d9dc8c866e9701cad49fafd3ed51808",
+    "mtime": 1783105818.1397789,
+    "ast_hash": "5e73d5e842cf23b61c38e26f2e72a626",
     "semantic_hash": ""
   },
   "conf/adapter/default.yaml": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783274850.8830843,
-    "ast_hash": "ae95a5fcabc96d012cfedc753e333e9c",
+    "mtime": 1783164712.8438942,
+    "ast_hash": "1a41f4a4f64b5537914a490f745e4541",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "pyproject.toml": {
-    "mtime": 1783267978.562271,
-    "ast_hash": "c02c56fa8c29da4f66b0b83859a0d337",
+    "mtime": 1783085787.2278416,
+    "ast_hash": "ac7eb0df5eb836750546fcb907b925a2",
     "semantic_hash": ""
   },
   "scripts/simulate_multistream.py": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/compositional.py": {
-    "mtime": 1783264153.3870587,
-    "ast_hash": "8aabed7723727882552ebab048ff8267",
+    "mtime": 1783148881.4192789,
+    "ast_hash": "2836f94f50111189a8071eb83aebc593",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/simulate_multistream.py": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1783273462.4082117,
-    "ast_hash": "9ebdc47ef1d28db5d83871c5ab4a655a",
+    "mtime": 1783082097.3622828,
+    "ast_hash": "ccf05baa3b39d047540f677c1f99a5af",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_common.py": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "tests/test_streams.py": {
-    "mtime": 1783264391.1289496,
-    "ast_hash": "1f62b2018e4a26b93091ccd2d1dfcc1b",
+    "mtime": 1783152686.799324,
+    "ast_hash": "e8d3eeea8a965d2c11e2aa29f09ab277",
     "semantic_hash": ""
   },
   "conf/adapter/stream.yaml": {
@@ -582,16 +582,6 @@
   "conf/preprocessing/stream_real_global_log10.yaml": {
     "mtime": 1783148974.1999192,
     "ast_hash": "5787234045ba23d37277340bc58a8462",
-    "semantic_hash": ""
-  },
-  "src/hydrabflow/simulators/stream_agama_rnbody.py": {
-    "mtime": 1783273460.2801943,
-    "ast_hash": "03daa57860893ca38e813dde7e6e68d5",
-    "semantic_hash": ""
-  },
-  "conf/simulator/stream_agama_rnbody.yaml": {
-    "mtime": 1783274591.3532064,
-    "ast_hash": "a6e65e91efc166f2ad4a2e1cb3784eac",
     "semantic_hash": ""
   }
 }

@@ -206,6 +206,20 @@ Every run saves:
   Artifacts: `misspecification.json` + `mmd_hypothesis_test.png`; all hooks defensive (never abort
   chained runs). `scripts/report_cross_model_tension.py` = offline cross-run posterior tension
   report (real vs sim). Verified end-to-end on the 2026-07-03 smoke model (GPU 1).
+- Session 2026-07-05 (restricted N-body simulator + prior predictive check): new
+  `stream_agama_rnbody` simulator (subclasses `stream_agama`; agama example_tidal_stream method —
+  self-consistent Plummer progenitor particles + periodically refit moving Multipole potential, no
+  dynamical friction (GC masses); NaN-guarded workers, per-worker `agama.setNumThreads`). ~10-25
+  s/row at 1 thread vs ~4-7 s spray. PPC on 120 matched prior draws vs the real Gaia members
+  found a **t_end inconsistency**: at the spray-era t_end=1.5 Gyr, restricted N-body cannot grow
+  the observed ~100° arms (real-locus reach NGC3201 13% / M68 8% vs spray 93% / 56%; median 0
+  in-window particles for NGC3201, whose progenitor lies outside its RA window) — spray fabricates
+  stripping uniformly over t_end so it never noticed; Pal 5 (t_end=4) is perfect in both. t_end=4
+  Gyr recovers reach ~42% / 73% ⇒ per user decision, `conf/simulator/stream_agama_rnbody.yaml` now
+  overrides NGC3201/M68 t_end to 4.0 (documented in the yaml). 30k-row training set generating to
+  `data/streams/data_agama_rnbody_hydrabflow/training_data_30000.npz` (20 nice'd workers).
+  agama>=1.0.157 gotcha: `getUnits()` returns astropy Quantities once astropy is imported in the
+  process — both simulators' workers harden `time_unit_gyr` against it.
 
 ## graphify
 

@@ -1,16 +1,16 @@
-# Graph Report - HydraBFlow  (2026-07-05)
+# Graph Report - HydraBFlow  (2026-07-04)
 
 ## Corpus Check
-- 74 files · ~48,615 words
+- 73 files · ~45,959 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 831 nodes · 1167 edges · 107 communities (71 shown, 36 thin omitted)
-- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 189 edges (avg confidence: 0.74)
+- 813 nodes · 1137 edges · 110 communities (75 shown, 35 thin omitted)
+- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 182 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4164d203`
+- Built from commit: `6bc994da`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -89,15 +89,17 @@
 - [[_COMMUNITY_Running a full pipeline with the Two Moons simulator|Running a full pipeline with the Two Moons simulator]]
 - [[_COMMUNITY__load_clean|_load_clean]]
 - [[_COMMUNITY_prior_score_from_spec|prior_score_from_spec]]
-- [[_COMMUNITY_configuration|configuration.md]]
+- [[_COMMUNITY_Part A — Use a pre-existing dataset (no simulator)|Part A — Use a pre-existing dataset (no simulator)]]
 - [[_COMMUNITY_StreamObservationStats|StreamObservationStats]]
+- [[_COMMUNITY_2. The four commands (full run)|2. The four commands (full run)]]
+- [[_COMMUNITY_MaskVcircRadii|MaskVcircRadii]]
 - [[_COMMUNITY_compose_cfg|compose_cfg]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `_jax()` - 24 edges
 2. `PreprocessStep` - 23 edges
 3. `_evaluate_compositional_global()` - 21 edges
-4. `AgamaStreamSimulator` - 21 edges
+4. `AgamaStreamSimulator` - 20 edges
 5. `register_configs()` - 17 edges
 6. `_evaluate_local()` - 17 edges
 7. `BaseSimulator` - 17 edges
@@ -120,27 +122,27 @@
 ## Import Cycles
 - None detected.
 
-## Communities (107 total, 36 thin omitted)
+## Communities (110 total, 35 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
 Cohesion: 0.06
-Nodes (33): PreprocessPipeline, PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty (+25 more)
+Nodes (32): PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty, Return a transformed copy/view of ``data``. (+24 more)
 
 ### Community 1 - "Eval / Checkpoint Stages"
 Cohesion: 0.33
 Nodes (6): Model Default Config, Diffusion Inference Network Config, Flow Matching Inference Network Config, DeepSet Summary Network Config, SetTransformer Summary Network Config, TimeSeriesTransformer Summary Network Config
 
 ### Community 2 - "Design Principles & Configs"
-Cohesion: 0.36
-Nodes (7): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Train the approximator and return (workflow, history)., Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., run_training(), _save_history_and_convergence(), _save_loss_plot()
+Cohesion: 0.21
+Nodes (10): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Train the approximator and return (workflow, history)., Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., run_training(), _save_history_and_convergence(), _save_loss_plot(), Seeding helpers for reproducible runs. (+2 more)
 
 ### Community 3 - "Augmentation Registry & Tests"
 Cohesion: 0.09
 Nodes (32): feature_dropout(), gaussian_noise(), multiplicative_noise(), Augmentation, Example augmentations. Use as templates for problem-specific ones.  Augmentation, Add zero-mean Gaussian noise to one observable key (additive observational noise, Scale an observable by ``(1 + N(0, mult_scale))`` — multiplicative / gain jitter, Randomly zero out entries of an observable with probability ``dropout_prob`` (Be (+24 more)
 
 ### Community 4 - "Simulate Stage & Registries"
-Cohesion: 0.06
-Nodes (44): available_augmentations(), build_augmentations(), Augmentation, Name -> augmentation-factory registry and builder.  An augmentation factory rece, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, available_steps(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``. (+36 more)
+Cohesion: 0.05
+Nodes (45): available_augmentations(), build_augmentations(), Augmentation, Name -> augmentation-factory registry and builder.  An augmentation factory rece, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, available_steps(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``. (+37 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
 Cohesion: 0.24
@@ -155,12 +157,12 @@ Cohesion: 0.07
 Nodes (28): 0. Prerequisites & install, 1. The five stages at a glance, 2. Changing the simulator, 2a. Write the simulator class, 2b. Registration is automatic, 2c. Add the simulator config, 2d. The adapter wires itself, 2e. Shape contract cheat-sheet (+20 more)
 
 ### Community 10 - "Config Composition Tests"
-Cohesion: 0.06
-Nodes (44): Logger, build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any (+36 more)
+Cohesion: 0.09
+Nodes (24): Logger, adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), Any, Build the BayesFlow ``Adapter`` from ``AdapterConfig``.  The adapter is the stru, Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``). (+16 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.15
-Nodes (11): Stage 1b: compositional (grouped) dataset generation.  Like :mod:`simulate`, but, Generate the compositional dataset described by ``cfg`` and return its path., run_multistream_simulation(), Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), get_run_dir(), Run-directory helpers and shared artifact filenames. (+3 more)
+Cohesion: 0.17
+Nodes (9): Stage 1b: compositional (grouped) dataset generation.  Like :mod:`simulate`, but, Generate the compositional dataset described by ``cfg`` and return its path., run_multistream_simulation(), Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), Run-directory helpers and shared artifact filenames., Copy Hydra's auto-generated ``.hydra/`` config folder next to a generated artifa (+1 more)
 
 ### Community 12 - "Dataset IO"
 Cohesion: 0.38
@@ -175,28 +177,28 @@ Cohesion: 0.13
 Nodes (23): _bf_mmd(), member_summaries(), mmd_test(), _null_mmd(), per_member_scores(), ndarray, Summary-space model misspecification test (observed group vs simulated reference, Mahalanobis OOD score of each observed member vs its own stream's reference clou (+15 more)
 
 ### Community 15 - "Logging Helper"
-Cohesion: 0.16
-Nodes (17): _agama(), _host_potential(), _ic_particle_spray(), ndarray, Stellar-stream forward model built on AGAMA (CPU, parallelized with joblib).  Po, Fardal+2015 initial conditions for particles escaping through the Lagrange point, Particle-spray stream including the progenitor's own (moving Plummer) potential., Model circular velocity [km/s] at the observed radii; NaN where v^2 < 0. (+9 more)
+Cohesion: 0.06
+Nodes (34): _agama(), AgamaStreamSimulator, _host_potential(), _ic_particle_spray(), ndarray, Stellar-stream forward model built on AGAMA (CPU, parallelized with joblib).  Po, Fardal+2015 initial conditions for particles escaping through the Lagrange point, Particle-spray stream including the progenitor's own (moving Plummer) potential. (+26 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
 Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.15
-Nodes (4): AgamaStreamSimulator, Stellar streams in a parametrized Milky Way potential, simulated with AGAMA., Prior spec of the inferred global parameters (used for compositional prior score, Per-stream prior spec of the inferred local parameters (drives their normalizati
+Cohesion: 0.29
+Nodes (7): B.1 The single seam, B.2 Option 1 — Quick swap (one format, replace the body), B.3 Option 2 — A format registry (support several formats by extension), B.4 (Optional) validate keys/shapes on load, Bring your own data (no simulator) & supporting other file formats, Checklist, Part B — Support a file format other than `.npz`
 
 ### Community 33 - "Community 33"
-Cohesion: 0.06
-Nodes (35): A.1 The data contract, A.2 Convert your existing arrays into the dataset file, A.3 Tell the pipeline about it (config only), A.4 Run train + evaluate, A.5 What reads what, B.1 The single seam, B.2 Option 1 — Quick swap (one format, replace the body), B.3 Option 2 — A format registry (support several formats by extension) (+27 more)
+Cohesion: 0.20
+Nodes (10): 1. Prerequisites, 2. Run a study, 3. What gets saved, 4. Run many processes at once (parallel tuning), 5. Reading the results, 6. Changing what is tuned (the search space), 7. Key config reference (`tuning` group), 8. Command recap (+2 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.17
 Nodes (11): Core Design Principles, Decisions Log, Folder Structure (finalized), Goal, graphify, HydraBFlow: SBI Pipeline Template with BayesFlow, Output Directory Convention, Run stages (6 entry points) (+3 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.18
-Nodes (6): AttachObservedVcirc, MaskVcircRadii, Stream-specific preprocessing: per-stream normalization and rotation-curve trimm, Attach the *observed* Milky Way rotation curve to a real dataset that lacks one., Keep only rotation-curve bins with ``r >= r_min`` on the observed radii grid., test_mask_vcirc_radii_trims_grid()
+Cohesion: 0.24
+Nodes (6): AttachObservedVcirc, Dataset, Stream-specific preprocessing: per-stream normalization and rotation-curve trimm, Attach the *observed* Milky Way rotation curve to a real dataset that lacks one., Integer stream ids broadcastable against ``like``.      ``j``'s leading axes alw, _stream_index()
 
 ### Community 37 - "Community 37"
 Cohesion: 0.07
@@ -211,12 +213,12 @@ Cohesion: 0.60
 Nodes (4): Preprocessing pipeline: fit/transform/split + state save/load round-trip., test_pipeline_fit_transform_and_split(), test_state_roundtrip(), _toy_data()
 
 ### Community 40 - "Community 40"
-Cohesion: 0.20
-Nodes (19): condition_keys(), Raw batch keys that act as sampling conditions (everything the adapter consumes, _evaluate_compositional_global(), _evaluate_local(), _load_test_data(), Stage 3: evaluation on a simulated test set (with known ground truth).  Loads th, Global-level evaluation on a grouped (multistream) test set, both ways:      * *, Local-level evaluation: per-member sampling conditioned on the true globals. (+11 more)
+Cohesion: 0.23
+Nodes (18): condition_keys(), Raw batch keys that act as sampling conditions (everything the adapter consumes, _evaluate_compositional_global(), _evaluate_local(), _load_test_data(), Stage 3: evaluation on a simulated test set (with known ground truth).  Loads th, Global-level evaluation on a grouped (multistream) test set, both ways:      * *, Local-level evaluation: per-member sampling conditioned on the true globals. (+10 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.23
-Nodes (11): ndarray, Shared helpers for the stellar-stream simulators (agama, gala, ...).  Ports the, Project Galactocentric phase-space coordinates to observed ICRS quantities., Draw ``(n, 1)`` samples from one prior spec (uniform / normal / identity)., Single-stream draw: global parameters, a random stream index ``j``, and that str, Compositional draw: one global draw shared by *all* streams of each dataset., sample_prior_value(), sample_stream_prior() (+3 more)
+Cohesion: 0.15
+Nodes (20): build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, Build BayesFlow networks from structured dataclass configs (no ``_target_``).  B (+12 more)
 
 ### Community 47 - "MaskedFusionNetwork"
 Cohesion: 0.16
@@ -224,11 +226,11 @@ Nodes (9): Layer, Shape, _fusion(), MaskedFusionNetwork, Multi-observable fusion
 
 ### Community 54 - "compositional.py"
 Cohesion: 0.19
-Nodes (12): apply_augmentations_once(), composition_level(), flatten_members(), group_members(), log10_keys_from_pipeline(), ndarray, Helpers for compositional (grouped) evaluation.  A compositional dataset stores, Inverse of :func:`flatten_members` for arrays of ``n*m`` rows -> ``(n, m, ...)`` (+4 more)
+Nodes (12): apply_augmentations_once(), composition_level(), flatten_members(), group_members(), log10_keys_from_pipeline(), ndarray, Helpers for compositional (grouped) evaluation.  A compositional dataset stores, Replay the configured augmentation chain once (fixed draw) on flattened rows. (+4 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.16
-Nodes (18): fix_keras_model(), load_approximator(), Any, Model save/load helpers, including the BayesFlow ``.keras`` deserialization work, Return a path to a load-safe copy of ``model_path`` (patching the ArrayImpl tag), Load a saved approximator, applying the ArrayImpl fix first., save_approximator(), _evaluate_real_compositional() (+10 more)
+Cohesion: 0.26
+Nodes (12): PreprocessPipeline, _evaluate_real_compositional(), _max_particles(), _prepare_real_members(), Stage 5: application to real (observed) data.  Like :mod:`evaluate`, but the inp, Load the observed group and normalize it to flat member rows.      Expected layo, Save a posterior pair plot per observation (real data has no ground truth)., run_real_evaluation() (+4 more)
 
 ### Community 57 - "Community 57"
 Cohesion: 0.50
@@ -247,59 +249,71 @@ Cohesion: 0.50
 Nodes (4): apply_bayesflow_patches(), _patch_compositional_condition_reshape(), Targeted runtime fixes for known BayesFlow bugs (version-checked, applied once)., Idempotently install the fixes. Called when a compositional workflow is built.
 
 ### Community 96 - "test_streams.py"
-Cohesion: 0.33
-Nodes (8): compose(), Expose the composer so tests can build configs with custom overrides., Stream-project components: config composition, hierarchy derivation, per-stream, test_adapter_derivation_follows_composition_level(), test_simulator_declares_hierarchy(), test_stream_config_composes(), test_stream_global_log10_and_nolos_presets_compose(), test_stream_noerr_and_nolos_variants_compose()
+Cohesion: 0.18
+Nodes (11): compose(), Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override(), Stream-project components: config composition, hierarchy derivation, per-stream, test_adapter_derivation_follows_composition_level() (+3 more)
 
 ### Community 97 - "reporting.py"
 Cohesion: 0.20
 Nodes (13): _finite(), _has_nonfinite(), inspect_history(), _load_json(), _metrics_table(), Any, _rate(), Training-convergence inspection and Markdown report generation.  Two pure-Python (+5 more)
 
 ### Community 98 - "Stream project (compositional score modeling)"
-Cohesion: 0.14
-Nodes (14): 1. What more flexible potential family, 2. More realistic stream simulation with agama — straight from their bundled examples, Adding your own simulator, Configuration used explicitly, Data generation, Design at a glance, Evaluation (plots + metrics), Future work (TODO) (+6 more)
+Cohesion: 0.18
+Nodes (11): Adding your own simulator, Configuration used explicitly, Data generation, Design at a glance, Evaluation (plots + metrics), GPU, HydraBFlow, Hyperparameter tuning (+3 more)
 
 ### Community 99 - "PerStreamParameterStandardize"
 Cohesion: 0.25
 Nodes (5): PerStreamParameterStandardize, ndarray, z-score each stream's local parameters with that stream's prior mean/std., test_per_stream_parameter_standardize_rejects_non_normal(), test_per_stream_parameter_standardize_roundtrip()
 
 ### Community 100 - "load_approximator"
-Cohesion: 0.24
-Nodes (10): _plummer_sample(), ndarray, Restricted N-body stellar-stream forward model on AGAMA (CPU, joblib).  Same pri, joblib worker: one restricted-N-body stream + the rotation curve of its potentia, Stellar streams via restricted N-body (agama example_tidal_stream method)., Positions/velocities (relative to the center) of an isotropic Plummer sphere., Restricted N-body stream: forward-integrate Plummer particles from the rewound o, RestrictedNbodyStreamSimulator (+2 more)
+Cohesion: 0.32
+Nodes (7): fix_keras_model(), load_approximator(), Any, Model save/load helpers, including the BayesFlow ``.keras`` deserialization work, Return a path to a load-safe copy of ``model_path`` (patching the ArrayImpl tag), Load a saved approximator, applying the ArrayImpl fix first., save_approximator()
 
 ### Community 101 - "Running a full pipeline with the Two Moons simulator"
 Cohesion: 0.29
-Nodes (4): Config composition + schema validation smoke tests., test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override()
+Nodes (7): 0. What you're running, 1. Prerequisites, 3. Fast smoke run (≈1 minute), 4. Optional: train with observational noise (augmentations), 5. Tuning the prior / observation knobs (optional), 6. Command recap, Running a full pipeline with the Two Moons simulator
 
 ### Community 102 - "_load_clean"
 Cohesion: 0.43
 Nodes (6): _load_clean(), main(), ndarray, Cross-model posterior tension report (offline analysis helper — not a Hydra run, Load a posterior .npz as {param: (n_datasets, n_samples)} float arrays., _resolve()
 
 ### Community 103 - "prior_score_from_spec"
-Cohesion: 0.25
-Nodes (8): Container, prior_score_from_spec(), Score of the log prior for compositional sampling, from a prior-spec mapping., The callable's signature names a ``time`` parameter, so BayesFlow's     ``prior_, d/dy log p_Y(y) for y=log10(x) must include the +ln(10) Jacobian term, not just, test_prior_score_applies_time_decay(), test_prior_score_from_spec(), test_prior_score_log10_jacobian_correction()
+Cohesion: 0.33
+Nodes (6): Container, prior_score_from_spec(), Score of the log prior for compositional sampling, from a prior-spec mapping., d/dy log p_Y(y) for y=log10(x) must include the +ln(10) Jacobian term, not just, test_prior_score_from_spec(), test_prior_score_log10_jacobian_correction()
+
+### Community 105 - "Part A — Use a pre-existing dataset (no simulator)"
+Cohesion: 0.33
+Nodes (6): A.1 The data contract, A.2 Convert your existing arrays into the dataset file, A.3 Tell the pipeline about it (config only), A.4 Run train + evaluate, A.5 What reads what, Part A — Use a pre-existing dataset (no simulator)
 
 ### Community 106 - "StreamObservationStats"
-Cohesion: 0.24
-Nodes (6): Dataset, Fit per-stream observation stats + log10(vcirc) per-bin stats on the (clean) tra, Integer stream ids broadcastable against ``like``.      ``j``'s leading axes alw, _stream_index(), StreamObservationStats, test_stream_observation_stats_fit_and_state_roundtrip()
+Cohesion: 0.33
+Nodes (3): Fit per-stream observation stats + log10(vcirc) per-bin stats on the (clean) tra, StreamObservationStats, test_stream_observation_stats_fit_and_state_roundtrip()
+
+### Community 107 - "2. The four commands (full run)"
+Cohesion: 0.40
+Nodes (5): 2.1 Generate the training set, 2.2 Generate a held-out test set, 2.3 Train, 2.4 Evaluate, 2. The four commands (full run)
+
+### Community 108 - "MaskVcircRadii"
+Cohesion: 0.40
+Nodes (3): MaskVcircRadii, Keep only rotation-curve bins with ``r >= r_min`` on the observed radii grid., test_mask_vcirc_radii_trims_grid()
 
 ### Community 109 - "compose_cfg"
 Cohesion: 0.50
 Nodes (4): cfg(), compose_cfg(), Shared test fixtures., Compose the root config with the structured schemas registered.      ``fill=True
 
 ## Knowledge Gaps
-- **144 isolated node(s):** `hydrabflow`, `graphify`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)` (+139 more)
+- **142 isolated node(s):** `hydrabflow`, `graphify`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)` (+137 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_simulator()` connect `Simulate Stage & Registries` to `test_streams.py`, `Config Schemas`, `Community 40`, `Config Composition Tests`, `Community 11`, `JAX Backend Pin`, `Community 56`?**
+- **Why does `get_simulator()` connect `Simulate Stage & Registries` to `Config Schemas`, `Community 40`, `Config Composition Tests`, `Community 11`, `JAX Backend Pin`, `Community 56`?**
   _High betweenness centrality (0.120) - this node is a cross-community bridge._
-- **Why does `BaseSimulator` connect `Config Schemas` to `Community 32`, `Simulate Stage & Registries`?**
-  _High betweenness centrality (0.115) - this node is a cross-community bridge._
-- **Why does `PreprocessStep` connect `Preprocessing Pipeline & Steps` to `PerStreamParameterStandardize`, `Community 35`, `Example Simulators (Skeleton/TwoMoons)`, `Config Schemas`, `StreamObservationStats`?**
-  _High betweenness centrality (0.094) - this node is a cross-community bridge._
+- **Why does `BaseSimulator` connect `Config Schemas` to `Simulate Stage & Registries`, `Logging Helper`?**
+  _High betweenness centrality (0.110) - this node is a cross-community bridge._
+- **Why does `PreprocessStep` connect `Preprocessing Pipeline & Steps` to `Community 35`, `PerStreamParameterStandardize`, `Example Simulators (Skeleton/TwoMoons)`, `Config Schemas`, `StreamObservationStats`, `MaskVcircRadii`, `Community 56`?**
+  _High betweenness centrality (0.095) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `PreprocessStep` (e.g. with `PreprocessPipeline` and `Standardizer`) actually correct?**
   _`PreprocessStep` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 12 inferred relationships involving `_evaluate_compositional_global()` (e.g. with `load_approximator()` and `apply_augmentations_once()`) actually correct?**
@@ -307,4 +321,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 15 inferred relationships involving `register_configs()` (e.g. with `AdapterConfig` and `AugmentationConfig`) actually correct?**
   _`register_configs()` has 15 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Marimo notebook: inspect a training run's posterior samples and diagnostics.  Ru`, `hydrabflow`, `Cross-model posterior tension report (offline analysis helper — not a Hydra run` to the rest of the system?**
-  _338 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _330 weakly-connected nodes found - possible documentation gaps or missing edges._
