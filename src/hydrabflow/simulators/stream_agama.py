@@ -390,6 +390,16 @@ class AgamaStreamSimulator(BaseSimulator):
             return extended_rotation_curve(self._obs_r_split)[2]
         return np.asarray(self.params.get("obs_sigma_vc", OBS_SIGMA_VC), dtype=float)
 
+    @property
+    def obs_vc_kms(self) -> np.ndarray:
+        """Observed Milky Way circular velocity aligned with ``obs_r_kpc`` — the fixed curve
+        ``attach_observed_vcirc`` supplies to real-data evaluation (simulated data carry their own
+        model curve). ``obs_r_grid: extended`` -> Zhou below the split u Huang beyond; otherwise
+        the Zhou grid. Mirrors :meth:`obs_r_kpc` / :meth:`obs_sigma_vc`."""
+        if str(self.params.get("obs_r_grid", "")) == "extended":
+            return extended_rotation_curve(self._obs_r_split)[1]
+        return np.asarray(self.params.get("obs_vc_kms", OBS_VC_KMS), dtype=float)
+
     @staticmethod
     def _as_dict(node) -> dict:
         from omegaconf import OmegaConf

@@ -103,13 +103,21 @@ def fill_stream_grid_from_simulator(cfg) -> None:
 
     radii = [float(x) for x in simulator.obs_r_kpc]
     sigma = [float(x) for x in simulator.obs_sigma_vc]
+    obs_vc = [float(x) for x in simulator.obs_vc_kms] if hasattr(simulator, "obs_vc_kms") else None
 
     # Preprocessing: give mask_vcirc_radii the full (untrimmed) grid so its bin-count check passes
-    # and it trims to r >= r_min consistently with the augmentation.
+    # and it trims to r >= r_min consistently with the augmentation; and give attach_observed_vcirc
+    # (real-data eval) the observed curve on that same grid so its shape matches the mask.
     for step in getattr(getattr(cfg, "preprocessing", None), "steps", []) or []:
-        if str(getattr(step, "name", "")) == "mask_vcirc_radii" and not getattr(step, "radii", None):
+        # Use .get() (not getattr): DictConfig exposes dict methods as attributes, so
+        # getattr(step, "values") would return the bound .values() method, not the config key.
+        name = str(step.get("name", ""))
+        if name == "mask_vcirc_radii" and not step.get("radii"):
             with open_dict(step):
                 step.radii = radii
+        elif name == "attach_observed_vcirc" and obs_vc is not None and not step.get("values"):
+            with open_dict(step):
+                step.values = obs_vc
 
     # Augmentation: give add_noise_to_vcirc the matching per-bin errors on the same grid.
     aug_params = getattr(getattr(cfg, "augmentation", None), "params", None)
