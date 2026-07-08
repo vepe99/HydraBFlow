@@ -61,8 +61,24 @@ def run_evaluation(cfg):
     # 4. Diagnostics (each guarded so one failure doesn't abort the rest).
     param_names = list(cfg.adapter.inference_variables)
     _run_diagnostics(cfg, posterior, test_data, param_names, run_dir)
+    _write_report(cfg, run_dir, model_dir, "none")
     log.info("Evaluation complete. Artifacts in %s", run_dir)
     return posterior
+
+
+def _write_report(cfg, run_dir: str, model_dir: str, level: str) -> None:
+    """Best-effort ``report.md`` from the metrics/figures just written; never aborts a run."""
+    try:
+        from hydrabflow.utils.reporting import write_report
+
+        write_report(
+            run_dir,
+            param_names=list(cfg.adapter.inference_variables),
+            model_dir=model_dir,
+            title=f"Evaluation report (composition={level})",
+        )
+    except Exception as exc:  # report generation must never abort an evaluation
+        log.warning("Could not write report.md: %s", exc)
 
 
 def _run_diagnostics(cfg, posterior, test_data, param_names, run_dir) -> None:
@@ -95,6 +111,7 @@ def _run_diagnostics(cfg, posterior, test_data, param_names, run_dir) -> None:
     plot_specs = [
         ("recovery", getattr(bf.diagnostics, "recovery", None)),
         ("calibration_ecdf", getattr(bf.diagnostics, "calibration_ecdf", None)),
+        ("coverage", getattr(bf.diagnostics, "coverage", None)),
         ("z_score_contraction", getattr(bf.diagnostics, "z_score_contraction", None)),
     ]
     for name, fn in plot_specs:

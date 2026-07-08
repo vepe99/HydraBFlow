@@ -13,6 +13,9 @@ log = get_logger(__name__)
 PREPROCESSING_STATE = "preprocessing_state.npz"
 POSTERIOR_SAMPLES = "posterior.npz"
 LOSS_PLOT = "loss.png"
+HISTORY_JSON = "history.json"          # raw Keras history.history dict
+CONVERGENCE_JSON = "convergence.json"  # inspect_history() report for the training run
+REPORT_MD = "report.md"                # human-readable evaluation report
 
 
 def get_run_dir() -> str:
