@@ -70,6 +70,57 @@ def fill_adapter_from_simulator(cfg) -> None:
         cfg.adapter.inference_conditions = list(inference_conditions)
 
 
+def fill_stream_grid_from_simulator(cfg) -> None:
+    """Align the training-time rotation-curve grid with the simulator's ``vcirc_kms`` grid.
+
+    The rotation-curve observable can live on a non-default radial grid (e.g. the extended
+    Zhou u Huang union grid, ``simulator.params.obs_r_grid: extended``, 50 radii). Two
+    training-time components hardcode the default Zhou grid and would otherwise mismatch it:
+
+      * the ``mask_vcirc_radii`` preprocessing step (raises if the observable's bin count differs
+        from its configured ``radii``);
+      * the ``add_noise_to_vcirc`` augmentation, whose per-bin sigma is drawn from the augmentation
+        params' ``obs_sigma_vc`` / ``obs_r_kpc`` (defaulting to the Zhou grid).
+
+    So when the simulator exposes a non-default grid, inject *its* radii + per-bin sigma into those
+    two config nodes where the user has not set them explicitly. The simulator stays the single
+    source of truth (``obs_r_kpc`` / ``obs_sigma_vc`` properties). No-op for simulators without a
+    vcirc grid or when the config already pins the grid, so the default Zhou path is untouched.
+    """
+    from hydrabflow.simulators.registry import get_simulator
+
+    try:
+        simulator = get_simulator(cfg.simulator)
+    except KeyError:
+        return
+    # Only stream simulators declaring a non-default grid need this; guard cheaply on the param.
+    if str(getattr(getattr(cfg.simulator, "params", None), "obs_r_grid", "") or "") != "extended":
+        return
+    if not hasattr(simulator, "obs_r_kpc") or not hasattr(simulator, "obs_sigma_vc"):
+        return
+
+    from omegaconf import open_dict
+
+    radii = [float(x) for x in simulator.obs_r_kpc]
+    sigma = [float(x) for x in simulator.obs_sigma_vc]
+
+    # Preprocessing: give mask_vcirc_radii the full (untrimmed) grid so its bin-count check passes
+    # and it trims to r >= r_min consistently with the augmentation.
+    for step in getattr(getattr(cfg, "preprocessing", None), "steps", []) or []:
+        if str(getattr(step, "name", "")) == "mask_vcirc_radii" and not getattr(step, "radii", None):
+            with open_dict(step):
+                step.radii = radii
+
+    # Augmentation: give add_noise_to_vcirc the matching per-bin errors on the same grid.
+    aug_params = getattr(getattr(cfg, "augmentation", None), "params", None)
+    if aug_params is not None:
+        with open_dict(aug_params):
+            if not getattr(aug_params, "obs_r_kpc", None):
+                aug_params.obs_r_kpc = radii
+            if not getattr(aug_params, "obs_sigma_vc", None):
+                aug_params.obs_sigma_vc = sigma
+
+
 def adapter_keys(cfg) -> List[str]:
     """All dataset keys the adapter (``cfg.adapter``) consumes, in a stable order."""
     keys = (

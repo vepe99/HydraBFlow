@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783499658.7217906,
-    "ast_hash": "39c9835d0b1716cc5c3c71f1708f6e25",
+    "mtime": 1783500690.633973,
+    "ast_hash": "96bcee4dc7d3996ad74062111425efe9",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1783440330.714972,
-    "ast_hash": "dbe7c56e896a8c9d72d25214e7bff270",
+    "mtime": 1783501438.4599178,
+    "ast_hash": "b94f328acb87fcf8792e949085410ba2",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_common.py": {
@@ -595,8 +595,8 @@
     "semantic_hash": ""
   },
   "scripts/ppc_prior_predictive.py": {
-    "mtime": 1783444796.6568704,
-    "ast_hash": "8b81e9c541f923e8b46a6e963d63bb02",
+    "mtime": 1783502672.929925,
+    "ast_hash": "21b5c17394fbd1024269932eb5e4e42f",
     "semantic_hash": ""
   },
   "scripts/corner_parameters.py": {
@@ -607,6 +607,36 @@
   "scripts/extend_vcirc_huang.py": {
     "mtime": 1783497931.7396991,
     "ast_hash": "bad5a1cfc393c24b09855d6b5b443740",
+    "semantic_hash": ""
+  },
+  "scripts/compare_spray_methods.py": {
+    "mtime": 1783501693.9339528,
+    "ast_hash": "9ff3f06b81a1dbb86ae778c54c660251",
+    "semantic_hash": ""
+  },
+  "scripts/probe_vcirc_acceptance.py": {
+    "mtime": 1783501800.8508048,
+    "ast_hash": "60bcf7d0b6310595d0199b20428e7bb0",
+    "semantic_hash": ""
+  },
+  "assets/gaia/README.md": {
+    "mtime": 1783502691.222074,
+    "ast_hash": "73e11f09ac05a3002ab04c1f65832d97",
+    "semantic_hash": ""
+  },
+  "assets/gaia/apjad382dt1_mrt.txt": {
+    "mtime": 1783502663.1618452,
+    "ast_hash": "36473298d1075dfe79bcf0699fa0012c",
+    "semantic_hash": ""
+  },
+  "assets/gaia/gaia_DR3_erorr_6D.txt": {
+    "mtime": 1783502663.1778455,
+    "ast_hash": "e0db4e57d89538dc1ad5a2742faf4108",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_agama_spray_huang.yaml": {
+    "mtime": 1783501505.30445,
+    "ast_hash": "52281897492213d504625de36bb723ad",
     "semantic_hash": ""
   }
 }

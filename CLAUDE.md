@@ -257,6 +257,43 @@ Every run saves:
   (Pal5/NGC3201/M68), 0% NaN — the cut REMOVES wild potentials that threw M68 off-locus, lifting
   its reach above the unconstrained t_end=4 check (~60%). Planned rejection-prior datasets (30k flat
   + 333 multistream) and model_5 training were scoped this session but NOT run yet.
+- Session 2026-07-08 (Chen+2024 spray + Zhou∪Huang rejection + portable assets + 30k dataset):
+  goal = a spray training set consistent with BOTH observed rotation curves. Three additions, all
+  config-driven on the existing `stream_agama` class (no new simulator class):
+  - **Chen, Gnedin & Li (2024) release recipe** as `params.spray_method: chen` (`_ic_chen_spray`,
+    a 1:1 port of gala `ChenStreamDF._sample` — 6D (r,φ,θ,v,α,β) Lagrange-point draw with the
+    r–α covariance; verified agama's R-matrix/`einsum` frame == gala's transform, so it is a clean
+    IC-only swap). Fardal+2015 stays the default (`spray_method` absent ⇒ fardal).
+  - **Extended rotation-curve observable** (`params.obs_r_grid: extended`, `obs_r_split_kpc: 24`):
+    the stored `vcirc_kms` AND the rejection grid become the Zhou(2023)∪Huang(2016) union (50
+    radii, single source of truth `stream_common.extended_rotation_curve`). `beta_..._halo` freed
+    to uniform[2,4] (was identity 3.0) so the model can grow Huang's declining outer curve.
+  - **Banded `vcirc_rejection`** (`params.vcirc_rejection.bands`, per-band criterion/stat/thresh):
+    zhou band 5.5–24 kpc fractional median<0.20; huang band r>24 sigma median<2.0 (respects
+    Huang's heteroscedastic 7–50 km/s errors — a flat fractional cut can't). Still a hard
+    indicator ⇒ compositional prior score stays valid unchanged. `_build_accept_bands` +
+    rewritten `_vcirc_accept_worker` (list of bands; row accepted iff every band passes).
+  Config: `conf/simulator/stream_agama_spray_huang.yaml` (`name: stream_agama`). Helper scripts:
+  `compare_spray_methods.py` (Fardal vs Chen vs real overlay), `probe_vcirc_acceptance.py`
+  (per-band + combined acceptance), `extend_vcirc_huang.py`; `ppc_prior_predictive.py` generalized
+  to the 50-radii grid (Zhou+Huang overlays, log-x, split line). Pilot: Zhou band 24.6%, Huang
+  15.4%, combined 7.9% (~12.6 screens/accepted row). **30k dataset generated** (Chen spray,
+  rejection prior, seed=2026, 24 workers, 40.5 min) →
+  `data/streams/data_agama_spray_huang_hydrabflow/training_data_30000.npz` (30000 rows,
+  `vcirc_kms` (30000,50,1), beta spanning [2,4] mean 3.10, streams 9922/10039/10039, 83 NaN rows
+  0.28%). Chunk-0 PPC: prior band brackets both curves, prior-median fracdev 5.6% vs Zhou / 5.3%
+  vs Huang (old fixed-β was ~21% off Huang); real-locus reach 100/99/97%.
+  **Portability (`assets/gaia/`, git-tracked, ~3.6 MB)**: copied the small static inputs (Gaia
+  member/error tables from the `data/` symlink; real observed-stream npz + reference tracks from
+  the reference project) so the repo is self-contained for moving to a GPU-less cluster.
+  README documents provenance + new-cluster wiring (`+augmentation.params.resources_dir=assets/gaia`).
+  Dataset creation needs NONE of these (rotation curves are hardcoded in `stream_common`); they
+  serve the PPC scripts + training/real eval. `ppc_prior_predictive` `DEFAULT_REAL` now prefers
+  the in-repo copy. Committed as b3692a1 (not pushed).
+  **DEFERRED / next**: the 50-radii observable needs training-time wiring before `train` runs on
+  this dataset — `mask_vcirc_radii` (raises on 50≠34) and `add_noise_to_vcirc` σ both hardcode the
+  34-Zhou grid and must be pointed at the extended grid (+ per-bin Zhou/Huang σ). 333 multistream
+  test set + model_5 train/eval/eval_real also pending.
 
 ## graphify
 

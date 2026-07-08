@@ -22,7 +22,10 @@ def make_cli(run_fn: Callable) -> Callable[[], None]:
         import hydra
 
         from hydrabflow.config import register_configs
-        from hydrabflow.pipeline.adapter import fill_adapter_from_simulator
+        from hydrabflow.pipeline.adapter import (
+            fill_adapter_from_simulator,
+            fill_stream_grid_from_simulator,
+        )
 
         register_configs()
 
@@ -31,6 +34,9 @@ def make_cli(run_fn: Callable) -> Callable[[], None]:
             # Empty adapter variable lists are derived from the simulator's declaration, so the
             # simulator class stays the single source of truth for its names/keys.
             fill_adapter_from_simulator(cfg)
+            # Align the rotation-curve grid (mask + noise sigma) with the simulator's vcirc grid
+            # when it uses a non-default (e.g. extended Zhou u Huang) grid; no-op otherwise.
+            fill_stream_grid_from_simulator(cfg)
             run_fn(cfg)
 
         _main()

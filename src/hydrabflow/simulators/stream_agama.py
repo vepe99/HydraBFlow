@@ -39,6 +39,7 @@ from hydrabflow.simulators.base import BaseSimulator
 from hydrabflow.simulators.registry import register_simulator
 from hydrabflow.simulators.stream_common import (
     OBS_R_KPC,
+    OBS_SIGMA_VC,
     OBS_VC_KMS,
     extended_rotation_curve,
     inferred_names,
@@ -374,6 +375,20 @@ class AgamaStreamSimulator(BaseSimulator):
         if str(self.params.get("obs_r_grid", "")) == "extended":
             return extended_rotation_curve(self._obs_r_split)[0]
         return np.asarray(self.params.get("obs_r_kpc", OBS_R_KPC), dtype=float)
+
+    @property
+    def obs_sigma_vc(self) -> np.ndarray:
+        """Per-bin observed 1-sigma on the rotation curve, aligned with ``obs_r_kpc``.
+
+        ``obs_r_grid: extended`` -> the Zhou u Huang errors (Zhou below ``obs_r_split_kpc``,
+        Huang beyond), so the training-time ``add_noise_to_vcirc`` gives the outer (Huang) radii
+        their own heteroscedastic errors rather than Zhou's ~0.2 km/s inner errors; an explicit
+        ``obs_sigma_vc`` list overrides; otherwise the Zhou grid. Mirrors :meth:`obs_r_kpc` so the
+        two stay aligned and the simulator remains the single source of truth for the vcirc grid.
+        """
+        if str(self.params.get("obs_r_grid", "")) == "extended":
+            return extended_rotation_curve(self._obs_r_split)[2]
+        return np.asarray(self.params.get("obs_sigma_vc", OBS_SIGMA_VC), dtype=float)
 
     @staticmethod
     def _as_dict(node) -> dict:
