@@ -47,136 +47,6 @@
       "norm_label": "hydrabflow"
     },
     {
-      "label": "corner_parameters.py",
-      "file_type": "code",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters",
-      "community": 105,
-      "norm_label": "corner_parameters.py"
-    },
-    {
-      "label": "expand_inputs()",
-      "file_type": "code",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L45",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_expand_inputs",
-      "community": 105,
-      "norm_label": "expand_inputs()"
-    },
-    {
-      "label": "detect_param_keys()",
-      "file_type": "code",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L66",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_detect_param_keys",
-      "community": 105,
-      "norm_label": "detect_param_keys()"
-    },
-    {
-      "label": "NpzFile",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "npzfile",
-      "community": 105,
-      "norm_label": "npzfile"
-    },
-    {
-      "label": "load_columns()",
-      "file_type": "code",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L78",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_load_columns",
-      "community": 105,
-      "norm_label": "load_columns()"
-    },
-    {
-      "label": "ndarray",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_py_ndarray",
-      "community": 105,
-      "norm_label": "ndarray"
-    },
-    {
-      "label": "autoscale()",
-      "file_type": "code",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L88",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_autoscale",
-      "community": 105,
-      "norm_label": "autoscale()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L97",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_main",
-      "community": 105,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Corner plot of parameter draws from a simulate dataset (offline helper \u2014 not a H",
-      "file_type": "rationale",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_rationale_1",
-      "community": 105,
-      "norm_label": "corner plot of parameter draws from a simulate dataset (offline helper \u2014 not a h"
-    },
-    {
-      "label": "Expand each input into concrete .npz files: a directory -> its sorted chunk_*.np",
-      "file_type": "rationale",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L46",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_rationale_46",
-      "community": 105,
-      "norm_label": "expand each input into concrete .npz files: a directory -> its sorted chunk_*.np"
-    },
-    {
-      "label": "Scalar-per-row keys that are not observables/indices, in file order.",
-      "file_type": "rationale",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L67",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_rationale_67",
-      "community": 105,
-      "norm_label": "scalar-per-row keys that are not observables/indices, in file order."
-    },
-    {
-      "label": "Concatenate each key across files, flattening any member axis to one column per",
-      "file_type": "rationale",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L79",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_rationale_79",
-      "community": 105,
-      "norm_label": "concatenate each key across files, flattening any member axis to one column per"
-    },
-    {
-      "label": "Divide by a power of ten when the typical magnitude is large/small, and note it",
-      "file_type": "rationale",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L89",
-      "_origin": "ast",
-      "id": "scripts_corner_parameters_rationale_89",
-      "community": 105,
-      "norm_label": "divide by a power of ten when the typical magnitude is large/small, and note it"
-    },
-    {
       "label": "evaluate.py",
       "file_type": "code",
       "source_file": "scripts/evaluate.py",
@@ -1893,7 +1763,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint",
-      "community": 108,
+      "community": 56,
       "norm_label": "checkpoint.py"
     },
     {
@@ -1903,7 +1773,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_save_approximator",
-      "community": 108,
+      "community": 56,
       "norm_label": "save_approximator()"
     },
     {
@@ -1913,7 +1783,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_py_any",
-      "community": 108,
+      "community": 56,
       "norm_label": "any"
     },
     {
@@ -1923,7 +1793,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_fix_keras_model",
-      "community": 108,
+      "community": 56,
       "norm_label": "fix_keras_model()"
     },
     {
@@ -1933,7 +1803,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_load_approximator",
-      "community": 108,
+      "community": 56,
       "norm_label": "load_approximator()"
     },
     {
@@ -1943,7 +1813,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_1",
-      "community": 108,
+      "community": 56,
       "norm_label": "model save/load helpers, including the bayesflow ``.keras`` deserialization work"
     },
     {
@@ -1953,7 +1823,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_30",
-      "community": 108,
+      "community": 56,
       "norm_label": "return a path to a load-safe copy of ``model_path`` (patching the arrayimpl tag)"
     },
     {
@@ -1963,7 +1833,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_47",
-      "community": 108,
+      "community": 56,
       "norm_label": "load a saved approximator, applying the arrayimpl fix first."
     },
     {
@@ -3043,7 +2913,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "abc",
-      "community": 0,
+      "community": 6,
       "norm_label": "abc"
     },
     {
@@ -5523,7 +5393,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_get_run_dir",
-      "community": 40,
+      "community": 96,
       "norm_label": "get_run_dir()"
     },
     {
@@ -5563,7 +5433,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_rationale_25",
-      "community": 40,
+      "community": 96,
       "norm_label": "return the current hydra run output dir (works regardless of the ``job.chdir`` s"
     },
     {
@@ -5793,7 +5663,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "tests_conftest_compose",
-      "community": 107,
+      "community": 101,
       "norm_label": "compose()"
     },
     {
@@ -5823,7 +5693,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "tests_conftest_rationale_40",
-      "community": 107,
+      "community": 101,
       "norm_label": "expose the composer so tests can build configs with custom overrides."
     },
     {
@@ -6353,7 +6223,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_streams",
-      "community": 107,
+      "community": 103,
       "norm_label": "test_streams.py"
     },
     {
@@ -6363,7 +6233,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_test_streams_test_stream_config_composes",
-      "community": 107,
+      "community": 101,
       "norm_label": "test_stream_config_composes()"
     },
     {
@@ -6373,7 +6243,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_streams_test_simulator_declares_hierarchy",
-      "community": 107,
+      "community": 4,
       "norm_label": "test_simulator_declares_hierarchy()"
     },
     {
@@ -6383,7 +6253,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "tests_test_streams_test_adapter_derivation_follows_composition_level",
-      "community": 107,
+      "community": 101,
       "norm_label": "test_adapter_derivation_follows_composition_level()"
     },
     {
@@ -6503,7 +6373,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "tests_test_streams_test_stream_global_log10_and_nolos_presets_compose",
-      "community": 107,
+      "community": 103,
       "norm_label": "test_stream_global_log10_and_nolos_presets_compose()"
     },
     {
@@ -6513,7 +6383,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "tests_test_streams_test_stream_noerr_and_nolos_variants_compose",
-      "community": 107,
+      "community": 101,
       "norm_label": "test_stream_noerr_and_nolos_variants_compose()"
     },
     {
@@ -6523,7 +6393,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_1",
-      "community": 107,
+      "community": 103,
       "norm_label": "stream-project components: config composition, hierarchy derivation, per-stream"
     },
     {
@@ -8193,7 +8063,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/preprocessing/registry.py",
       "source_location": "L25",
-      "community": 0,
+      "community": 56,
       "norm_label": "preprocesspipeline",
       "id": "preprocesspipeline"
     },
@@ -8406,7 +8276,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -8766,183 +8636,6 @@
       "weight": 1.0,
       "source": "notebooks_explore_rationale_1",
       "target": "notebooks_explore",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L88",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters",
-      "target": "scripts_corner_parameters_autoscale",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L66",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters",
-      "target": "scripts_corner_parameters_detect_param_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L45",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters",
-      "target": "scripts_corner_parameters_expand_inputs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L78",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters",
-      "target": "scripts_corner_parameters_load_columns",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L97",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters",
-      "target": "scripts_corner_parameters_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_rationale_1",
-      "target": "scripts_corner_parameters",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L110",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_main",
-      "target": "scripts_corner_parameters_expand_inputs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L46",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_rationale_46",
-      "target": "scripts_corner_parameters_expand_inputs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "parameter_type",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L66",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_detect_param_keys",
-      "target": "npzfile",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L113",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_main",
-      "target": "scripts_corner_parameters_detect_param_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L67",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_rationale_67",
-      "target": "scripts_corner_parameters_detect_param_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L78",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_load_columns",
-      "target": "scripts_corner_parameters_py_ndarray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L120",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_main",
-      "target": "scripts_corner_parameters_load_columns",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L79",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_rationale_79",
-      "target": "scripts_corner_parameters_load_columns",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L88",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_autoscale",
-      "target": "scripts_corner_parameters_py_ndarray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L128",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_main",
-      "target": "scripts_corner_parameters_autoscale",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/corner_parameters.py",
-      "source_location": "L89",
-      "weight": 1.0,
-      "source": "scripts_corner_parameters_rationale_89",
-      "target": "scripts_corner_parameters_autoscale",
       "confidence_score": 1.0
     },
     {
@@ -21551,5 +21244,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "18a5da6b3c6cb0e5502d6fa9eb43551cd8972c36"
+  "built_at_commit": "322cf204b8bc5db1a569245953901ab03e53c83c"
 }

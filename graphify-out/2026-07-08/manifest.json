@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783488821.1835892,
-    "ast_hash": "ac349e675ae1e36f93b20e133eb7df14",
+    "mtime": 1783444613.1393213,
+    "ast_hash": "d5456004c0058afbc34275daf305ed47",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -597,11 +597,6 @@
   "scripts/ppc_prior_predictive.py": {
     "mtime": 1783444796.6568704,
     "ast_hash": "8b81e9c541f923e8b46a6e963d63bb02",
-    "semantic_hash": ""
-  },
-  "scripts/corner_parameters.py": {
-    "mtime": 1783491043.0239344,
-    "ast_hash": "f4ef958ff9466d5a7c21edcd20cd7011",
     "semantic_hash": ""
   }
 }

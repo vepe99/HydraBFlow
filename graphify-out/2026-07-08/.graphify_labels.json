@@ -104,9 +104,6 @@
   "102": "_load_clean",
   "103": "prior_score_from_spec",
   "104": "ppc_prior_predictive.py",
-  "105": "corner_parameters.py",
   "106": "StreamObservationStats",
-  "107": "test_streams.py",
-  "108": "load_approximator",
   "109": "compose_cfg"
 }
