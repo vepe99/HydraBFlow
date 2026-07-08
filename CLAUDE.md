@@ -290,10 +290,58 @@ Every run saves:
   Dataset creation needs NONE of these (rotation curves are hardcoded in `stream_common`); they
   serve the PPC scripts + training/real eval. `ppc_prior_predictive` `DEFAULT_REAL` now prefers
   the in-repo copy. Committed as b3692a1 (not pushed).
-  **DEFERRED / next**: the 50-radii observable needs training-time wiring before `train` runs on
-  this dataset — `mask_vcirc_radii` (raises on 50≠34) and `add_noise_to_vcirc` σ both hardcode the
-  34-Zhou grid and must be pointed at the extended grid (+ per-bin Zhou/Huang σ). 333 multistream
-  test set + model_5 train/eval/eval_real also pending.
+  **Extended-grid training wiring** (was deferred, now done — commits b1599cc/b681ed2): the
+  50-radii observable needed wiring before `train`/`evaluate*` would run, since `mask_vcirc_radii`
+  (raised on 50≠34), `add_noise_to_vcirc` σ, and (real data) `attach_observed_vcirc` all hardcoded
+  the 34-Zhou grid. Fix mirrors `fill_adapter_from_simulator`: `stream_agama` gained
+  `obs_sigma_vc` + `obs_vc_kms` properties (extended → Zhou∪Huang per-bin σ / observed curve),
+  and `adapter.fill_stream_grid_from_simulator` (wired into `_app.py`) injects the simulator's
+  radii + per-bin σ + observed curve into those three config nodes when `obs_r_grid=extended` and
+  the user left them unset — no-op for the default Zhou path. Gotcha fixed: `getattr(DictConfig,
+  "values")` returns the bound `.values()` method, not the key — use `step.get("values")`.
+- Session 2026-07-08 (model_5 train/eval/eval_real on the spray+Huang 30k): trained
+  `stream_fusion_model5` (composition=global, plain stream_global preproc+aug, 300 epochs, GPU 0,
+  23.6 min, val_loss 1.20, convergence OK) on `training_data_30000.npz`; generated the 333-group
+  test set `simulation_multistream_333.npz`. **Sim eval** (base=per-member, compositional=pooled):
+  base RMSE 0.628 / calib 0.029; compositional RMSE 0.561 / calib 0.048 (well-calibrated; pooling
+  improves accuracy). **Real eval** (Gaia Pal5/NGC3201/M68): global q_halo 1.15 [0.99,1.28],
+  beta_halo **3.26 [2.97,3.55]** (data-constrained, not railing the freed [2,4] prior),
+  Sigma_Disk 4.98e8, gamma_halo 1.06, r_Disk 2.83. **Key win**: the per-stream disagreement that
+  plagued the earlier rnbody model_5 (M68 pulling q_halo→1.0, Sigma_Disk high) is largely gone —
+  per-stream q_halo 1.32/0.97/1.12 and Sigma_Disk 5.24/6.57/4.51e8 now overlap and track the
+  pooled Global (rejection prior + freed β + Chen spray ⇒ coherent joint fit). **MMD** still flags
+  residual misspecification (mmd 2.84, p_plain 0.015, p_stratified 0.0; per-member Mahalanobis pct
+  M68 100 / Pal5 99.7 / NGC3201 81.5) — parameters now agree but M68/Pal5 summary features remain
+  atypical vs the sim reference; much milder than before. Runs: train
+  `outputs/stream_agama/stream_fusion_model5_spray_huang/2026-07-08_12-12-40`, sim-eval
+  `…/2026-07-08_14-33-47`, real-eval `…/2026-07-08_14-42-49`. Next (not run): local level via
+  `ancestral_sample` with `composition.global_run_dir` → the real-eval run.
+- Session 2026-07-08 (rotation-curve-only PPC + next-dataset plan): added
+  `scripts/ppc_rotation_curve.py` — a posterior-predictive check on the **model rotation curve
+  alone**. It REUSES the already-sampled posterior draws from an `evaluate_real composition=global`
+  run (`posterior.npz` = pooled global, `single_stream_posterior.npz` = per-member — the same draws
+  behind `real_global_vs_streams_corner.png`; NO network re-sampling), subsamples N per group
+  (default 100 → 100×4=400 curves for Combined+Pal5+NGC3201+M68), builds each draw's host potential
+  and evaluates `v_circ(r)` on the observed grid, and overlays median + 68/95% bands on the observed
+  Zhou∪Huang curve. **Standalone** (agama+numpy+matplotlib only; the rotation-curve constants +
+  `_host_potential`/`_vcirc` are inlined verbatim from `stream_agama`/`stream_common`) — importing
+  `hydrabflow.simulators` triggers auto-discovery that imports BayesFlow→JAX and stalled ~11 min on
+  a busy GPU, so the PPC deliberately avoids the package import; also runs on the GPU-less cluster.
+  On model_5 (spray_huang real-eval run): all four groups reproduce the curve to **<1% median frac
+  dev** (Combined 0.8 / Pal5 0.7 / NGC3201 0.6 / M68 0.9%); 95% band covers 68–86% of obs points
+  (bands slightly narrower than Zhou's point-to-point scatter). Parameter-level per-stream tension
+  from the corner plot does NOT show up as a rotation-curve mismatch — vcirc pins enclosed mass, on
+  which all three streams agree. Artifact: `ppc_rotation_curve.png` in the run dir.
+- **PLANNED next dataset (not yet run)**: a **larger** training set that combines all three prior/
+  model improvements at once — (1) the banded **Zhou∪Huang rotation-curve rejection prior**
+  (`vcirc_rejection.bands`, `obs_r_grid: extended`), (2) the **restricted N-body** stream simulator
+  (`stream_agama_rnbody`, self-consistent progenitor + refit Multipole, t_end=4 Gyr for NGC3201/M68),
+  and (3) the **freed halo β** (`beta_..._halo` uniform[2,4] instead of fixed 3.0) so the model can
+  match Huang's declining outer curve. Requires a new `conf/simulator/*.yaml` (`name:
+  stream_agama_rnbody`) carrying the spray_huang extras (chen IC is spray-only, so rnbody keeps its
+  own IC; the rejection prior + extended grid + free β are class-level and already config-driven on
+  the base `stream_agama`, which `stream_agama_rnbody` subclasses). Dataset creation to run on the
+  GPU-less cluster (rnbody is CPU/joblib, ~10-25 s/row × rejection screening) then scp'd back.
 
 ## graphify
 

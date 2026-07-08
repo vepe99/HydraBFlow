@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1783505072.6164553,
-    "ast_hash": "c32a9f0ad1adbac45f7e5a622ff53812",
+    "mtime": 1783516476.231928,
+    "ast_hash": "51b6a1576797bc7dcd7a987ca8058d03",
     "semantic_hash": ""
   },
   "README.md": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783505569.4122767,
-    "ast_hash": "1d23e35347d384f69a2c815f94c6cc04",
+    "mtime": 1783516055.7726681,
+    "ast_hash": "ca5ba403d5e21a3bba694fdf0ddc8b42",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -637,6 +637,11 @@
   "conf/simulator/stream_agama_spray_huang.yaml": {
     "mtime": 1783501505.30445,
     "ast_hash": "52281897492213d504625de36bb723ad",
+    "semantic_hash": ""
+  },
+  "scripts/ppc_rotation_curve.py": {
+    "mtime": 1783516125.0812032,
+    "ast_hash": "241595ef2d2de59b48962edda0c3312d",
     "semantic_hash": ""
   }
 }

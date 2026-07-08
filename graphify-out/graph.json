@@ -447,13 +447,133 @@
       "norm_label": "fraction of real members with >=1 sim particle within both sky and pm tolerance."
     },
     {
+      "label": "ppc_rotation_curve.py",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve",
+      "community": 110,
+      "norm_label": "ppc_rotation_curve.py"
+    },
+    {
+      "label": "extended_rotation_curve()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L81",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_extended_rotation_curve",
+      "community": 110,
+      "norm_label": "extended_rotation_curve()"
+    },
+    {
+      "label": "_agama()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L92",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_agama",
+      "community": 110,
+      "norm_label": "_agama()"
+    },
+    {
+      "label": "_host_potential()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L99",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_host_potential",
+      "community": 110,
+      "norm_label": "_host_potential()"
+    },
+    {
+      "label": "_vcirc()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L111",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_vcirc",
+      "community": 110,
+      "norm_label": "_vcirc()"
+    },
+    {
+      "label": "_load_posterior()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L125",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_load_posterior",
+      "community": 110,
+      "norm_label": "_load_posterior()"
+    },
+    {
+      "label": "_rows()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L130",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_rows",
+      "community": 110,
+      "norm_label": "_rows()"
+    },
+    {
+      "label": "_vcirc_stack()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L134",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_vcirc_stack",
+      "community": 110,
+      "norm_label": "_vcirc_stack()"
+    },
+    {
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L146",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_main",
+      "community": 110,
+      "norm_label": "main()"
+    },
+    {
+      "label": "Posterior-predictive check on the *model rotation curve* only.  Takes a complete",
+      "file_type": "rationale",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_rationale_1",
+      "community": 110,
+      "norm_label": "posterior-predictive check on the *model rotation curve* only.  takes a complete"
+    },
+    {
+      "label": "Zhou up to split, Huang beyond; sorted by radius. (r, vc, sigma).",
+      "file_type": "rationale",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L82",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_rationale_82",
+      "community": 110,
+      "norm_label": "zhou up to split, huang beyond; sorted by radius. (r, vc, sigma)."
+    },
+    {
+      "label": "Model circular velocity [km/s] at obs_r; NaN where v^2 < 0.",
+      "file_type": "rationale",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L112",
+      "_origin": "ast",
+      "id": "scripts_ppc_rotation_curve_rationale_112",
+      "community": 110,
+      "norm_label": "model circular velocity [km/s] at obs_r; nan where v^2 < 0."
+    },
+    {
       "label": "probe_vcirc_acceptance.py",
       "file_type": "code",
       "source_file": "scripts/probe_vcirc_acceptance.py",
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance",
-      "community": 46,
+      "community": 110,
       "norm_label": "probe_vcirc_acceptance.py"
     },
     {
@@ -463,7 +583,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_band_pass_worker",
-      "community": 46,
+      "community": 110,
       "norm_label": "_band_pass_worker()"
     },
     {
@@ -473,7 +593,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_py_ndarray",
-      "community": 46,
+      "community": 110,
       "norm_label": "ndarray"
     },
     {
@@ -483,7 +603,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_main",
-      "community": 46,
+      "community": 110,
       "norm_label": "main()"
     },
     {
@@ -493,7 +613,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_rationale_1",
-      "community": 46,
+      "community": 110,
       "norm_label": "measure the vcirc-rejection acceptance rate of a stream simulator's prior (calib"
     },
     {
@@ -503,7 +623,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_rationale_28",
-      "community": 46,
+      "community": 110,
       "norm_label": "(n_rows, n_bands) bool: does each row's model curve pass each band? (one vc eval"
     },
     {
@@ -2003,7 +2123,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_adapter_fill_stream_grid_from_simulator",
-      "community": 111,
+      "community": 11,
       "norm_label": "fill_stream_grid_from_simulator()"
     },
     {
@@ -2073,7 +2193,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_adapter_rationale_74",
-      "community": 111,
+      "community": 11,
       "norm_label": "align the training-time rotation-curve grid with the simulator's ``vcirc_kms`` g"
     },
     {
@@ -2113,7 +2233,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint",
-      "community": 56,
+      "community": 32,
       "norm_label": "checkpoint.py"
     },
     {
@@ -2123,7 +2243,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_save_approximator",
-      "community": 56,
+      "community": 32,
       "norm_label": "save_approximator()"
     },
     {
@@ -2133,7 +2253,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_py_any",
-      "community": 56,
+      "community": 32,
       "norm_label": "any"
     },
     {
@@ -2143,7 +2263,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_fix_keras_model",
-      "community": 56,
+      "community": 32,
       "norm_label": "fix_keras_model()"
     },
     {
@@ -2153,7 +2273,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_load_approximator",
-      "community": 56,
+      "community": 40,
       "norm_label": "load_approximator()"
     },
     {
@@ -2163,7 +2283,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_1",
-      "community": 56,
+      "community": 32,
       "norm_label": "model save/load helpers, including the bayesflow ``.keras`` deserialization work"
     },
     {
@@ -2173,7 +2293,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_30",
-      "community": 56,
+      "community": 32,
       "norm_label": "return a path to a load-safe copy of ``model_path`` (patching the arrayimpl tag)"
     },
     {
@@ -2183,7 +2303,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_47",
-      "community": 56,
+      "community": 40,
       "norm_label": "load a saved approximator, applying the arrayimpl fix first."
     },
     {
@@ -3283,7 +3403,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "abc",
-      "community": 0,
+      "community": 6,
       "norm_label": "abc"
     },
     {
@@ -4093,7 +4213,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize_init",
-      "community": 100,
+      "community": 11,
       "norm_label": ".__init__()"
     },
     {
@@ -4603,7 +4723,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_get_simulator",
-      "community": 4,
+      "community": 96,
       "norm_label": "get_simulator()"
     },
     {
@@ -4643,7 +4763,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_rationale_32",
-      "community": 4,
+      "community": 96,
       "norm_label": "instantiate the simulator selected by ``cfg.simulator`` (a ``simulatorconfig``)."
     },
     {
@@ -4733,7 +4853,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama",
-      "community": 32,
+      "community": 11,
       "norm_label": "stream_agama.py"
     },
     {
@@ -4743,7 +4863,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agama",
-      "community": 32,
+      "community": 11,
       "norm_label": "_agama()"
     },
     {
@@ -4753,7 +4873,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_host_potential",
-      "community": 32,
+      "community": 11,
       "norm_label": "_host_potential()"
     },
     {
@@ -4763,7 +4883,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
-      "community": 32,
+      "community": 11,
       "norm_label": "_rj_vj_r()"
     },
     {
@@ -4773,7 +4893,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_py_ndarray",
-      "community": 108,
+      "community": 11,
       "norm_label": "ndarray"
     },
     {
@@ -4783,7 +4903,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
-      "community": 32,
+      "community": 11,
       "norm_label": "_ic_particle_spray()"
     },
     {
@@ -4793,7 +4913,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
-      "community": 32,
+      "community": 11,
       "norm_label": "_ic_chen_spray()"
     },
     {
@@ -4803,7 +4923,7 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_spray_stream",
-      "community": 32,
+      "community": 11,
       "norm_label": "_spray_stream()"
     },
     {
@@ -4813,7 +4933,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_vcirc",
-      "community": 46,
+      "community": 11,
       "norm_label": "_vcirc()"
     },
     {
@@ -4823,7 +4943,7 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
-      "community": 32,
+      "community": 11,
       "norm_label": "_vcirc_accept_worker()"
     },
     {
@@ -4833,7 +4953,7 @@
       "source_location": "L299",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_simulate_one",
-      "community": 32,
+      "community": 11,
       "norm_label": "_simulate_one()"
     },
     {
@@ -4913,7 +5033,7 @@
       "source_location": "L368",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_kpc",
-      "community": 111,
+      "community": 11,
       "norm_label": ".obs_r_kpc()"
     },
     {
@@ -4923,7 +5043,7 @@
       "source_location": "L380",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_sigma_vc",
-      "community": 111,
+      "community": 11,
       "norm_label": ".obs_sigma_vc()"
     },
     {
@@ -4933,7 +5053,7 @@
       "source_location": "L394",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_vc_kms",
-      "community": 111,
+      "community": 11,
       "norm_label": ".obs_vc_kms()"
     },
     {
@@ -4963,7 +5083,7 @@
       "source_location": "L418",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_global_parameter_names",
-      "community": 100,
+      "community": 11,
       "norm_label": ".global_parameter_names()"
     },
     {
@@ -4973,7 +5093,7 @@
       "source_location": "L422",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_local_parameter_names",
-      "community": 100,
+      "community": 11,
       "norm_label": ".local_parameter_names()"
     },
     {
@@ -5033,7 +5153,7 @@
       "source_location": "L463",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
-      "community": 108,
+      "community": 11,
       "norm_label": "._build_accept_bands()"
     },
     {
@@ -5043,7 +5163,7 @@
       "source_location": "L505",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
-      "community": 108,
+      "community": 11,
       "norm_label": "._vcirc_accept_mask()"
     },
     {
@@ -5053,7 +5173,7 @@
       "source_location": "L528",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
-      "community": 108,
+      "community": 11,
       "norm_label": "._rejection_sample()"
     },
     {
@@ -5063,7 +5183,7 @@
       "source_location": "L550",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_prior",
-      "community": 108,
+      "community": 11,
       "norm_label": ".sample_prior()"
     },
     {
@@ -5073,7 +5193,7 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
-      "community": 108,
+      "community": 11,
       "norm_label": ".simulate()"
     },
     {
@@ -5083,7 +5203,7 @@
       "source_location": "L588",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
-      "community": 108,
+      "community": 11,
       "norm_label": ".sample_compositional()"
     },
     {
@@ -5093,7 +5213,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_1",
-      "community": 32,
+      "community": 11,
       "norm_label": "stellar-stream forward model built on agama (cpu, parallelized with joblib).  po"
     },
     {
@@ -5103,7 +5223,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_67",
-      "community": 32,
+      "community": 11,
       "norm_label": "import agama with the (kpc, km/s, msun) unit system set. safe to call repeatedly"
     },
     {
@@ -5113,7 +5233,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_75",
-      "community": 32,
+      "community": 11,
       "norm_label": "bulge (fixed) + two-power triaxial halo + exponential disk from one parameter ro"
     },
     {
@@ -5123,7 +5243,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_102",
-      "community": 32,
+      "community": 11,
       "norm_label": "jacobi radius, velocity offset, and host->satellite rotation matrices along the"
     },
     {
@@ -5133,7 +5253,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_135",
-      "community": 32,
+      "community": 11,
       "norm_label": "fardal+2015 initial conditions for particles escaping through the lagrange point"
     },
     {
@@ -5143,7 +5263,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_175",
-      "community": 32,
+      "community": 11,
       "norm_label": "chen+2024 initial conditions: one trailing + one leading particle per orbit seed"
     },
     {
@@ -5153,7 +5273,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_215",
-      "community": 32,
+      "community": 11,
       "norm_label": "particle-spray stream including the progenitor's own (moving plummer) potential."
     },
     {
@@ -5163,7 +5283,7 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_258",
-      "community": 46,
+      "community": 11,
       "norm_label": "model circular velocity [km/s] at the observed radii; nan where v^2 < 0."
     },
     {
@@ -5173,7 +5293,7 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_265",
-      "community": 32,
+      "community": 11,
       "norm_label": "joblib worker: does each parameter row's model rotation curve pass the rejection"
     },
     {
@@ -5183,7 +5303,7 @@
       "source_location": "L303",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_303",
-      "community": 32,
+      "community": 11,
       "norm_label": "joblib worker: one stream realization + the rotation curve of its potential."
     },
     {
@@ -5213,7 +5333,7 @@
       "source_location": "L369",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_369",
-      "community": 111,
+      "community": 11,
       "norm_label": "radii the model rotation curve is evaluated on (also the ``vcirc_kms`` grid)."
     },
     {
@@ -5223,7 +5343,7 @@
       "source_location": "L381",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_381",
-      "community": 111,
+      "community": 11,
       "norm_label": "per-bin observed 1-sigma on the rotation curve, aligned with ``obs_r_kpc``."
     },
     {
@@ -5233,7 +5353,7 @@
       "source_location": "L395",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_395",
-      "community": 111,
+      "community": 11,
       "norm_label": "observed milky way circular velocity aligned with ``obs_r_kpc`` \u2014 the fixed curv"
     },
     {
@@ -5273,7 +5393,7 @@
       "source_location": "L464",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_464",
-      "community": 108,
+      "community": 11,
       "norm_label": "resolve ``vcirc_rejection`` into a list of band specs for the accept worker."
     },
     {
@@ -5283,7 +5403,7 @@
       "source_location": "L506",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_506",
-      "community": 108,
+      "community": 11,
       "norm_label": "screen each draw's global potential against the observed rotation curve."
     },
     {
@@ -5293,7 +5413,7 @@
       "source_location": "L529",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_529",
-      "community": 108,
+      "community": 11,
       "norm_label": "draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut."
     },
     {
@@ -5303,7 +5423,7 @@
       "source_location": "L589",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_589",
-      "community": 108,
+      "community": 11,
       "norm_label": "one shared global draw per dataset, one stream realization per target stream."
     },
     {
@@ -5453,7 +5573,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_common_extended_rotation_curve",
-      "community": 111,
+      "community": 11,
       "norm_label": "extended_rotation_curve()"
     },
     {
@@ -5483,7 +5603,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_common_inferred_names",
-      "community": 100,
+      "community": 11,
       "norm_label": "inferred_names()"
     },
     {
@@ -5533,7 +5653,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_common_rationale_68",
-      "community": 111,
+      "community": 11,
       "norm_label": "union rotation-curve grid: zhou (2023) up to ``split_kpc``, huang (2016) beyond"
     },
     {
@@ -5553,7 +5673,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_common_rationale_98",
-      "community": 100,
+      "community": 11,
       "norm_label": "names of the non-fixed (inferred) entries of a prior-spec mapping, in config ord"
     },
     {
@@ -6333,7 +6453,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "tests_test_augmentation_test_two_moons_shapes_and_reproducibility",
-      "community": 4,
+      "community": 96,
       "norm_label": "test_two_moons_shapes_and_reproducibility()"
     },
     {
@@ -6633,7 +6753,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registries",
-      "community": 4,
+      "community": 15,
       "norm_label": "test_registries.py"
     },
     {
@@ -6653,7 +6773,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_test_registries_test_skeleton_simulator_raises",
-      "community": 4,
+      "community": 15,
       "norm_label": "test_skeleton_simulator_raises()"
     },
     {
@@ -6683,7 +6803,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_registries_test_unknown_simulator_errors",
-      "community": 4,
+      "community": 15,
       "norm_label": "test_unknown_simulator_errors()"
     },
     {
@@ -6713,7 +6833,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registries_rationale_1",
-      "community": 4,
+      "community": 15,
       "norm_label": "registry resolution + skeleton-simulator behavior."
     },
     {
@@ -7350,7 +7470,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "CLAUDE.md",
-      "source_location": "L298",
+      "source_location": "L346",
       "_origin": "ast",
       "id": "claude_graphify",
       "community": 34,
@@ -7363,7 +7483,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "readme",
-      "community": 115,
+      "community": 33,
       "norm_label": "readme.md"
     },
     {
@@ -7413,7 +7533,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "readme_stream_project_compositional_score_modeling",
-      "community": 114,
+      "community": 98,
       "norm_label": "stream project (compositional score modeling)"
     },
     {
@@ -7423,7 +7543,7 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "readme_configuration_used_explicitly",
-      "community": 114,
+      "community": 98,
       "norm_label": "configuration used explicitly"
     },
     {
@@ -7433,7 +7553,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "readme_data_generation",
-      "community": 114,
+      "community": 98,
       "norm_label": "data generation"
     },
     {
@@ -7443,7 +7563,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "readme_training",
-      "community": 114,
+      "community": 98,
       "norm_label": "training"
     },
     {
@@ -7453,7 +7573,7 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "readme_evaluation_plots_metrics",
-      "community": 114,
+      "community": 98,
       "norm_label": "evaluation (plots + metrics)"
     },
     {
@@ -7463,7 +7583,7 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "readme_hyperparameter_tuning",
-      "community": 114,
+      "community": 98,
       "norm_label": "hyperparameter tuning"
     },
     {
@@ -7473,7 +7593,7 @@
       "source_location": "L253",
       "_origin": "ast",
       "id": "readme_gpu",
-      "community": 114,
+      "community": 98,
       "norm_label": "gpu"
     },
     {
@@ -7553,7 +7673,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_bring_your_own_data",
-      "community": 115,
+      "community": 33,
       "norm_label": "bring_your_own_data.md"
     },
     {
@@ -7563,7 +7683,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_bring_your_own_data_no_simulator_supporting_other_file_formats",
-      "community": 112,
+      "community": 33,
       "norm_label": "bring your own data (no simulator) & supporting other file formats"
     },
     {
@@ -7573,7 +7693,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_part_a_use_a_pre_existing_dataset_no_simulator",
-      "community": 116,
+      "community": 33,
       "norm_label": "part a \u2014 use a pre-existing dataset (no simulator)"
     },
     {
@@ -7583,7 +7703,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_a_1_the_data_contract",
-      "community": 116,
+      "community": 33,
       "norm_label": "a.1 the data contract"
     },
     {
@@ -7593,7 +7713,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_a_2_convert_your_existing_arrays_into_the_dataset_file",
-      "community": 116,
+      "community": 33,
       "norm_label": "a.2 convert your existing arrays into the dataset file"
     },
     {
@@ -7603,7 +7723,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_a_3_tell_the_pipeline_about_it_config_only",
-      "community": 116,
+      "community": 33,
       "norm_label": "a.3 tell the pipeline about it (config only)"
     },
     {
@@ -7613,7 +7733,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_a_4_run_train_evaluate",
-      "community": 116,
+      "community": 33,
       "norm_label": "a.4 run train + evaluate"
     },
     {
@@ -7623,7 +7743,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_a_5_what_reads_what",
-      "community": 116,
+      "community": 33,
       "norm_label": "a.5 what reads what"
     },
     {
@@ -7633,7 +7753,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_part_b_support_a_file_format_other_than_npz",
-      "community": 112,
+      "community": 33,
       "norm_label": "part b \u2014 support a file format other than `.npz`"
     },
     {
@@ -7643,7 +7763,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_b_1_the_single_seam",
-      "community": 112,
+      "community": 33,
       "norm_label": "b.1 the single seam"
     },
     {
@@ -7653,7 +7773,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_b_2_option_1_quick_swap_one_format_replace_the_body",
-      "community": 112,
+      "community": 33,
       "norm_label": "b.2 option 1 \u2014 quick swap (one format, replace the body)"
     },
     {
@@ -7663,7 +7783,7 @@
       "source_location": "L217",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_b_3_option_2_a_format_registry_support_several_formats_by_extension",
-      "community": 112,
+      "community": 33,
       "norm_label": "b.3 option 2 \u2014 a format registry (support several formats by extension)"
     },
     {
@@ -7673,7 +7793,7 @@
       "source_location": "L324",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_b_4_optional_validate_keys_shapes_on_load",
-      "community": 112,
+      "community": 33,
       "norm_label": "b.4 (optional) validate keys/shapes on load"
     },
     {
@@ -7683,7 +7803,7 @@
       "source_location": "L343",
       "_origin": "ast",
       "id": "docs_bring_your_own_data_checklist",
-      "community": 112,
+      "community": 33,
       "norm_label": "checklist"
     },
     {
@@ -7693,7 +7813,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_configuration",
-      "community": 115,
+      "community": 33,
       "norm_label": "configuration.md"
     },
     {
@@ -8003,7 +8123,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_end_to_end_guide",
-      "community": 115,
+      "community": 33,
       "norm_label": "end_to_end_guide.md"
     },
     {
@@ -8293,7 +8413,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_hyperparameter_tuning",
-      "community": 115,
+      "community": 33,
       "norm_label": "hyperparameter_tuning.md"
     },
     {
@@ -8403,7 +8523,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline",
-      "community": 115,
+      "community": 33,
       "norm_label": "two_moons_pipeline.md"
     },
     {
@@ -8413,7 +8533,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_running_a_full_pipeline_with_the_two_moons_simulator",
-      "community": 113,
+      "community": 33,
       "norm_label": "running a full pipeline with the two moons simulator"
     },
     {
@@ -8423,7 +8543,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_0_what_you_re_running",
-      "community": 113,
+      "community": 33,
       "norm_label": "0. what you're running"
     },
     {
@@ -8433,7 +8553,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_1_prerequisites",
-      "community": 113,
+      "community": 33,
       "norm_label": "1. prerequisites"
     },
     {
@@ -8443,7 +8563,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_2_the_four_commands_full_run",
-      "community": 118,
+      "community": 33,
       "norm_label": "2. the four commands (full run)"
     },
     {
@@ -8453,7 +8573,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_2_1_generate_the_training_set",
-      "community": 118,
+      "community": 33,
       "norm_label": "2.1 generate the training set"
     },
     {
@@ -8463,7 +8583,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_2_2_generate_a_held_out_test_set",
-      "community": 118,
+      "community": 33,
       "norm_label": "2.2 generate a held-out test set"
     },
     {
@@ -8473,7 +8593,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_2_3_train",
-      "community": 118,
+      "community": 33,
       "norm_label": "2.3 train"
     },
     {
@@ -8483,7 +8603,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_2_4_evaluate",
-      "community": 118,
+      "community": 33,
       "norm_label": "2.4 evaluate"
     },
     {
@@ -8493,7 +8613,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_3_fast_smoke_run_1_minute",
-      "community": 113,
+      "community": 33,
       "norm_label": "3. fast smoke run (\u22481 minute)"
     },
     {
@@ -8503,7 +8623,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_4_optional_train_with_observational_noise_augmentations",
-      "community": 113,
+      "community": 33,
       "norm_label": "4. optional: train with observational noise (augmentations)"
     },
     {
@@ -8513,7 +8633,7 @@
       "source_location": "L185",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_5_tuning_the_prior_observation_knobs_optional",
-      "community": 113,
+      "community": 33,
       "norm_label": "5. tuning the prior / observation knobs (optional)"
     },
     {
@@ -8523,7 +8643,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "docs_two_moons_pipeline_6_command_recap",
-      "community": 113,
+      "community": 33,
       "norm_label": "6. command recap"
     },
     {
@@ -8603,7 +8723,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/preprocessing/registry.py",
       "source_location": "L25",
-      "community": 0,
+      "community": 39,
       "norm_label": "preprocesspipeline",
       "id": "preprocesspipeline"
     },
@@ -8816,7 +8936,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -9552,7 +9672,7 @@
       "source_location": "L60",
       "weight": 1.0,
       "source": "scripts_extend_vcirc_huang_vcirc_worker",
-      "target": "src_hydrabflow_simulators_stream_agama_agama"
+      "target": "scripts_ppc_rotation_curve_agama"
     },
     {
       "relation": "calls",
@@ -9563,7 +9683,7 @@
       "source_location": "L65",
       "weight": 1.0,
       "source": "scripts_extend_vcirc_huang_vcirc_worker",
-      "target": "src_hydrabflow_simulators_stream_agama_host_potential"
+      "target": "scripts_ppc_rotation_curve_host_potential"
     },
     {
       "relation": "calls",
@@ -9574,7 +9694,7 @@
       "source_location": "L65",
       "weight": 1.0,
       "source": "scripts_extend_vcirc_huang_vcirc_worker",
-      "target": "src_hydrabflow_simulators_stream_agama_vcirc"
+      "target": "scripts_ppc_rotation_curve_vcirc"
     },
     {
       "relation": "references",
@@ -9629,7 +9749,7 @@
       "source_location": "L132",
       "weight": 1.0,
       "source": "scripts_extend_vcirc_huang_main",
-      "target": "src_hydrabflow_simulators_stream_common_extended_rotation_curve"
+      "target": "scripts_ppc_rotation_curve_extended_rotation_curve"
     },
     {
       "relation": "contains",
@@ -9786,7 +9906,7 @@
       "source_location": "L85",
       "weight": 1.0,
       "source": "scripts_ppc_prior_predictive_rotation_curve_ppc",
-      "target": "src_hydrabflow_simulators_stream_common_extended_rotation_curve"
+      "target": "scripts_ppc_rotation_curve_extended_rotation_curve"
     },
     {
       "relation": "rationale_for",
@@ -9818,6 +9938,226 @@
       "weight": 1.0,
       "source": "scripts_ppc_prior_predictive_main",
       "target": "scripts_ppc_prior_predictive_stream_ppc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_agama",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_extended_rotation_curve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_host_potential",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_load_posterior",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L146",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_rows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_vcirc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L134",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve",
+      "target": "scripts_ppc_rotation_curve_vcirc_stack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_rationale_1",
+      "target": "scripts_ppc_rotation_curve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L162",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_main",
+      "target": "scripts_ppc_rotation_curve_extended_rotation_curve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L82",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_rationale_82",
+      "target": "scripts_ppc_rotation_curve_extended_rotation_curve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L135",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_vcirc_stack",
+      "target": "scripts_ppc_rotation_curve_agama",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "scripts/probe_vcirc_acceptance.py",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
+      "target": "scripts_ppc_rotation_curve_agama"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L140",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_vcirc_stack",
+      "target": "scripts_ppc_rotation_curve_host_potential",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "scripts/probe_vcirc_acceptance.py",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
+      "target": "scripts_ppc_rotation_curve_host_potential"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L112",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_rationale_112",
+      "target": "scripts_ppc_rotation_curve_vcirc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L140",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_vcirc_stack",
+      "target": "scripts_ppc_rotation_curve_vcirc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "scripts/probe_vcirc_acceptance.py",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
+      "target": "scripts_ppc_rotation_curve_vcirc"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_main",
+      "target": "scripts_ppc_rotation_curve_load_posterior",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L177",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_main",
+      "target": "scripts_ppc_rotation_curve_rows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/ppc_rotation_curve.py",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "scripts_ppc_rotation_curve_main",
+      "target": "scripts_ppc_rotation_curve_vcirc_stack",
       "confidence_score": 1.0
     },
     {
@@ -9860,39 +10200,6 @@
       "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
       "target": "scripts_probe_vcirc_acceptance_py_ndarray",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/probe_vcirc_acceptance.py",
-      "source_location": "L29",
-      "weight": 1.0,
-      "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
-      "target": "src_hydrabflow_simulators_stream_agama_agama"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/probe_vcirc_acceptance.py",
-      "source_location": "L34",
-      "weight": 1.0,
-      "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
-      "target": "src_hydrabflow_simulators_stream_agama_host_potential"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/probe_vcirc_acceptance.py",
-      "source_location": "L34",
-      "weight": 1.0,
-      "source": "scripts_probe_vcirc_acceptance_band_pass_worker",
-      "target": "src_hydrabflow_simulators_stream_agama_vcirc"
     },
     {
       "relation": "indirect_call",
@@ -21427,7 +21734,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CLAUDE.md",
-      "source_location": "L298",
+      "source_location": "L346",
       "weight": 1.0,
       "source": "claude_hydrabflow_sbi_pipeline_template_with_bayesflow",
       "target": "claude_graphify",
@@ -22785,5 +23092,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b1599cc00e6d19764bd91f6c71b7889ef858f265"
+  "built_at_commit": "b681ed25422cb8fbc19290ff947cc0b5c900e123"
 }
