@@ -131,7 +131,12 @@ Every run saves:
   training and test sets in the same `data_dir` don't overwrite each other's snapshot.
 - `train`: `approximator.keras`, `preprocessing_state.npz`, `loss.png`
 - `evaluate`: `posterior.npz`, `metrics.json`, diagnostic plots
-- `evaluate_real`: `posterior.npz`, posterior pair plots
+- `evaluate_real`: `posterior.npz`, posterior pair plots. At `composition=global` it additionally
+  saves `single_stream_posterior.npz` (per-member posteriors) and
+  `real_global_vs_streams_corner.png` — an overlay corner plot of the pooled global posterior plus
+  each single-stream posterior over the shared global parameters (mirrors the reference
+  `main_eval_gaiastreams.py` `global_cornerplot`; members named from the simulator's
+  `target_streams`). Best-effort hook (never aborts the run).
 - `tune`: `best_trials.json` (Optuna study in `tuning.storage_dir`)
 
 `evaluate` / `evaluate_real` load the trained model + fitted preprocessing from `model_dir`
@@ -238,6 +243,16 @@ Every run saves:
   `prior_score_from_spec` stays correct UNCHANGED — the networks learn the truncation implicitly
   from rejection-sampled training data (no change to `pipeline/compositional.py`; optional future
   add: post-hoc filter + report the fraction of compositional draws that leak outside the cut).
+- Session 2026-07-08 (real-data global-vs-streams corner): `evaluate_real composition=global` now
+  always emits `real_global_vs_streams_corner.png` + `single_stream_posterior.npz`
+  (`_save_global_vs_streams_corner` in `pipeline/evaluate_real.py`). Overlays the pooled global
+  (compositional) posterior and each per-member `workflow.sample` single-stream posterior over the
+  shared global parameters, in physical units, with 68/95% contours + marginals (ChainConsumer
+  `shade=False` look from the reference `main_eval_gaiastreams.py` `global_cornerplot`). Reuses the
+  sim-eval "base" per-member sampling mechanism + `target_streams` name map; shared robust
+  percentile ranges so overlays register; best-effort (never aborts). On the model_5 real-data run
+  it localizes the misspecification: M68 alone pulls q_halo low (~1.0 vs ~1.5) and Sigma_Disk high
+  (~1e9 vs ~5e8), while the pooled Global tracks the Pal5/NGC3201 consensus.
   Stream-level PPC (30 accepted potentials, rnbody, seed=2026): real-locus reach 100%/93%/90%
   (Pal5/NGC3201/M68), 0% NaN — the cut REMOVES wild potentials that threw M68 off-locus, lifting
   its reach above the unconstrained t_end=4 check (~60%). Planned rejection-prior datasets (30k flat

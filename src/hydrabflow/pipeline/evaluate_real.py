@@ -173,6 +173,9 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
         _save_posterior_plot(
             pipeline.inverse_transform(dict(posterior)), list(cfg.adapter.inference_variables), run_dir
         )
+        # Overlay corner: pooled global posterior + each single-stream posterior on the shared
+        # global parameters (reference: main_eval_gaiastreams.py `global_cornerplot`).
+        _save_global_vs_streams_corner(cfg, workflow, flat, posterior, pipeline, run_dir)
         # Summary-space misspecification diagnostics (both best-effort, never abort the run):
         # save the observed members' summaries, then MMD-test them against the reference
         # summaries of a simulated `evaluate` run (eval.misspecification_reference).
@@ -230,11 +233,98 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     return posterior
 
 
-def _save_posterior(posterior, run_dir: str) -> None:
+def _save_posterior(posterior, run_dir: str, name: str = POSTERIOR_SAMPLES) -> None:
     np.savez(
-        os.path.join(run_dir, POSTERIOR_SAMPLES),
+        os.path.join(run_dir, name),
         **{k: np.asarray(v) for k, v in posterior.items()},
     )
+
+
+def _save_global_vs_streams_corner(cfg, workflow, flat, global_posterior, pipeline, run_dir) -> None:
+    """Overlay corner plot of the pooled *global* posterior and each *single-stream* posterior
+    over the shared global parameters.
+
+    The ``Global`` chain is the compositional (pooled) posterior already sampled by the caller;
+    each stream chain is the ordinary per-member ``workflow.sample`` posterior conditioned on that
+    single member alone (the same mechanism as the sim-eval "base" mode). Both are mapped back to
+    physical units through the fitted preprocessing. Members are labelled from the simulator's
+    ``target_streams`` (name -> j index) when available. The single-stream posteriors are also
+    saved to ``single_stream_posterior.npz`` (native/model space, leading axis = member).
+
+    Best-effort: any failure is logged and swallowed so the chained run never aborts.
+    """
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import corner  # noqa: E402
+        import matplotlib.pyplot as plt  # noqa: E402
+        from matplotlib.lines import Line2D  # noqa: E402
+
+        from hydrabflow.simulators.registry import get_simulator
+
+        param_names = list(cfg.adapter.inference_variables)
+
+        # Per-member ("single stream") posteriors: leading axis = member, same call the sim-eval
+        # base mode uses. Conditioned on one member's data at a time (no pooling).
+        flat_conditions = {k: flat[k] for k in condition_keys(cfg) if k in flat}
+        per_stream = workflow.sample(
+            num_samples=int(cfg.inference.num_samples),
+            conditions=flat_conditions,
+            batch_size=int(cfg.inference.batch_size),
+        )
+        _save_posterior(per_stream, run_dir, name="single_stream_posterior.npz")
+
+        global_phys = pipeline.inverse_transform(dict(global_posterior))
+        per_stream_phys = pipeline.inverse_transform(dict(per_stream))
+
+        stream_ids = np.asarray(flat["j"]).reshape(-1).astype(int)
+        target_streams = getattr(get_simulator(cfg.simulator), "target_streams", None)
+        names = (
+            {int(v): str(k) for k, v in target_streams.items()}
+            if target_streams
+            else {int(s): f"stream_{int(s)}" for s in stream_ids}
+        )
+
+        def _stack(source, member: int):
+            return np.column_stack(
+                [np.asarray(source[k])[member].reshape(-1) for k in param_names]
+            )
+
+        chains = [("Global", _stack(global_phys, 0))]
+        for member in range(stream_ids.shape[0]):
+            label = names.get(int(stream_ids[member]), f"stream_{int(stream_ids[member])}")
+            chains.append((label, _stack(per_stream_phys, member)))
+
+        # Shared axis ranges across all chains (robust percentiles) so the overlays register.
+        all_data = np.vstack([c for _, c in chains])
+        lo = np.nanpercentile(all_data, 0.5, axis=0)
+        hi = np.nanpercentile(all_data, 99.5, axis=0)
+        pad = 0.05 * np.where(hi > lo, hi - lo, 1.0)
+        ranges = list(zip(lo - pad, hi + pad))
+
+        # colors[0] = pooled compositional (Global); the rest track the members in chain order
+        # (streams in j order), from the RdYlBu_r colormap.
+        colors = plt.cm.RdYlBu_r(np.linspace(0, 1, len(chains)))
+        fig = None
+        for i, (_, data) in enumerate(chains):
+            fig = corner.corner(
+                data, fig=fig, labels=param_names, range=ranges,
+                color=colors[i], bins=40,
+                plot_datapoints=False, plot_density=False, fill_contours=False,
+                smooth=1.0, levels=(0.68, 0.95), hist_kwargs={"density": True},
+            )
+        handles = [
+            Line2D([0], [0], color=colors[i], label=label)
+            for i, (label, _) in enumerate(chains)
+        ]
+        fig.legend(handles=handles, loc="upper right", fontsize=11, frameon=False)
+        path = os.path.join(run_dir, "real_global_vs_streams_corner.png")
+        fig.savefig(path, dpi=130, bbox_inches="tight")
+        plt.close(fig)
+        log.info("Saved global-vs-single-stream corner overlay: %s", path)
+    except Exception as exc:
+        log.warning("global-vs-streams corner plot failed: %s", exc)
 
 
 def _save_posterior_plot(posterior, param_names, run_dir) -> None:
