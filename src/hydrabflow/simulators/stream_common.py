@@ -41,6 +41,45 @@ OBS_SIGMA_VC = np.array([
     1.69, 2.01, 2.50, 4.94,
 ])
 
+# Huang et al. (2016) rotation curve out to ~100 kpc (three tracer samples — HI, PRCG, HKG —
+# combined for full radial coverage), used to probe / extend the observational space beyond the
+# Zhou (2023) range (~24 kpc). Columns: radii [kpc], Vc [km/s], 1-sigma [km/s].
+_HUANG = np.array([
+    [4.60, 231.24, 7.00], [5.08, 230.46, 7.00], [5.58, 230.01, 7.00],
+    [6.10, 239.61, 7.00], [6.57, 246.27, 7.00], [7.07, 243.49, 7.00],
+    [7.58, 242.71, 7.00], [8.04, 243.23, 7.00],
+    [8.34, 239.89, 5.92], [8.65, 237.26, 6.29], [9.20, 235.30, 5.60],
+    [9.62, 230.99, 5.49], [10.09, 228.41, 5.62], [10.58, 224.26, 5.87],
+    [11.09, 224.94, 7.02], [11.58, 233.57, 7.65], [12.07, 240.02, 6.17],
+    [12.73, 242.21, 8.64], [13.72, 261.78, 14.89], [14.95, 259.26, 30.84],
+    [15.52, 268.57, 49.67], [16.55, 261.17, 50.91], [17.56, 240.66, 49.91],
+    [18.54, 215.31, 24.80], [19.50, 214.99, 24.42], [21.25, 251.68, 19.50],
+    [23.78, 259.65, 19.62], [26.22, 242.02, 18.66], [28.71, 224.11, 16.97],
+    [31.29, 211.20, 16.43], [33.73, 217.93, 17.66], [36.19, 219.33, 18.44],
+    [38.73, 213.31, 17.29], [41.25, 200.05, 17.72], [43.93, 190.15, 18.65],
+    [46.43, 198.95, 20.70], [48.71, 192.91, 19.24], [51.56, 198.90, 21.74],
+    [57.03, 185.88, 21.56], [62.55, 173.89, 22.87], [69.47, 196.36, 25.89],
+    [79.27, 175.05, 22.71], [98.97, 147.72, 23.55],
+])
+HUANG_R_KPC, HUANG_VC_KMS, HUANG_SIGMA_VC = _HUANG.T
+
+
+def extended_rotation_curve(split_kpc: float | None = None):
+    """Union rotation-curve grid: Zhou (2023) up to ``split_kpc``, Huang (2016) beyond it.
+
+    Returns ``(r_kpc, vc_kms, sigma_kms)`` — the radii the model curve is evaluated on and the
+    observed reference (Zhou below the split, Huang above), sorted by radius. ``split_kpc``
+    defaults to the largest Zhou radius, so the Zhou grid is kept intact and only the
+    larger-radius Huang points are appended.
+    """
+    split = float(OBS_R_KPC.max()) if split_kpc is None else float(split_kpc)
+    hi = HUANG_R_KPC > split
+    r = np.concatenate([OBS_R_KPC, HUANG_R_KPC[hi]])
+    vc = np.concatenate([OBS_VC_KMS, HUANG_VC_KMS[hi]])
+    sig = np.concatenate([OBS_SIGMA_VC, HUANG_SIGMA_VC[hi]])
+    order = np.argsort(r)
+    return r[order], vc[order], sig[order]
+
 
 def sample_prior_value(spec: Mapping, n: int, rng: np.random.Generator) -> np.ndarray:
     """Draw ``(n, 1)`` samples from one prior spec (uniform / normal / identity)."""

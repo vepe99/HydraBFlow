@@ -1,0 +1,54 @@
+# Particle-spray stream simulator (Chen+2024 recipe) with an EXTENDED rotation-curve observable
+# and a Zhou-AND-Huang rejection prior. Same host potential / streams / projection as
+# stream_agama; this config only changes four things (documented inline):
+#   1. spray_method: chen  -> Chen, Gnedin & Li (2024) release model (gala ChenStreamDF), a
+#      port of the 6D (r, phi, theta, v, alpha, beta) Lagrange-point draw. The base
+#      stream_agama / stream_agama_rnbody keep Fardal+2015 (spray_method defaults to fardal).
+#   2. beta free: the halo outer slope beta is inferred, uniform [2, 4], so the model can grow
+#      the declining outer rotation curve Huang sees (base has it fixed at 3.0).
+#   3. obs_r_grid: extended -> both the stored vcirc_kms observable AND the rejection grid become
+#      the Zhou(2023) u Huang(2016) union (50 radii, single source of truth
+#      stream_common.extended_rotation_curve), so inference can later use the larger radii.
+#   4. banded vcirc_rejection: consistent with BOTH surveys (see below).
+# t_end is inherited from base (Pal5=4.0, NGC3201/M68=1.5): spray grows the ~100deg arms at 1.5
+# Gyr (unlike restricted N-body, which is why only the rnbody config overrides t_end).
+defaults:
+  - stream_agama
+
+# Reuses the registered stream_agama simulator class (Chen vs Fardal is a param, not a new
+# class); the distinct behaviour lives entirely in params below + this file's name in the
+# `simulator=` override. Keeping name=stream_agama is what makes get_simulator resolve the class.
+name: stream_agama
+params:
+  spray_method: chen
+  obs_r_grid: extended
+  obs_r_split_kpc: 24.0   # keep Zhou below this radius, append Huang beyond
+  n_workers: 24
+
+  # Free the halo outer slope (was identity [3.0]); becomes an inferred global parameter.
+  priors_global:
+    beta_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [2.0, 4.0]
+
+  # Rotation-curve rejection prior, now consistent with BOTH observed curves. A row's model
+  # curve must pass every band; hard indicator cut -> the compositional prior score stays valid
+  # unchanged inside the accepted region (as for the single-band rnbody cut).
+  #   - Zhou band  (5.5 < r <= 24 kpc): fractional, median |vc-vc_Zhou|/vc_Zhou < 0.20
+  #     (unchanged criterion; the inner sigma ~0.2 km/s is far too tight for a sigma cut).
+  #   - Huang band (r > 24 kpc):        sigma-based, median |vc-vc_Huang|/sigma_Huang < 2.0,
+  #     which respects Huang's heteroscedastic 7-50 km/s errors (a flat fractional cut would
+  #     treat a 7 and a 50 km/s error identically).
+  vcirc_rejection:
+    bands:
+      - name: zhou
+        r_min_kpc: 5.5
+        r_max_kpc: 24.0
+        criterion: fracdev
+        stat: median
+        max_frac_dev: 0.20
+      - name: huang
+        r_min_kpc: 24.0
+        criterion: sigma
+        stat: median
+        max_n_sigma: 2.0

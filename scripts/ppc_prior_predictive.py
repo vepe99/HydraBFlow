@@ -39,12 +39,21 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from scipy.spatial import cKDTree  # noqa: E402
 
-from hydrabflow.simulators.stream_common import OBS_R_KPC, OBS_SIGMA_VC, OBS_VC_KMS  # noqa: E402
-
-DEFAULT_REAL = (
-    "/export/home/vgiusepp/diffusion-experiments/case_study5/project_stream/"
-    "data/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz"
+from hydrabflow.simulators.stream_common import (  # noqa: E402
+    OBS_R_KPC,
+    OBS_SIGMA_VC,
+    OBS_VC_KMS,
+    extended_rotation_curve,
 )
+
+_REAL_NAME = "gaia_observed_streams_6Dwitherrors_cutNGC3201.npz"
+# Prefer the in-repo copy (assets/gaia/, portable across clusters); fall back to the reference
+# directory on the original machine. `copy the gaia data` populated assets/gaia/.
+_REPO_REAL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          "assets", "gaia", _REAL_NAME)
+_REF_REAL = ("/export/home/vgiusepp/diffusion-experiments/case_study5/project_stream/"
+             "data/" + _REAL_NAME)
+DEFAULT_REAL = _REPO_REAL if os.path.exists(_REPO_REAL) else _REF_REAL
 # j index -> stream name (matches conf/simulator/stream_agama.yaml target_streams).
 STREAM_NAMES = {0: "Pal5", 1: "NGC3201", 2: "M68"}
 # sim_data_projected feature order (stream_common.sky_projection):
@@ -66,19 +75,38 @@ def real_members(real_path: str) -> dict[int, np.ndarray]:
 
 
 def rotation_curve_ppc(vc: np.ndarray, out_dir: str, r_min: float) -> dict:
-    r = OBS_R_KPC
-    pct = np.percentile(vc, [5, 16, 50, 84, 95], axis=0)
-    fig, ax = plt.subplots(figsize=(7.5, 5))
+    # Pick the observed reference to match the dataset's vcirc grid: the Zhou (34-radii) grid, or
+    # the extended Zhou u Huang union grid when vcirc was generated with obs_r_grid=extended.
+    n_r = vc.shape[1]
+    if n_r == len(OBS_R_KPC):
+        r, vc_ref, sig = OBS_R_KPC, OBS_VC_KMS, OBS_SIGMA_VC
+        split = None
+    else:
+        r, vc_ref, sig = extended_rotation_curve()
+        split = float(OBS_R_KPC.max())
+        if len(r) != n_r:
+            raise ValueError(f"vcirc has {n_r} radii, extended grid has {len(r)} - grid mismatch")
+
+    pct = np.nanpercentile(vc, [5, 16, 50, 84, 95], axis=0)
+    fig, ax = plt.subplots(figsize=(8.5 if split else 7.5, 5))
     ax.fill_between(r, pct[0], pct[4], color="C0", alpha=0.18, label="prior 5-95%")
     ax.fill_between(r, pct[1], pct[3], color="C0", alpha=0.30, label="prior 16-84%")
     ax.plot(r, pct[2], color="C0", lw=2, label="prior median")
-    ax.errorbar(r, OBS_VC_KMS, yerr=OBS_SIGMA_VC, fmt="o", ms=3, color="k", capsize=2, lw=1,
-                label="Zhou+23 observed")
+    if split is None:
+        ax.errorbar(r, vc_ref, yerr=sig, fmt="o", ms=3, color="k", capsize=2, lw=1,
+                    label="Zhou+23 observed")
+    else:
+        lo = r <= split
+        ax.errorbar(r[lo], vc_ref[lo], yerr=sig[lo], fmt="o", ms=3, color="k", capsize=2, lw=1,
+                    label="Zhou+23 (<=24 kpc)")
+        ax.errorbar(r[~lo], vc_ref[~lo], yerr=sig[~lo], fmt="s", ms=4, color="crimson", capsize=2,
+                    lw=1, label="Huang+16 (>24 kpc)")
+        ax.axvline(split, color="grey", ls="--", lw=1)
+        ax.set_xscale("log")
     ax.axvspan(r.min(), r_min, color="grey", alpha=0.12)
-    ax.text(r_min + 0.1, ax.get_ylim()[0] + 3, f"cut uses r > {r_min} kpc", fontsize=8)
     ax.set_xlabel("R [kpc]")
     ax.set_ylabel(r"$v_c$ [km/s]")
-    ax.set_title(f"Prior-predictive rotation curve (n={len(vc)})")
+    ax.set_title(f"Prior-predictive rotation curve (n={len(vc)}, {n_r} radii)")
     ax.legend(fontsize=8)
     fig.tight_layout()
     path = os.path.join(out_dir, "ppc_rotation_curve.png")
@@ -86,14 +114,22 @@ def rotation_curve_ppc(vc: np.ndarray, out_dir: str, r_min: float) -> dict:
     plt.close(fig)
 
     use = r > r_min
-    inside = (OBS_VC_KMS >= pct[0]) & (OBS_VC_KMS <= pct[4])
-    med_fracdev = float(np.median(np.abs(pct[2][use] - OBS_VC_KMS[use]) / OBS_VC_KMS[use]))
-    return {
+    inside = (vc_ref >= pct[0]) & (vc_ref <= pct[4])
+    med_fracdev = float(np.median(np.abs(pct[2][use] - vc_ref[use]) / vc_ref[use]))
+    out = {
         "n_curves": int(len(vc)),
+        "n_radii": int(n_r),
         "obs_bins_in_prior_5_95_pct": float(inside[use].mean()),
         "prior_median_vs_obs_median_fracdev": med_fracdev,
         "figure": path,
     }
+    if split is not None:
+        ext = r > split
+        out["huang_bins_in_prior_5_95_pct"] = float(inside[ext].mean())
+        out["prior_median_vs_huang_median_fracdev"] = float(
+            np.median(np.abs(pct[2][ext] - vc_ref[ext]) / vc_ref[ext])
+        )
+    return out
 
 
 def _reach(sim_xy, sim_pm, real_xy, real_pm, sky_tol, pm_tol) -> float:
@@ -119,7 +155,9 @@ def stream_ppc(chunk, out_dir, real_path, sky_tol, pm_tol) -> dict:
         return metrics
     fig, axes = plt.subplots(len(present), 2, figsize=(11, 4.2 * len(present)), squeeze=False)
     for row, jj in enumerate(present):
-        ra, dec, _, pmra, pmdec, _ = sp[j == jj].reshape(-1, 6).T
+        feats = sp[j == jj].reshape(-1, 6)
+        feats = feats[np.isfinite(feats).all(axis=1)]  # drop NaN particles (invalid seeds)
+        ra, dec, _, pmra, pmdec, _ = feats.T
         cosd = np.cos(np.deg2rad(dec))
         sim_xy = np.column_stack([ra * cosd, dec])
         sim_pm = np.column_stack([pmra, pmdec])

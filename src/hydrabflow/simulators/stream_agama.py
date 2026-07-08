@@ -40,6 +40,7 @@ from hydrabflow.simulators.registry import register_simulator
 from hydrabflow.simulators.stream_common import (
     OBS_R_KPC,
     OBS_VC_KMS,
+    extended_rotation_curve,
     inferred_names,
     sample_stream_prior,
     sample_stream_prior_shared_global,
@@ -154,9 +155,61 @@ def _ic_particle_spray(
     return ic_stream
 
 
+# Chen, Gnedin & Li (2024) release model (arXiv:2408.01496), ported 1:1 from gala's
+# ``ChenStreamDF._sample`` (gala/dynamics/mockstream/df.pyx). The 6D draw is
+# (r, phi, theta, v, alpha, beta): a radial scale r*rj, sky angles (phi, theta) for the
+# escape *position*, a velocity scale v (fixed to the local escape speed), and angles
+# (alpha, beta) for the escape *velocity* — all in the satellite frame whose basis
+# (radial, L x radial, L) matches ``_rj_vj_R`` here, so the same ``einsum(..., R)`` maps
+# back to Galactocentric coordinates as for the Fardal path.
+_CHEN_MEAN = np.array([1.6, -30.0, 0.0, 1.0, 20.0, 0.0])  # r, phi[deg], theta[deg], v, alpha[deg], beta[deg]
+_CHEN_COV = np.diag([0.1225, 529.0, 144.0, 0.0, 400.0, 484.0])
+_CHEN_COV[0, 4] = _CHEN_COV[4, 0] = -4.9  # covariance between r and alpha
+
+
+def _ic_chen_spray(
+    orbit_sat: np.ndarray, rj: np.ndarray, R: np.ndarray, rng: np.random.Generator,
+    mass_sat: float, G: float,
+) -> np.ndarray:
+    """Chen+2024 initial conditions: one trailing + one leading particle per orbit seed.
+
+    Mirrors gala's ``ChenStreamDF``: the leading tail is the trailing draw with 180 deg added
+    to the position angle ``phi`` and the velocity angle ``alpha``. Particles are interleaved
+    (``2k`` trailing, ``2k+1`` leading) so they line up with ``np.repeat(time_sat, 2)`` in
+    :func:`_spray_stream`, exactly like the Fardal path.
+    """
+    N = len(rj)
+    trail = rng.multivariate_normal(_CHEN_MEAN, _CHEN_COV, size=N, check_valid="ignore")
+    lead = rng.multivariate_normal(_CHEN_MEAN, _CHEN_COV, size=N, check_valid="ignore")
+    lead[:, 1] += 180.0  # phi   -> leading tail
+    lead[:, 4] += 180.0  # alpha -> leading tail
+    s = np.empty((2 * N, 6))
+    s[0::2] = trail
+    s[1::2] = lead
+
+    rj2 = np.repeat(rj, 2)
+    Dr = s[:, 0] * rj2
+    with np.errstate(invalid="ignore"):
+        Dv = s[:, 3] * np.sqrt(2.0 * G * mass_sat / Dr)  # local escape speed at Dr
+    phi, theta = np.deg2rad(s[:, 1]), np.deg2rad(s[:, 2])
+    alpha, beta = np.deg2rad(s[:, 4]), np.deg2rad(s[:, 5])
+    offset_pos = Dr[:, None] * np.column_stack(
+        [np.cos(theta) * np.cos(phi), np.cos(theta) * np.sin(phi), np.sin(theta)]
+    )
+    offset_vel = Dv[:, None] * np.column_stack(
+        [np.cos(beta) * np.cos(alpha), np.cos(beta) * np.sin(alpha), np.sin(beta)]
+    )
+    R2 = np.repeat(R, 2, axis=0)
+    ic_stream = np.repeat(orbit_sat, 2, axis=0)
+    ic_stream[:, 0:3] += np.einsum("ni,nij->nj", offset_pos, R2)
+    ic_stream[:, 3:6] += np.einsum("ni,nij->nj", offset_vel, R2)
+    return ic_stream
+
+
 def _spray_stream(
     agama, pot_host, posvel_sat: np.ndarray, mass_sat: float, radius_sat: float,
     time_total: float, num_particles: int, rng: np.random.Generator,
+    method: str = "fardal",
 ) -> np.ndarray:
     """Particle-spray stream including the progenitor's own (moving Plummer) potential.
 
@@ -171,7 +224,10 @@ def _spray_stream(
     orbit_sat = orbit_sat[1:][::-1]
 
     rj, vj, R = _rj_vj_R(agama, pot_host, orbit_sat, mass_sat)
-    ic_stream = _ic_particle_spray(orbit_sat, rj, vj, R, rng)
+    if method == "chen":
+        ic_stream = _ic_chen_spray(orbit_sat, rj, R, rng, mass_sat, agama.G)
+    else:
+        ic_stream = _ic_particle_spray(orbit_sat, rj, vj, R, rng)
     time_seed = np.repeat(time_sat, 2)
 
     pot_sat = agama.Potential(
@@ -204,36 +260,45 @@ def _vcirc(pot_host, obs_r: np.ndarray) -> np.ndarray:
     return np.sqrt(np.where(v2 > 0, v2, np.nan))
 
 
-def _vcirc_accept_worker(
-    rows: list,
-    obs_r: np.ndarray,
-    use_bin: np.ndarray,
-    vc_ref: np.ndarray,
-    max_frac_dev: float,
-    stat: str,
-) -> np.ndarray:
+def _vcirc_accept_worker(rows: list, obs_r: np.ndarray, bands: list) -> np.ndarray:
     """joblib worker: does each parameter row's model rotation curve pass the rejection cut?
 
-    A row is accepted when ``stat`` (median or max) of the fractional deviation
-    ``|vc_model - vc_ref| / vc_ref`` over the selected radial bins is below ``max_frac_dev``.
-    Rows whose potential fails to build or yields NaN circular velocities are rejected.
+    A row is accepted iff it passes *every* band. Each band selects a set of radial bins
+    (``bin_mask``) and requires ``stat`` (median or max) of a per-bin deviation to fall below
+    ``threshold``: ``|vc - vc_ref| / vc_ref`` for a ``fracdev`` band, ``|vc - vc_ref| / sigma``
+    for a ``sigma`` band. Rows whose potential fails to build or yields a NaN circular velocity
+    in any used bin are rejected.
     """
     agama = _agama()
     agama.setNumThreads(1)
-    reduce = np.median if stat == "median" else np.max
     out = np.zeros(len(rows), dtype=bool)
     for i, p in enumerate(rows):
         try:
-            vc = _vcirc(_host_potential(agama, p), obs_r)[use_bin]
+            vc = _vcirc(_host_potential(agama, p), obs_r)
         except Exception:
             continue
-        fdev = np.abs(vc - vc_ref) / vc_ref
-        if not np.isnan(fdev).any():
-            out[i] = bool(reduce(fdev) < max_frac_dev)
+        ok = True
+        for b in bands:
+            v = vc[b["bin_mask"]]
+            if np.isnan(v).any():
+                ok = False
+                break
+            if b["criterion"] == "sigma":
+                dev = np.abs(v - b["vc_ref"]) / b["sigma"]
+            else:
+                dev = np.abs(v - b["vc_ref"]) / b["vc_ref"]
+            reduce = np.median if b["stat"] == "median" else np.max
+            if not bool(reduce(dev) < b["threshold"]):
+                ok = False
+                break
+        out[i] = ok
     return out
 
 
-def _simulate_one(p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int):
+def _simulate_one(
+    p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int,
+    spray_method: str = "fardal",
+):
     """joblib worker: one stream realization + the rotation curve of its potential."""
     agama = _agama()
     rng = np.random.default_rng(seed)
@@ -264,6 +329,7 @@ def _simulate_one(p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed
         time_total=p["t_end"] / time_unit_gyr,
         num_particles=n_particles,
         rng=rng,
+        method=spray_method,
     )
     return xv, _vcirc(pot_host, obs_r)
 
@@ -293,7 +359,20 @@ class AgamaStreamSimulator(BaseSimulator):
         return int(self.params.get("n_workers", 8))
 
     @property
+    def _obs_r_split(self) -> float:
+        """Split radius for the extended (Zhou u Huang) rotation-curve grid."""
+        return float(self.params.get("obs_r_split_kpc", float(OBS_R_KPC.max())))
+
+    @property
     def obs_r_kpc(self) -> np.ndarray:
+        """Radii the model rotation curve is evaluated on (also the ``vcirc_kms`` grid).
+
+        ``obs_r_grid: extended`` -> Zhou below ``obs_r_split_kpc`` u Huang beyond (50 radii,
+        the single source of truth being ``stream_common.extended_rotation_curve``); an
+        explicit ``obs_r_kpc`` list overrides; otherwise the Zhou grid.
+        """
+        if str(self.params.get("obs_r_grid", "")) == "extended":
+            return extended_rotation_curve(self._obs_r_split)[0]
         return np.asarray(self.params.get("obs_r_kpc", OBS_R_KPC), dtype=float)
 
     @staticmethod
@@ -356,16 +435,54 @@ class AgamaStreamSimulator(BaseSimulator):
         node = self.params.get("vcirc_rejection", None)
         return self._as_dict(node) if node else None
 
+    def _build_accept_bands(self, cfg: Mapping, obs_r: np.ndarray) -> list:
+        """Resolve ``vcirc_rejection`` into a list of band specs for the accept worker.
+
+        ``bands`` mode (a list of ``{r_min_kpc, r_max_kpc, criterion, stat, ...}`` entries)
+        sources the per-bin reference and 1-sigma from ``extended_rotation_curve`` (Zhou below
+        the split, Huang above), which requires ``obs_r_grid: extended`` so the reference aligns
+        with ``obs_r_kpc``. Without ``bands`` the legacy single fractional cut is reproduced.
+        """
+        if "bands" in cfg:
+            r_ref, vc_ref_full, sig_full = extended_rotation_curve(self._obs_r_split)
+            if not (len(r_ref) == len(obs_r) and np.allclose(r_ref, obs_r)):
+                raise ValueError(
+                    "banded vcirc_rejection requires obs_r_grid=extended so the Zhou/Huang "
+                    "reference grid aligns with obs_r_kpc."
+                )
+            bands = []
+            for b in cfg["bands"]:
+                mask = (obs_r > float(b.get("r_min_kpc", 0.0))) & (
+                    obs_r <= float(b.get("r_max_kpc", np.inf))
+                )
+                criterion = str(b.get("criterion", "fracdev"))
+                threshold = float(b["max_n_sigma"] if criterion == "sigma" else b["max_frac_dev"])
+                bands.append({
+                    "bin_mask": mask,
+                    "vc_ref": vc_ref_full[mask],
+                    "sigma": sig_full[mask],
+                    "criterion": criterion,
+                    "threshold": threshold,
+                    "stat": str(b.get("stat", "median")),
+                })
+            return bands
+
+        use_bin = obs_r > float(cfg.get("r_min_kpc", 5.5))
+        return [{
+            "bin_mask": use_bin,
+            "vc_ref": np.asarray(cfg.get("vc_ref_kms", OBS_VC_KMS), dtype=float)[use_bin],
+            "sigma": None,
+            "criterion": "fracdev",
+            "threshold": float(cfg["max_frac_dev"]),
+            "stat": str(cfg.get("stat", "median")),
+        }]
+
     def _vcirc_accept_mask(self, draws: Mapping[str, np.ndarray]) -> np.ndarray:
         """Screen each draw's global potential against the observed rotation curve."""
         from joblib import Parallel, delayed
 
-        cfg = self._vcirc_rejection
         obs_r = self.obs_r_kpc
-        use_bin = obs_r > float(cfg.get("r_min_kpc", 5.5))
-        vc_ref = np.asarray(cfg.get("vc_ref_kms", OBS_VC_KMS), dtype=float)[use_bin]
-        max_frac_dev = float(cfg["max_frac_dev"])
-        stat = str(cfg.get("stat", "median"))
+        bands = self._build_accept_bands(self._vcirc_rejection, obs_r)
 
         n = len(np.asarray(next(iter(draws.values()))))
         gkeys = list(self._priors_global)
@@ -376,8 +493,7 @@ class AgamaStreamSimulator(BaseSimulator):
         n_jobs = min(self._n_workers, len(rows))
         chunks = [rows[i::n_jobs] for i in range(n_jobs)]
         res = Parallel(n_jobs=n_jobs)(
-            delayed(_vcirc_accept_worker)(c, obs_r, use_bin, vc_ref, max_frac_dev, stat)
-            for c in chunks
+            delayed(_vcirc_accept_worker)(c, obs_r, bands) for c in chunks
         )
         mask = np.zeros(n, dtype=bool)
         for i, r in enumerate(res):
@@ -427,9 +543,12 @@ class AgamaStreamSimulator(BaseSimulator):
             for i in range(n)
         ]
         seeds = rng.integers(0, 2**31 - 1, size=n)
+        spray_method = str(self.params.get("spray_method", "fardal"))
 
         results = Parallel(n_jobs=self._n_workers)(
-            delayed(_simulate_one)(row, self._n_particles, self.obs_r_kpc, int(seed))
+            delayed(_simulate_one)(
+                row, self._n_particles, self.obs_r_kpc, int(seed), spray_method
+            )
             for row, seed in zip(rows, seeds)
         )
         xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
