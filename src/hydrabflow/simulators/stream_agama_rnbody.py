@@ -41,6 +41,30 @@ from hydrabflow.simulators.stream_common import sky_projection
 _PLUMMER_MMAX = 0.99  # truncate the sampled enclosed-mass fraction (r <~ 12 scale radii)
 
 
+class _OrbitCapExceeded(Exception):
+    """Raised when an ``agama.orbit`` call stopped at ``maxNumSteps`` instead of reaching the
+    requested end time — i.e. a pathological orbit (e.g. near-radial/plunging) whose adaptive
+    integrator step collapsed and would otherwise run for hours inside a single C call (a Python
+    signal cannot interrupt it, since agama does not return to the interpreter mid-integration).
+    The row is dropped to NaN in :func:`_simulate_one_rnbody`, exactly like any other failure."""
+
+
+def _assert_reached(times, expected_final: float, span: float) -> None:
+    """Raise :class:`_OrbitCapExceeded` unless every orbit reached ``expected_final``.
+
+    A capped orbit stores its actual last-reached time, which falls short of the requested end.
+    ``times`` is either a 1d timestamp array (single orbit) or an object array of such arrays (a
+    bunch, ``result[:, 0]``). Tolerance is 1% of the integration ``span`` (reached times match the
+    request exactly when uncapped, so this only ever fires on a genuine early stop)."""
+    arr = np.atleast_1d(times)
+    if arr.dtype == object:  # bunch: result[:, 0] is an object array of per-orbit time arrays
+        reached = np.array([float(np.atleast_1d(t)[-1]) for t in arr])
+    else:  # single orbit: a 1d array of timestamps
+        reached = np.array([float(arr[-1])])
+    if np.any(np.abs(reached - expected_final) > 0.01 * abs(span) + 1e-9):
+        raise _OrbitCapExceeded()
+
+
 def _plummer_sample(
     agama, n: int, mass: float, scale: float, rng: np.random.Generator
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -86,14 +110,28 @@ def _rnbody_stream(
     n_updates: int,
     traj_per_update: int,
     accuracy: float,
+    max_num_steps: float,
+    update_max_num_steps: float,
 ) -> np.ndarray:
     """Restricted N-body stream: forward-integrate Plummer particles from the rewound orbit
-    position, refitting the moving progenitor potential from the particles every ``tupd``."""
+    position, refitting the moving progenitor potential from the particles every ``tupd``.
+
+    Every ``agama.orbit`` call caps the integrator's step count and asserts it reached the
+    requested end time; an orbit that hits the cap raises :class:`_OrbitCapExceeded` (-> NaN row).
+    Two caps are used because the two kinds of orbit have very different legit step counts:
+    ``max_num_steps`` for the progenitor's own rewind/center orbit (a single orbit integrated over
+    the full time, ~1e3-1e4 legit steps), and the much tighter ``update_max_num_steps`` for the
+    per-particle orbits inside each update (integrated over only ``tupd``, ~1e2 legit steps). The
+    tight per-update cap bounds a moderately pathological row (whose 1000 particles are each slow
+    but individually below 1e6 steps) to seconds instead of hours. The progenitor orbit is checked
+    first, so a fully pathological row bails before the expensive update loop."""
     # Rewind the progenitor's center to -T, then integrate it forward once, densely sampled:
     # the slices of this single trajectory drive the moving-potential center in every chunk.
-    _, orbit_back = agama.orbit(
-        potential=pot_host, ic=posvel_sat, time=-time_total, trajsize=2, accuracy=1e-10
+    t_back, orbit_back = agama.orbit(
+        potential=pot_host, ic=posvel_sat, time=-time_total, trajsize=2,
+        accuracy=1e-10, maxNumSteps=int(max_num_steps),
     )
+    _assert_reached(t_back, -time_total, time_total)
     xv_past = orbit_back[-1]
     n_knots = n_updates * traj_per_update + 1
     t_center, orbit_center = agama.orbit(
@@ -103,7 +141,9 @@ def _rnbody_stream(
         timestart=-time_total,
         trajsize=n_knots,
         accuracy=1e-10,
+        maxNumSteps=int(max_num_steps),
     )
+    _assert_reached(t_center, 0.0, time_total)
 
     pos, vel = _plummer_sample(agama, num_particles, mass_sat, radius_sat, rng)
     xv = np.tile(xv_past, (num_particles, 1))
@@ -126,7 +166,9 @@ def _rnbody_stream(
             timestart=t_center[knots][0],
             trajsize=1,
             accuracy=accuracy,
+            maxNumSteps=int(update_max_num_steps),
         )
+        _assert_reached(result[:, 0], t_center[knots][0] + tupd, tupd)
         xv = np.vstack(result[:, 1])
         # Refit the progenitor's own potential from its particles (monopole approximation,
         # as in the example: all particles contribute, stripped ones negligibly).
@@ -185,8 +227,10 @@ def _simulate_one_rnbody(
             n_updates=int(opts.get("n_updates", 12)),
             traj_per_update=int(opts.get("traj_per_update", 16)),
             accuracy=float(opts.get("accuracy", 1e-8)),
+            max_num_steps=float(opts.get("max_num_steps", 1e6)),
+            update_max_num_steps=float(opts.get("update_max_num_steps", 1e4)),
         )
-    except Exception:
+    except Exception:  # _OrbitCapExceeded (pathological orbit hit the step cap) or agama failure
         xv = np.full((n_particles, 6), np.nan)
     return xv, vcirc
 
@@ -201,6 +245,16 @@ class RestrictedNbodyStreamSimulator(AgamaStreamSimulator):
             "n_updates": int(self.params.get("n_updates", 12)),
             "traj_per_update": int(self.params.get("traj_per_update", 16)),
             "accuracy": float(self.params.get("accuracy", 1e-8)),
+            # Hard per-orbit step caps that guard against pathological orbits (near-radial/plunging
+            # ones whose adaptive step collapses and would run for hours inside a single agama C
+            # call — a Python timeout cannot interrupt that, since agama holds the GIL). A capped
+            # orbit is detected (reached-time short) and its row dropped to NaN. Two caps because
+            # the two orbit kinds differ ~50x in legit step count (measured):
+            #   max_num_steps        - progenitor rewind/center orbit, full time, ~3e3 legit steps.
+            #   update_max_num_steps - per-particle orbits over one update (tupd), ~1e2 legit steps;
+            #     tight so a moderately-slow row (1000 particles each <1e6 steps) bails in ~150 s.
+            "max_num_steps": float(self.params.get("max_num_steps", 1e6)),
+            "update_max_num_steps": float(self.params.get("update_max_num_steps", 1e4)),
         }
 
     def simulate(
@@ -216,7 +270,10 @@ class RestrictedNbodyStreamSimulator(AgamaStreamSimulator):
         seeds = rng.integers(0, 2**31 - 1, size=n)
         opts = self._rnbody_opts()
 
-        results = Parallel(n_jobs=self._n_workers)(
+        # batch_size=1: restricted-N-body rows vary wildly in cost (fast rows vs the multi-minute
+        # t_end=4 rows), so one row per dispatch keeps all n_workers busy instead of letting
+        # joblib's 'auto' batching hand a few workers oversized batches while the rest idle.
+        results = Parallel(n_jobs=self._n_workers, batch_size=1)(
             delayed(_simulate_one_rnbody)(row, self._n_particles, self.obs_r_kpc, int(seed), opts)
             for row, seed in zip(rows, seeds)
         )

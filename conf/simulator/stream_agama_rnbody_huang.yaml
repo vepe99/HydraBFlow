@@ -1,0 +1,53 @@
+# Restricted N-body stream simulator combining all three prior/model improvements at once
+# (the "PLANNED next dataset" from CLAUDE.md, larger 60k run):
+#   1. Restricted N-body IC — inherited from stream_agama_rnbody (self-consistent Plummer
+#      progenitor particles + periodically refit moving Multipole potential; t_end=4.0 Gyr for
+#      NGC3201/M68). NO Chen spray IC: `spray_method: chen` is spray-only, so rnbody keeps its
+#      own restricted N-body IC path.
+#   2. Extended Zhou(2023) u Huang(2016) rotation-curve observable (obs_r_grid: extended, 50
+#      radii) AND a freed halo outer slope beta (uniform [2, 4] instead of the base identity 3.0)
+#      so the model can grow Huang's declining outer curve.
+#   3. Banded Zhou u Huang rotation-curve rejection prior (overrides the single-band Zhou-only
+#      cut that stream_agama_rnbody carries; the leftover single-band keys are ignored once
+#      `bands` is present — see stream_agama._build_accept_bands). A hard indicator cut, so the
+#      compositional prior score stays valid unchanged inside the accepted region.
+# Items 2 and 3 are class-level and config-driven on the base stream_agama, which
+# stream_agama_rnbody subclasses; this file just carries the spray_huang extras onto the rnbody
+# variant. name stays stream_agama_rnbody so get_simulator resolves the restricted-N-body class.
+defaults:
+  - stream_agama_rnbody
+
+name: stream_agama_rnbody
+params:
+  # ~70% of this 256-core machine. rnbody runs agama_num_threads=1 per worker, so the total CPU
+  # load is ~= n_workers. Used for both the (cheap) rejection screening and the forward model.
+  n_workers: 180
+
+  # Extended rotation-curve observable + rejection grid (Zhou below the split, Huang above).
+  obs_r_grid: extended
+  obs_r_split_kpc: 24.0
+
+  # Free the halo outer slope (base fixes it identity [3.0]); inferred, uniform [2, 4].
+  priors_global:
+    beta_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [2.0, 4.0]
+
+  # Banded rejection consistent with BOTH observed curves. A row's model curve must pass every
+  # band. Overrides stream_agama_rnbody's single-band cut.
+  #   - Zhou band  (5.5 < r <= 24 kpc): fractional, median |vc-vc_Zhou|/vc_Zhou < 0.20
+  #   - Huang band (r > 24 kpc):        sigma-based, median |vc-vc_Huang|/sigma_Huang < 2.0
+  #     (respects Huang's heteroscedastic 7-50 km/s errors).
+  vcirc_rejection:
+    bands:
+      - name: zhou
+        r_min_kpc: 5.5
+        r_max_kpc: 24.0
+        criterion: fracdev
+        stat: median
+        max_frac_dev: 0.20
+      - name: huang
+        r_min_kpc: 24.0
+        criterion: sigma
+        stat: median
+        max_n_sigma: 2.0

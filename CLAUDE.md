@@ -342,6 +342,34 @@ Every run saves:
   own IC; the rejection prior + extended grid + free β are class-level and already config-driven on
   the base `stream_agama`, which `stream_agama_rnbody` subclasses). Dataset creation to run on the
   GPU-less cluster (rnbody is CPU/joblib, ~10-25 s/row × rejection screening) then scp'd back.
+- **TODO — native missing-vlos handling in the SetTransformer (designed 2026-07-08, not
+  implemented)**: replace the `mask_vlos` mean imputation with a missingness-aware summary network.
+  Current state: `mask_vlos` (`augmentation/streams.py:445`) overwrites unmeasured stars' vlos with
+  the per-stream mean of the kept values and their sigma with the sample std, then
+  `concatenate_vlos_mask` (`streams.py:629`) appends the binary indicator channel — so the
+  SetTransformer sees fabricated, artificially coherent values and must learn to ignore them via
+  the indicator alone. The bf attention mask can't help: `summary_attention_mask` (routed by the
+  adapter rename `adapter.py:191-193` → `MaskedFusionNetwork` → only the `sim_data_projected`
+  backbone, `fusion.py:80-83`) masks whole set elements (padding), never a single feature channel.
+  **Plan (recommended)**: new self-registering module
+  `src/hydrabflow/networks/masked_set_transformer.py` — a `SummaryNetwork` subclass registered as
+  `masked_set_transformer` that (a) reads the vlos mask from its feature channel, (b) zeros the
+  vlos value + sigma channels where mask=0, (c) projects features through a `Dense(embed_dim)`
+  input layer and **adds a learned "missing-vlos" embedding vector** to stars without vlos
+  (BERT-style mask token), then (d) runs a stock `bf.networks.SetTransformer`, forwarding
+  `attention_mask` unchanged. Channel indices for the current `stream_global` layout (6 obs +
+  6 sigma + magnitude + vlos_mask + stream index = 15): `value_channels: [5]`,
+  `sigma_channels: [11]`, `mask_channel: 13` (config `params`). Also: `mask_vlos` gains
+  `params.impute: mean|zero` (default mean for back-compat; use zero with the new net so true
+  simulated vlos never leaks), and `conf/model/summary_network/stream_fusion*.yaml` swaps the
+  `sim_data_projected` backbone type. Adapter/preprocessing/real-data path untouched — real Gaia
+  npz already carries its own `vlos_mask` (`evaluate_real.py:122`), so sim and real missingness go
+  through the identical forward pass. Rejected alternative: two-set fusion (astrometry set +
+  vlos-only set, per-backbone attention masks) — bf's approximator forwards exactly ONE
+  `summary_attention_mask`, so it needs mask-stacking hacks or a custom approximator and breaks the
+  star-level pm↔vlos joint unless coords are duplicated. Caveats: architecture change ⇒ existing
+  checkpoints (model_5 …) can't be reused, retrain required; if `per_stream_standardize` is ever
+  added to the chain, fit its vlos stats on measured values only (today they include imputed ones).
 
 ## graphify
 

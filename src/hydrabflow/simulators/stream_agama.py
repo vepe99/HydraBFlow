@@ -570,7 +570,13 @@ class AgamaStreamSimulator(BaseSimulator):
         seeds = rng.integers(0, 2**31 - 1, size=n)
         spray_method = str(self.params.get("spray_method", "fardal"))
 
-        results = Parallel(n_jobs=self._n_workers)(
+        # batch_size=1: forward-model rows have highly variable cost (restricted N-body rows,
+        # especially the long t_end streams, run far longer than spray rows). joblib's default
+        # batch_size='auto' grows the batch after fast early rows and then dispatches a few large
+        # batches to a handful of workers, starving the rest and serializing the slow tail. One
+        # row per dispatch keeps all n_workers busy; the per-task overhead is negligible next to a
+        # multi-second row.
+        results = Parallel(n_jobs=self._n_workers, batch_size=1)(
             delayed(_simulate_one)(
                 row, self._n_particles, self.obs_r_kpc, int(seed), spray_method
             )
