@@ -175,6 +175,174 @@ def test_prior_score_applies_time_decay():
     np.testing.assert_allclose(np.asarray(out_t_half["g"]), 0.5 * raw)
 
 
+def test_prior_score_from_kde_fits_in_log10_space(tmp_path):
+    """The KDE prior score must be fit in the network's native space (log10 for ``log10_keys``),
+    NOT physical units -- fitting in physical units was the bug that blew up compositional
+    sampling (rho/Sigma worst) while base sampling stayed fine. Verify: (a) grad log p matches a
+    finite-difference of the log-density recomputed independently in log10 space, and (b) the
+    ``(1 - t)`` decay is applied by the callable itself."""
+    from scipy.special import logsumexp
+
+    from hydrabflow.pipeline.compositional import prior_score_from_kde
+
+    rng = np.random.default_rng(0)
+    n = 4000
+    rho = 10 ** rng.uniform(6.0, 8.0, n)  # log10-key, huge physical scale
+    gamma = rng.normal(0.0, 1.0, n)  # non-log key
+    npz = tmp_path / "kde.npz"
+    np.savez(npz, rho=rho, gamma=gamma)
+
+    order = ["rho", "gamma"]
+    score = prior_score_from_kde(
+        str(npz), param_order=order, log10_keys={"rho"}, max_points=2000, seed=1
+    )
+
+    # Independently reconstruct the same diagonal KDE in log10 space for a finite-diff reference.
+    X = np.stack([np.log10(rho), gamma], axis=1)
+    X = X[np.random.default_rng(1).choice(X.shape[0], 2000, replace=False)]
+    m, d = X.shape
+    h = np.maximum((m ** (-1.0 / (d + 4))) ** 2 * X.var(0), 1e-12)
+
+    def logpdf(pt):
+        ex = -0.5 * np.sum((pt[None, :] - X) ** 2 / h, axis=1)
+        return logsumexp(ex) - np.log(m) - 0.5 * np.sum(np.log(2 * np.pi * h))
+
+    pts = np.array([[7.0, 0.2], [6.5, -1.0]])  # rho given in LOG10 space (as bayesflow passes it)
+    eps = 1e-4
+    fd = np.zeros_like(pts)
+    for b in range(pts.shape[0]):
+        for jx in range(d):
+            p = pts[b].copy(); p[jx] += eps; hi = logpdf(p)
+            p[jx] -= 2 * eps; lo = logpdf(p)
+            fd[b, jx] = (hi - lo) / (2 * eps)
+
+    theta = {"rho": pts[:, [0]], "gamma": pts[:, [1]]}
+    g = score(theta)
+    got = np.concatenate([np.asarray(g["rho"]), np.asarray(g["gamma"])], axis=1)
+    np.testing.assert_allclose(got, fd, atol=2e-3)
+
+    # (1 - t) decay owned by the callable.
+    g_half = score(theta, time=np.full((2, 1), 0.5))
+    np.testing.assert_allclose(np.asarray(g_half["rho"]), 0.5 * np.asarray(g["rho"]), rtol=1e-5)
+
+
+def test_prior_score_from_kde_linear_space(tmp_path):
+    """With no ``log10_keys`` every parameter stays in physical/linear space; the KDE must be fit
+    and scored there directly (no log10 anywhere). Guards the non-log path before committing:
+    grad log p must match a finite-difference of the linear-space diagonal KDE recomputed
+    independently, including for a large-magnitude physical parameter."""
+    from scipy.special import logsumexp
+
+    from hydrabflow.pipeline.compositional import prior_score_from_kde
+
+    rng = np.random.default_rng(2)
+    n = 4000
+    big = rng.uniform(1e6, 1e8, n)  # large-magnitude PHYSICAL param, deliberately NOT a log10-key
+    small = rng.normal(0.0, 1.0, n)  # ordinary-scale physical param
+    npz = tmp_path / "kde_linear.npz"
+    np.savez(npz, big=big, small=small)
+
+    order = ["big", "small"]
+    score = prior_score_from_kde(str(npz), param_order=order, log10_keys=(), max_points=2000, seed=1)
+
+    # Independently reconstruct the same diagonal KDE in physical (linear) space.
+    X = np.stack([big, small], axis=1)
+    X = X[np.random.default_rng(1).choice(X.shape[0], 2000, replace=False)]
+    m, d = X.shape
+    h = np.maximum((m ** (-1.0 / (d + 4))) ** 2 * X.var(0), 1e-12)
+
+    def logpdf(pt):
+        ex = -0.5 * np.sum((pt[None, :] - X) ** 2 / h, axis=1)
+        return logsumexp(ex) - np.log(m) - 0.5 * np.sum(np.log(2 * np.pi * h))
+
+    pts = np.array([[5.0e7, 0.2], [2.0e7, -1.0]])  # both params in physical space
+    fd = np.zeros_like(pts)
+    for b in range(pts.shape[0]):
+        for jx in range(d):
+            eps = 1e-4 * max(abs(pts[b, jx]), 1.0)  # scale-aware step for the huge-magnitude dim
+            p = pts[b].copy(); p[jx] += eps; hi = logpdf(p)
+            p[jx] -= 2 * eps; lo = logpdf(p)
+            fd[b, jx] = (hi - lo) / (2 * eps)
+
+    theta = {"big": pts[:, [0]], "small": pts[:, [1]]}
+    g = score(theta)
+    got = np.concatenate([np.asarray(g["big"]), np.asarray(g["small"])], axis=1)
+    # Relative tolerance: the "big" gradient is ~1e-8-scale, the "small" one ~O(1);
+    # atol tolerates float32 softmax vs float64 finite-diff on the O(1) dimension.
+    np.testing.assert_allclose(got, fd, rtol=2e-3, atol=5e-3)
+
+
+def test_prior_score_from_kde_jax_matches_finite_diff(tmp_path):
+    """The jax.scipy.stats.gaussian_kde implementation must (a) fit in the network's native
+    (log10) space and (b) return grad log p matching a finite-difference of jax's OWN logpdf,
+    and (c) apply the (1 - t) decay itself."""
+    import jax.numpy as jnp
+    from jax.scipy.stats import gaussian_kde
+
+    from hydrabflow.pipeline.compositional import prior_score_from_kde_jax
+
+    rng = np.random.default_rng(3)
+    n = 3000
+    rho = 10 ** rng.uniform(6.0, 8.0, n)  # log10-key, huge physical scale
+    gamma = rng.normal(0.0, 1.0, n)
+    npz = tmp_path / "kde_jax.npz"
+    np.savez(npz, rho=rho, gamma=gamma)
+
+    order = ["rho", "gamma"]
+    score = prior_score_from_kde_jax(
+        str(npz), param_order=order, log10_keys={"rho"}, max_points=1500, seed=1
+    )
+
+    # Independently rebuild the SAME jax kde in log10 space for a finite-diff reference.
+    X = np.stack([np.log10(rho), gamma], axis=1).astype("float32")
+    X = X[np.random.default_rng(1).choice(X.shape[0], 1500, replace=False)]
+    kde = gaussian_kde(jnp.asarray(X.T), bw_method="scott")
+
+    pts = np.array([[7.0, 0.2], [6.5, -1.0]], dtype="float32")  # rho in LOG10 space
+    eps = 1e-3
+    fd = np.zeros_like(pts)
+    for b in range(pts.shape[0]):
+        for jx in range(2):
+            p = pts[b].copy(); p[jx] += eps; hi = float(kde.logpdf(jnp.asarray(p[:, None]))[0])
+            p[jx] -= 2 * eps; lo = float(kde.logpdf(jnp.asarray(p[:, None]))[0])
+            fd[b, jx] = (hi - lo) / (2 * eps)
+
+    theta = {"rho": pts[:, [0]], "gamma": pts[:, [1]]}
+    g = score(theta)
+    got = np.concatenate([np.asarray(g["rho"]), np.asarray(g["gamma"])], axis=1)
+    np.testing.assert_allclose(got, fd, atol=8e-3)  # FD truncation on the fast log10 dim
+
+    g_half = score(theta, time=np.full((2, 1), 0.5))
+    np.testing.assert_allclose(np.asarray(g_half["rho"]), 0.5 * np.asarray(g["rho"]), rtol=1e-4)
+
+
+def test_kde_jax_and_diagonal_agree_when_uncorrelated(tmp_path):
+    """Full-covariance (jax) and diagonal (custom) KDEs reduce to the same estimator when the
+    training draws are uncorrelated -- so their scores must agree there. This pins down that the
+    two implementations differ ONLY by the off-diagonal covariance terms, not by a bug."""
+    from hydrabflow.pipeline.compositional import (
+        prior_score_from_kde,
+        prior_score_from_kde_jax,
+    )
+
+    rng = np.random.default_rng(4)
+    n = 6000  # large N so ddof=0 (custom) vs ddof=1 (jax cov) is negligible
+    a = rng.normal(0.0, 2.0, n)  # independent columns -> ~diagonal covariance
+    b = rng.normal(5.0, 0.5, n)
+    npz = tmp_path / "kde_uncorr.npz"
+    np.savez(npz, a=a, b=b)
+
+    order = ["a", "b"]
+    s_diag = prior_score_from_kde(str(npz), param_order=order, max_points=6000, seed=7)
+    s_jax = prior_score_from_kde_jax(str(npz), param_order=order, max_points=6000, seed=7)
+
+    theta = {"a": np.array([[0.5], [-1.0], [1.5]]), "b": np.array([[5.2], [4.6], [5.0]])}
+    gd = s_diag(theta)
+    gj = s_jax(theta)
+    for k in order:
+        np.testing.assert_allclose(np.asarray(gj[k]), np.asarray(gd[k]), rtol=5e-2, atol=1e-2)
+
+
 def test_mask_vcirc_radii_trims_grid():
     from hydrabflow.preprocessing.streams import MaskVcircRadii
     from hydrabflow.simulators.stream_common import OBS_R_KPC

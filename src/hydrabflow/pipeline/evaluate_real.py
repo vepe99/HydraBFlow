@@ -33,11 +33,11 @@ from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.checkpoint import load_approximator
 from hydrabflow.pipeline.compositional import (
     apply_augmentations_once,
+    build_prior_score,
     composition_level,
     condition_keys,
     group_members,
     log10_keys_from_pipeline,
-    prior_score_from_spec,
 )
 from hydrabflow.pipeline.misspecification import (
     run_misspecification_test,
@@ -155,8 +155,12 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
         from hydrabflow.simulators.registry import get_simulator
 
         log10_keys = log10_keys_from_pipeline(pipeline)
-        prior_score = prior_score_from_spec(
-            get_simulator(cfg.simulator).prior_spec_global, log10_keys=log10_keys
+        prior_score = build_prior_score(
+            cfg,
+            get_simulator(cfg.simulator),
+            log10_keys=log10_keys,
+            param_order=list(cfg.adapter.inference_variables),
+            seed=int(cfg.seed),
         )
         log.info("Compositional (global) sampling on the observed group of %d members", m)
         posterior = workflow.compositional_sample(

@@ -29,12 +29,12 @@ from hydrabflow.pipeline.adapter import select_adapter_keys
 from hydrabflow.pipeline.checkpoint import load_approximator
 from hydrabflow.pipeline.compositional import (
     apply_augmentations_once,
+    build_prior_score,
     composition_level,
     condition_keys,
     flatten_members,
     group_members,
     log10_keys_from_pipeline,
-    prior_score_from_spec,
 )
 from hydrabflow.pipeline.misspecification import save_member_summaries
 from hydrabflow.pipeline.workflow import build_workflow
@@ -157,7 +157,9 @@ def _evaluate_compositional_global(cfg):
     conditions = {k: grouped[k] for k in condition_keys(cfg) if k in grouped}
 
     simulator = get_simulator(cfg.simulator)
-    prior_score = prior_score_from_spec(simulator.prior_spec_global, log10_keys=log10_keys)
+    prior_score = build_prior_score(
+        cfg, simulator, log10_keys=log10_keys, param_order=param_names, seed=int(cfg.seed)
+    )
 
     log.info("Compositional (global) sampling: %d datasets x %d members", n, m)
     posterior = workflow.compositional_sample(

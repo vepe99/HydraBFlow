@@ -229,6 +229,19 @@ class EvalConfig:
     # Empty = skip the test.
     misspecification_reference: str = ""
     misspecification_num_null: int = 200
+    # Compositional prior score (composition=global). "spec" = analytic simulator prior spec
+    # (valid under a hard vcirc_rejection cut, its default); "kde" = Gaussian KDE fit on the
+    # rejection-sampled training draws, in the network's native (log10) space. The KDE knobs are
+    # ignored unless prior_score=kde.
+    prior_score: str = "spec"
+    prior_kde_samples: str = ""
+    prior_kde_max_points: int = 4096
+    prior_kde_bandwidth: float = 0.0
+    # KDE implementation when prior_score=kde. "diagonal" = hand-rolled diagonal-bandwidth
+    # estimator with a closed-form softmax gradient (default); "jax" = jax.scipy.stats.gaussian_kde
+    # (full covariance, Scott's rule) differentiated with jax.grad. On correlated parameters the
+    # full-covariance "jax" estimator whitens; on uncorrelated ones the two coincide.
+    prior_kde_impl: str = "diagonal"
 
 
 # --------------------------------------------------------------------------------------------- #

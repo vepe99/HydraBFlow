@@ -77,6 +77,197 @@ def prior_score_from_spec(
     return score
 
 
+def prior_score_from_kde(
+    samples_path: str,
+    param_order,
+    log10_keys: Container[str] = (),
+    max_points: int = 4096,
+    bandwidth: float = 0.0,
+    seed: int = 0,
+) -> Callable[[dict], dict]:
+    """KDE compositional prior score, fit in the network's native (un-standardized, log10) space.
+
+    Use this instead of :func:`prior_score_from_spec` when the training prior was truncated by
+    ``vcirc_rejection``: the analytic spec is blind to the truncation boundary, a KDE of the
+    actual (rejection-sampled) training draws is not.
+
+    **Space contract (this is what the earlier physical-unit KDE got wrong).**
+    ``bayesflow.approximators.helpers.compositional.build_prior_score_fn`` calls
+    ``compute_prior_score`` on parameters that have already been *un-standardized* and passed
+    through the *inverse* of the (zero-log-det-jac) adapter — i.e. the network's native space:
+    ``log10(x)`` for the parameters the ``log10_transform`` preprocessing reparametrized and
+    physical ``x`` for the rest. BayesFlow then multiplies the returned score by the
+    standardization std itself. So the KDE must be fit on the training draws transformed to that
+    SAME space (``log10`` on ``log10_keys``); then ``grad log p_KDE`` is directly the score in
+    that space — no separate change-of-variables/Jacobian term is needed (unlike the analytic
+    spec, whose ``+ln(10)`` term corrects the *closed-form* density, not a density fit in the
+    transformed space). The old KDE was fit on the raw physical-unit npz arrays but evaluated on
+    ``log10``-space parameters, so its gradient was wrong precisely for the large-magnitude
+    ``log10_keys`` (rho, Sigma) — which were the worst-recovered parameters.
+
+    Because the callable names a ``time`` parameter, BayesFlow expects it to apply the ``(1-t)``
+    time-decay itself (same convention as :func:`prior_score_from_spec`); we do so here.
+
+    A diagonal-bandwidth Gaussian KDE is used (per-dimension bandwidth = Scott's factor**2 times
+    the per-dimension variance) so wildly different parameter scales are handled without a full
+    covariance solve. ``bandwidth>0`` overrides Scott's factor; ``max_points`` subsamples the
+    training draws for a tractable, low-memory ``(batch, n_points)`` kernel evaluation.
+    """
+    from keras import ops
+
+    param_order = list(param_order)
+    data = np.load(samples_path)
+    cols = []
+    for key in param_order:
+        arr = np.asarray(data[key], dtype="float64").reshape(-1)
+        if key in log10_keys:
+            arr = np.log10(arr)
+        cols.append(arr)
+    X = np.stack(cols, axis=1)  # (N, d) in the network's native (log10) space
+    X = X[np.all(np.isfinite(X), axis=1)]
+    n_pts, d = X.shape
+    if max_points and n_pts > int(max_points):
+        idx = np.random.default_rng(seed).choice(n_pts, size=int(max_points), replace=False)
+        X = X[idx]
+    m_pts = X.shape[0]
+
+    factor = float(bandwidth) if bandwidth and float(bandwidth) > 0 else m_pts ** (-1.0 / (d + 4))
+    var = X.var(axis=0)
+    h = np.maximum((factor**2) * var, 1e-12)  # diagonal bandwidth variances, (d,)
+    inv_h_np = 1.0 / h
+
+    # Center the data by its per-dimension mean before forming the kernel. The expanded
+    # Mahalanobis form ``q - 2*cross + r`` suffers catastrophic float32 cancellation when a
+    # dimension's magnitude is large relative to its bandwidth (e.g. log10(rho) ~ 7 with
+    # bandwidth ~0.16: the ``q`` terms reach ~1900 while the O(1) differences that matter are
+    # swamped). Working in ``u = theta - mu`` / ``Xc = X - mu`` keeps every term O(std) so the
+    # softmax exponent is precise on GPU as well as CPU; the resulting gradient is unchanged
+    # (a pure shift of both operands leaves ``theta - weighted_x`` invariant).
+    mu_np = X.mean(axis=0)
+    Xc = X - mu_np  # (M, d) centered
+    Xc_t = ops.convert_to_tensor(Xc.astype("float32"))  # (M, d)
+    Xc_T = ops.transpose(Xc_t)  # (d, M)
+    mu = ops.convert_to_tensor(mu_np.astype("float32"))  # (d,)
+    inv_h = ops.convert_to_tensor(inv_h_np.astype("float32"))  # (d,)
+    r_pts = ops.convert_to_tensor(((Xc**2) * inv_h_np).sum(axis=1).astype("float32"))  # (M,)
+
+    def score(x: Dict[str, np.ndarray], time=None) -> Dict[str, np.ndarray]:
+        theta = ops.concatenate(
+            [ops.reshape(ops.cast(x[k], "float32"), (-1, 1)) for k in param_order], axis=1
+        )  # (B, d)
+        u = theta - mu  # (B, d) centered query
+        u_scaled = u * inv_h  # (B, d)
+        q = ops.sum(u * u_scaled, axis=1, keepdims=True)  # (B, 1) = sum u^2 / h
+        cross = ops.matmul(u_scaled, Xc_T)  # (B, M) = sum u * xc / h
+        maha = -0.5 * (q - 2.0 * cross + ops.reshape(r_pts, (1, -1)))  # (B, M) log-kernel exponent
+        w = ops.softmax(maha, axis=1)  # (B, M) responsibilities
+        weighted_xc = ops.matmul(w, Xc_t)  # (B, d) = sum_j w_j (x_j - mu)
+        grad = -(u - weighted_xc) * inv_h  # (B, d) = -H^{-1}(theta - sum_j w_j x_j)
+
+        out = {}
+        for i, key in enumerate(param_order):
+            g = ops.reshape(grad[:, i], ops.shape(x[key]))
+            out[key] = g if time is None else (1.0 - time) * g
+        return out
+
+    return score
+
+
+def prior_score_from_kde_jax(
+    samples_path: str,
+    param_order,
+    log10_keys: Container[str] = (),
+    max_points: int = 4096,
+    bandwidth: float = 0.0,
+    seed: int = 0,
+) -> Callable[[dict], dict]:
+    """KDE compositional prior score via ``jax.scipy.stats.gaussian_kde`` + ``jax.grad``.
+
+    An alternative to the hand-rolled :func:`prior_score_from_kde`. Same *space contract*: the
+    KDE is fit on the training draws transformed to the network's native space (``log10`` on
+    ``log10_keys``), so ``grad log p_KDE`` is directly the score bayesflow expects; the callable
+    names ``time`` and applies the ``(1 - t)`` decay itself. The ONLY substantive differences
+    from the custom version are (a) SciPy/JAX ``gaussian_kde`` uses a **full covariance**
+    bandwidth (Scott's rule on the whole data covariance, so it whitens correlated parameters)
+    where the custom version is **diagonal**, and (b) the gradient comes from autodiff
+    (``jax.grad`` through ``logpdf``) rather than the closed-form softmax expression. On
+    uncorrelated parameters the two coincide; on correlated ones they differ by the off-diagonal
+    covariance terms.
+
+    ``jax`` is imported lazily inside this function so the dependency is only ever incurred when
+    this implementation is actually selected (``eval.prior_kde_impl=jax``). This path is only
+    valid under the JAX keras backend, which HydraBFlow pins.
+
+    ``bandwidth>0`` is passed to ``gaussian_kde`` as a scalar ``bw_method`` (== Scott factor
+    override); ``0`` uses Scott's rule. ``max_points`` subsamples the training draws.
+    """
+    import jax
+    import jax.numpy as jnp
+    from jax.scipy.stats import gaussian_kde
+
+    param_order = list(param_order)
+    data = np.load(samples_path)
+    cols = []
+    for key in param_order:
+        arr = np.asarray(data[key], dtype="float64").reshape(-1)
+        if key in log10_keys:
+            arr = np.log10(arr)
+        cols.append(arr)
+    X = np.stack(cols, axis=1)  # (N, d) in the network's native (log10) space
+    X = X[np.all(np.isfinite(X), axis=1)]
+    n_pts, d = X.shape
+    if max_points and n_pts > int(max_points):
+        idx = np.random.default_rng(seed).choice(n_pts, size=int(max_points), replace=False)
+        X = X[idx]
+
+    dataset = jnp.asarray(X.T.astype("float32"))  # gaussian_kde wants (d, N)
+    bw_method = float(bandwidth) if bandwidth and float(bandwidth) > 0 else "scott"
+    kde = gaussian_kde(dataset, bw_method=bw_method)
+
+    # logpdf of point j depends only on evaluation column j, so d/d(pts) of the summed logpdf
+    # yields each column's own gradient -> a single grad call gives the (d, B) per-point score.
+    grad_fn = jax.grad(lambda pts: jnp.sum(kde.logpdf(pts)))
+
+    def score(x: Dict[str, np.ndarray], time=None) -> Dict[str, np.ndarray]:
+        pts = jnp.stack(
+            [jnp.reshape(jnp.asarray(x[k], dtype=jnp.float32), (-1,)) for k in param_order],
+            axis=0,
+        )  # (d, B)
+        g = grad_fn(pts)  # (d, B)
+        out = {}
+        for i, key in enumerate(param_order):
+            gi = jnp.reshape(g[i], jnp.shape(x[key]))
+            out[key] = gi if time is None else (1.0 - time) * gi
+        return out
+
+    return score
+
+
+def build_prior_score(cfg, simulator, log10_keys, param_order, seed: int = 0):
+    """Select the compositional prior score from ``cfg.eval.prior_score`` (``spec``|``kde``).
+
+    When ``prior_score=kde``, ``cfg.eval.prior_kde_impl`` chooses between the hand-rolled
+    diagonal-bandwidth estimator (``diagonal``, default) and the ``jax.scipy.stats.gaussian_kde``
+    full-covariance estimator (``jax``).
+    """
+    mode = str(getattr(getattr(cfg, "eval", None), "prior_score", "spec") or "spec")
+    if mode == "kde":
+        samples = str(getattr(cfg.eval, "prior_kde_samples", "") or "")
+        if not samples:
+            raise ValueError("eval.prior_score=kde requires eval.prior_kde_samples to be set")
+        impl = str(getattr(cfg.eval, "prior_kde_impl", "diagonal") or "diagonal")
+        builder = prior_score_from_kde_jax if impl == "jax" else prior_score_from_kde
+        return builder(
+            samples,
+            param_order=param_order,
+            log10_keys=log10_keys,
+            max_points=int(getattr(cfg.eval, "prior_kde_max_points", 4096)),
+            bandwidth=float(getattr(cfg.eval, "prior_kde_bandwidth", 0.0)),
+            seed=seed,
+        )
+    return prior_score_from_spec(simulator.prior_spec_global, log10_keys=log10_keys)
+
+
 def log10_keys_from_pipeline(pipeline) -> list:
     """Keys the ``log10_transform`` preprocessing step reparametrized, if present (else empty)."""
     step = pipeline.get_step("log10_transform") if pipeline is not None else None

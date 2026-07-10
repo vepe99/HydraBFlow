@@ -435,6 +435,61 @@ Every run saves:
   star-level pm↔vlos joint unless coords are duplicated. Caveats: architecture change ⇒ existing
   checkpoints (model_5 …) can't be reused, retrain required; if `per_stream_standardize` is ever
   added to the chain, fit its vlos stats on measured values only (today they include imputed ones).
+- Session 2026-07-10 (KDE compositional prior score — bug found + fixed + rerun): the 2026-07-09
+  KDE prior score (removed as "does not work well") was diagnosed as a **space bug, not a KDE
+  limitation**. `bayesflow…helpers.compositional.build_prior_score_fn` calls `compute_prior_score`
+  on parameters in the network's native space (un-standardized + adapter-inverse, which requires
+  **zero log_det_jac** — so the log10 reparam lives in *preprocessing*, not the adapter): i.e.
+  `log10(x)` for the `log10_transform` keys, physical otherwise; bayesflow re-applies the
+  standardization Jacobian itself afterward, and since our callable names a `time` arg it must
+  apply the `(1-t)` decay itself. The old KDE was fit on the **raw physical-unit** npz arrays but
+  evaluated on log10-space θ ⇒ wrong gradients, worst for large-magnitude log10 keys — base
+  (no prior score) stayed pristine while compositional blew up (RMSE 0.51→3.49, calib 0.04→0.40;
+  rho 7.38, Sigma 4.74). **Fix**: `pipeline/compositional.py::prior_score_from_kde` fits the KDE in
+  the SAME network space (log10 on `log10_keys`), so `grad log p_KDE` is directly the score — no
+  +ln10 term (that corrects the analytic *closed-form* density, not a density fit in the
+  transformed space). Diagonal-bandwidth Gaussian KDE (per-dim Scott factor²×var),
+  softmax-weighted closed-form gradient in `keras.ops`, applies its own `(1-t)`; selector
+  `build_prior_score` reads `eval.prior_score` (spec|kde) + `eval.prior_kde_{samples,max_points,
+  bandwidth}` (added to `EvalConfig`), wired into evaluate.py + evaluate_real.py. Analytic spec
+  stays the default. Gradient verified vs finite differences (~4e-4). **Rerun** (same model, GPU
+  via autocvd) `outputs/stream_agama_rnbody/stream_fusion_model5_rnbody_huang/kdeprior_fixed/
+  eval_sim_333`: compositional RMSE **0.520** / calib **0.027** (base 0.540/0.020; pooling improves
+  q/a/Sigma/r_Disk; z_Disk the lone "poor" RMSE, tightest normal prior — same as the analytic
+  path). Real-data eval with `prior_score=kde` (diagonal) then run:
+  `.../kdeprior_fixed/eval_real` — global q_halo 1.26 [1.23,1.29], beta_halo 2.62 [2.42,2.92]
+  (freed [2,4], data pulls it toward the declining outer curve), Sigma_Disk 7.6e8, gamma 1.23;
+  MMD 2.653 / p_strat 0.015 — **identical** to the analytic-spec baseline real eval (MMD is on
+  the summary space, independent of the prior score → clean sanity check the swap touched only
+  the score).
+- Session 2026-07-10 (KDE prior score: linear-space guard + numerical-stability fix + jax
+  full-cov comparison): three follow-ups to the KDE fix, all before committing.
+  - **Numerical stability**: adding a linear-space (no `log10_keys`) regression test exposed
+    float32 catastrophic cancellation in the expanded Mahalanobis form `q - 2*cross + r` (large
+    on GPU, ~0.1 gradient error, GPU≠CPU) whenever a dimension's magnitude ≫ its bandwidth (the
+    log10(rho)~7 case). Fixed in `prior_score_from_kde` by **centering** the data by its per-dim
+    mean before the kernel (`u = theta - mu`, `Xc = X - mu`); the gradient `theta - weighted_x`
+    is invariant under the shift, so it's provably unchanged but GPU-precise. Tests now pass at
+    tight tol on GPU. Two new tests: `test_prior_score_from_kde_linear_space` (finite-diff, all
+    physical params incl. a large-magnitude one) + the existing log10 one.
+  - **Second KDE implementation** (user-requested, kept separate): `prior_score_from_kde_jax` =
+    `jax.scipy.stats.gaussian_kde` (full covariance, Scott) + `jax.grad` (jax imported lazily,
+    only on this path). Selector knob `eval.prior_kde_impl` (diagonal|jax), **default diagonal**.
+    Same log10-space contract + `(1-t)` decay. Tests: jax-vs-finite-diff correctness, and
+    `test_kde_jax_and_diagonal_agree_when_uncorrelated` (the two coincide only when the training
+    draws are uncorrelated).
+  - **Comparison — jax full-cov is UNUSABLE here** (important finding): on the same model,
+    `kdeprior_jax/eval_sim_333` compositional RMSE **3.49** / calib 0.40 (≈ the old space-bug
+    numbers) vs diagonal 0.52/0.03; real-Gaia posterior collapses/rails (gamma→-2.6, beta→4.7,
+    q→0.17, all outside their priors). Diagnosed (not a wrapper bug): the log10-space parameter
+    covariance has tightly-constrained directions (eigenvalues 0.004-0.006, condition number
+    ~280, from the rejection prior pinning r_Disk/z_Disk/a); the full-covariance bandwidth whitens
+    by it, so a 1σ move along a low-variance direction is many bandwidth-units away and the score
+    explodes (max |score| 272 vs 15 for diagonal at mean+1σ), dominating the compositional term
+    `(1-n)(1-t) grad log p` and collapsing the posterior. **The diagonal closed-form is the
+    correct estimator for this rejection-truncated, near-degenerate prior**; jax full-cov is kept
+    only as a documented, selectable alternative. Runs preserved side by side: `kdeprior_fixed/`
+    (diagonal) vs `kdeprior_jax/`.
 
 ## graphify
 

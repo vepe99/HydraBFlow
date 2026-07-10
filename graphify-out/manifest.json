@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1783664289.6979136,
-    "ast_hash": "710af28ae446b62547f4a89562d031c4",
+    "mtime": 1783674989.1744995,
+    "ast_hash": "935c495c411f4c7996e6e698a04d3a15",
     "semantic_hash": ""
   },
   "README.md": {
@@ -215,8 +215,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/config/schema.py": {
-    "mtime": 1783611409.2890263,
-    "ast_hash": "45e6d40826a91c74ad0334ef3934f0f8",
+    "mtime": 1783673445.49939,
+    "ast_hash": "bbe28b8b4c3255fffd613a5eb4e55967",
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/__init__.py": {
@@ -250,13 +250,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate.py": {
-    "mtime": 1783611409.3050263,
-    "ast_hash": "622d3f7fe8b55fa4e0f6a76a575fc6f6",
+    "mtime": 1783671204.9458308,
+    "ast_hash": "568b406ed745bffac7ce843129fa41e5",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate_real.py": {
-    "mtime": 1783611409.3090265,
-    "ast_hash": "3bb042d33cb06d54f8296f3f7292bca6",
+    "mtime": 1783671211.4658835,
+    "ast_hash": "dbac47d6a2db6d7a514a01a4ea6ca636",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/io.py": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783597822.1528392,
-    "ast_hash": "d03222b20b30ca30fd81ffa364b65803",
+    "mtime": 1783674171.1769853,
+    "ast_hash": "5815fd51ce2f4b0e702928e7e83c7d6a",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/compositional.py": {
-    "mtime": 1783611409.2970264,
-    "ast_hash": "8aabed7723727882552ebab048ff8267",
+    "mtime": 1783673431.4152806,
+    "ast_hash": "de1b190fa4d10d4b5298381383f52a51",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/simulate_multistream.py": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "tests/test_streams.py": {
-    "mtime": 1783520029.2008853,
-    "ast_hash": "1f62b2018e4a26b93091ccd2d1dfcc1b",
+    "mtime": 1783673506.179861,
+    "ast_hash": "6a34cf400c1d116f4aca80b5e50678db",
     "semantic_hash": ""
   },
   "conf/adapter/stream.yaml": {
@@ -702,6 +702,11 @@
   "scripts/training_eval_rnbody_huand_dataset copy.sh": {
     "mtime": 1783598049.7226071,
     "ast_hash": "43041f3d3cc44beb90eb1e47962d1f5d",
+    "semantic_hash": ""
+  },
+  "scripts/diagnose_mass_prior.py": {
+    "mtime": 1783667276.7295938,
+    "ast_hash": "8df92943b152a9137110e8bcece8d2de",
     "semantic_hash": ""
   }
 }
