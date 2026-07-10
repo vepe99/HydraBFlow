@@ -1,0 +1,53 @@
+# Ibata fusion summary network: model_5 backbones (star cloud + rotation curve) plus one backbone
+# per ancillary observable — v_term and rho(z) as TimeSeriesTransformers (1-D grids, like vcirc),
+# sigma_z as a small MLP (a single scalar per row). The attention mask is routed only to the
+# particle (set) backbone. Pair with adapter=stream_ibata.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: sim_data_projected
+  backbones:
+    sim_data_projected:
+      type: set_transformer
+      summary_dim: 36
+      num_blocks: 4
+      num_heads: 3
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 14
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+    vterm_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+    rho_z:
+      type: time_series_transformer
+      summary_dim: 24
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+    sigma_z:
+      type: mlp
+      summary_dim: 8
+      mlp_depth: 2
+      mlp_width: 32
+      dropout: 0.05
+  head:
+    width: 64
+    depth: 4
+    output_dim: 72

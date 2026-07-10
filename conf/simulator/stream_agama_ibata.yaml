@@ -1,0 +1,45 @@
+# Particle-spray stream simulator with the FULL Ibata et al. (2023, arXiv:2311.17202) Milky-Way
+# potential and the three ancillary potential-derived observables (see new_constrains.md).
+#
+# Inherits everything from stream_agama_spray_huang (Chen+2024 spray, extended Zhou u Huang
+# rotation-curve observable + banded rejection prior, freed halo outer slope beta) and adds the
+# Ibata potential-model changes + the new observables. Reuses the registered stream_agama class
+# (name: stream_agama) — the new behaviour is entirely config-driven via params.
+defaults:
+  - stream_agama_spray_huang
+
+name: stream_agama
+params:
+  # --- Ibata potential model (config-driven; see stream_agama._host_potential) ---
+  halo_r_t_kpc: 1000.0      # truncate the dark halo at r_t = 1000 kpc (was untruncated)
+  gas_disks: true           # add the FIXED McMillan HI + H2 gas disks (inner-Galaxy terminal vel.)
+  thick_disk: true          # add a free THICK stellar disk (thin + thick, Ibata's minimal model)
+  disk_vertical: exponential  # McMillan/Ibata stellar disks are exponential (exp(-|z|/h)); the
+                              # fixed bulge stays a Spheroid and the gas disks stay sech^2.
+  # The fixed bulge (BULGE_PARAMS) is already a separate compact spheroid in the class, so the
+  # bulge/halo split the brief asks for is already satisfied. NOTE: M200 hard-bound rejection was
+  # intentionally NOT enabled (its per-draw enclosed-mass root-find is too slow at 1e5 scale).
+
+  # --- Ancillary observables computed from each row's potential (stored in every record) ---
+  # vterm  -> vterm_kms (n, n_l, 1)  HI terminal-velocity curve on |sin l|>0.5 longitudes
+  # sigma_z-> sigma_z   (n, 1)       local surface density Sigma(z=1.1 kpc) [Msun/pc^2]
+  # rho_z  -> rho_z     (n, n_z, 1)  vertical stellar-density profile (shape) at R0
+  # Grids (VTERM_L_DEG, RHO_Z_KPC) live in stream_common — single source of truth, not stored.
+  ancillary_observables:
+    - vterm
+    - sigma_z
+    - rho_z
+
+  # --- Free thick stellar disk parameters (added to the inferred global set) ---
+  # Coupling zd_thick > zd_thin is enforced by reparametrization: the thick scale height is
+  # z_Disk + dz_thick_Disk with dz_thick_Disk > 0 (so no extra rejection is needed).
+  priors_global:
+    r_thick_Disk:
+      type: uniform
+      prior_parameters: [1.0, 10.0]        # Ibata thick-disk scale length (McMillan Rd_thick=3.02)
+    dz_thick_Disk:
+      type: uniform
+      prior_parameters: [0.05, 4.5]        # zd_thick = z_Disk + dz_thick_Disk (> zd_thin always)
+    Sigma_thick_Disk:
+      type: uniform
+      prior_parameters: [1.0e7, 1.0e9]     # brackets McMillan's 1.83e8 Msun/kpc^2

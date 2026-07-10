@@ -1,0 +1,14 @@
+# model_5 (fusion + diffusion) extended with the three Ibata ancillary observables as fusion
+# summary backbones. Pair with adapter=stream_ibata, simulator=stream_agama_ibata,
+# augmentation=stream_global_ibata, preprocessing=stream_global_log10_ibata, composition=global.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_ibata
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_ibata
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

@@ -124,7 +124,13 @@
   "122": "prior_score_from_spec",
   "123": "test_config.py",
   "124": "get_run_dir",
+  "125": "prior_score_from_kde",
   "126": "eval_rnbody_huand_dataset_kde_prior.sh",
   "127": "training_eval_agama_1e6.sh",
-  "128": "training_eval_rnbody_huand_dataset copy.sh"
+  "128": "training_eval_rnbody_huand_dataset copy.sh",
+  "129": "PerStreamParameterStandardize",
+  "130": "load_approximator",
+  "131": "prior_score_from_spec",
+  "132": "MaskVcircRadii",
+  "133": "compose_cfg"
 }

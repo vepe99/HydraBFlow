@@ -1,0 +1,20 @@
+# Ibata adapter (condition variant): the scalar surface density sigma_z enters as an inference
+# CONDITION (concatenated directly, "like the j index") instead of through a summary backbone;
+# the two VECTOR observables (vterm_kms, rho_z) still go through fusion summary backbones, since
+# rank-3 grids cannot be concatenated into inference_conditions. inference_conditions is set
+# explicitly here (so sigma_z + the derived context key j are both included). Pair with
+# model=stream_fusion_ibata_sigma_cond.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_data_projected
+  - vcirc_kms
+  - vterm_kms
+  - rho_z
+inference_conditions:
+  - sigma_z
+  - j
+drop: []
+attention_mask_key: attention_mask

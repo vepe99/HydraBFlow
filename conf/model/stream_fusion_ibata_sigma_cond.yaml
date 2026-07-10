@@ -1,0 +1,13 @@
+# Condition variant of stream_fusion_ibata: sigma_z is an inference condition (not a summary
+# backbone). Pair with adapter=stream_ibata_sigma_cond.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_ibata_sigma_cond
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_ibata_sigma_cond
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

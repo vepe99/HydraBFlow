@@ -1,0 +1,18 @@
+# Ibata adapter (recommended): all three ancillary observables enter as extra FUSION SUMMARY
+# backbones alongside the star cloud and the rotation curve. summary_variables is set explicitly
+# (so it survives fill_adapter_from_simulator); inference_variables / inference_conditions stay
+# empty and are still derived from the simulator (global/local split follows composition.level,
+# j is the derived condition). Pair with model=stream_fusion_ibata.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_data_projected
+  - vcirc_kms
+  - vterm_kms
+  - rho_z
+  - sigma_z
+inference_conditions: []
+drop: []
+attention_mask_key: attention_mask

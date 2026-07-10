@@ -1,0 +1,24 @@
+# As stream_global_log10, but also log10-reparametrizes the new free thick-disk parameters that
+# span a wide dynamic range / must stay positive (Sigma_thick_Disk, r_thick_Disk). dz_thick_Disk
+# (uniform, modest range) is left linear. drop_nan / mask_vcirc_radii / train_val_split are
+# unchanged — the ancillary observables (vterm_kms, sigma_z, rho_z) are npz-resident, so the
+# drop_nan keys=${adapter.summary_variables} indexing stays valid.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys: ${adapter.summary_variables}
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+      - Sigma_thick_Disk
+      - r_thick_Disk

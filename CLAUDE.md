@@ -530,6 +530,57 @@ Every run saves:
   summaries-only-without-rotation-curve ablation are natural follow-ups; sumonly used the
   pre-checkpointing train.py (saved epoch-300 weights, mild 1.20x overfit) so a re-run with
   best-weights restore would be marginally cleaner.
+- Session 2026-07-10 (Ibata 2023 ancillary observables + full potential model — IMPLEMENTED, dataset
+  gen deferred to user): per `new_constrains.md`, added three potential-derived observables (HI
+  terminal velocity `v_term(l)`, local surface density `Sigma(1.1 kpc)`, vertical stellar-density
+  profile `rho(z)`) computed as pure functions of each row's AGAMA potential (no stream sim). All
+  config-driven on the base `stream_agama` class (legacy configs/tests unchanged; `pot_cfg=None`
+  reproduces the old potential bit-for-bit, so `stream_agama_rnbody` etc. are untouched).
+  - **Full Ibata potential** (user chose "full", not minimal): `_host_potential(agama, p, pot_cfg)`
+    now assembles fixed bulge (already a separate compact Spheroid — the brief's bulge/halo split
+    was already satisfied) + fixed McMillan HI & H2 gas disks (`GAS_HI/H2_PARAMS`) + **halo
+    truncated at r_t=1000 kpc** (`params.halo_r_t_kpc`, was `outerCutoffRadius=inf`) + free thin +
+    **free thick stellar disk**. Thick coupling `zd_thick>zd_thin` enforced by reparametrization:
+    thick scale height = `z_Disk + dz_thick_Disk` (dz>0), so NO extra rejection. New free globals:
+    `r_thick_Disk` U[1,10], `dz_thick_Disk` U[0.05,4.5], `Sigma_thick_Disk` U[1e7,1e9]. Stellar
+    disks switched to **exponential** vertical profile (`disk_vertical: exponential`, negative agama
+    scaleHeight) per McMillan/Ibata; gas stay sech^2, bulge unchanged. **M200 hard-bound rejection
+    was implemented then REMOVED per user** ("too slow" — the per-draw enclosed-mass root-find).
+  - Helpers in `stream_common.py`: `terminal_velocity`, `surface_density`, `vertical_density_profile`,
+    `vcirc_from_potential`; constants `R0_KPC=8.178`, `G_KPC_KMS2_MSUN` (== agama.G, verified to
+    ~1e-8). Grids `VTERM_L_DEG` (first-quadrant l=31..67 deg, 2 deg — matches the observed CSV) and
+    `RHO_Z_KPC` (0.1..5, 20) are the single source of truth, NOT stored in the npz (only per-row
+    VALUES are, like vcirc_kms). Sim stores `vterm_kms (n,n_l,1)`, `sigma_z (n,1)`, `rho_z (n,n_z,1)`
+    (group-level in compositional, one per dataset, like vcirc). Enabled by
+    `params.ancillary_observables: [vterm, sigma_z, rho_z]` (empty by default -> zero overhead).
+  - **Physics validated** before wiring: flat-curve limits exact (`v_term(30 deg)=0.5 V`); McMillan
+    (2017) cross-check `Sigma(1.1)=71.7` (~71 obs) confirms G + units + disk-height sign; tests in
+    `tests/test_ancillary_observables.py` (10, all pass; 89 total green).
+  - **Observational-error augmentations** (`augmentation/streams.py`, mirror `add_noise_to_vcirc`,
+    each a no-op if its key is absent): `add_noise_to_vterm` (6.2 km/s), `add_noise_to_sigma_z`
+    (6.0), `add_noise_to_rho_z` (rel_err*|rho|), `log10_rho_z`.
+  - **Wired into fusion, selectable** (user request — as summary backbones OR as a condition):
+    configs `simulator/stream_agama_ibata.yaml` (inherits `stream_agama_spray_huang`: Chen spray,
+    extended Zhou u Huang grid + banded rejection, freed beta), `augmentation/stream_global_ibata`,
+    `preprocessing/stream_global_log10_ibata` (+ thick keys to log10), `adapter/stream_ibata`
+    (all 3 as summary backbones) + `adapter/stream_ibata_sigma_cond` (sigma_z as inference_condition,
+    vectors stay backbones), `model/summary_network/stream_fusion_ibata{,_sigma_cond}` (v_term/rho_z
+    = TimeSeriesTransformer, sigma_z = mlp), `model/stream_fusion_ibata{,_sigma_cond}`. Both variants
+    compose + build (MaskedFusionNetwork). `simulate`/`simulate_multistream` CLIs verified end-to-end
+    at tiny scale.
+  - **Assets**: `assets/terminal_velocity.csv` added (first-quadrant HI v_term, McClure-Griffiths &
+    Dickey 2016, l=31..67 deg, sigma=6.2; grid == VTERM_L_DEG). Rotation-curve CSVs NOT added
+    (already hardcoded in `stream_common`). **rho(z) real data = TODO** (Ibata 2017b Fig 12f, digitize);
+    `Sigma_z=71+/-6` hardcoded as the real datum; v_term real values live in the CSV.
+  - **PPC**: `scripts/ppc_ancillary_observables.py` (standalone-ish, imports only `stream_common`):
+    prior bands of v_term vs observed CSV, Sigma_z hist vs 71+/-6, rho(z) shape band; `--sim-multistream`
+    also renders the **per-stream summary-statistic tracks** (reuses a refactored `render()` in
+    `ppc_summary_statistics.py`). Smoke-tested (24 rows): observed v_term sits at the TOP edge of the
+    prior band (prior median ~15-20% low — watch on the full run), Sigma_z median ~70 brackets 71.
+  - **Deliverable for the user to run**: `scripts/create_ibata_dataset.sh` — a fast pilot batch +
+    full PPC first, then the **10^5 flat spray training set + 333-group multistream** test set
+    (CPU/joblib, resumable, n_workers=24). NOT yet run (user runs it). Training later uses GPU ->
+    autocvd; the script prints the train command (`model=stream_fusion_ibata adapter=stream_ibata ...`).
 
 ## graphify
 

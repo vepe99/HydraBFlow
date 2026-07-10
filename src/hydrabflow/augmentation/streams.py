@@ -717,3 +717,98 @@ def _concatenate_stream_index(params, rng):
         return batch
 
     return aug
+
+
+# ------------------------------------------------------------------------------------------- #
+# Ibata (2023) ancillary potential observables — observational-error resampling.
+#
+# Mirror ``add_noise_to_vcirc``: the simulator stores the noise-free MODEL observable (a
+# deterministic function of the sampled potential), and these per-batch augmentations add the
+# reported observational scatter so the simulated "data" match real measurement precision. Each
+# is a no-op unless the corresponding key is present (so they can sit in a shared step list; only
+# the Ibata datasets carry vterm_kms / sigma_z / rho_z). Defaults from ``stream_common``.
+# ------------------------------------------------------------------------------------------- #
+
+
+@register_augmentation("add_noise_to_vterm")
+def _add_noise_to_vterm(params, rng):
+    from hydrabflow.simulators.stream_common import VTERM_SIGMA_KMS
+
+    key = str(params.get("vterm_key", "vterm_kms"))
+    sigma = float(params.get("vterm_sigma_kms", VTERM_SIGMA_KMS))
+    cell = _key_cell(rng)
+    jax, jnp = _jax()
+
+    @jax.jit
+    def _run(vterm, subkey):
+        return vterm + jax.random.normal(subkey, shape=vterm.shape) * sigma
+
+    def aug(batch):
+        if key in batch:
+            batch[key] = _run(jnp.asarray(batch[key]), _next_key(cell))
+        return batch
+
+    return aug
+
+
+@register_augmentation("add_noise_to_sigma_z")
+def _add_noise_to_sigma_z(params, rng):
+    from hydrabflow.simulators.stream_common import SIGMA_Z_ERR_MSUN_PC2
+
+    key = str(params.get("sigma_z_key", "sigma_z"))
+    sigma = float(params.get("sigma_z_err", SIGMA_Z_ERR_MSUN_PC2))
+    cell = _key_cell(rng)
+    jax, jnp = _jax()
+
+    @jax.jit
+    def _run(sig, subkey):
+        return sig + jax.random.normal(subkey, shape=sig.shape) * sigma
+
+    def aug(batch):
+        if key in batch:
+            batch[key] = _run(jnp.asarray(batch[key]), _next_key(cell))
+        return batch
+
+    return aug
+
+
+@register_augmentation("add_noise_to_rho_z")
+def _add_noise_to_rho_z(params, rng):
+    """Resample the vertical stellar-density profile at an assumed per-point RELATIVE uncertainty
+    (rho(z) is a shape observable with a free normalization). Noise sigma = rel_err * |rho|."""
+    from hydrabflow.simulators.stream_common import RHO_Z_REL_ERR
+
+    key = str(params.get("rho_z_key", "rho_z"))
+    rel_err = float(params.get("rho_z_rel_err", RHO_Z_REL_ERR))
+    cell = _key_cell(rng)
+    jax, jnp = _jax()
+
+    @jax.jit
+    def _run(rho, subkey):
+        return rho + jax.random.normal(subkey, shape=rho.shape) * rel_err * jnp.abs(rho)
+
+    def aug(batch):
+        if key in batch:
+            batch[key] = _run(jnp.asarray(batch[key]), _next_key(cell))
+        return batch
+
+    return aug
+
+
+@register_augmentation("log10_rho_z")
+def _log10_rho_z(params, rng):
+    """rho(z) spans orders of magnitude over z; feed its log10 to the network (as for vcirc).
+    Runs AFTER add_noise_to_rho_z; the small chance of a negative noised value is clipped."""
+    key = str(params.get("rho_z_key", "rho_z"))
+    jax, jnp = _jax()
+
+    @jax.jit
+    def _run(rho):
+        return jnp.log10(jnp.maximum(rho, 1.0))
+
+    def aug(batch):
+        if key in batch:
+            batch[key] = _run(jnp.asarray(batch[key]))
+        return batch
+
+    return aug

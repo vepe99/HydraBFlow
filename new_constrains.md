@@ -1,6 +1,6 @@
 # Task: augment the dataset with HI terminal-velocity and vertical potential constraints
 
-> **How to use this file (Claude Code):** this is a single self-contained brief. All data files live in the project's `assets/` folder. The rotation-curve datasets are embedded below as fenced ```csv blocks, each starting with a `# FILE: assets/<name>.csv` comment. The terminal-velocity and vertical-density data are external (download instructions given inline). Implement the helpers in *Reference implementation*, then follow *How to augment the dataset*.
+> **How to use this file (Claude Code):** this is a single self-contained brief. All data files live in the project's `assets/` folder. **Every dataset is embedded below** as a fenced ```csv block starting with a `# FILE: assets/<name>.csv` comment — rotation curve (Zhou + Huang), HI terminal velocity, and the vertical density profile. Write each block verbatim to its path (after STEP 0), then implement the helpers in *Reference implementation* and follow *How to augment the dataset*. The only external item is the optional 4th-quadrant terminal-velocity curve (noted inline).
 >
 > **STEP 0 — check what already exists before writing anything.** The current pipeline already has a rotation-curve (circular-velocity) modality, so some of this data may already be in the repo. Before creating files:
 > 1. `ls assets/` and grep the data-loading / simulator code for existing rotation-curve, terminal-velocity, `Kz`/`sigma_z`/surface-density, and vertical-density inputs (search terms: `rotation`, `vcirc`, `circular`, `vterm`, `terminal`, `Kz`, `surface_density`, `Sigma`, `rho_z`, `Eilers`, `Zhou`, `Huang`).
@@ -22,6 +22,79 @@ These are **deterministic functions of the AGAMA `Potential` object** built from
 Use `agama.setUnits(mass=1, length=1, velocity=1)` → mass in **Msun**, length in **kpc**, velocity in **km/s**. In this system `pot.force(xyz)` returns the acceleration `−∇Φ` in units of `(km/s)² / kpc`, and `pot.density(xyz)` returns `Msun / kpc³`. Newton's constant is `G = 4.300917270e-6` (kpc·(km/s)²/Msun). Fix `R0 = 8.178` kpc (GRAVITY 2019), as Ibata does.
 
 > **Check to run once:** verify `G` matches AGAMA's internal convention in these units by comparing `Σ(1.1 kpc)` for a known McMillan (2017) model against its published value (~71 Msun/pc²). If it is off by a constant factor, `G` or the unit system is wrong.
+
+## Galaxy potential model — components to add (following Ibata et al. 2023, Sec. 5)
+
+The new constraints only bite if the potential has the components they constrain. Ibata's minimal Galaxy model — and the reason it is minimal — is:
+
+| Component | Ibata 2023 treatment | Why | Your current state → action |
+|---|---|---|---|
+| **Bulge** | **Fixed** to McMillan (2017) | streams/RC don't probe the inner ~2 kpc | you share one density with the halo → **split it out into a separate, fixed compact spheroid** |
+| **Thin stellar disk** | Fitted (double-exponential) | — | you already have this (one ExpDisk) |
+| **Thick stellar disk** | Fitted (double-exponential) | one disk forced an unrealistic scale height (~1 kpc) | **add a second (thick) disk** |
+| **Atomic (HI) gas disk** | **Fixed** to McMillan (2017) | needed at low latitude / inner Galaxy (terminal velocities) | **add it** |
+| **Molecular (H₂) gas disk** | **Fixed** to McMillan (2017) | same | **add it** |
+| **Dark halo** | Fitted; flattened (`q_{m,h}`), truncated at `r_t = 1000 kpc` | — | keep free; **separate from the bulge**, optionally add flattening |
+
+So concretely you should: (1) **separate the bulge from the halo** and fix the bulge; (2) **add a thick disk** (thin + thick, both double-exponential); (3) **add two fixed gas disks** (HI + H₂); (4) keep the halo as your free component (NFW, optionally flattened, truncated at 1000 kpc). Using one density for bulge+halo cannot match the inner terminal-velocity data and the outer rotation curve simultaneously — that is exactly the degeneracy these constraints are meant to break.
+
+**Easiest route — use AGAMA's bundled McMillan17 model** for the fixed pieces (bulge + both gas disks), and add your free stellar disks + halo on top. AGAMA ships `McMillan17.ini` in its data directory:
+
+```python
+import os, agama
+agama.setUnits(mass=1, length=1, velocity=1)
+
+# Fixed components from McMillan (2017) — verify the .ini ships with your AGAMA install
+mcm = os.path.join(agama.getConfigDir() if hasattr(agama,'getConfigDir') else '', 'McMillan17.ini')
+pot_bulge = agama.Potential(file=mcm, type=None)  # or load .ini and pick the bulge + gas disks
+# If loading-by-section is awkward, build the fixed pieces explicitly (params below).
+```
+
+**Explicit fallback (McMillan 2017 best-fit params; verify against his Table 1).** In AGAMA units (Msun, kpc, km/s):
+
+```python
+# --- FIXED: bulge (flattened, exponentially truncated power law) ---
+bulge = agama.Potential(type='Spheroid', densityNorm=9.93e10, axisRatioZ=0.5,
+                        gamma=0.0, beta=1.8, alpha=1.0,
+                        scaleRadius=0.075, outerCutoffRadius=2.1, cutoffStrength=2.0)
+
+# --- FIXED: gas disks (sech^2 vertical -> positive scaleHeight; hole = innerCutoffRadius) ---
+gas_HI = agama.Potential(type='Disk', surfaceDensity=5.31e7, scaleRadius=7.0,
+                         innerCutoffRadius=4.0,  scaleHeight=0.085)
+gas_H2 = agama.Potential(type='Disk', surfaceDensity=2.18e9, scaleRadius=1.5,
+                         innerCutoffRadius=12.0, scaleHeight=0.045)
+
+# --- FREE (fitted): thin + thick stellar disks (exponential vertical -> negative scaleHeight) ---
+thin  = agama.Potential(type='Disk', surfaceDensity=8.96e8, scaleRadius=2.5,  scaleHeight=-0.30)
+thick = agama.Potential(type='Disk', surfaceDensity=1.83e8, scaleRadius=3.02, scaleHeight=-0.90)
+
+# --- FREE (fitted): dark halo (NFW; add axisRatioZ<1 for flattening; truncate far out) ---
+halo  = agama.Potential(type='NFW', mass=None, densityNorm=8.54e6, scaleRadius=19.6,
+                        outerCutoffRadius=1000.0)
+
+pot      = agama.Potential(bulge, gas_HI, gas_H2, thin, thick, halo)
+disk_pot = agama.Potential(thin, thick)   # pass this as `disk_pot` for the vertical-density observable
+```
+
+> AGAMA gotchas to verify: (a) the **sign of `scaleHeight`** sets the vertical profile — negative ⇒ exponential (`exp(-|z|/h)`, McMillan's stellar disks), positive ⇒ isothermal `sech²` (his gas disks); confirm against your AGAMA version. (b) `innerCutoffRadius` is the gas central hole `R_m` (`Σ ∝ exp(-R_m/R - R/R_d)`). (c) The bulge `Spheroid` reproduces `ρ ∝ (1+r'/r0)^{-1.8} exp(-(r'/r_cut)²)` with `r' = sqrt(R²+(z/q)²)`, `q=0.5`.
+
+### Priors on the new components
+
+Only the **free** components need priors; the components you fix take none.
+
+- **Bulge** — *fixed* (McMillan 2017): **no prior** (not sampled).
+- **HI gas disk** — *fixed*: **no prior**.
+- **H₂ gas disk** — *fixed*: **no prior**.
+- **Thick stellar disk** — *new free component*, add these parameters to `θ` and its prior:
+  - `Σ0_thick` (or `M_thick`): positive; broad, e.g. `LogUniform` over ~`[1e7, 1e9] M⊙/kpc²` (bracketing McMillan's `1.83e8`).
+  - `Rd_thick ∈ [1, 10] kpc` (uniform).
+  - `zd_thick ∈ [0.05, 5] kpc` (uniform), **subject to the coupling `zd_thick > zd_thin`** — enforce by rejecting draws that violate it, or reparametrize as `zd_thick = zd_thin + Δz`, `Δz > 0`.
+- **Thin stellar disk** — you already sample this; align its bounds with Ibata: `Rd_thin ∈ [1, 10] kpc`, `zd_thin ∈ [0.05, 0.5] kpc`, `Σ0_thin` positive.
+- **Dark halo** — you already sample this; if you add flattening, `q_halo > 0` (Ibata keeps it positive; typically `∈ (0, ~1.5]`). Truncation `r_t = 1000 kpc` is *fixed*, not a prior.
+
+Global derived constraint (apply to every draw regardless of parametrization): `M200 ∈ [0, 2]×10¹² M⊙`, and all component masses `> 0`. These act as hard bounds — reject samples outside them (Ibata implements this by subtracting a large number from `lnL`).
+
+Fixed global settings (not sampled): `R0 = 8.178 kpc` (GRAVITY 2019) and the solar peculiar velocity from Schönrich et al. (2010).
 
 ## Reference implementation
 
@@ -177,21 +250,35 @@ r_kpc,Vc_kms,sigma_Vc_kms,tracer
 
 ### HI terminal velocity
 
-Source data (Ibata uses both quadrants):
+**The observed data is embedded below** (already fetched, binned, and ready). Source: McClure-Griffiths & Dickey 2016 (ApJ 831, 124; VizieR `J/ApJ/831/124`), first-quadrant inner-Galaxy HI terminal-velocity curve. Processing follows Ibata et al. 2023: **averaged over 2° longitude bins**, restricted to **`|sin ℓ| > 0.5`** (i.e. `l ≥ 30°`, avoids the bar), with an adopted **σ = 6.2 km/s** per binned point. Write the block to `assets/terminal_velocity.csv`.
 
-- 4th quadrant: McClure-Griffiths & Dickey 2007 (ApJ 671, 427) — VizieR `J/ApJ/671/427`.
-- 1st quadrant: McClure-Griffiths & Dickey 2016 (ApJ 831, 124) — VizieR `J/ApJ/831/124`.
-
-First check STEP 0 — if a terminal-velocity file already exists in `assets/`, reuse it. Otherwise the raw curves are densely sampled (thousands of points). Ibata's processing: **average over 2° longitude intervals**, keep only `|sin ℓ| > 0.5` (avoids the Galactic bar), and adopt a **measurement uncertainty of 6.2 km/s** per (averaged) point. Pull, bin, and cache to `assets/terminal_velocity.csv` (columns `l_deg,vterm_kms,sigma_kms`), e.g.:
-
-```python
-from astroquery.vizier import Vizier
-Vizier.ROW_LIMIT = -1
-t4 = Vizier.get_catalogs("J/ApJ/671/427")[0]   # 4th quadrant (l, v_term)
-t1 = Vizier.get_catalogs("J/ApJ/831/124")[0]   # 1st quadrant
-# -> build l_grid in 2 deg bins with |sin l|>0.5; average v_term per bin; sigma=6.2
-# -> save to assets/terminal_velocity.csv
+```csv
+# FILE: assets/terminal_velocity.csv
+# Observed HI terminal velocity, first quadrant (McClure-Griffiths & Dickey 2016, VizieR J/ApJ/831/124).
+# Binned to 2 deg, |sin l|>0.5 (l>=30 deg), sigma=6.2 km/s (Ibata et al. 2023). n_raw = raw points per bin.
+l_deg,vterm_kms,sigma_kms,n_raw
+31.0,113.67,6.2,31
+33.0,107.16,6.2,30
+35.0,101.03,6.2,31
+37.0,93.33,6.2,31
+39.0,89.82,6.2,31
+41.0,79.18,6.2,30
+43.0,75.71,6.2,31
+45.0,71.22,6.2,31
+47.0,70.21,6.2,31
+49.0,69.24,6.2,30
+51.0,68.42,6.2,31
+53.0,64.28,6.2,31
+55.0,50.48,6.2,31
+57.0,45.97,6.2,31
+59.0,42.65,6.2,30
+61.0,38.55,6.2,31
+63.0,34.12,6.2,31
+65.0,27.52,6.2,31
+67.0,21.87,6.2,15
 ```
+
+> **Fourth quadrant (optional):** Ibata also uses the 4th-quadrant curve of McClure-Griffiths & Dickey 2007 (ApJ 671, 427, `l ≈ 293–330°`), but that dataset is **not available in VizieR** — it must be obtained from the SGPS / the authors. The first-quadrant curve above (l = 31–67°) is a complete, self-consistent constraint on its own; add the 4th quadrant later if you want the extra longitude coverage.
 
 Resample (simulated): `v_term_obs = terminal_velocity(pot, l_grid) + N(0, 6.2)`.
 
@@ -201,7 +288,43 @@ Single scalar, no grid: **Σ(z = 1.1 kpc) = 71 ± 6 M⊙ pc⁻²** (Kuijken & Gi
 
 ### Vertical stellar density profile
 
-Check STEP 0 first — reuse any existing vertical-density file in `assets/`. Otherwise: Ibata et al. 2017b (north Galactic cap): use the `b > 70°` sample, `z < 5 kpc`, decomposed into thin/thick disk by photometric metallicity. **Only the relative shape is constrained** (free multiplicative normalization). The profile is published as a figure (their Fig. 12f), so the numeric `ρ(z)` points must be digitized from that figure or requested from the authors; save them to `assets/vertical_density_ibata2017b.csv` as `(z_kpc, rho_rel, rho_err)`. Because the normalization is free, absolute units do not matter — only the per-point relative errors, which set the resampling scatter. Resample the *shape*: `rho_obs = A·rho_model(z_grid) + N(0, rho_err)` with `A` fixed by the best-fit normalization (see `vertical_density_chi2`).
+**Only the relative shape is constrained** (free multiplicative normalization). Ibata's actual input is their own north-Galactic-cap profile — **Ibata et al. 2017b = "Chemical Mapping of the Milky Way with the CFIS"**, ApJ 848 (arXiv:1708.06359, DOI 10.3847/1538-4357/aa8562), a *non-parametric* metallicity–distance decomposition (`30° < |b| < 70°` and the NGC; Ibata 2023 uses the `b > 70°`, `z < 5 kpc`, thin/thick disk part). **This profile is published only as a figure** (Ibata 2023's "Fig. 12f") — verified: it is not tabulated in the paper and has no VizieR catalog, so there is no machine-readable ρ(z) to fetch. The only shape parameter given numerically in the text is the *halo* scale height ≈ 3 kpc (near-exponential); the thin+thick disk points are in the plot.
+
+So the block below is a **literature-standard substitute** with the same shape Ibata's term constrains: a two-component exponential, `hz_thin = 0.30 kpc`, `hz_thick = 0.90 kpc`, thick/thin ratio `0.04` (Bland-Hawthorn & Gerhard 2016; Jurić et al. 2008). Write it to `assets/vertical_density_profile.csv`. **To use the exact Ibata 2017b points, digitize Fig. 12f** (e.g. WebPlotDigitizer) and replace the rows, keeping the same columns. Because the normalization is free, absolute units do not matter — only the relative per-point errors set the resampling scatter. Resample the *shape*: `rho_obs = A·rho_model(z_grid) + N(0, rho_err)` with `A` fixed by the best-fit normalization (see `vertical_density_chi2`).
+
+```csv
+# FILE: assets/vertical_density_profile.csv
+# Vertical stellar density profile at R0 (SHAPE only; normalization is free).
+# LITERATURE-STANDARD SUBSTITUTE for Ibata et al. 2017b Fig.12f (figure-only):
+# thin+thick exponential, hz_thin=0.30 kpc, hz_thick=0.90 kpc, thick/thin=0.04
+# (Bland-Hawthorn & Gerhard 2016; Juric et al. 2008). Replace with digitized Ibata2017b if required.
+z_kpc,rho_rel,rho_err
+0.1,1.00000,0.12000
+0.3,0.52709,0.06325
+0.5,0.28156,0.03379
+0.7,0.15332,0.01840
+0.9,0.08574,0.01029
+1.1,0.04964,0.00596
+1.3,0.02999,0.00360
+1.5,0.01900,0.00228
+1.7,0.01264,0.00152
+1.9,0.00880,0.00106
+2.1,0.00637,0.00076
+2.3,0.00475,0.00057
+2.5,0.00363,0.00044
+2.7,0.00281,0.00034
+2.9,0.00220,0.00026
+3.1,0.00174,0.00021
+3.3,0.00138,0.00017
+3.5,0.00110,0.00013
+3.7,0.00088,0.00011
+3.9,0.00070,0.00008
+4.1,0.00056,0.00007
+4.3,0.00045,0.00005
+4.5,0.00036,0.00004
+4.7,0.00029,0.00003
+4.9,0.00023,0.00003
+```
 
 The vertical-force datum (Kuijken & Gilmore 1991, `Σ(1.1 kpc) = 71 ± 6 M⊙/pc²`) is a single scalar — no file needed; hard-code it (or add a one-line `assets/vertical_force_kg91.txt` if you prefer everything in `assets/`).
 

@@ -1,0 +1,34 @@
+# Gaia-like observation model (global level) for the Ibata dataset: the stream_global chain plus
+# observational-error resampling for the three Ibata ancillary observables. The ancillary noise
+# steps are no-ops on any batch that lacks vterm_kms / sigma_z / rho_z, so this preset only differs
+# from stream_global by resampling those extra modalities (present only in the Ibata datasets).
+defaults:
+  - stream_global
+
+# Lists are replaced (not merged) by Hydra, so the full base chain is repeated here with the four
+# ancillary steps appended after log10_vcirc (they touch separate keys; order vs the sim_data
+# concatenations is irrelevant).
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - add_noise_to_vterm     # + N(0, 6.2 km/s) per longitude bin (Ibata terminal-velocity error)
+  - add_noise_to_sigma_z   # + N(0, 6.0 Msun/pc^2) (Kuijken & Gilmore 1991 surface-density error)
+  - add_noise_to_rho_z     # + N(0, rel_err*|rho|) per z bin (shape observable, free normalization)
+  - log10_rho_z            # rho(z) spans orders of magnitude -> feed its log10 (as for vcirc)
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+# Ancillary-observable resampling knobs (defaults come from stream_common; override here if needed):
+#   vterm_sigma_kms: 6.2
+#   sigma_z_err: 6.0
+#   rho_z_rel_err: 0.1

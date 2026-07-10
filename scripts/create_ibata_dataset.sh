@@ -29,7 +29,7 @@ cd "$(dirname "$0")/.."
 SIM=stream_agama_ibata
 DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_ibata_hydrabflow}
 SEED=${SEED:-2026}
-N_WORKERS=${N_WORKERS:-24}
+N_WORKERS=${N_WORKERS:-30}
 N_FULL=${N_FULL:-100000}
 N_GROUPS=${N_GROUPS:-333}
 RUN_PILOT=${RUN_PILOT:-1}

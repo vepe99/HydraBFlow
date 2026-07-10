@@ -2086,7 +2086,7 @@
       "label": "PreprocessingConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L133",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_preprocessingconfig",
       "community": 3,
@@ -2096,7 +2096,7 @@
       "label": "AugmentationConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L140",
+      "source_location": "L144",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_augmentationconfig",
       "community": 3,
@@ -2106,7 +2106,7 @@
       "label": "CompositionConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L153",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_compositionconfig",
       "community": 3,
@@ -2116,7 +2116,7 @@
       "label": "AdapterConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L179",
+      "source_location": "L183",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_adapterconfig",
       "community": 3,
@@ -2126,7 +2126,7 @@
       "label": "InferenceConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L209",
+      "source_location": "L213",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_inferenceconfig",
       "community": 3,
@@ -2136,7 +2136,7 @@
       "label": "EvalConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L215",
+      "source_location": "L219",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_evalconfig",
       "community": 3,
@@ -2146,7 +2146,7 @@
       "label": "TuningConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L253",
+      "source_location": "L257",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_tuningconfig",
       "community": 3,
@@ -2156,7 +2156,7 @@
       "label": "RootConfig",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L274",
+      "source_location": "L278",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_rootconfig",
       "community": 3,
@@ -2166,7 +2166,7 @@
       "label": "register_configs()",
       "file_type": "code",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L292",
+      "source_location": "L296",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_register_configs",
       "community": 3,
@@ -2216,9 +2216,9 @@
       "label": "Ordered list of preprocessing steps. Each entry is ``{name: <registry key>, ...p",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L134",
+      "source_location": "L138",
       "_origin": "ast",
-      "id": "src_hydrabflow_config_schema_rationale_134",
+      "id": "src_hydrabflow_config_schema_rationale_138",
       "community": 3,
       "norm_label": "ordered list of preprocessing steps. each entry is ``{name: <registry key>, ...p"
     },
@@ -2226,9 +2226,9 @@
       "label": "Ordered list of per-batch augmentation names resolved through the augmentation r",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L141",
+      "source_location": "L145",
       "_origin": "ast",
-      "id": "src_hydrabflow_config_schema_rationale_141",
+      "id": "src_hydrabflow_config_schema_rationale_145",
       "community": 3,
       "norm_label": "ordered list of per-batch augmentation names resolved through the augmentation r"
     },
@@ -2236,9 +2236,9 @@
       "label": "Compositional score modeling: train/evaluate the global or the local level separ",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L154",
+      "source_location": "L158",
       "_origin": "ast",
-      "id": "src_hydrabflow_config_schema_rationale_154",
+      "id": "src_hydrabflow_config_schema_rationale_158",
       "community": 3,
       "norm_label": "compositional score modeling: train/evaluate the global or the local level separ"
     },
@@ -2246,9 +2246,9 @@
       "label": "Maps raw dataset keys to BayesFlow roles.      ``inference_variables`` are conca",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L180",
+      "source_location": "L184",
       "_origin": "ast",
-      "id": "src_hydrabflow_config_schema_rationale_180",
+      "id": "src_hydrabflow_config_schema_rationale_184",
       "community": 3,
       "norm_label": "maps raw dataset keys to bayesflow roles.      ``inference_variables`` are conca"
     },
@@ -2256,9 +2256,9 @@
       "label": "Register all schemas in Hydra's ConfigStore.      Must be called before ``@hydra",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L293",
+      "source_location": "L297",
       "_origin": "ast",
-      "id": "src_hydrabflow_config_schema_rationale_293",
+      "id": "src_hydrabflow_config_schema_rationale_297",
       "community": 3,
       "norm_label": "register all schemas in hydra's configstore.      must be called before ``@hydra"
     },
@@ -2509,7 +2509,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "summarynetwork",
-      "community": 15,
+      "community": 32,
       "norm_label": "summarynetwork"
     },
     {
@@ -2669,7 +2669,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer",
-      "community": 15,
+      "community": 32,
       "norm_label": "masked_set_transformer.py"
     },
     {
@@ -2679,7 +2679,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer",
-      "community": 15,
+      "community": 32,
       "norm_label": "maskedsettransformer"
     },
     {
@@ -2689,7 +2689,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_init",
-      "community": 15,
+      "community": 32,
       "norm_label": ".__init__()"
     },
     {
@@ -2699,7 +2699,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_py_layer",
-      "community": 15,
+      "community": 32,
       "norm_label": "layer"
     },
     {
@@ -2709,7 +2709,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_build",
-      "community": 15,
+      "community": 32,
       "norm_label": ".build()"
     },
     {
@@ -2719,7 +2719,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_compute_output_shape",
-      "community": 15,
+      "community": 32,
       "norm_label": ".compute_output_shape()"
     },
     {
@@ -2729,7 +2729,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_call",
-      "community": 15,
+      "community": 32,
       "norm_label": ".call()"
     },
     {
@@ -2739,7 +2739,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_py_tensor",
-      "community": 15,
+      "community": 32,
       "norm_label": "tensor"
     },
     {
@@ -2749,7 +2749,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_get_config",
-      "community": 15,
+      "community": 32,
       "norm_label": ".get_config()"
     },
     {
@@ -2759,7 +2759,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_from_config",
-      "community": 15,
+      "community": 32,
       "norm_label": ".from_config()"
     },
     {
@@ -2769,7 +2769,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_masked_set_transformer",
-      "community": 15,
+      "community": 32,
       "norm_label": "_masked_set_transformer()"
     },
     {
@@ -2779,7 +2779,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_rationale_1",
-      "community": 15,
+      "community": 32,
       "norm_label": "missingness-aware settransformer for stars without a measured line-of-sight velo"
     },
     {
@@ -2789,7 +2789,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_rationale_46",
-      "community": 15,
+      "community": 32,
       "norm_label": "zero masked feature channels, add a learned missing-value embedding, run a settr"
     },
     {
@@ -2799,7 +2799,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_rationale_124",
-      "community": 15,
+      "community": 32,
       "norm_label": "build a :class:`maskedsettransformer` from a ``summarynetworkconfig`` (see modul"
     },
     {
@@ -3079,7 +3079,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint",
-      "community": 56,
+      "community": 130,
       "norm_label": "checkpoint.py"
     },
     {
@@ -3089,7 +3089,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_save_approximator",
-      "community": 56,
+      "community": 130,
       "norm_label": "save_approximator()"
     },
     {
@@ -3099,7 +3099,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_py_any",
-      "community": 56,
+      "community": 130,
       "norm_label": "any"
     },
     {
@@ -3109,7 +3109,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_fix_keras_model",
-      "community": 56,
+      "community": 130,
       "norm_label": "fix_keras_model()"
     },
     {
@@ -3119,7 +3119,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_load_approximator",
-      "community": 56,
+      "community": 130,
       "norm_label": "load_approximator()"
     },
     {
@@ -3129,7 +3129,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_1",
-      "community": 56,
+      "community": 130,
       "norm_label": "model save/load helpers, including the bayesflow ``.keras`` deserialization work"
     },
     {
@@ -3139,7 +3139,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_30",
-      "community": 56,
+      "community": 130,
       "norm_label": "return a path to a load-safe copy of ``model_path`` (patching the arrayimpl tag)"
     },
     {
@@ -3149,7 +3149,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_47",
-      "community": 56,
+      "community": 130,
       "norm_label": "load a saved approximator, applying the arrayimpl fix first."
     },
     {
@@ -3179,7 +3179,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_prior_score_from_spec",
-      "community": 123,
+      "community": 131,
       "norm_label": "prior_score_from_spec()"
     },
     {
@@ -3189,7 +3189,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "container",
-      "community": 123,
+      "community": 125,
       "norm_label": "container"
     },
     {
@@ -3199,7 +3199,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_prior_score_from_kde",
-      "community": 123,
+      "community": 125,
       "norm_label": "prior_score_from_kde()"
     },
     {
@@ -3209,7 +3209,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_prior_score_from_kde_jax",
-      "community": 123,
+      "community": 125,
       "norm_label": "prior_score_from_kde_jax()"
     },
     {
@@ -3299,7 +3299,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_rationale_24",
-      "community": 123,
+      "community": 131,
       "norm_label": "score of the log prior for compositional sampling, from a prior-spec mapping."
     },
     {
@@ -3309,7 +3309,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_rationale_88",
-      "community": 123,
+      "community": 125,
       "norm_label": "kde compositional prior score, fit in the network's native (un-standardized, log"
     },
     {
@@ -3319,7 +3319,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_rationale_184",
-      "community": 123,
+      "community": 125,
       "norm_label": "kde compositional prior score via ``jax.scipy.stats.gaussian_kde`` + ``jax.grad`"
     },
     {
@@ -4053,10 +4053,20 @@
       "norm_label": "run_training()"
     },
     {
+      "label": "_restore_best_weights()",
+      "file_type": "code",
+      "source_file": "src/hydrabflow/pipeline/train.py",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "src_hydrabflow_pipeline_train_restore_best_weights",
+      "community": 2,
+      "norm_label": "_restore_best_weights()"
+    },
+    {
       "label": "_save_history_and_convergence()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L89",
+      "source_location": "L115",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_save_history_and_convergence",
       "community": 2,
@@ -4066,7 +4076,7 @@
       "label": "_save_loss_plot()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L114",
+      "source_location": "L140",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_save_loss_plot",
       "community": 2,
@@ -4076,7 +4086,7 @@
       "label": "_n()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L129",
+      "source_location": "L155",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_n",
       "community": 2,
@@ -4103,12 +4113,22 @@
       "norm_label": "train the approximator and return (workflow, history)."
     },
     {
+      "label": "Load the best-val-loss weights BayesFlow checkpointed during training back into",
+      "file_type": "rationale",
+      "source_file": "src/hydrabflow/pipeline/train.py",
+      "source_location": "L98",
+      "_origin": "ast",
+      "id": "src_hydrabflow_pipeline_train_rationale_98",
+      "community": 2,
+      "norm_label": "load the best-val-loss weights bayesflow checkpointed during training back into"
+    },
+    {
       "label": "Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L90",
+      "source_location": "L116",
       "_origin": "ast",
-      "id": "src_hydrabflow_pipeline_train_rationale_90",
+      "id": "src_hydrabflow_pipeline_train_rationale_116",
       "community": 2,
       "norm_label": "persist ``history.json`` + ``convergence.json``; best-effort, never fails a run."
     },
@@ -4226,7 +4246,7 @@
       "label": "build_workflow()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/workflow.py",
-      "source_location": "L18",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_workflow_build_workflow",
       "community": 59,
@@ -4256,9 +4276,9 @@
       "label": "Build a ``bf.BasicWorkflow`` (or ``bf.CompositionalWorkflow``) from the root ``c",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/workflow.py",
-      "source_location": "L19",
+      "source_location": "L23",
       "_origin": "ast",
-      "id": "src_hydrabflow_pipeline_workflow_rationale_19",
+      "id": "src_hydrabflow_pipeline_workflow_rationale_23",
       "community": 59,
       "norm_label": "build a ``bf.basicworkflow`` (or ``bf.compositionalworkflow``) from the root ``c"
     },
@@ -4639,7 +4659,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry",
-      "community": 32,
+      "community": 4,
       "norm_label": "registry.py"
     },
     {
@@ -4649,7 +4669,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_register_step",
-      "community": 32,
+      "community": 4,
       "norm_label": "register_step()"
     },
     {
@@ -4669,7 +4689,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_available_steps",
-      "community": 32,
+      "community": 4,
       "norm_label": "available_steps()"
     },
     {
@@ -4679,7 +4699,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_rationale_1",
-      "community": 32,
+      "community": 4,
       "norm_label": "name -> preprocessing-step registry and pipeline builder."
     },
     {
@@ -4689,7 +4709,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_rationale_14",
-      "community": 32,
+      "community": 4,
       "norm_label": "register a step factory (usually the step class itself) under ``name``."
     },
     {
@@ -5099,7 +5119,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_py_ndarray",
-      "community": 118,
+      "community": 129,
       "norm_label": "ndarray"
     },
     {
@@ -5109,7 +5129,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize",
-      "community": 118,
+      "community": 129,
       "norm_label": "perstreamparameterstandardize"
     },
     {
@@ -5149,7 +5169,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize_state",
-      "community": 118,
+      "community": 129,
       "norm_label": ".state()"
     },
     {
@@ -5159,7 +5179,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize_load_state",
-      "community": 118,
+      "community": 129,
       "norm_label": ".load_state()"
     },
     {
@@ -5209,7 +5229,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_streamobservationstats_state",
-      "community": 118,
+      "community": 129,
       "norm_label": ".state()"
     },
     {
@@ -5219,7 +5239,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_streamobservationstats_load_state",
-      "community": 118,
+      "community": 129,
       "norm_label": ".load_state()"
     },
     {
@@ -5259,7 +5279,7 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_maskvcircradii",
-      "community": 118,
+      "community": 132,
       "norm_label": "maskvcircradii"
     },
     {
@@ -5269,7 +5289,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_maskvcircradii_init",
-      "community": 118,
+      "community": 132,
       "norm_label": ".__init__()"
     },
     {
@@ -5279,7 +5299,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_maskvcircradii_transform",
-      "community": 118,
+      "community": 132,
       "norm_label": ".transform()"
     },
     {
@@ -5309,7 +5329,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_rationale_48",
-      "community": 118,
+      "community": 129,
       "norm_label": "z-score each stream's local parameters with that stream's prior mean/std."
     },
     {
@@ -5339,7 +5359,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_rationale_201",
-      "community": 118,
+      "community": 132,
       "norm_label": "keep only rotation-curve bins with ``r >= r_min`` on the observed radii grid."
     },
     {
@@ -5899,7 +5919,7 @@
       "source_location": "L351",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams",
-      "community": 56,
+      "community": 11,
       "norm_label": ".target_streams()"
     },
     {
@@ -7169,7 +7189,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed",
-      "community": 2,
+      "community": 40,
       "norm_label": "seed.py"
     },
     {
@@ -7179,7 +7199,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_seed_everything",
-      "community": 2,
+      "community": 40,
       "norm_label": "seed_everything()"
     },
     {
@@ -7189,7 +7209,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_rationale_1",
-      "community": 2,
+      "community": 40,
       "norm_label": "seeding helpers for reproducible runs."
     },
     {
@@ -7199,7 +7219,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_rationale_12",
-      "community": 2,
+      "community": 40,
       "norm_label": "seed python, numpy, and (best effort) the active keras backend.      returns a n"
     },
     {
@@ -7209,7 +7229,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest",
-      "community": 123,
+      "community": 133,
       "norm_label": "conftest.py"
     },
     {
@@ -7219,7 +7239,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_conftest_compose_cfg",
-      "community": 123,
+      "community": 133,
       "norm_label": "compose_cfg()"
     },
     {
@@ -7229,7 +7249,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_conftest_cfg",
-      "community": 123,
+      "community": 133,
       "norm_label": "cfg()"
     },
     {
@@ -7249,7 +7269,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest_rationale_1",
-      "community": 123,
+      "community": 133,
       "norm_label": "shared test fixtures."
     },
     {
@@ -7259,7 +7279,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_conftest_rationale_13",
-      "community": 123,
+      "community": 133,
       "norm_label": "compose the root config with the structured schemas registered.      ``fill=true"
     },
     {
@@ -7679,7 +7699,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "tests_test_masked_vlos_test_real_global_chain_includes_impute_vlos",
-      "community": 123,
+      "community": 107,
       "norm_label": "test_real_global_chain_includes_impute_vlos()"
     },
     {
@@ -7759,7 +7779,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "tests_test_masked_vlos_test_maskedvlos_model_config_composes",
-      "community": 123,
+      "community": 107,
       "norm_label": "test_maskedvlos_model_config_composes()"
     },
     {
@@ -7969,7 +7989,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_registries_test_preprocess_registry",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_preprocess_registry()"
     },
     {
@@ -7979,7 +7999,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_test_registries_test_augmentation_registry_builds",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_augmentation_registry_builds()"
     },
     {
@@ -8219,7 +8239,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_streams_test_simulator_declares_hierarchy",
-      "community": 123,
+      "community": 96,
       "norm_label": "test_simulator_declares_hierarchy()"
     },
     {
@@ -8249,7 +8269,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "tests_test_streams_test_per_stream_parameter_standardize_roundtrip",
-      "community": 118,
+      "community": 129,
       "norm_label": "test_per_stream_parameter_standardize_roundtrip()"
     },
     {
@@ -8279,7 +8299,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_from_spec",
-      "community": 123,
+      "community": 131,
       "norm_label": "test_prior_score_from_spec()"
     },
     {
@@ -8289,7 +8309,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_applies_time_decay",
-      "community": 123,
+      "community": 131,
       "norm_label": "test_prior_score_applies_time_decay()"
     },
     {
@@ -8299,7 +8319,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_from_kde_fits_in_log10_space",
-      "community": 123,
+      "community": 125,
       "norm_label": "test_prior_score_from_kde_fits_in_log10_space()"
     },
     {
@@ -8309,7 +8329,7 @@
       "source_location": "L229",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_from_kde_linear_space",
-      "community": 123,
+      "community": 125,
       "norm_label": "test_prior_score_from_kde_linear_space()"
     },
     {
@@ -8319,7 +8339,7 @@
       "source_location": "L275",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_from_kde_jax_matches_finite_diff",
-      "community": 123,
+      "community": 125,
       "norm_label": "test_prior_score_from_kde_jax_matches_finite_diff()"
     },
     {
@@ -8329,7 +8349,7 @@
       "source_location": "L319",
       "_origin": "ast",
       "id": "tests_test_streams_test_kde_jax_and_diagonal_agree_when_uncorrelated",
-      "community": 123,
+      "community": 125,
       "norm_label": "test_kde_jax_and_diagonal_agree_when_uncorrelated()"
     },
     {
@@ -8339,7 +8359,7 @@
       "source_location": "L346",
       "_origin": "ast",
       "id": "tests_test_streams_test_mask_vcirc_radii_trims_grid",
-      "community": 118,
+      "community": 132,
       "norm_label": "test_mask_vcirc_radii_trims_grid()"
     },
     {
@@ -8359,7 +8379,7 @@
       "source_location": "L381",
       "_origin": "ast",
       "id": "tests_test_streams_test_per_stream_parameter_standardize_rejects_non_normal",
-      "community": 118,
+      "community": 129,
       "norm_label": "test_per_stream_parameter_standardize_rejects_non_normal()"
     },
     {
@@ -8379,7 +8399,7 @@
       "source_location": "L407",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_log10_jacobian_correction",
-      "community": 123,
+      "community": 131,
       "norm_label": "test_prior_score_log10_jacobian_correction()"
     },
     {
@@ -8419,7 +8439,7 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_160",
-      "community": 123,
+      "community": 131,
       "norm_label": "the callable's signature names a ``time`` parameter, so bayesflow's     ``prior_"
     },
     {
@@ -8429,7 +8449,7 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_179",
-      "community": 123,
+      "community": 125,
       "norm_label": "the kde prior score must be fit in the network's native space (log10 for ``log10"
     },
     {
@@ -8439,7 +8459,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_230",
-      "community": 123,
+      "community": 125,
       "norm_label": "with no ``log10_keys`` every parameter stays in physical/linear space; the kde m"
     },
     {
@@ -8449,7 +8469,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_276",
-      "community": 123,
+      "community": 125,
       "norm_label": "the jax.scipy.stats.gaussian_kde implementation must (a) fit in the network's na"
     },
     {
@@ -8459,7 +8479,7 @@
       "source_location": "L320",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_320",
-      "community": 123,
+      "community": 125,
       "norm_label": "full-covariance (jax) and diagonal (custom) kdes reduce to the same estimator wh"
     },
     {
@@ -8469,7 +8489,7 @@
       "source_location": "L408",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_408",
-      "community": 123,
+      "community": 131,
       "norm_label": "d/dy log p_y(y) for y=log10(x) must include the +ln(10) jacobian term, not just"
     },
     {
@@ -8523,6 +8543,16 @@
       "norm_label": "test_build_workflow()"
     },
     {
+      "label": "test_build_workflow_checkpointing()",
+      "file_type": "code",
+      "source_file": "tests/test_workflow.py",
+      "source_location": "L40",
+      "_origin": "ast",
+      "id": "tests_test_workflow_test_build_workflow_checkpointing",
+      "community": 10,
+      "norm_label": "test_build_workflow_checkpointing()"
+    },
+    {
       "label": "Adapter / network / workflow construction. Skipped if bayesflow isn't installed.",
       "file_type": "rationale",
       "source_file": "tests/test_workflow.py",
@@ -8531,6 +8561,16 @@
       "id": "tests_test_workflow_rationale_1",
       "community": 10,
       "norm_label": "adapter / network / workflow construction. skipped if bayesflow isn't installed."
+    },
+    {
+      "label": "Passing run_dir turns on BayesFlow best-weights checkpointing; omitting it leave",
+      "file_type": "rationale",
+      "source_file": "tests/test_workflow.py",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "tests_test_workflow_rationale_41",
+      "community": 10,
+      "norm_label": "passing run_dir turns on bayesflow best-weights checkpointing; omitting it leave"
     },
     {
       "label": "CLAUDE.md",
@@ -8906,7 +8946,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "CLAUDE.md",
-      "source_location": "L494",
+      "source_location": "L534",
       "_origin": "ast",
       "id": "claude_graphify",
       "community": 34,
@@ -10269,7 +10309,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/preprocessing/registry.py",
       "source_location": "L25",
-      "community": 0,
+      "community": 39,
       "norm_label": "preprocesspipeline",
       "id": "preprocesspipeline"
     },
@@ -10482,7 +10522,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -13996,7 +14036,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L153",
+      "source_location": "L157",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema",
       "target": "src_hydrabflow_config_schema_compositionconfig",
@@ -14147,7 +14187,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L302",
+      "source_location": "L306",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_simulatorconfig",
@@ -14168,7 +14208,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L304",
+      "source_location": "L308",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_summarynetworkconfig",
@@ -14232,7 +14272,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L308",
+      "source_location": "L312",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_inferencenetworkconfig",
@@ -14243,7 +14283,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L303",
+      "source_location": "L307",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_modelconfig",
@@ -14254,7 +14294,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L310",
+      "source_location": "L314",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_dataconfig",
@@ -14265,7 +14305,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L311",
+      "source_location": "L315",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_trainingconfig",
@@ -14275,85 +14315,11 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L134",
+      "source_location": "L138",
       "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_rationale_134",
+      "source": "src_hydrabflow_config_schema_rationale_138",
       "target": "src_hydrabflow_config_schema_preprocessingconfig",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L312",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_register_configs",
-      "target": "src_hydrabflow_config_schema_preprocessingconfig",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L141",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_rationale_141",
-      "target": "src_hydrabflow_config_schema_augmentationconfig",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L313",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_register_configs",
-      "target": "src_hydrabflow_config_schema_augmentationconfig",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L154",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_rationale_154",
-      "target": "src_hydrabflow_config_schema_compositionconfig",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L315",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_register_configs",
-      "target": "src_hydrabflow_config_schema_compositionconfig",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L180",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_rationale_180",
-      "target": "src_hydrabflow_config_schema_adapterconfig",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L314",
-      "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_register_configs",
-      "target": "src_hydrabflow_config_schema_adapterconfig",
-      "confidence_score": 0.5
     },
     {
       "relation": "indirect_call",
@@ -14361,6 +14327,80 @@
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
       "source_location": "L316",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_register_configs",
+      "target": "src_hydrabflow_config_schema_preprocessingconfig",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_rationale_145",
+      "target": "src_hydrabflow_config_schema_augmentationconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L317",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_register_configs",
+      "target": "src_hydrabflow_config_schema_augmentationconfig",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L158",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_rationale_158",
+      "target": "src_hydrabflow_config_schema_compositionconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L319",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_register_configs",
+      "target": "src_hydrabflow_config_schema_compositionconfig",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_rationale_184",
+      "target": "src_hydrabflow_config_schema_adapterconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L318",
+      "weight": 1.0,
+      "source": "src_hydrabflow_config_schema_register_configs",
+      "target": "src_hydrabflow_config_schema_adapterconfig",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/hydrabflow/config/schema.py",
+      "source_location": "L320",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_inferenceconfig",
@@ -14371,7 +14411,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L317",
+      "source_location": "L321",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_evalconfig",
@@ -14382,7 +14422,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L318",
+      "source_location": "L322",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_tuningconfig",
@@ -14393,7 +14433,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L301",
+      "source_location": "L305",
       "weight": 1.0,
       "source": "src_hydrabflow_config_schema_register_configs",
       "target": "src_hydrabflow_config_schema_rootconfig",
@@ -14403,9 +14443,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/config/schema.py",
-      "source_location": "L293",
+      "source_location": "L297",
       "weight": 1.0,
-      "source": "src_hydrabflow_config_schema_rationale_293",
+      "source": "src_hydrabflow_config_schema_rationale_297",
       "target": "src_hydrabflow_config_schema_register_configs",
       "confidence_score": 1.0
     },
@@ -15383,7 +15423,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/pipeline/workflow.py",
-      "source_location": "L35",
+      "source_location": "L46",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_workflow_build_workflow",
       "target": "src_hydrabflow_pipeline_bf_patches_apply_bayesflow_patches"
@@ -18044,6 +18084,16 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/pipeline/train.py",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "src_hydrabflow_pipeline_train",
+      "target": "src_hydrabflow_pipeline_train_restore_best_weights",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/hydraflow/pipeline/train.py",
       "source_location": "L27",
       "weight": 1.0,
@@ -18055,7 +18105,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L89",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_train",
       "target": "src_hydrabflow_pipeline_train_save_history_and_convergence",
@@ -18107,7 +18157,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L83",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_hydrabflow_pipeline_train_run_training",
+      "target": "src_hydrabflow_pipeline_train_restore_best_weights",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/pipeline/train.py",
+      "source_location": "L91",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_train_run_training",
       "target": "src_hydrabflow_pipeline_train_save_history_and_convergence",
@@ -18172,9 +18233,19 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L90",
+      "source_location": "L98",
       "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_train_rationale_90",
+      "source": "src_hydrabflow_pipeline_train_rationale_98",
+      "target": "src_hydrabflow_pipeline_train_restore_best_weights",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/pipeline/train.py",
+      "source_location": "L116",
+      "weight": 1.0,
+      "source": "src_hydrabflow_pipeline_train_rationale_116",
       "target": "src_hydrabflow_pipeline_train_save_history_and_convergence",
       "confidence_score": 1.0
     },
@@ -18184,7 +18255,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/pipeline/train.py",
-      "source_location": "L101",
+      "source_location": "L127",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_train_save_history_and_convergence",
       "target": "src_hydrabflow_utils_reporting_inspect_history"
@@ -18436,7 +18507,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/workflow.py",
-      "source_location": "L18",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_workflow_build_workflow",
       "target": "src_hydrabflow_pipeline_workflow_py_any",
@@ -18456,9 +18527,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/workflow.py",
-      "source_location": "L19",
+      "source_location": "L23",
       "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_workflow_rationale_19",
+      "source": "src_hydrabflow_pipeline_workflow_rationale_23",
       "target": "src_hydrabflow_pipeline_workflow_build_workflow",
       "confidence_score": 1.0
     },
@@ -18471,6 +18542,17 @@
       "source_location": "L36",
       "weight": 1.0,
       "source": "tests_test_workflow_test_build_workflow",
+      "target": "src_hydrabflow_pipeline_workflow_build_workflow"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_workflow.py",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "tests_test_workflow_test_build_workflow_checkpointing",
       "target": "src_hydrabflow_pipeline_workflow_build_workflow"
     },
     {
@@ -25088,6 +25170,16 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_workflow.py",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "tests_test_workflow",
+      "target": "tests_test_workflow_test_build_workflow_checkpointing",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_workflow.py",
@@ -25095,6 +25187,16 @@
       "weight": 1.0,
       "source": "tests_test_workflow_rationale_1",
       "target": "tests_test_workflow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_workflow.py",
+      "source_location": "L41",
+      "weight": 1.0,
+      "source": "tests_test_workflow_rationale_41",
+      "target": "tests_test_workflow_test_build_workflow_checkpointing",
       "confidence_score": 1.0
     },
     {
@@ -25391,7 +25493,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CLAUDE.md",
-      "source_location": "L494",
+      "source_location": "L534",
       "weight": 1.0,
       "source": "claude_hydrabflow_sbi_pipeline_template_with_bayesflow",
       "target": "claude_graphify",

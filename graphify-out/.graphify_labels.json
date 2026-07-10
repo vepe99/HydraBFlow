@@ -132,5 +132,11 @@
   "130": "load_approximator",
   "131": "prior_score_from_spec",
   "132": "MaskVcircRadii",
-  "133": "compose_cfg"
+  "133": "compose_cfg",
+  "134": "ppc_ancillary_observables.py",
+  "135": "_spray_stream",
+  "136": "test_config.py",
+  "137": "test_workflow.py",
+  "138": "inferred_names",
+  "139": "create_ibata_dataset.sh"
 }

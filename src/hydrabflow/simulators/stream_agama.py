@@ -41,11 +41,16 @@ from hydrabflow.simulators.stream_common import (
     OBS_R_KPC,
     OBS_SIGMA_VC,
     OBS_VC_KMS,
+    RHO_Z_KPC,
+    VTERM_L_DEG,
     extended_rotation_curve,
     inferred_names,
     sample_stream_prior,
     sample_stream_prior_shared_global,
     sky_projection,
+    surface_density,
+    terminal_velocity,
+    vertical_density_profile,
 )
 
 # Fixed bulge component of the host potential (not inferred), from the reference project.
@@ -62,6 +67,18 @@ BULGE_PARAMS = dict(
     axisRatioZ=0.5,
 )
 
+# Fixed atomic (HI) and molecular (H2) gas disks, McMillan (2017) best-fit params (see
+# new_constrains.md). Positive scaleHeight => isothermal sech^2 vertical profile (McMillan's gas
+# disks); innerCutoffRadius is the central hole R_m (Sigma ~ exp(-R_m/R - R/R_d)). Added only when
+# the potential config enables gas disks (the Ibata model) — needed for the inner-Galaxy terminal
+# velocity; absent from the legacy potential.
+GAS_HI_PARAMS = dict(
+    type="Disk", surfaceDensity=5.31e7, scaleRadius=7.0, innerCutoffRadius=4.0, scaleHeight=0.085
+)
+GAS_H2_PARAMS = dict(
+    type="Disk", surfaceDensity=2.18e9, scaleRadius=1.5, innerCutoffRadius=12.0, scaleHeight=0.045
+)
+
 
 def _agama():
     """Import agama with the (kpc, km/s, Msun) unit system set. Safe to call repeatedly."""
@@ -71,31 +88,95 @@ def _agama():
     return agama
 
 
-def _host_potential(agama, p: Mapping[str, float]):
-    """Bulge (fixed) + two-power triaxial halo + exponential disk from one parameter row."""
-    return agama.Potential(
-        BULGE_PARAMS,
-        dict(
-            type="Spheroid",
-            scaleRadius=p["a_TwoPowerTriaxial_halo"],
-            densityNorm=p["rho_TwoPowerTriaxial_halo"],
-            gamma=p["gamma_TwoPowerTriaxial_halo"],
-            alpha=1,
-            beta=p["beta_TwoPowerTriaxial_halo"],
-            cutoffStrength=2,
-            outerCutoffRadius=np.inf,
-            axisRatioY=1.0,
-            axisRatioZ=p["q_TwoPowerTriaxial_halo"],
-        ),
-        dict(
-            type="Disk",
-            scaleRadius=p["r_Disk"],
-            scaleHeight=p["z_Disk"],
-            surfaceDensity=p["Sigma_Disk"],
-            sersicIndex=1,
-            innerCutoffRadius=0,
-        ),
+# Default potential configuration = the legacy (pre-Ibata) model: untruncated halo, no gas disks,
+# no thick disk, isothermal (sech^2) disk vertical profile. The Ibata model overrides these via
+# ``simulator.params`` (see ``AgamaStreamSimulator._pot_cfg``). Kept as the ``pot_cfg=None`` default
+# so existing configs / subclasses (stream_agama_rnbody) build exactly the same potential as before.
+_DEFAULT_POT_CFG = dict(
+    halo_r_t_kpc=float("inf"),
+    gas_disks=False,
+    thick_disk=False,
+    disk_vertical="isothermal",  # "isothermal" (sech^2, +h) | "exponential" (exp(-|z|/h), -h)
+)
+
+
+def _resolve_pot_cfg(pot_cfg: Mapping | None) -> dict:
+    cfg = dict(_DEFAULT_POT_CFG)
+    if pot_cfg:
+        cfg.update(pot_cfg)
+    return cfg
+
+
+def _thin_disk_params(p: Mapping[str, float], hsign: float) -> dict:
+    return dict(
+        type="Disk",
+        scaleRadius=p["r_Disk"],
+        scaleHeight=hsign * p["z_Disk"],
+        surfaceDensity=p["Sigma_Disk"],
+        sersicIndex=1,
+        innerCutoffRadius=0,
     )
+
+
+def _thick_disk_params(p: Mapping[str, float], hsign: float) -> dict:
+    # Reparametrized coupling zd_thick > zd_thin: thick scale height = z_Disk + dz_thick_Disk
+    # (dz_thick_Disk > 0), so no rejection is needed to enforce Ibata's zd_thick > zd_thin.
+    return dict(
+        type="Disk",
+        scaleRadius=p["r_thick_Disk"],
+        scaleHeight=hsign * (p["z_Disk"] + p["dz_thick_Disk"]),
+        surfaceDensity=p["Sigma_thick_Disk"],
+        sersicIndex=1,
+        innerCutoffRadius=0,
+    )
+
+
+def _halo_params(p: Mapping[str, float], r_t: float) -> dict:
+    return dict(
+        type="Spheroid",
+        scaleRadius=p["a_TwoPowerTriaxial_halo"],
+        densityNorm=p["rho_TwoPowerTriaxial_halo"],
+        gamma=p["gamma_TwoPowerTriaxial_halo"],
+        alpha=1,
+        beta=p["beta_TwoPowerTriaxial_halo"],
+        cutoffStrength=2,
+        outerCutoffRadius=r_t,
+        axisRatioY=1.0,
+        axisRatioZ=p["q_TwoPowerTriaxial_halo"],
+    )
+
+
+def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None):
+    """Assemble the Milky Way host potential from one parameter row.
+
+    Legacy model (``pot_cfg=None``): fixed bulge + two-power triaxial halo (untruncated) + one
+    isothermal (sech^2) exponential-radial disk. Ibata model (``pot_cfg`` from the Ibata sim
+    config): additionally truncates the halo at ``halo_r_t_kpc`` (1000 kpc), adds the fixed HI &
+    H2 gas disks, adds a free thick stellar disk, and (optionally) switches the stellar disks to an
+    exponential vertical profile — see ``new_constrains.md``.
+    """
+    cfg = _resolve_pot_cfg(pot_cfg)
+    hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
+    components = [BULGE_PARAMS]
+    if cfg["gas_disks"]:
+        components += [GAS_HI_PARAMS, GAS_H2_PARAMS]
+    components.append(_halo_params(p, float(cfg["halo_r_t_kpc"])))
+    components.append(_thin_disk_params(p, hsign))
+    if cfg["thick_disk"]:
+        components.append(_thick_disk_params(p, hsign))
+    return agama.Potential(*components)
+
+
+def _stellar_disk_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None):
+    """The stellar-disk component(s) alone (thin [+ thick]) — the ``disk_pot`` for the vertical
+    stellar-density observable rho(z), so gas/halo do not contaminate the stellar profile."""
+    cfg = _resolve_pot_cfg(pot_cfg)
+    hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
+    disks = [_thin_disk_params(p, hsign)]
+    if cfg["thick_disk"]:
+        disks.append(_thick_disk_params(p, hsign))
+    return agama.Potential(*disks)
+
 
 
 def _rj_vj_R(agama, pot_host, orbit_sat: np.ndarray, mass_sat: float):
@@ -261,7 +342,9 @@ def _vcirc(pot_host, obs_r: np.ndarray) -> np.ndarray:
     return np.sqrt(np.where(v2 > 0, v2, np.nan))
 
 
-def _vcirc_accept_worker(rows: list, obs_r: np.ndarray, bands: list) -> np.ndarray:
+def _vcirc_accept_worker(
+    rows: list, obs_r: np.ndarray, bands: list, pot_cfg: Mapping | None = None
+) -> np.ndarray:
     """joblib worker: does each parameter row's model rotation curve pass the rejection cut?
 
     A row is accepted iff it passes *every* band. Each band selects a set of radial bins
@@ -275,7 +358,7 @@ def _vcirc_accept_worker(rows: list, obs_r: np.ndarray, bands: list) -> np.ndarr
     out = np.zeros(len(rows), dtype=bool)
     for i, p in enumerate(rows):
         try:
-            vc = _vcirc(_host_potential(agama, p), obs_r)
+            vc = _vcirc(_host_potential(agama, p, pot_cfg), obs_r)
         except Exception:
             continue
         ok = True
@@ -296,11 +379,34 @@ def _vcirc_accept_worker(rows: list, obs_r: np.ndarray, bands: list) -> np.ndarr
     return out
 
 
+def _ancillary_observables(
+    agama, pot_host, p: Dict[str, float], pot_cfg: Mapping | None, spec: Mapping | None
+) -> Dict[str, np.ndarray]:
+    """Ibata (2023) potential-derived observables for one row, per ``spec`` (an empty/None spec
+    computes nothing). ``spec`` carries the requested observable names + their fixed grids:
+    ``{"names": [...], "l_deg": array, "z_kpc": array}``. Deterministic force/density evaluations
+    on the assembled potential — no stream simulation."""
+    if not spec or not spec.get("names"):
+        return {}
+    names = set(spec["names"])
+    out: Dict[str, np.ndarray] = {}
+    if "vterm" in names:
+        out["vterm_kms"] = terminal_velocity(pot_host, spec["l_deg"]).astype(float)
+    if "sigma_z" in names:
+        out["sigma_z"] = np.array([surface_density(pot_host)], dtype=float)
+    if "rho_z" in names:
+        disk_pot = _stellar_disk_potential(agama, p, pot_cfg)
+        out["rho_z"] = vertical_density_profile(disk_pot, spec["z_kpc"]).astype(float)
+    return out
+
+
 def _simulate_one(
     p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int,
-    spray_method: str = "fardal",
+    spray_method: str = "fardal", pot_cfg: Mapping | None = None,
+    ancillary: Mapping | None = None,
 ):
-    """joblib worker: one stream realization + the rotation curve of its potential."""
+    """joblib worker: one stream realization + the rotation curve of its potential (+ the optional
+    Ibata ancillary observables of that potential)."""
     agama = _agama()
     rng = np.random.default_rng(seed)
     # getUnits()['time'] is a float [Myr] normally, but an astropy Quantity once astropy has
@@ -308,7 +414,7 @@ def _simulate_one(
     tu = agama.getUnits()["time"]
     time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
 
-    pot_host = _host_potential(agama, p)
+    pot_host = _host_potential(agama, p, pot_cfg)
 
     l0, b0, pml0, pmb0 = agama.transformCelestialCoords(
         agama.fromICRStoGalactic,
@@ -332,7 +438,8 @@ def _simulate_one(
         rng=rng,
         method=spray_method,
     )
-    return xv, _vcirc(pot_host, obs_r)
+    anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary)
+    return xv, _vcirc(pot_host, obs_r), anc
 
 
 @register_simulator("stream_agama")
@@ -399,6 +506,65 @@ class AgamaStreamSimulator(BaseSimulator):
         if str(self.params.get("obs_r_grid", "")) == "extended":
             return extended_rotation_curve(self._obs_r_split)[1]
         return np.asarray(self.params.get("obs_vc_kms", OBS_VC_KMS), dtype=float)
+
+    # ------------------------------------------------------------------------------------- #
+    # Potential model + Ibata ancillary observables (config-driven; legacy defaults are no-ops)
+    # ------------------------------------------------------------------------------------- #
+
+    @property
+    def _pot_cfg(self) -> dict:
+        """Host-potential configuration threaded to the joblib workers. Legacy default (all keys
+        absent) reproduces the original bulge + untruncated halo + one isothermal disk; the Ibata
+        sim config sets ``halo_r_t_kpc`` / ``gas_disks`` / ``thick_disk`` / ``disk_vertical``."""
+        return dict(
+            halo_r_t_kpc=float(self.params.get("halo_r_t_kpc", float("inf"))),
+            gas_disks=bool(self.params.get("gas_disks", False)),
+            thick_disk=bool(self.params.get("thick_disk", False)),
+            disk_vertical=str(self.params.get("disk_vertical", "isothermal")),
+        )
+
+    @property
+    def _ancillary_names(self) -> list[str]:
+        """Requested Ibata ancillary observables (``params.ancillary_observables``); empty by
+        default so existing stream configs compute nothing new (zero overhead)."""
+        node = self.params.get("ancillary_observables", None)
+        if not node:
+            return []
+        names = list(self._as_dict(node)) if not isinstance(node, (list, tuple)) else list(node)
+        valid = {"vterm", "sigma_z", "rho_z"}
+        bad = set(names) - valid
+        if bad:
+            raise ValueError(f"Unknown ancillary_observables {sorted(bad)}; valid: {sorted(valid)}")
+        return names
+
+    @property
+    def vterm_l_deg(self) -> np.ndarray:
+        """Galactic longitudes [deg] the terminal-velocity curve is evaluated on (single source of
+        truth, not stored in the npz — like ``obs_r_kpc`` for vcirc)."""
+        node = self.params.get("vterm_l_deg", None)
+        return np.asarray(node, dtype=float) if node else np.asarray(VTERM_L_DEG, dtype=float)
+
+    @property
+    def rho_z_kpc(self) -> np.ndarray:
+        """Heights z [kpc] the vertical stellar-density profile is evaluated on."""
+        node = self.params.get("rho_z_kpc", None)
+        return np.asarray(node, dtype=float) if node else np.asarray(RHO_Z_KPC, dtype=float)
+
+    @property
+    def _ancillary_spec(self) -> dict | None:
+        """Spec passed to the joblib worker: requested names + their fixed grids (or None)."""
+        names = self._ancillary_names
+        if not names:
+            return None
+        return {"names": names, "l_deg": self.vterm_l_deg, "z_kpc": self.rho_z_kpc}
+
+    @property
+    def ancillary_observable_keys(self) -> list[str]:
+        """Dataset keys the requested ancillary observables are stored under (``vterm``->``vterm_kms``,
+        ``sigma_z``->``sigma_z``, ``rho_z``->``rho_z``). Empty when none requested. Used by the
+        adapter/model presets and PPC to discover the extra modalities without hardcoding names."""
+        key_of = {"vterm": "vterm_kms", "sigma_z": "sigma_z", "rho_z": "rho_z"}
+        return [key_of[n] for n in self._ancillary_names]
 
     @staticmethod
     def _as_dict(node) -> dict:
@@ -517,8 +683,9 @@ class AgamaStreamSimulator(BaseSimulator):
         ]
         n_jobs = min(self._n_workers, len(rows))
         chunks = [rows[i::n_jobs] for i in range(n_jobs)]
+        pot_cfg = self._pot_cfg
         res = Parallel(n_jobs=n_jobs)(
-            delayed(_vcirc_accept_worker)(c, obs_r, bands) for c in chunks
+            delayed(_vcirc_accept_worker)(c, obs_r, bands, pot_cfg) for c in chunks
         )
         mask = np.zeros(n, dtype=bool)
         for i, r in enumerate(res):
@@ -569,6 +736,8 @@ class AgamaStreamSimulator(BaseSimulator):
         ]
         seeds = rng.integers(0, 2**31 - 1, size=n)
         spray_method = str(self.params.get("spray_method", "fardal"))
+        pot_cfg = self._pot_cfg
+        ancillary = self._ancillary_spec
 
         # batch_size=1: forward-model rows have highly variable cost (restricted N-body rows,
         # especially the long t_end streams, run far longer than spray rows). joblib's default
@@ -578,18 +747,29 @@ class AgamaStreamSimulator(BaseSimulator):
         # multi-second row.
         results = Parallel(n_jobs=self._n_workers, batch_size=1)(
             delayed(_simulate_one)(
-                row, self._n_particles, self.obs_r_kpc, int(seed), spray_method
+                row, self._n_particles, self.obs_r_kpc, int(seed), spray_method, pot_cfg, ancillary
             )
             for row, seed in zip(rows, seeds)
         )
         xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
         vcirc = np.stack([r[1] for r in results], axis=0)[..., None]  # (n, n_radii, 1)
 
-        return {
+        out = {
             "sim_data_carthesian": xv,
             "sim_data_projected": sky_projection(xv),
             "vcirc_kms": vcirc,
         }
+        # Ibata ancillary observables (only present when requested): vterm_kms (n, n_l, 1),
+        # sigma_z (n, 1), rho_z (n, n_z, 1). Each is a deterministic function of the shared
+        # potential; the noisy "observed" counterparts are added later by the augmentation chain.
+        anc_list = [r[2] for r in results]
+        if ancillary:
+            for key in ("vterm_kms", "rho_z"):
+                if key in anc_list[0]:
+                    out[key] = np.stack([a[key] for a in anc_list], axis=0)[..., None]
+            if "sigma_z" in anc_list[0]:
+                out["sigma_z"] = np.stack([a["sigma_z"] for a in anc_list], axis=0)  # (n, 1)
+        return out
 
     def sample_compositional(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
         """One shared global draw per dataset, one stream realization per target stream.
@@ -628,4 +808,10 @@ class AgamaStreamSimulator(BaseSimulator):
         )
         # Identical for the m streams of a dataset (shared potential): keep one per dataset.
         out["vcirc_kms"] = sims["vcirc_kms"].reshape(n, m, -1, 1)[:, 0]
+        # Ibata ancillary observables also depend only on the shared potential -> one per dataset.
+        for key in ("vterm_kms", "rho_z"):  # (n*m, bins, 1) -> (n, bins, 1)
+            if key in sims:
+                out[key] = sims[key].reshape(n, m, -1, 1)[:, 0]
+        if "sigma_z" in sims:  # (n*m, 1) -> (n, 1)
+            out["sigma_z"] = sims["sigma_z"].reshape(n, m, 1)[:, 0]
         return out

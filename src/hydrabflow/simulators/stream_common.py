@@ -64,6 +64,82 @@ _HUANG = np.array([
 HUANG_R_KPC, HUANG_VC_KMS, HUANG_SIGMA_VC = _HUANG.T
 
 
+# --------------------------------------------------------------------------------------------- #
+# Ibata et al. (2023, arXiv:2311.17202) ancillary potential observables.
+#
+# Three deterministic functions of the AGAMA Potential (no stream simulation needed): the HI
+# terminal-velocity curve v_term(l), the local vertical force -> surface density Sigma(z=1.1 kpc),
+# and the vertical stellar-density profile rho(z) at R0. See conf/simulator (Ibata potential) and
+# new_constrains.md. Unit system is agama's (Msun, kpc, km/s); G below must match agama.G (verified
+# to ~1e-10 relative). Fix R0 = 8.178 kpc (GRAVITY 2019), as Ibata does.
+# --------------------------------------------------------------------------------------------- #
+R0_KPC = 8.178                      # Solar galactocentric radius, fixed (GRAVITY 2019)
+G_KPC_KMS2_MSUN = 4.300917270e-6    # Newton's G in (kpc, km/s, Msun); == agama.G
+
+# Fixed grids the ancillary observables are evaluated on (single source of truth; NOT stored in
+# the npz — only the per-row observable VALUES are, exactly as for the vcirc_kms rotation curve).
+# Terminal velocity: the first-quadrant inner-Galaxy longitudes of the OBSERVED curve
+# (McClure-Griffiths & Dickey 2016, l = 31..67 deg in 2 deg bins; == assets/terminal_velocity.csv
+# `l_deg`), so the model curve aligns bin-for-bin with the data at real-data inference time. All
+# satisfy |sin l| > 0.5 (tangent-point method; also avoids the bar). The 4th-quadrant curve
+# (McClure-Griffiths & Dickey 2007) is not on VizieR; add it here + to the CSV if obtained.
+VTERM_L_DEG = np.arange(31.0, 67.0 + 1e-9, 2.0)
+# Vertical stellar-density profile: z = 0.1 -> 5 kpc (shape only; normalization marginalized).
+RHO_Z_KPC = np.linspace(0.1, 5.0, 20)
+
+# Reported observational uncertainties feeding the resampling of the SIMULATED observables
+# (the observed central values enter only at real-data inference time).
+VTERM_SIGMA_KMS = 6.2               # per (2-deg-averaged) terminal-velocity point (Ibata 2023)
+SIGMA_Z_Z_KPC = 1.1                 # height of the surface-density datum
+SIGMA_Z_OBS_MSUN_PC2 = 71.0         # Sigma(1.1 kpc) observed (Kuijken & Gilmore 1991)
+SIGMA_Z_ERR_MSUN_PC2 = 6.0         # its 1-sigma
+RHO_Z_REL_ERR = 0.1                 # assumed per-point relative uncertainty for rho(z) resampling
+
+
+def vcirc_from_potential(pot, R) -> np.ndarray:
+    """Circular velocity vc(R) [km/s] in the midplane; vc^2 = R dPhi/dR = -R F_R. NaN where <0."""
+    R = np.atleast_1d(np.asarray(R, float))
+    xyz = np.column_stack([R, np.zeros_like(R), np.zeros_like(R)])
+    fR = pot.force(xyz)[:, 0]
+    v2 = -R * fR
+    return np.sqrt(np.where(v2 > 0, v2, np.nan))
+
+
+def terminal_velocity(pot, l_deg=VTERM_L_DEG, R0: float = R0_KPC) -> np.ndarray:
+    """HI terminal velocity v_term(l) (Ibata 2023, Eq. 13), tangent-point method.
+
+    ``v_term(l) = sgn(sin l) * vc(R0 |sin l|) - vc(R0) * sin l``. Keep to |sin l| > 0.5 (the
+    default ``VTERM_L_DEG`` grid already enforces this). Signed (not log) — terminal velocities
+    change sign between quadrants.
+    """
+    l = np.radians(np.atleast_1d(np.asarray(l_deg, float)))
+    sinl = np.sin(l)
+    Rt = R0 * np.abs(sinl)
+    return np.sign(sinl) * vcirc_from_potential(pot, Rt) - vcirc_from_potential(pot, R0)[0] * sinl
+
+
+def surface_density(pot, z: float = SIGMA_Z_Z_KPC, R: float = R0_KPC) -> float:
+    """Local surface density Sigma(z) [Msun/pc^2] from the vertical force (Kuijken & Gilmore 1991).
+
+    Plane-parallel slab: ``Sigma(z) = |K_z| / (2 pi G)`` with ``K_z = -dPhi/dz = F_z``. Returns a
+    scalar; matches Ibata's Sigma(1.1 kpc) = 71 +/- 6 Msun/pc^2 datum.
+    """
+    Fz = float(np.asarray(pot.force([R, 0.0, z])).reshape(-1)[2])
+    Kz = -Fz
+    return Kz / (2.0 * np.pi * G_KPC_KMS2_MSUN) / 1.0e6
+
+
+def vertical_density_profile(disk_pot, z_vals=RHO_Z_KPC, R: float = R0_KPC) -> np.ndarray:
+    """Vertical stellar-density profile rho(z) [Msun/kpc^3] at R (Ibata et al. 2017b).
+
+    SHAPE only (free multiplicative normalization). ``disk_pot`` must be the STELLAR-disk
+    component(s) alone (thin + thick), so gas/halo do not contaminate the stellar profile.
+    """
+    z_vals = np.atleast_1d(np.asarray(z_vals, float))
+    xyz = np.column_stack([np.full_like(z_vals, R), np.zeros_like(z_vals), z_vals])
+    return np.asarray(disk_pot.density(xyz), dtype=float)
+
+
 def extended_rotation_curve(split_kpc: float | None = None):
     """Union rotation-curve grid: Zhou (2023) up to ``split_kpc``, Huang (2016) beyond it.
 

@@ -90,20 +90,18 @@ def binned_median(x, y, edges):
     )
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "--real",
-        default="assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz",
-        help="real observed-streams npz (defines the frames + real tracks)",
-    )
-    ap.add_argument("--sim", required=True, help="grouped multistream npz (N,S,P,6)")
-    ap.add_argument("--out", default="ppc_summary_statistics.png")
-    ap.add_argument("--n-sim", type=int, default=40)
-    ap.add_argument("--k-track", type=int, default=10)
-    ap.add_argument("--k-vlos", type=int, default=3)
-    ap.add_argument("--seed", type=int, default=0)
-    args = ap.parse_args()
+def render(real, sim, out="ppc_summary_statistics.png", n_sim=40, k_track=10, k_vlos=3, seed=0):
+    """Overlay simulated per-stream summary tracks on the real Gaia streams and save to ``out``.
+
+    ``real`` = observed-streams npz (defines the great-circle frames + real tracks); ``sim`` =
+    grouped multistream npz (``sim_data_projected`` (N,S,P,6)). Reused by :func:`main` and by
+    ``scripts/ppc_ancillary_observables.py`` so the stream-dependent summary statistics are part of
+    the same prior-predictive check as the ancillary potential observables.
+    """
+    class args:  # keep the original body's `args.*` references intact
+        pass
+    args.real, args.sim, args.out = real, sim, out
+    args.n_sim, args.k_track, args.k_vlos, args.seed = n_sim, k_track, k_vlos, seed
 
     rng = np.random.default_rng(args.seed)
     d = np.load(args.real)
@@ -165,6 +163,24 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     plt.savefig(args.out, dpi=110)
     print("saved", args.out)
+    return args.out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--real",
+        default="assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz",
+        help="real observed-streams npz (defines the frames + real tracks)",
+    )
+    ap.add_argument("--sim", required=True, help="grouped multistream npz (N,S,P,6)")
+    ap.add_argument("--out", default="ppc_summary_statistics.png")
+    ap.add_argument("--n-sim", type=int, default=40)
+    ap.add_argument("--k-track", type=int, default=10)
+    ap.add_argument("--k-vlos", type=int, default=3)
+    ap.add_argument("--seed", type=int, default=0)
+    args = ap.parse_args()
+    render(args.real, args.sim, args.out, args.n_sim, args.k_track, args.k_vlos, args.seed)
 
 
 if __name__ == "__main__":
