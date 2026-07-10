@@ -63,6 +63,17 @@ def _sim_key(params) -> str:
     return str(params.get("observable", _SIM_KEY))
 
 
+def _vlos_impute(params) -> str:
+    """Fill mode for stars without a measured v_los: ``mean`` (per-stream mean/std of the
+    measured members — the historical behavior, and the fill baked into the real Gaia npz) or
+    ``zero`` (constant 0.0 for value and sigma; the indicator channel carries the missingness,
+    per Wang et al. 2024's most robust encoding)."""
+    mode = str(params.get("vlos_impute", "mean"))
+    if mode not in ("mean", "zero"):
+        raise ValueError(f"params.vlos_impute must be 'mean' or 'zero', got {mode!r}")
+    return mode
+
+
 def _jax():
     import jax
     import jax.numpy as jnp
@@ -441,6 +452,14 @@ def _apply_obs_error(params, rng):
     return aug
 
 
+def _measured_vlos_stats(jnp, vlos, vlos_mask):
+    """Per-row mean/std of v_los over the measured (mask=1) members."""
+    kept = jnp.clip(vlos_mask.sum(axis=1), min=1)
+    mean = jnp.where(vlos_mask, vlos, 0.0).sum(axis=1) / kept
+    std = jnp.sqrt(jnp.where(vlos_mask, (vlos - mean[:, None]) ** 2, 0.0).sum(axis=1) / kept)
+    return mean, std
+
+
 @register_augmentation("mask_vlos")
 def _mask_vlos(params, rng):
     res = _resources(params)
@@ -448,20 +467,23 @@ def _mask_vlos(params, rng):
     cell = _key_cell(rng)
     jax, jnp = _jax()
     min_star_with_vlos = res.jax_lookups()["min_star_with_vlos"]
+    impute = _vlos_impute(params)
 
     @jax.jit
     def _run(sim, sigma, mask, j, subkey):
         vlos_mask = _keep_first_k_random_jax(mask, min_star_with_vlos[j], subkey)
 
         vlos = sim[:, :, -1]
-        kept = jnp.clip(vlos_mask.sum(axis=1), min=1)
-        mean = jnp.where(vlos_mask, vlos, 0.0).sum(axis=1) / kept
-        std = jnp.sqrt(
-            jnp.where(vlos_mask, (vlos - mean[:, None]) ** 2, 0.0).sum(axis=1) / kept
-        )
+        if impute == "zero":
+            fill_value = jnp.zeros(vlos.shape[0], dtype=vlos.dtype)
+            fill_sigma = fill_value
+        else:
+            fill_value, fill_sigma = _measured_vlos_stats(jnp, vlos, vlos_mask)
 
-        sim = sim.at[:, :, -1].set(jnp.where(vlos_mask, vlos, mean[:, None]))
-        sigma = sigma.at[:, :, -1].set(jnp.where(vlos_mask, sigma[:, :, -1], std[:, None]))
+        sim = sim.at[:, :, -1].set(jnp.where(vlos_mask, vlos, fill_value[:, None]))
+        sigma = sigma.at[:, :, -1].set(
+            jnp.where(vlos_mask, sigma[:, :, -1], fill_sigma[:, None])
+        )
         return sim, sigma, vlos_mask[:, None, :]
 
     def aug(batch):
@@ -493,6 +515,42 @@ def _override_vlos_error_with_real(params, rng):
         vlos_error = jnp.asarray(batch["vlos_error"])[..., 0]
         vlos_mask = jnp.asarray(batch["vlos_mask"])[..., 0]
         batch["sigma_errors"] = _run(sigma, vlos_error, vlos_mask)
+        return batch
+
+    return aug
+
+
+@register_augmentation("impute_vlos")
+def _impute_vlos(params, rng):
+    """Re-apply the missing-v_los fill from the batch's existing ``vlos_mask`` (real data
+    carries its own mask, and the shipped npz is pre-filled with the measured-star mean).
+    ``vlos_impute: mean`` recomputes that mean — a value-preserving no-op on the shipped real
+    data, sigma untouched — while ``zero`` writes 0.0 into value and sigma so real inputs match
+    a model trained with ``mask_vlos`` in zero mode."""
+    key = _sim_key(params)
+    jax, jnp = _jax()
+    impute = _vlos_impute(params)
+
+    @jax.jit
+    def _run(sim, sigma, vlos_mask):
+        vlos = sim[:, :, -1]
+        if impute == "zero":
+            fill = jnp.zeros(vlos.shape[0], dtype=vlos.dtype)
+            sigma = sigma.at[:, :, -1].set(
+                jnp.where(vlos_mask, sigma[:, :, -1], fill[:, None])
+            )
+        else:
+            fill, _ = _measured_vlos_stats(jnp, vlos, vlos_mask)
+        sim = sim.at[:, :, -1].set(jnp.where(vlos_mask, vlos, fill[:, None]))
+        return sim, sigma
+
+    def aug(batch):
+        sim = jnp.asarray(batch[key])
+        sigma = jnp.asarray(batch["sigma_errors"])
+        vlos_mask = jnp.asarray(batch["vlos_mask"])[:, 0, :].astype(bool)
+        sim, sigma = _run(sim, sigma, vlos_mask)
+        batch[key] = sim
+        batch["sigma_errors"] = sigma
         return batch
 
     return aug

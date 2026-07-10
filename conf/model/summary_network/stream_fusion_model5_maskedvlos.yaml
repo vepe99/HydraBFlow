@@ -1,0 +1,37 @@
+# model_5 fusion architecture with the stream backbone swapped for the missingness-aware
+# masked_set_transformer (src/hydrabflow/networks/masked_set_transformer.py): v_los value/sigma
+# channels are hard-zeroed for stars without a measurement and a learned missing-v_los embedding
+# is added instead (BERT-style mask token) — the network no longer sees imputed velocities.
+# Hyperparameters identical to stream_fusion_model5 for a clean ablation. The channel indices
+# follow the stream_global augmentation layout: 0-5 obs values (v_los=5), 6-11 sigmas
+# (v_los sigma=11), 12 magnitude, 13 vlos mask, 14 stream index.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: sim_data_projected
+  backbones:
+    sim_data_projected:
+      type: masked_set_transformer
+      summary_dim: 36
+      num_blocks: 4
+      num_heads: 3
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 14
+        value_channels: [5]
+        sigma_channels: [11]
+        mask_channel: 13
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+  head:
+    width: 48
+    depth: 4
+    output_dim: 59

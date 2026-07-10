@@ -7,6 +7,7 @@ defaults:
 
 steps:
   - sample_obs_error
+  - impute_vlos
   - log10_vcirc
   - concatenate_sigma_errors
   - concatenate_magnitudes

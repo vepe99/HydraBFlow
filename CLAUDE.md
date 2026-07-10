@@ -342,8 +342,73 @@ Every run saves:
   own IC; the rejection prior + extended grid + free β are class-level and already config-driven on
   the base `stream_agama`, which `stream_agama_rnbody` subclasses). Dataset creation to run on the
   GPU-less cluster (rnbody is CPU/joblib, ~10-25 s/row × rejection screening) then scp'd back.
-- **TODO — native missing-vlos handling in the SetTransformer (designed 2026-07-08, not
-  implemented)**: replace the `mask_vlos` mean imputation with a missingness-aware summary network.
+- Session 2026-07-09 (missing-vlos handling — implemented + ablation): literature check first
+  (user request): Wang et al. PLOS CompBiol 2024 (missing data in BayesFlow NPE) find constant-fill
+  + binary indicator ("E2") the most robust encoding — our mean-fill was nonstandard (fill = a
+  statistic of the observed subset); Le Morvan et al. 2020 prove constant+mask asymptotically
+  Bayes-optimal (so this is an efficiency fix, not correctness); NAIM 2024 = precedent for the
+  learned missing-embedding design below. Implemented per the 2026-07-08 TODO design:
+  `mask_vlos` gained `params.vlos_impute: mean|zero` (declared in `conf/augmentation/
+  stream_global.yaml` — Hydra struct mode rejects undeclared overrides); new `impute_vlos` step in
+  `stream_real_global` re-applies the fill on real data from its `vlos_mask` (REQUIRED for
+  zero-fill arms: the real npz ships pre-imputed with the per-stream mean — verified exactly equal;
+  mean mode is a value-preserving no-op, so existing real evals unchanged); new
+  `networks/masked_set_transformer.py` (`masked_set_transformer`) = zero vlos value/sigma channels
+  where mask=0 → Dense(embed_dim) → + learned missing-vlos embedding (BERT mask token) → stock
+  bf SetTransformer, attention_mask forwarded — channel zeroing inside the net makes sim/real
+  consistent regardless of upstream fill. Configs `stream_fusion_model5_maskedvlos` (only the
+  stream backbone differs from model_5; channels value=[5], sigma=[11], mask=13 of the 15-ch
+  stream_global layout). 12 tests in `tests/test_masked_vlos.py` (incl. unmeasured-vlos invariance
+  + serialization round-trip). Ablation harness
+  `scripts/training_eval_missing_vlos_ablation.sh` (autocvd GPU pick), smoke-verified end-to-end;
+  full runs launched on the rnbody+Huang 60k set (baseline mean-impute =
+  `outputs/stream_agama_rnbody/stream_fusion_model5_rnbody_huang`, finished 2026-07-09: base RMSE
+  0.540/calib 0.020, comp RMSE 0.511/calib 0.041, real MMD 2.65 p_strat 0.015) vs
+  `outputs/missing_vlosexperiments/{zerofill,maskedvlos}_model5`. **Results** (see
+  `outputs/missing_vlosexperiments/README.md`): sim accuracy indistinguishable (base RMSE
+  0.540/0.536/0.534 for mean/zero/masked); maskedvlos best base calibration (0.015 vs 0.019/0.020)
+  and the only run passing the overfit check (1.08x vs 1.13-1.14x). Real-data **MMD unchanged**
+  (2.65/2.67/2.69, p_strat 0.010-0.015, all members ≳98th pct) ⇒ the residual misspecification is
+  NOT the vlos imputation. Real posteriors shift ~1-2σ between arms (maskedvlos: q_halo 1.39±0.02
+  tightest+highest, gamma 1.03, Sigma_Disk 7.8e8) — within the known cross-model real-data
+  scatter; one seed per arm. **Recommendation: use `model=stream_fusion_model5_maskedvlos` +
+  `augmentation.params.vlos_impute=zero` going forward.** Same day, user-directed: a joint
+  Gaussian-KDE prior score for the vcirc-truncated prior (swap for `prior_score_from_spec` in
+  compositional sampling) was implemented, tested and then **removed — "the kde approximation of
+  the prior does not work well, do not use it"** (user's own check); the analytic spec score
+  stays, per the 2026-07-07 rationale.
+- **TODO — summary-statistics observables (designed 2026-07-10, user-deferred, not implemented)**:
+  replace/augment the star-level stream input with hand-crafted per-stream summary statistics, to
+  make real-data inference robust to the misspecification-driven cross-model divergence (models
+  agree on sim, diverge on real ⇒ learned summaries extrapolate arbitrarily off-manifold; cf. the
+  four-generation comparison of 2026-07-10 where spray_huang 30k — NOT rnbody_huang 60k — is the
+  most real-data-coherent model: per-stream Sigma_Disk spread 17% vs 39-53% elsewhere).
+  **Design**: new augmentation `stream_summary_statistics` inserted after `log10_vcirc` (before
+  the concatenations) reading the 6-channel observable + `vlos_mask` + `attention_mask` + `j`,
+  writing a new batch key `sim_summary` `(n, n_stats)` — per-stream fixed RA-bin (from
+  `observational_window`) weighted stats: count fraction, dec/parallax/pm tracks + dec dispersion
+  (~8 bins), vlos mean/dispersion from MEASURED stars only (~4 coarse bins — natively solves
+  missing-vlos, no imputation), plus scalars (attended fraction, extent, arm asymmetry);
+  optionally linear-density power-spectrum modes (Bovy+2017). Two arms: summaries-only (adapter
+  `summary_variables=[sim_summary, vcirc_kms]`, run vs the maskedvlos/baseline ablation) and
+  hybrid (3-key fusion `[sim_data_projected, sim_summary, vcirc_kms]`). Precedents: Albatross
+  (Alvey+23), Hermans+21; robust-SBI motivation Ward+22/Huang+23. Payoff: per-statistic sim-vs-real
+  z-scores localize WHICH physics is off.
+  **Seams verified 2026-07-10** (all file:line refs checked): per-batch augmentations run BEFORE
+  the adapter (bf `offline_dataset.py:134`) so `sim_summary` needn't exist in stored npz;
+  `select_adapter_keys`/`condition_keys`/`_prepare_real_members` all tolerate the later-created
+  key; bf `Standardize` handles grouped dicts per-leaf; fusion `mask_backbone` optional and
+  2-D backbone inputs fine (outputs all rank-2). **Two real blockers**: (1) `drop_nan` preprocessing
+  uses `keys: ${adapter.summary_variables}` with a bare `data[key]` → KeyError before augmentation;
+  pin its keys to npz-resident observables or make the step skip missing keys. (2) no registered
+  2-D summary backbone — add `@register_summary_network("mlp")` = `bf.networks.MLP(widths=[mlp_width]*mlp_depth)`
+  + `Dense(summary_dim)` (schema already has mlp_depth/mlp_width). New configs: adapter presets
+  with explicit `summary_variables` (survives `fill_adapter_from_simulator`), augmentation presets
+  `stream_global_sumstats`/`stream_real_global_sumstats`(+hybrid variants keeping concatenations),
+  model yamls `stream_fusion_model5_sumstats`/`_hybrid` (mask_backbone null for summaries-only).
+- **Native missing-vlos handling in the SetTransformer (designed 2026-07-08, IMPLEMENTED
+  2026-07-09 — see that session entry; original design notes kept below)**: replace the
+  `mask_vlos` mean imputation with a missingness-aware summary network.
   Current state: `mask_vlos` (`augmentation/streams.py:445`) overwrites unmeasured stars' vlos with
   the per-stream mean of the kept values and their sigma with the sample std, then
   `concatenate_vlos_mask` (`streams.py:629`) appends the binary indicator channel — so the

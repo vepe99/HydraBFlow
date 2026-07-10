@@ -29,6 +29,10 @@ params:
   error_table: gaia_DR3_erorr_6D.txt
   max_particles: 300
   vcirc_r_min: 5.5
+  # Fill for stars without a measured v_los: mean (per-stream mean/std of the measured members,
+  # historical behavior) or zero (constant 0.0 for value+sigma; pair with the
+  # masked_set_transformer backbone or rely on the indicator channel).
+  vlos_impute: mean
 
   target_streams: ${simulator.params.target_streams}
 

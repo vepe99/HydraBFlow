@@ -1,0 +1,15 @@
+# model_5 (fusion + diffusion) with the missingness-aware masked_set_transformer stream backbone.
+# Same inference network and hyperparameters as stream_fusion_model5 — the only change is how
+# stars without a measured v_los enter the summary network. Train with
+# augmentation.params.vlos_impute=zero so the zeroed channels never leak simulated v_los.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_model5_maskedvlos
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_model5_maskedvlos
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20
