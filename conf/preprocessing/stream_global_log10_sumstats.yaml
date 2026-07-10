@@ -1,0 +1,25 @@
+# As stream_global_log10, but with drop_nan keys PINNED to the npz-resident observables instead of
+# ${adapter.summary_variables}. The summary-statistics runs set adapter.summary_variables to
+# include `sim_summary`, which is created per-batch by the `stream_summary_statistics` augmentation
+# and does NOT exist in the stored npz — so ${adapter.summary_variables} would KeyError here.
+# Pinning to [sim_data_projected, vcirc_kms] also guarantees rnbody NaN rows are dropped
+# (independent of which observables the network is fed), matching the baseline drop.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk

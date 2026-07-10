@@ -45,8 +45,9 @@ def run_training(cfg):
     train_data = select_adapter_keys(train_data, cfg)
     val_data = select_adapter_keys(val_data, cfg) if val_data is not None else None
 
-    # 3. Build the BayesFlow workflow (adapter + summary net + inference net).
-    workflow = build_workflow(cfg)
+    # 3. Build the BayesFlow workflow (adapter + summary net + inference net). Passing run_dir
+    #    turns on best-val-loss checkpointing (approximator_best.weights.h5), restored in step 6.
+    workflow = build_workflow(cfg, run_dir=run_dir)
 
     # 4. Per-batch augmentations (stochastic, re-drawn each epoch). They get their own generator
     #    seeded from cfg.seed so augmentation randomness is reproducible yet independent of the
@@ -63,7 +64,11 @@ def run_training(cfg):
             val_data = aug(val_data)
         val_data = {k: np.asarray(v) for k, v in val_data.items()}
 
-    # 5. Offline training on the in-memory dataset.
+    # 5. Offline training on the in-memory dataset. TerminateOnNaN stops immediately on a NaN loss
+    #    (a diverged run has nothing left to learn); combined with best-weights checkpointing
+    #    (step 3), a late divergence costs no compute and never overwrites a converged model.
+    import keras
+
     history = workflow.fit_offline(
         train_data,
         validation_data=val_data,
@@ -71,9 +76,12 @@ def run_training(cfg):
         batch_size=int(cfg.training.batch_size),
         augmentations=augmentations if augmentations else None,
         verbose=int(cfg.training.verbose),
+        callbacks=[keras.callbacks.TerminateOnNaN()],
     )
 
-    # 6. Persist the trained approximator and a loss curve.
+    # 6. Restore the best-val-loss weights saved during training (immune to a late NaN spike),
+    #    then persist the approximator and a loss curve.
+    _restore_best_weights(workflow, run_dir)
     save_approximator(workflow, run_dir)
     _save_loss_plot(history, run_dir)
 
@@ -84,6 +92,24 @@ def run_training(cfg):
 
     log.info("Training complete. Artifacts in %s", run_dir)
     return workflow, history
+
+
+def _restore_best_weights(workflow, run_dir: str) -> None:
+    """Load the best-val-loss weights BayesFlow checkpointed during training back into the
+    approximator, so the persisted model is the best one seen — not the last epoch (which may be
+    worse, or NaN after a late divergence). Best-effort: a missing checkpoint (e.g. checkpointing
+    disabled, or training never improved) leaves the in-memory weights untouched."""
+    from hydrabflow.pipeline.workflow import BEST_WEIGHTS_NAME
+
+    ckpt = os.path.join(run_dir, BEST_WEIGHTS_NAME + ".weights.h5")
+    if not os.path.exists(ckpt):
+        log.info("No best-weights checkpoint at %s; keeping final-epoch weights.", ckpt)
+        return
+    try:
+        workflow.approximator.load_weights(ckpt)
+        log.info("Restored best-val-loss weights from %s", ckpt)
+    except Exception as exc:  # never fail a run over checkpoint restore
+        log.warning("Could not restore best weights from %s: %s", ckpt, exc)
 
 
 def _save_history_and_convergence(history, run_dir: str) -> None:

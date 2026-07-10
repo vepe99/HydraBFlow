@@ -1,0 +1,34 @@
+# stream_global + hand-crafted per-stream summary statistics. `stream_summary_statistics` runs
+# AFTER log10_vcirc (observable still has its 6 raw channels) and BEFORE the concatenations,
+# writing batch["sim_summary"]. The particle concatenations still run (harmless when the raw
+# star cloud is dropped by the summaries-only adapter; needed by the hybrid adapter).
+# One augmentation preset serves BOTH the hybrid and summaries-only variants — they differ only
+# in the adapter (which observables reach the network) and the model (fusion backbones).
+defaults:
+  - stream_global
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_summary_statistics
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  # Bin counts derived from the real Gaia member/vlos counts (Pal5 129/69, NGC3201 195/37,
+  # M68 297/29 → ~12 stars/bin): tracks support ~10 bins, v_los only ~3 (limited by M68).
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  # Great-circle frame + φ1 quantile edges are fitted once from this real observed-streams npz
+  # (default resolves under resources_dir); same frame used for sim and real → comparable.
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

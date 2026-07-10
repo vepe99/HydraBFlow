@@ -1,0 +1,28 @@
+# Summaries-only fusion: a default-sized MLP (hand-crafted summary-statistics vector) + model_5
+# TimeSeriesTransformer (rotation curve). No set (particle) backbone, so mask_backbone is null —
+# the attention mask is simply not consumed (the summary vector already reflects the window/mask).
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: null
+  backbones:
+    sim_summary:
+      type: mlp
+      summary_dim: 32
+      mlp_depth: 2
+      mlp_width: 128
+      dropout: 0.05
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+  head:
+    width: 48
+    depth: 4
+    output_dim: 59

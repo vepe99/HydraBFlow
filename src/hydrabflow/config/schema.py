@@ -122,6 +122,10 @@ class TrainingConfig:
         default_factory=lambda: ["inference_variables", "summary_variables"]
     )
     verbose: int = 2
+    # Save the best-val-loss network weights during training (BayesFlow ModelCheckpoint) and restore
+    # them before persisting the final approximator, so a late-training divergence (e.g. a NaN loss
+    # spike) can never destroy a converged model. Paired with a TerminateOnNaN callback in train.py.
+    save_best_weights: bool = True
 
 
 # --------------------------------------------------------------------------------------------- #

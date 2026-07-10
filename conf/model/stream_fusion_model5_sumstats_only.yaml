@@ -1,0 +1,13 @@
+# Summaries-only variant of model_5: summary-statistics vector + rotation curve, fused, with the
+# model_5 diffusion inference network. No raw particles reach the network.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_model5_sumstats_only
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_model5_sumstats_only
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

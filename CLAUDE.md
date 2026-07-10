@@ -490,6 +490,46 @@ Every run saves:
     correct estimator for this rejection-truncated, near-degenerate prior**; jax full-cov is kept
     only as a documented, selectable alternative. Runs preserved side by side: `kdeprior_fixed/`
     (diagonal) vs `kdeprior_jax/`.
+- Session 2026-07-10 (summary-statistics observables — IMPLEMENTED + run; was the long-standing
+  TODO): hand-crafted per-stream summary statistics in a data-driven stream frame, to test whether
+  physically-motivated summaries stabilise/change the real-data posterior vs the learned particle
+  embedding. **New augmentation** `stream_summary_statistics` (`augmentation/stream_summary.py`):
+  fits a great-circle frame per stream from the REAL Gaia members (pole = smallest-eigval eigvec of
+  Σ n nᵀ), projects positions + proper motions into (φ1,φ2,μ_φ1,μ_φ2) in JAX per batch (astropy/gala
+  too slow per batch; gala NOT needed/installed), and writes `sim_summary` (n,91) = per-φ1-bin
+  **median+std** of {φ2,parallax,μ_φ1,μ_φ2} (10 track bins) + v_los from MEASURED stars only (3 bins,
+  native missing-vlos) + scalars (measured frac, attended frac, φ1 extent, arm asymmetry) + stream
+  index `j` (user-requested: the summary MLP must be stream-aware). Bin counts derived from the real
+  member/vlos counts (Pal5 129/69, NGC3201 195/37, M68 297/29 → K_track=10, K_vlos=3), NOT guessed;
+  validated in a prior-predictive check (`scripts/ppc_summary_statistics.py`, standalone numpy) that
+  the sim tracks bracket the real Gaia data. **Infra**: `adapter_keys()` now includes `adapter.drop`
+  (so summaries-only retains the raw star cloud as the augmentation input but drops it before the
+  net); new `mlp` summary backbone (`networks/factory.py`). **Always-on checkpointing** (user
+  request, also fixes the NaN below): `build_workflow(cfg, run_dir)` enables BayesFlow's built-in
+  best-val-loss `ModelCheckpoint` (`approximator_best.weights.h5`, `training.save_best_weights`
+  default True) + train.py adds `TerminateOnNaN` and restores best weights before saving — a late
+  divergence can no longer destroy a run. Configs: `stream_global_sumstats`/`stream_real_global_sumstats`
+  augmentation, `stream_sumstats_{hybrid,only}` adapter, `stream_fusion_model5_sumstats_{hybrid,only}`
+  model, `stream_global_log10_sumstats` preprocessing (pins `drop_nan.keys` to npz observables since
+  `sim_summary` is batch-only). Runner `scripts/training_eval_summary_stats.sh` (2 arms, 2 GPUs via
+  autocvd). Tests `tests/test_stream_summary.py` (8) + checkpoint-wiring test. **Results**
+  (`outputs/summary_stats_experiments/README.md`; A=particles baseline, B=hybrid, C=summaries-only):
+  sim base RMSE 0.540/0.537/0.611, comp 0.511/0.507/0.570 — **hybrid ≈ baseline** (summaries add
+  nothing on in-distribution sim), summaries-only only ~13% worse (a tiny MLP on 91 numbers recovers
+  most of the particle SetTransformer's info). **Real-data key finding: the input representation
+  drives halo flattening** — particles (A,B) rail to prolate q_halo≈1.26–1.33, summaries-only gives
+  oblate **q_halo≈0.76 [0.69,0.82]**; disk params agree; hybrid tracks the particle q (raw particles
+  dominate halo-shape when both present). MMD (each in its own summary space): summaries-only makes
+  Pal5 look typical (69th pct vs 100th for particles), NGC3201 stays 100th everywhere. **NaN gotcha
+  (documented)**: at 1000 epochs the summaries-only diffusion net deterministically NaN'd at epoch
+  761 (heavy-tailed per-bin std features → large standardized value → inf loss → NaN grad; bf's
+  default clipnorm=1.5 can't catch an inf-loss NaN); converged by ~epoch 300, so C was run at 300
+  epochs. The always-on checkpointing above is the durable fix. Runs:
+  `outputs/summary_stats_experiments/{hybrid,sumonly}_model5/`. **TODO not yet done**: the hybrid
+  3-key variant keeps particles in ICRS (per user) — a stream-frame-particles arm and the
+  summaries-only-without-rotation-curve ablation are natural follow-ups; sumonly used the
+  pre-checkpointing train.py (saved epoch-300 weights, mild 1.20x overfit) so a re-run with
+  best-weights restore would be marginally cleaner.
 
 ## graphify
 

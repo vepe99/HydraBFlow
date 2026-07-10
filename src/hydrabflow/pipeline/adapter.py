@@ -130,11 +130,18 @@ def fill_stream_grid_from_simulator(cfg) -> None:
 
 
 def adapter_keys(cfg) -> List[str]:
-    """All dataset keys the adapter (``cfg.adapter``) consumes, in a stable order."""
+    """All dataset keys the adapter (``cfg.adapter``) consumes, in a stable order.
+
+    ``drop`` is included so keys the adapter drops still survive :func:`select_adapter_keys`: a
+    dropped key may be a *per-batch augmentation input* (e.g. the raw ``sim_data_projected`` star
+    cloud a summary-statistics augmentation reads) that the network must NOT see — it has to reach
+    the augmentation chain, then the adapter's ``.drop()`` removes it before the approximator.
+    """
     keys = (
         _as_list(cfg.adapter.inference_variables)
         + _as_list(cfg.adapter.summary_variables)
         + _as_list(cfg.adapter.inference_conditions)
+        + _as_list(cfg.adapter.drop)
     )
     mask_key = getattr(cfg.adapter, "attention_mask_key", None)
     if mask_key:

@@ -1,0 +1,15 @@
+# Hybrid: the summary network sees the raw star cloud (sim_data_projected), the hand-crafted
+# summary-statistics vector (sim_summary), and the rotation curve (vcirc_kms) — one fusion backbone
+# each. summary_variables is set explicitly (so it survives fill_adapter_from_simulator);
+# inference_variables / inference_conditions stay empty and are still derived from the simulator.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_data_projected
+  - sim_summary
+  - vcirc_kms
+inference_conditions: []
+drop: []
+attention_mask_key: attention_mask

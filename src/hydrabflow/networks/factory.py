@@ -121,6 +121,25 @@ def _deep_set(cfg) -> Any:
     )
 
 
+@register_summary_network("mlp")
+def _mlp(cfg) -> Any:
+    """A plain MLP summary backbone for *already-summarised* (rank-2, ``(batch, features)``)
+    inputs — e.g. a hand-crafted per-stream summary-statistics vector fed to a fusion backbone.
+    Not a permutation-invariant set network; use ``set_transformer``/``deep_set`` for point clouds.
+    Returns ``(batch, summary_dim)``. In a :class:`MaskedFusionNetwork` this is routed through the
+    non-``SummaryNetwork`` branch of ``compute_metrics`` (it carries no own loss)."""
+    import bayesflow as bf
+    import keras
+
+    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
+    return keras.Sequential(
+        [
+            bf.networks.MLP(widths=widths, dropout=float(cfg.dropout)),
+            keras.layers.Dense(units=int(cfg.summary_dim)),
+        ]
+    )
+
+
 @register_inference_network("flow_matching")
 def _flow_matching(cfg) -> Any:
     import bayesflow as bf

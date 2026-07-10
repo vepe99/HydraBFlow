@@ -1,0 +1,37 @@
+# Hybrid fusion: model_5 SetTransformer (raw particles, observed/ICRS frame) + a default-sized MLP
+# (hand-crafted summary-statistics vector) + model_5 TimeSeriesTransformer (rotation curve).
+# Particle + rotation-curve backbones keep the tuned model_5 sizes so the only change vs baseline A
+# is the added summary backbone; the summary MLP uses plain BayesFlow-default sizes.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: sim_data_projected      # attention mask routed only to the set (particle) backbone
+  backbones:
+    sim_data_projected:
+      type: set_transformer
+      summary_dim: 36
+      num_blocks: 4
+      num_heads: 3
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 14
+    sim_summary:
+      type: mlp
+      summary_dim: 32
+      mlp_depth: 2
+      mlp_width: 128
+      dropout: 0.05
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+  head:
+    width: 48
+    depth: 4
+    output_dim: 59

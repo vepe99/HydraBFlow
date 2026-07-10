@@ -1,0 +1,16 @@
+# Summaries-only: the network sees ONLY the summary-statistics vector (sim_summary) and the
+# rotation curve (vcirc_kms). The raw star cloud (sim_data_projected) is still needed as the INPUT
+# to the stream_summary_statistics augmentation, so it is listed in `drop`: adapter_keys() includes
+# drop, so select_adapter_keys retains it (augmentation reads it), then build_adapter's .drop()
+# removes it before the approximator. summary_variables is explicit; the rest derive from the sim.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_summary
+  - vcirc_kms
+inference_conditions: []
+drop:
+  - sim_data_projected
+attention_mask_key: attention_mask

@@ -1,0 +1,21 @@
+# Real-data augmentation chain + the same summary-statistics step, inserted after log10_vcirc.
+# Inherits params (incl. summary_track_bins / summary_vlos_bins / real_streams_file) from
+# stream_global_sumstats via stream_real_global's own inheritance chain; the frame is the SAME one
+# fitted from the real members, so sim (training) and real summaries are directly comparable.
+defaults:
+  - stream_real_global
+
+steps:
+  - sample_obs_error
+  - impute_vlos
+  - log10_vcirc
+  - stream_summary_statistics
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
