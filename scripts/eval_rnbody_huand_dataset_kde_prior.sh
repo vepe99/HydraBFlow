@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
-# Train model_5 (fusion) on the restricted-N-body + free-beta + Zhou∪Huang-rejection 60k set,
-# then evaluate on the 333-group simulated multistream test set and on the real Gaia streams.
+# Same as training_eval_rnbody_huand_dataset.sh (train model_5 fusion on the restricted-N-body +
+# free-beta + Zhou∪Huang-rejection 60k set, then eval on the 333-group sim test set + real Gaia
+# streams), but the compositional prior score used by evaluate/evaluate_real is the KDE fit on the
+# rejection-sampled training draws (eval.prior_score=kde) instead of the analytic simulator spec.
+# Use this whenever the training prior was truncated by vcirc_rejection: the spec score is blind
+# to the truncation boundary, the KDE score isn't (see tests/test_prior_score_kde.py).
+#
 # Autonomous: the three stages run back-to-back and every eval automatically points at the
 # training run dir produced by stage 1 (no hand-editing of <TRAIN_RUN_DIR> between runs).
 #
 # CPU only (no GPU on this machine): JAX_PLATFORMS=cpu. The Gaia augmentation resources come
 # from the git-tracked assets/gaia/ copy (the data/ symlink may not be mounted here).
 #
-# Run it (from anywhere):   bash scripts/training_eval_rnbody_huand_dataset.sh
-# Override any knob:        SEED=7 N_EPOCHS=300 bash scripts/training_eval_rnbody_huand_dataset.sh
+# Run it (from anywhere):   bash scripts/training_eval_rnbody_huand_dataset_kde_prior.sh
+# Override any knob:        SEED=7 N_EPOCHS=300 bash scripts/training_eval_rnbody_huand_dataset_kde_prior.sh
 # Log to a file + background:
-#   nohup bash scripts/training_eval_rnbody_huand_dataset.sh > train_eval.log 2>&1 &
+#   nohup bash scripts/training_eval_rnbody_huand_dataset_kde_prior.sh > train_eval_kde.log 2>&1 &
 
 # -e: abort on first error   -u: error on unset var   -o pipefail: a failing stage in a pipe fails
 set -euo pipefail
@@ -21,7 +26,7 @@ cd "$(dirname "$0")/.."
 # JAX (with jax[cuda12], already a dependency) auto-detects the GPU, so we do NOT set
 # JAX_PLATFORMS=cpu. CUDA_VISIBLE_DEVICES pins ONE physical GPU so we don't grab a busy one;
 # override with e.g.  GPU=2 bash scripts/...  . Set GPU=cpu to force CPU instead.
-GPU=${GPU:-0}
+GPU=${GPU:-2}
 if [ "${GPU}" = "cpu" ]; then
   export JAX_PLATFORMS=cpu
 else
@@ -44,22 +49,32 @@ BATCH_SIZE=${BATCH_SIZE:-1024}
 N_TRAIN=${N_TRAIN:-60000}   # -> training_data_60000.npz
 N_TEST=${N_TEST:-333}       # -> test_multistream_333.npz
 
+# ---- KDE compositional prior score --------------------------------------------------------
+# The training set is rejection-sampled (vcirc_rejection), so the analytic simulator prior spec
+# no longer matches the truncated density the networks actually learned. Fit the KDE score on
+# the training draws themselves (physical-unit global-parameter arrays, already what the npz
+# stores) instead of a separate sample file.
+PRIOR_SCORE=${PRIOR_SCORE:-kde}
+PRIOR_KDE_SAMPLES=${PRIOR_KDE_SAMPLES:-${DATA_DIR}/training_data_${N_TRAIN}.npz}
+PRIOR_KDE_MAX_POINTS=${PRIOR_KDE_MAX_POINTS:-4096}
+PRIOR_KDE_BANDWIDTH=${PRIOR_KDE_BANDWIDTH:-0.0}
+
 # All run outputs (trained model + both evals) land together under data_jarvis/runs so the whole
 # deliverable lives in one place next to the datasets. Pinning hydra.run.dir (instead of the
 # default timestamped dir) is what lets the eval stages reference MODEL_DIR deterministically.
-RUNS_DIR=${RUNS_DIR:-outputs/stream_agama_rnbody/stream_fusion_model5_rnbody_huang/300epochs}
+RUNS_DIR=${RUNS_DIR:-outputs/stream_agama_rnbody/stream_fusion_model5_rnbody_huang/}
 MODEL_DIR=${RUNS_DIR}/train
-EVAL_DIR=${RUNS_DIR}/eval_sim_${N_TEST}
-REAL_DIR=${RUNS_DIR}/eval_real
+EVAL_DIR=${RUNS_DIR}/kdeprior/eval_sim_${N_TEST}
+REAL_DIR=${RUNS_DIR}/kdeprior/eval_real
 
-echo "=== [1/3] TRAIN  -> ${MODEL_DIR} ==="
-uv run python scripts/train.py \
-  simulator=stream_agama_rnbody_huang model=stream_fusion_model5 composition=global \
-  adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
-  data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
-  training.n_epochs="${N_EPOCHS}" training.batch_size="${BATCH_SIZE}" seed="${SEED}" \
-  augmentation.params.resources_dir="${RES}" \
-  hydra.run.dir="${MODEL_DIR}"
+# echo "=== [1/3] TRAIN  -> ${MODEL_DIR} ==="
+# uv run python scripts/train.py \
+#   simulator=stream_agama_rnbody_huang model=stream_fusion_model5 composition=global \
+#   adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
+#   data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
+#   training.n_epochs="${N_EPOCHS}" training.batch_size="${BATCH_SIZE}" seed="${SEED}" \
+#   augmentation.params.resources_dir="${RES}" \
+#   hydra.run.dir="${MODEL_DIR}"
 
 echo "=== [2/3] EVALUATE on simulated ${N_TEST}-group multistream test set -> ${EVAL_DIR} ==="
 uv run python scripts/evaluate.py \
@@ -67,6 +82,8 @@ uv run python scripts/evaluate.py \
   adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
   eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \
   model_dir="${MODEL_DIR}" augmentation.params.resources_dir="${RES}" \
+  eval.prior_score="${PRIOR_SCORE}" eval.prior_kde_samples="${PRIOR_KDE_SAMPLES}" \
+  eval.prior_kde_max_points="${PRIOR_KDE_MAX_POINTS}" eval.prior_kde_bandwidth="${PRIOR_KDE_BANDWIDTH}" \
   hydra.run.dir="${EVAL_DIR}"
 
 echo "=== [3/3] EVALUATE REAL (Gaia Pal5/NGC3201/M68) -> ${REAL_DIR} ==="
@@ -76,6 +93,8 @@ uv run python scripts/evaluate_real.py \
   data.real_data_path="${REAL}" \
   model_dir="${MODEL_DIR}" augmentation.params.resources_dir="${RES}" \
   eval.misspecification_reference="${EVAL_DIR}" \
+  eval.prior_score="${PRIOR_SCORE}" eval.prior_kde_samples="${PRIOR_KDE_SAMPLES}" \
+  eval.prior_kde_max_points="${PRIOR_KDE_MAX_POINTS}" eval.prior_kde_bandwidth="${PRIOR_KDE_BANDWIDTH}" \
   hydra.run.dir="${REAL_DIR}"
 
 echo "=== DONE. Outputs under ${RUNS_DIR} ==="

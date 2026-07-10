@@ -21,7 +21,7 @@ cd "$(dirname "$0")/.."
 # JAX (with jax[cuda12], already a dependency) auto-detects the GPU, so we do NOT set
 # JAX_PLATFORMS=cpu. CUDA_VISIBLE_DEVICES pins ONE physical GPU so we don't grab a busy one;
 # override with e.g.  GPU=2 bash scripts/...  . Set GPU=cpu to force CPU instead.
-GPU=${GPU:-0}
+GPU=${GPU:-2}
 if [ "${GPU}" = "cpu" ]; then
   export JAX_PLATFORMS=cpu
 else
