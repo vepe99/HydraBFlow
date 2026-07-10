@@ -1,0 +1,26 @@
+# As stream_global_ibata but WITHOUT the rho_z observation-error / log10 steps (vertical stellar
+# density is not used by the norho model). vterm and sigma_z noise are kept. Leaving the rho_z steps
+# out avoids wasting work on a key nothing downstream consumes. Pair with adapter=stream_ibata_norho
+# and model=stream_fusion_ibata_norho.
+defaults:
+  - stream_global
+
+# Lists are replaced (not merged) by Hydra, so the full base chain is repeated here with only the
+# vterm + sigma_z ancillary steps appended after log10_vcirc.
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - add_noise_to_vterm     # + N(0, 6.2 km/s) per longitude bin (Ibata terminal-velocity error)
+  - add_noise_to_sigma_z   # + N(0, 6.0 Msun/pc^2) (Kuijken & Gilmore 1991 surface-density error)
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

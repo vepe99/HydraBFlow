@@ -1,0 +1,17 @@
+# Ibata adapter WITHOUT the vertical stellar-density observable (rho_z). Identical to
+# stream_ibata but drops rho_z from the fusion summary backbones, because rho(z) has no real-data
+# datum yet (Ibata 2017b Fig 12f, still to digitize) — training without it keeps sim and (future)
+# real inference on the same observable set. rho_z can still be present in the .npz; it is simply
+# never selected. Pair with model=stream_fusion_ibata_norho.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_data_projected
+  - vcirc_kms
+  - vterm_kms
+  - sigma_z
+inference_conditions: []
+drop: []
+attention_mask_key: attention_mask

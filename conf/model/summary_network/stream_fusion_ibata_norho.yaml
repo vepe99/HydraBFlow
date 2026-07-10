@@ -1,0 +1,45 @@
+# Ibata fusion summary network WITHOUT the rho_z backbone (vertical stellar density has no
+# real-data datum yet). Same as stream_fusion_ibata minus the rho_z TimeSeriesTransformer; the
+# fusion head auto-adjusts to the smaller concatenated summary. Pair with adapter=stream_ibata_norho
+# and model=stream_fusion_ibata_norho.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: sim_data_projected
+  backbones:
+    sim_data_projected:
+      type: set_transformer
+      summary_dim: 36
+      num_blocks: 4
+      num_heads: 3
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 14
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+    vterm_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+    sigma_z:
+      type: mlp
+      summary_dim: 8
+      mlp_depth: 2
+      mlp_width: 32
+      dropout: 0.05
+  head:
+    width: 64
+    depth: 4
+    output_dim: 72

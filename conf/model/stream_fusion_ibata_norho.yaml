@@ -1,0 +1,14 @@
+# stream_fusion_ibata WITHOUT the vertical stellar-density observable (rho_z). Pair with
+# adapter=stream_ibata_norho, augmentation=stream_global_ibata_norho, simulator=stream_agama_ibata,
+# preprocessing=stream_global_log10_ibata, composition=global.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_ibata_norho
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_ibata_norho
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20
