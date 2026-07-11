@@ -90,7 +90,7 @@ def test_vertical_density_profile_decreasing():
 # config (defaults) does not, and its potential is unchanged.
 # ------------------------------------------------------------------------------------------- #
 
-from hydrabflow.simulators.stream_agama import AgamaStreamSimulator  # noqa: E402
+from hydrabflow.simulators.stream_agama import AgamaStreamSimulator, BULGE_PARAMS  # noqa: E402
 from hydrabflow.simulators.stream_common import RHO_Z_KPC, VTERM_L_DEG  # noqa: E402
 
 
@@ -128,7 +128,8 @@ def test_legacy_config_has_no_ancillary_observables():
     sim = AgamaStreamSimulator(_base_params())
     assert sim.ancillary_observable_keys == []
     assert sim._pot_cfg == dict(
-        halo_r_t_kpc=float("inf"), gas_disks=False, thick_disk=False, disk_vertical="isothermal"
+        halo_r_t_kpc=float("inf"), gas_disks=False, thick_disk=False, disk_vertical="isothermal",
+        bulge_density_norm=BULGE_PARAMS["densityNorm"],
     )
     out = sim.simulate(sim.sample_prior(2, np.random.default_rng(0)), np.random.default_rng(1))
     assert set(out) == {"sim_data_carthesian", "sim_data_projected", "vcirc_kms"}

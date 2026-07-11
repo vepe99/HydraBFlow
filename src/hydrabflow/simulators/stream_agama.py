@@ -97,6 +97,7 @@ _DEFAULT_POT_CFG = dict(
     gas_disks=False,
     thick_disk=False,
     disk_vertical="isothermal",  # "isothermal" (sech^2, +h) | "exponential" (exp(-|z|/h), -h)
+    bulge_density_norm=BULGE_PARAMS["densityNorm"],  # override the fixed bulge densityNorm
 )
 
 
@@ -157,7 +158,8 @@ def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = Non
     """
     cfg = _resolve_pot_cfg(pot_cfg)
     hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
-    components = [BULGE_PARAMS]
+    bulge = {**BULGE_PARAMS, "densityNorm": float(cfg["bulge_density_norm"])}
+    components = [bulge]
     if cfg["gas_disks"]:
         components += [GAS_HI_PARAMS, GAS_H2_PARAMS]
     components.append(_halo_params(p, float(cfg["halo_r_t_kpc"])))
@@ -515,12 +517,16 @@ class AgamaStreamSimulator(BaseSimulator):
     def _pot_cfg(self) -> dict:
         """Host-potential configuration threaded to the joblib workers. Legacy default (all keys
         absent) reproduces the original bulge + untruncated halo + one isothermal disk; the Ibata
-        sim config sets ``halo_r_t_kpc`` / ``gas_disks`` / ``thick_disk`` / ``disk_vertical``."""
+        sim config sets ``halo_r_t_kpc`` / ``gas_disks`` / ``thick_disk`` / ``disk_vertical`` /
+        ``bulge_density_norm``."""
         return dict(
             halo_r_t_kpc=float(self.params.get("halo_r_t_kpc", float("inf"))),
             gas_disks=bool(self.params.get("gas_disks", False)),
             thick_disk=bool(self.params.get("thick_disk", False)),
             disk_vertical=str(self.params.get("disk_vertical", "isothermal")),
+            bulge_density_norm=float(
+                self.params.get("bulge_density_norm", BULGE_PARAMS["densityNorm"])
+            ),
         )
 
     @property
