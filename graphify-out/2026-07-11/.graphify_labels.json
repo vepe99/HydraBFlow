@@ -138,7 +138,5 @@
   "136": "test_config.py",
   "137": "test_workflow.py",
   "138": "inferred_names",
-  "139": "create_ibata_dataset.sh",
-  "140": "train_ibata_sumstats.sh",
-  "141": "tune_ibata_sumstats.sh"
+  "139": "create_ibata_dataset.sh"
 }

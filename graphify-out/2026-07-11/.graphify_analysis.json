@@ -1,0 +1,581 @@
+{
+  "communities": {
+    "0": [
+      "preprocessing_base",
+      "preprocessing_base_preprocesspipeline",
+      "preprocessing_base_preprocesspipeline_fit_transform",
+      "preprocessing_base_preprocesspipeline_init",
+      "preprocessing_base_preprocesspipeline_load",
+      "preprocessing_base_preprocesspipeline_save",
+      "preprocessing_base_preprocessstep",
+      "preprocessing_base_preprocessstep_fit",
+      "preprocessing_base_preprocessstep_load_state",
+      "preprocessing_base_preprocessstep_state",
+      "preprocessing_base_rationale_1",
+      "preprocessing_base_rationale_26",
+      "preprocessing_base_rationale_31",
+      "preprocessing_base_rationale_35",
+      "preprocessing_base_rationale_38",
+      "preprocessing_base_rationale_42",
+      "preprocessing_base_rationale_46",
+      "preprocessing_base_rationale_53",
+      "preprocessing_base_rationale_63",
+      "preprocessing_base_rationale_77",
+      "preprocessing_base_splitstep",
+      "preprocessing_base_splitstep_split",
+      "preprocessing_base_splitstep_transform",
+      "preprocessing_standardize",
+      "preprocessing_standardize_rationale_1",
+      "preprocessing_standardize_standardizer",
+      "preprocessing_standardize_standardizer_fit",
+      "preprocessing_standardize_standardizer_init",
+      "preprocessing_standardize_standardizer_inverse_transform",
+      "preprocessing_standardize_standardizer_load_state",
+      "preprocessing_standardize_standardizer_state",
+      "preprocessing_standardize_standardizer_transform",
+      "preprocessing_steps",
+      "preprocessing_steps_castdtype",
+      "preprocessing_steps_castdtype_init",
+      "preprocessing_steps_castdtype_transform",
+      "preprocessing_steps_dropnansimulations",
+      "preprocessing_steps_num_rows",
+      "preprocessing_steps_rationale_1",
+      "preprocessing_steps_rationale_20",
+      "preprocessing_steps_rationale_40",
+      "preprocessing_steps_rationale_58",
+      "preprocessing_steps_rationale_71",
+      "preprocessing_steps_selectkeys",
+      "preprocessing_steps_trainvalsplit",
+      "preprocessing_steps_trainvalsplit_split",
+      "src_hydraflow_preprocessing_base_py_dataset",
+      "src_hydraflow_preprocessing_base_py_ndarray",
+      "src_hydraflow_preprocessing_standardize_py_dataset",
+      "src_hydraflow_preprocessing_standardize_py_ndarray",
+      "src_hydraflow_preprocessing_steps_py_dataset"
+    ],
+    "1": [
+      "adapter_default",
+      "adapter_two_moons",
+      "augmentation_default",
+      "bring_your_own_data_data_contract",
+      "bring_your_own_data_doc",
+      "bring_your_own_data_format_registry",
+      "bring_your_own_data_io_seam",
+      "claudemd_full_traceability",
+      "claudemd_hydraflow",
+      "claudemd_jax_backend_pin",
+      "claudemd_preprocessing_vs_augmentation",
+      "claudemd_self_registration",
+      "claudemd_single_level_inference",
+      "claudemd_structured_configs_factories",
+      "config_config_yaml",
+      "config_output_dir_convention",
+      "end_to_end_guide_doc",
+      "end_to_end_guide_factory_backed_networks",
+      "end_to_end_guide_five_stages",
+      "end_to_end_guide_gaussian_example",
+      "end_to_end_guide_shape_contract",
+      "eval_default",
+      "hyperparameter_tuning_doc",
+      "hyperparameter_tuning_journal_storage",
+      "hyperparameter_tuning_multi_objective",
+      "hyperparameter_tuning_save_every_trial",
+      "hyperparameter_tuning_shared_preprocessing",
+      "inference_default",
+      "inference_network_diffusion",
+      "inference_network_flow_matching",
+      "model_default",
+      "preprocessing_default",
+      "readme_autocvd_gpu_pin",
+      "readme_hydraflow",
+      "readme_quickstart",
+      "simulator_two_moons",
+      "summary_network_deep_set",
+      "summary_network_set_transformer",
+      "summary_network_time_series_transformer",
+      "training_default",
+      "tuning_default",
+      "two_moons_pipeline_benchmark",
+      "two_moons_pipeline_doc"
+    ],
+    "2": [
+      "pipeline_checkpoint",
+      "pipeline_checkpoint_fix_keras_model",
+      "pipeline_checkpoint_load_approximator",
+      "pipeline_checkpoint_rationale_1",
+      "pipeline_checkpoint_rationale_30",
+      "pipeline_checkpoint_rationale_47",
+      "pipeline_checkpoint_save_approximator",
+      "pipeline_evaluate",
+      "pipeline_evaluate_rationale_1",
+      "pipeline_evaluate_real",
+      "pipeline_evaluate_real_rationale_1",
+      "pipeline_evaluate_real_rationale_68",
+      "pipeline_evaluate_real_run_real_evaluation",
+      "pipeline_evaluate_real_save_posterior_plot",
+      "pipeline_evaluate_require_model_dir",
+      "pipeline_evaluate_run_diagnostics",
+      "pipeline_evaluate_run_evaluation",
+      "pipeline_train",
+      "pipeline_train_n",
+      "pipeline_train_rationale_1",
+      "pipeline_train_rationale_28",
+      "pipeline_train_run_training",
+      "pipeline_train_save_loss_plot",
+      "pipeline_tune",
+      "pipeline_tune_objective",
+      "pipeline_tune_rationale_1",
+      "pipeline_tune_rationale_62",
+      "pipeline_tune_rationale_67",
+      "pipeline_tune_report",
+      "pipeline_tune_run_tuning",
+      "pipeline_tune_save_shared_preprocessing",
+      "pipeline_tune_suggest",
+      "pipeline_tune_trial_dir",
+      "src_hydraflow_pipeline_checkpoint_py_any",
+      "utils_paths",
+      "utils_paths_ensure_dir",
+      "utils_paths_get_run_dir",
+      "utils_paths_rationale_1",
+      "utils_paths_rationale_14",
+      "utils_seed",
+      "utils_seed_rationale_1",
+      "utils_seed_rationale_12",
+      "utils_seed_seed_everything"
+    ],
+    "3": [
+      "augmentation_examples",
+      "augmentation_examples_feature_dropout",
+      "augmentation_examples_gaussian_noise",
+      "augmentation_examples_multiplicative_noise",
+      "augmentation_examples_rationale_1",
+      "augmentation_examples_rationale_30",
+      "augmentation_examples_rationale_49",
+      "augmentation_examples_rationale_69",
+      "config_schema",
+      "config_schema_adapterconfig",
+      "config_schema_augmentationconfig",
+      "config_schema_dataconfig",
+      "config_schema_evalconfig",
+      "config_schema_inferenceconfig",
+      "config_schema_inferencenetworkconfig",
+      "config_schema_modelconfig",
+      "config_schema_preprocessingconfig",
+      "config_schema_rationale_1",
+      "config_schema_rationale_124",
+      "config_schema_rationale_131",
+      "config_schema_rationale_144",
+      "config_schema_rationale_28",
+      "config_schema_rationale_47",
+      "config_schema_rationale_67",
+      "config_schema_rootconfig",
+      "config_schema_simulatorconfig",
+      "config_schema_summarynetworkconfig",
+      "config_schema_trainingconfig",
+      "config_schema_tuningconfig"
+    ],
+    "4": [
+      "augmentation_registry",
+      "augmentation_registry_available_augmentations",
+      "augmentation_registry_build_augmentations",
+      "augmentation_registry_rationale_1",
+      "augmentation_registry_rationale_38",
+      "augmentation_registry_register_augmentation",
+      "src_hydraflow_augmentation_registry_py_augmentation",
+      "tests_test_augmentation",
+      "tests_test_augmentation_batch",
+      "tests_test_augmentation_build_one",
+      "tests_test_augmentation_compose_aug",
+      "tests_test_augmentation_rationale_1",
+      "tests_test_augmentation_rationale_117",
+      "tests_test_augmentation_rationale_129",
+      "tests_test_augmentation_rationale_29",
+      "tests_test_augmentation_rationale_56",
+      "tests_test_augmentation_rationale_64",
+      "tests_test_augmentation_rationale_72",
+      "tests_test_augmentation_rationale_80",
+      "tests_test_augmentation_rationale_89",
+      "tests_test_augmentation_test_actually_perturbs",
+      "tests_test_augmentation_test_all_examples_registered",
+      "tests_test_augmentation_test_build_augmentations_full_chain_reproducible",
+      "tests_test_augmentation_test_different_seed_differs",
+      "tests_test_augmentation_test_does_not_touch_global_numpy_state",
+      "tests_test_augmentation_test_per_batch_stochasticity",
+      "tests_test_augmentation_test_per_step_streams_are_independent",
+      "tests_test_augmentation_test_same_seed_is_reproducible",
+      "tests_test_registries_test_augmentation_registry_builds"
+    ],
+    "5": [
+      "networks_factory",
+      "networks_factory_build_inference_network",
+      "networks_factory_build_summary_network",
+      "networks_factory_rationale_1",
+      "networks_factory_rationale_19",
+      "networks_factory_rationale_52",
+      "pipeline_adapter",
+      "pipeline_adapter_as_list",
+      "pipeline_adapter_build_adapter",
+      "pipeline_adapter_rationale_1",
+      "pipeline_adapter_rationale_27",
+      "pipeline_workflow",
+      "pipeline_workflow_build_workflow",
+      "pipeline_workflow_rationale_1",
+      "pipeline_workflow_rationale_16",
+      "src_hydraflow_networks_factory_py_any",
+      "src_hydraflow_pipeline_adapter_py_any",
+      "src_hydraflow_pipeline_workflow_py_any",
+      "tests_test_workflow",
+      "tests_test_workflow_rationale_1",
+      "tests_test_workflow_test_build_adapter",
+      "tests_test_workflow_test_build_networks",
+      "tests_test_workflow_test_build_workflow"
+    ],
+    "6": [
+      "basesimulator",
+      "simulator_skeleton",
+      "simulators_skeleton",
+      "simulators_skeleton_rationale_1",
+      "simulators_skeleton_skeletonsimulator_observable_keys",
+      "simulators_skeleton_skeletonsimulator_parameter_names",
+      "simulators_skeleton_skeletonsimulator_sample_prior",
+      "simulators_skeleton_skeletonsimulator_simulate",
+      "simulators_two_moons",
+      "simulators_two_moons_rationale_1",
+      "simulators_two_moons_twomoonssimulator",
+      "simulators_two_moons_twomoonssimulator_mean_radius",
+      "simulators_two_moons_twomoonssimulator_n_obs",
+      "simulators_two_moons_twomoonssimulator_observable_keys",
+      "simulators_two_moons_twomoonssimulator_parameter_names",
+      "simulators_two_moons_twomoonssimulator_prior_high",
+      "simulators_two_moons_twomoonssimulator_prior_low",
+      "simulators_two_moons_twomoonssimulator_sample_prior",
+      "simulators_two_moons_twomoonssimulator_simulate",
+      "simulators_two_moons_twomoonssimulator_std_radius",
+      "src_hydraflow_simulators_skeleton_py_ndarray",
+      "src_hydraflow_simulators_two_moons_py_ndarray"
+    ],
+    "7": [
+      "pipeline_simulate",
+      "pipeline_simulate_rationale_1",
+      "pipeline_simulate_rationale_25",
+      "pipeline_simulate_run_simulation",
+      "simulators_registry",
+      "simulators_registry_available_simulators",
+      "simulators_registry_get_simulator",
+      "simulators_registry_rationale_1",
+      "simulators_registry_rationale_18",
+      "simulators_registry_rationale_32",
+      "simulators_registry_register_simulator",
+      "src_hydraflow_simulators_registry_py_basesimulator",
+      "tests_test_augmentation_test_two_moons_registered",
+      "tests_test_augmentation_test_two_moons_shapes_and_reproducibility",
+      "tests_test_registries",
+      "tests_test_registries_rationale_1",
+      "tests_test_registries_test_simulator_registry_has_skeleton",
+      "tests_test_registries_test_skeleton_simulator_raises",
+      "tests_test_registries_test_unknown_simulator_errors"
+    ],
+    "8": [
+      "_claude_graphify_trigger",
+      "graphify_skill",
+      "graphify_skill_ast_extraction",
+      "graphify_skill_audit_trail",
+      "graphify_skill_community_detection",
+      "graphify_skill_detect_step",
+      "graphify_skill_fast_path",
+      "graphify_skill_gemini_backend",
+      "graphify_skill_god_nodes",
+      "graphify_skill_graph_json",
+      "graphify_skill_graph_report",
+      "graphify_skill_interpreter_detect",
+      "graphify_skill_knowledge_graph",
+      "graphify_skill_obsidian_vault",
+      "graphify_skill_semantic_cache",
+      "graphify_skill_semantic_extraction",
+      "graphify_skill_subagent_dispatch"
+    ],
+    "9": [
+      "abc",
+      "simulators_base",
+      "simulators_base_basesimulator",
+      "simulators_base_basesimulator_init",
+      "simulators_base_basesimulator_observable_keys",
+      "simulators_base_basesimulator_parameter_names",
+      "simulators_base_basesimulator_sample",
+      "simulators_base_basesimulator_sample_prior",
+      "simulators_base_basesimulator_simulate",
+      "simulators_base_rationale_1",
+      "simulators_base_rationale_25",
+      "simulators_base_rationale_34",
+      "simulators_base_rationale_39",
+      "simulators_base_rationale_43",
+      "simulators_base_rationale_49",
+      "src_hydraflow_simulators_base_py_any",
+      "src_hydraflow_simulators_base_py_ndarray"
+    ],
+    "10": [
+      "config_schema_rationale_224",
+      "config_schema_register_configs",
+      "tests_conftest",
+      "tests_conftest_cfg",
+      "tests_conftest_compose",
+      "tests_conftest_compose_cfg",
+      "tests_conftest_rationale_1",
+      "tests_conftest_rationale_13",
+      "tests_conftest_rationale_38",
+      "tests_test_config",
+      "tests_test_config_rationale_1",
+      "tests_test_config_test_group_override",
+      "tests_test_config_test_inference_variables_set",
+      "tests_test_config_test_interpolations_resolve",
+      "tests_test_config_test_root_config_composes"
+    ],
+    "11": [
+      "preprocessing_registry",
+      "preprocessing_registry_available_steps",
+      "preprocessing_registry_build_pipeline",
+      "preprocessing_registry_rationale_1",
+      "preprocessing_registry_rationale_14",
+      "preprocessing_registry_rationale_26",
+      "preprocessing_registry_register_step",
+      "preprocesspipeline",
+      "tests_test_preprocessing",
+      "tests_test_preprocessing_rationale_1",
+      "tests_test_preprocessing_test_pipeline_fit_transform_and_split",
+      "tests_test_preprocessing_test_state_roundtrip",
+      "tests_test_preprocessing_toy_data",
+      "tests_test_registries_test_preprocess_registry"
+    ],
+    "12": [
+      "pipeline_io",
+      "pipeline_io_concatenate_chunks",
+      "pipeline_io_load_dataset",
+      "pipeline_io_rationale_1",
+      "pipeline_io_rationale_38",
+      "pipeline_io_save_dataset",
+      "src_hydraflow_pipeline_io_py_dataset"
+    ],
+    "13": [
+      "pipeline_app",
+      "pipeline_app_conf_path",
+      "pipeline_app_make_cli",
+      "pipeline_app_rationale_1",
+      "pipeline_app_rationale_10",
+      "pipeline_app_rationale_16"
+    ],
+    "14": [
+      "utils_backend",
+      "utils_backend_limit_gpus",
+      "utils_backend_rationale_1",
+      "utils_backend_rationale_38",
+      "utils_backend_rationale_86",
+      "utils_backend_set_backend"
+    ],
+    "15": [
+      "logger",
+      "utils_logging",
+      "utils_logging_get_logger",
+      "utils_logging_rationale_1",
+      "utils_logging_rationale_11"
+    ],
+    "16": [
+      "claude_settings",
+      "claude_settings_hooks",
+      "claude_settings_hooks_pretooluse"
+    ],
+    "17": [
+      "augmentation_init",
+      "augmentation_init_rationale_1"
+    ],
+    "18": [
+      "hydraflow_init",
+      "hydraflow_init_rationale_1"
+    ],
+    "19": [
+      "notebooks_explore",
+      "notebooks_explore_rationale_1"
+    ],
+    "20": [
+      "pipeline_init",
+      "pipeline_init_rationale_1"
+    ],
+    "21": [
+      "preprocessing_init",
+      "preprocessing_init_rationale_1"
+    ],
+    "22": [
+      "simulators_init",
+      "simulators_init_rationale_1"
+    ],
+    "23": [
+      "config_init"
+    ],
+    "24": [
+      "networks_init"
+    ],
+    "25": [
+      "scripts_evaluate"
+    ],
+    "26": [
+      "scripts_evaluate_real"
+    ],
+    "27": [
+      "scripts_simulate"
+    ],
+    "28": [
+      "scripts_train"
+    ],
+    "29": [
+      "scripts_tune"
+    ],
+    "30": [
+      "utils_init"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07372549019607844,
+    "1": 0.07862679955703211,
+    "2": 0.07087486157253599,
+    "3": 0.07389162561576355,
+    "4": 0.10098522167487685,
+    "5": 0.11067193675889328,
+    "6": 0.09956709956709957,
+    "7": 0.11695906432748537,
+    "8": 0.125,
+    "9": 0.15441176470588236,
+    "10": 0.1523809523809524,
+    "11": 0.17582417582417584,
+    "12": 0.38095238095238093,
+    "13": 0.3333333333333333,
+    "14": 0.3333333333333333,
+    "15": 0.4,
+    "16": 0.6666666666666666,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0
+  },
+  "gods": [
+    {
+      "id": "preprocessing_base_preprocessstep",
+      "label": "PreprocessStep",
+      "degree": 18
+    },
+    {
+      "id": "graphify_skill",
+      "label": "graphify Skill",
+      "degree": 13
+    },
+    {
+      "id": "src_hydraflow_preprocessing_base_py_dataset",
+      "label": "Dataset",
+      "degree": 12
+    },
+    {
+      "id": "pipeline_workflow_build_workflow",
+      "label": "build_workflow()",
+      "degree": 11
+    },
+    {
+      "id": "simulators_two_moons_twomoonssimulator",
+      "label": "TwoMoonsSimulator",
+      "degree": 11
+    },
+    {
+      "id": "config_config_yaml",
+      "label": "Root Hydra Config (config.yaml)",
+      "degree": 11
+    },
+    {
+      "id": "pipeline_train_run_training",
+      "label": "run_training()",
+      "degree": 10
+    },
+    {
+      "id": "preprocessing_base_splitstep",
+      "label": "SplitStep",
+      "degree": 10
+    },
+    {
+      "id": "end_to_end_guide_doc",
+      "label": "End-to-End Pipeline Guide",
+      "degree": 10
+    },
+    {
+      "id": "preprocessing_registry_build_pipeline",
+      "label": "build_pipeline()",
+      "degree": 9
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Dataset Format Registry by Extension",
+      "target": "Self-Registration by Name Pattern",
+      "source_files": [
+        "docs/bring_your_own_data.md",
+        "CLAUDE.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link"
+    },
+    {
+      "source": "test_augmentation_registry_builds()",
+      "target": "build_augmentations()",
+      "source_files": [
+        "tests/test_registries.py",
+        "src/hydraflow/augmentation/registry.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `test_augmentation_registry_builds()` unexpectedly reaches hub `build_augmentations()`"
+    },
+    {
+      "source": "test_build_adapter()",
+      "target": "build_adapter()",
+      "source_files": [
+        "tests/test_workflow.py",
+        "src/hydraflow/pipeline/adapter.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `test_build_adapter()` unexpectedly reaches hub `build_adapter()`"
+    },
+    {
+      "source": "test_build_workflow()",
+      "target": "build_workflow()",
+      "source_files": [
+        "tests/test_workflow.py",
+        "src/hydraflow/pipeline/workflow.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `test_build_workflow()` unexpectedly reaches hub `build_workflow()`"
+    },
+    {
+      "source": "test_two_moons_shapes_and_reproducibility()",
+      "target": "get_simulator()",
+      "source_files": [
+        "tests/test_augmentation.py",
+        "src/hydraflow/simulators/registry.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `test_two_moons_shapes_and_reproducibility()` unexpectedly reaches hub `get_simulator()`"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
