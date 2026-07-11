@@ -1,0 +1,20 @@
+# Ibata particle-spray simulator with a WIDENED halo scale-radius prior.
+#
+# Identical to stream_agama_ibata (full Ibata potential, Chen+2024 spray, extended Zhou u Huang
+# rotation-curve observable + banded rejection prior, freed halo outer slope beta, three ancillary
+# potential observables) EXCEPT the dark-halo scale radius a_TwoPowerTriaxial_halo is widened from
+# uniform[1, 30] to uniform[1, 50] kpc. Motivation: test whether allowing more extended /
+# lower-concentration halos (still forced onto the observed rotation curve by the vcirc rejection
+# prior) reduces the real-data misspecification seen with the a<=30 model.
+#
+# priors_global is a dict, so this override merges into the parent chain: only a's prior_parameters
+# list is replaced; the thick-disk priors, freed beta, and everything else are inherited unchanged.
+defaults:
+  - stream_agama_ibata
+
+name: stream_agama
+params:
+  priors_global:
+    a_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [1.0, 50.0]

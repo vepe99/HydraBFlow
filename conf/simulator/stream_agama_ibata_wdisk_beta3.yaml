@@ -1,0 +1,31 @@
+# Ibata particle-spray simulator: WIDER disk mass + halo beta fixed at 3.0.
+#
+# Inherits stream_agama_ibata_awide (full Ibata potential, Chen+2024 spray, extended Zhou u Huang
+# rotation-curve observable + banded rejection prior, three ancillary observables, halo scale
+# radius a widened to uniform[1,50]) and changes two things to address the HI terminal-velocity
+# deficit (v_term probes v_circ at R = R0*|sin l| = 4.2-7.5 kpc, the inner disk region):
+#
+#   1. Sigma_Disk uniform[1e7, 1.5e9] -> uniform[1e7, 3.0e9]. The 1.5e9 ceiling was capping the
+#      inner mass below MGD16: the Zhou+Huang-accepted prior under-predicted v_term by a median
+#      -15.8 km/s (obs at the 8.7% upper tail). Raising it to 3e9 halves the gap (-9.3 km/s) and
+#      brings the observed terminal velocity into the prior BULK (~41% within ~1 sigma), at
+#      negligible acceptance cost (8.6% vs 9.8%). Verified by a prior-space scan (2026-07-11).
+#
+#   2. beta_TwoPowerTriaxial_halo fixed at 3.0 (identity), reverting the spray_huang freed [2,4].
+#      The scan showed beta=3 leaves both the v_term fix and the Huang outer-curve match intact
+#      (combined acceptance 8.6% vs 8.7% free) -> beta is no longer an inferred global here.
+#
+# priors_global is a dict, so these override only the two named entries; the widened a, thick
+# disk, ancillary observables, Chen spray, and rejection bands are all inherited unchanged.
+defaults:
+  - stream_agama_ibata_awide
+
+name: stream_agama
+params:
+  priors_global:
+    Sigma_Disk:
+      type: uniform
+      prior_parameters: [1.0e7, 3.0e9]
+    beta_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [3.0]
