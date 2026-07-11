@@ -1,0 +1,28 @@
+# As stream_global_log10_ibata, but `drop_nan.keys` is PINNED to the npz-resident observables
+# instead of ${adapter.summary_variables}: this variant's summary_variables includes `sim_summary`,
+# which is created per-batch by the augmentation and does NOT exist in the stored npz, so the
+# interpolation would KeyError. Pinning also guarantees any NaN rows are dropped consistently.
+# log10 keys include the free thick-disk params (Sigma_thick_Disk, r_thick_Disk). Pair with
+# adapter=stream_ibata_sumstats and augmentation=stream_global_ibata_sumstats.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+      - vterm_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+      - Sigma_thick_Disk
+      - r_thick_Disk

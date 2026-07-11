@@ -45,6 +45,10 @@ from hydrabflow.utils.seed import seed_everything
 
 log = get_logger(__name__)
 
+# Finite worst-case RMSE recorded for a trial that diverged to NaN (well above any real trial's
+# RMSE, so it is strictly dominated on the Pareto front but still gives the sampler a signal).
+_NAN_PENALTY_RMSE = 1.0e3
+
 
 def _suggest(trial, name, spec):
     t = spec["type"]
@@ -88,22 +92,45 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
     for path, spec in base_cfg.tuning.search_space.items():
         OmegaConf.update(cfg, path, _suggest(trial, path, spec), force_add=True)
 
-    workflow = build_workflow(cfg)
-    history = workflow.fit_offline(
-        train_data,
-        validation_data=val_data,
-        epochs=int(cfg.tuning.n_epochs),
-        batch_size=int(cfg.training.batch_size),
-        augmentations=augmentations if augmentations else None,
-        verbose=0,
-    )
+    import keras
+
+    from hydrabflow.pipeline.train import _restore_best_weights
+    from hydrabflow.utils.oom import run_with_oom_backoff
+
+    # Per-trial dir up front so BayesFlow's best-val-loss checkpointing writes into it. The
+    # diffusion net can diverge to NaN late in training (heavy-tailed summary-statistic features →
+    # inf loss → NaN grad), so — exactly as the production train stage does — we score the model on
+    # its BEST-weights checkpoint, not the possibly-NaN final epoch. TerminateOnNaN stops a diverged
+    # trial immediately (the best weights up to that point are still on disk).
+    trial_dir = _trial_dir(cfg, trial)
+    workflow = build_workflow(cfg, run_dir=trial_dir)
+
+    def _fit(batch_size: int):
+        return workflow.fit_offline(
+            train_data,
+            validation_data=val_data,
+            epochs=int(cfg.tuning.n_epochs),
+            batch_size=int(batch_size),
+            augmentations=augmentations if augmentations else None,
+            verbose=0,
+            callbacks=[keras.callbacks.TerminateOnNaN()],
+        )
+
+    # A trial may draw a large architecture that OOMs at the configured batch size; halve and retry
+    # (both the training fit and the posterior sampling below) rather than fail the whole trial.
+    history = run_with_oom_backoff(_fit, int(cfg.training.batch_size), logger=log)
+    _restore_best_weights(workflow, trial_dir)  # rescue a late NaN divergence
 
     from bayesflow.diagnostics import metrics as bf_metrics
 
-    posterior = workflow.sample(
-        num_samples=int(cfg.inference.num_samples),
-        conditions=val_data,
-        batch_size=int(cfg.inference.batch_size),
+    posterior = run_with_oom_backoff(
+        lambda batch_size: workflow.sample(
+            num_samples=int(cfg.inference.num_samples),
+            conditions=val_data,
+            batch_size=int(batch_size),
+        ),
+        int(cfg.inference.batch_size),
+        logger=log,
     )
     rmse = bf_metrics.root_mean_squared_error(
         estimates=posterior, targets=val_data, variable_keys=param_names
@@ -114,10 +141,19 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
     rmse_mean = float(np.mean(rmse["values"]))
     cal_mean = float(np.mean(cal["values"]))
 
+    # If a trial diverged from the very start (no finite best weights), the posterior — and thus
+    # RMSE — is NaN. Optuna rejects a NaN objective (fails the trial, giving the sampler no signal);
+    # instead return a finite worst-case so the trial completes and the sampler learns to avoid that
+    # region of the search space.
+    if not np.isfinite(rmse_mean):
+        log.warning("Trial %d: non-finite RMSE (training diverged); penalizing.", trial.number)
+        rmse_mean = _NAN_PENALTY_RMSE
+    if not np.isfinite(cal_mean):
+        cal_mean = 1.0
+
     # Persist the full trial (model + posterior + diagnostics). The val split carries ground truth,
     # so the same truth-aware diagnostics the evaluate stage produces apply here.
     if bool(cfg.tuning.save_artifacts):
-        trial_dir = _trial_dir(cfg, trial)
         save_approximator(workflow, trial_dir)
         _save_loss_plot(history, trial_dir)
         np.savez(

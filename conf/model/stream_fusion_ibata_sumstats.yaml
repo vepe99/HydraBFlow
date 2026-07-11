@@ -1,0 +1,18 @@
+# Ibata sumstats fusion model (norho, sigma-condition): binned per-stream summary statistics +
+# vcirc/vterm vector observables through a fusion summary network, sigma_z + j as inference
+# conditions. This single model config is the base for BOTH the full test run (sim_summary uses the
+# feature_transformer / TimeSeriesTransformer) AND the Optuna study (which flips sim_summary.type
+# between mlp and feature_transformer). Pair with adapter=stream_ibata_sumstats,
+# augmentation=stream_global_ibata_sumstats, preprocessing=stream_global_log10_ibata_sumstats,
+# simulator=stream_agama_ibata, composition=global.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_ibata_sumstats
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_ibata_sumstats
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

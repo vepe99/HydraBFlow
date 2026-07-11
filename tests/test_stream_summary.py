@@ -162,6 +162,30 @@ def test_mlp_backbone_forward():
     assert out.shape == (8, 16)
 
 
+def test_feature_transformer_backbone_forward():
+    """The Transformer alternative to `mlp` on the flat summary vector: reshapes (n, F) -> (n, F, 1)
+    feature tokens and runs a TimeSeriesTransformer, returning (n, summary_dim)."""
+    from omegaconf import OmegaConf
+
+    from hydrabflow.config.schema import SummaryNetworkConfig
+    from hydrabflow.networks.factory import build_summary_network
+
+    cfg = OmegaConf.merge(
+        OmegaConf.structured(SummaryNetworkConfig),
+        {
+            "type": "feature_transformer",
+            "summary_dim": 16,
+            "num_blocks": 2,
+            "num_heads": 4,
+            "params": {"embed_dim_multiplier": 4},
+        },
+    )
+    net = build_summary_network(cfg)
+    x = np.random.default_rng(0).normal(size=(8, N_STATS)).astype("float32")
+    out = np.asarray(net(x))
+    assert out.shape == (8, 16)
+
+
 # --------------------------------------------------------------------------------------------- #
 # Config composition + adapter drop retention
 # --------------------------------------------------------------------------------------------- #

@@ -1,0 +1,44 @@
+# Ibata sumstats fusion summary network (norho, sigma-condition). Three backbones:
+#   sim_summary  -> feature_transformer  (the binned per-stream summary vector, tokenized to
+#                   (n, F, 1) and run through a TimeSeriesTransformer — the "TST test")
+#   vcirc_kms    -> time_series_transformer  (50-radii rotation curve)
+#   vterm_kms    -> time_series_transformer  (19-longitude HI terminal-velocity curve)
+# No particle/set backbone -> mask_backbone is null (the attention mask is not consumed; the
+# summary vector already reflects the observational window). sigma_z is NOT a backbone here — the
+# adapter routes it to inference_conditions. The Optuna study flips sim_summary.type to `mlp` on
+# some trials (drop-in on the same rank-2 input). Pair with adapter=stream_ibata_sumstats.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: null
+  backbones:
+    sim_summary:
+      type: feature_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+    vterm_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+  head:
+    width: 64
+    depth: 4
+    output_dim: 72

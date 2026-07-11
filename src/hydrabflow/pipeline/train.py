@@ -69,15 +69,21 @@ def run_training(cfg):
     #    (step 3), a late divergence costs no compute and never overwrites a converged model.
     import keras
 
-    history = workflow.fit_offline(
-        train_data,
-        validation_data=val_data,
-        epochs=int(cfg.training.n_epochs),
-        batch_size=int(cfg.training.batch_size),
-        augmentations=augmentations if augmentations else None,
-        verbose=int(cfg.training.verbose),
-        callbacks=[keras.callbacks.TerminateOnNaN()],
-    )
+    from hydrabflow.utils.oom import run_with_oom_backoff
+
+    def _fit(batch_size: int):
+        return workflow.fit_offline(
+            train_data,
+            validation_data=val_data,
+            epochs=int(cfg.training.n_epochs),
+            batch_size=int(batch_size),
+            augmentations=augmentations if augmentations else None,
+            verbose=int(cfg.training.verbose),
+            callbacks=[keras.callbacks.TerminateOnNaN()],
+        )
+
+    # If the configured batch size does not fit on the card, halve it and retry (down to 16).
+    history = run_with_oom_backoff(_fit, int(cfg.training.batch_size), logger=log)
 
     # 6. Restore the best-val-loss weights saved during training (immune to a late NaN spike),
     #    then persist the approximator and a loss curve.

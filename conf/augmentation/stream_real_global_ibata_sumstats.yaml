@@ -1,0 +1,23 @@
+# Real-data (Gaia) augmentation for the Ibata sumstats model (norho): mirrors stream_real_global
+# (no synthetic selection or observational noise — the data is already observed) plus the
+# summary-statistics step, using the SAME great-circle frame fitted from the real members so sim and
+# real summaries are comparable. The attached vterm_kms / sigma_z (from preprocessing) need no noise
+# and no log10, so no add_noise_* / rho_z steps appear here. Pair with
+# preprocessing=stream_real_global_ibata_sumstats and adapter=stream_ibata_sumstats.
+defaults:
+  - stream_real_global
+
+steps:
+  - sample_obs_error
+  - impute_vlos
+  - log10_vcirc
+  - stream_summary_statistics
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

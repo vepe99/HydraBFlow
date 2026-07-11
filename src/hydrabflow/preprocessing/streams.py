@@ -196,6 +196,60 @@ class AttachObservedVcirc(PreprocessStep):
         return out
 
 
+@register_step("attach_observed_vterm")
+class AttachObservedVterm(PreprocessStep):
+    """Attach the *observed* HI terminal-velocity curve to a real dataset that lacks one.
+
+    The mirror of :class:`AttachObservedVcirc` for the Ibata ancillary observable ``vterm_kms``:
+    simulated datasets carry their model curve; real observations use the measured values
+    (McClure-Griffiths & Dickey 2016, ``OBS_VTERM_KMS`` on the ``VTERM_L_DEG`` grid). One copy per
+    row, shape ``(n, n_l, 1)``, matching the simulator's stored layout.
+    """
+
+    name = "attach_observed_vterm"
+
+    def __init__(self, vterm_key: str = "vterm_kms", values: Iterable[float] | None = None) -> None:
+        from hydrabflow.simulators.stream_common import OBS_VTERM_KMS
+
+        self.vterm_key = vterm_key
+        self.values = np.asarray(values if values is not None else OBS_VTERM_KMS, dtype=float)
+
+    def transform(self, data: Dataset) -> Dataset:
+        if self.vterm_key in data:
+            return data
+        out = dict(data)
+        n = len(next(iter(data.values())))
+        out[self.vterm_key] = np.tile(self.values[None, :, None], (n, 1, 1))
+        return out
+
+
+@register_step("attach_observed_sigma_z")
+class AttachObservedSigmaZ(PreprocessStep):
+    """Attach the *observed* local surface density Sigma(1.1 kpc) to a real dataset that lacks one.
+
+    Scalar analogue of :class:`AttachObservedVcirc` for the Ibata ancillary observable ``sigma_z``:
+    the observed value (``SIGMA_Z_OBS_MSUN_PC2`` = 71 Msun/pc^2, Kuijken & Gilmore 1991) tiled to
+    one copy per row, shape ``(n, 1)`` — matching the simulator's stored layout and the adapter's
+    use of ``sigma_z`` as an inference condition.
+    """
+
+    name = "attach_observed_sigma_z"
+
+    def __init__(self, sigma_z_key: str = "sigma_z", value: float | None = None) -> None:
+        from hydrabflow.simulators.stream_common import SIGMA_Z_OBS_MSUN_PC2
+
+        self.sigma_z_key = sigma_z_key
+        self.value = float(value if value is not None else SIGMA_Z_OBS_MSUN_PC2)
+
+    def transform(self, data: Dataset) -> Dataset:
+        if self.sigma_z_key in data:
+            return data
+        out = dict(data)
+        n = len(next(iter(data.values())))
+        out[self.sigma_z_key] = np.full((n, 1), self.value, dtype=float)
+        return out
+
+
 @register_step("mask_vcirc_radii")
 class MaskVcircRadii(PreprocessStep):
     """Keep only rotation-curve bins with ``r >= r_min`` on the observed radii grid."""

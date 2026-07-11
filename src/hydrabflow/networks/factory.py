@@ -140,6 +140,35 @@ def _mlp(cfg) -> Any:
     )
 
 
+@register_summary_network("feature_transformer")
+def _feature_transformer(cfg) -> Any:
+    """A Transformer summary backbone for *already-summarised* (rank-2, ``(batch, features)``)
+    inputs — e.g. a hand-crafted per-stream summary-statistics vector fed to a fusion backbone.
+
+    The flat feature vector has no sequence/set axis, so the stock ``time_series_transformer`` /
+    ``set_transformer`` builders (which need a genuine rank-3 input) cannot consume it directly.
+    This wrapper reshapes ``(batch, F)`` into ``(batch, F, 1)`` feature tokens and runs a
+    ``bayesflow.networks.TimeSeriesTransformer`` over them, so a Transformer can stand in for the
+    ``mlp`` backbone on exactly the same input (they are drop-in alternatives selectable by
+    ``type`` — useful e.g. as an Optuna categorical). Returns ``(batch, summary_dim)``. Like
+    ``mlp`` it is a plain ``keras.Sequential`` (routed through the non-``SummaryNetwork`` branch of
+    the fusion ``compute_metrics``; carries no own loss)."""
+    import bayesflow as bf
+    import keras
+
+    blocks = int(cfg.num_blocks)
+    return keras.Sequential(
+        [
+            keras.layers.Reshape((-1, 1)),
+            bf.networks.TimeSeriesTransformer(
+                summary_dim=int(cfg.summary_dim),
+                embed_dims=(_embed_dim(cfg),) * blocks,
+                num_heads=(int(cfg.num_heads),) * blocks,
+            ),
+        ]
+    )
+
+
 @register_inference_network("flow_matching")
 def _flow_matching(cfg) -> Any:
     import bayesflow as bf

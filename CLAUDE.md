@@ -581,6 +581,48 @@ Every run saves:
     full PPC first, then the **10^5 flat spray training set + 333-group multistream** test set
     (CPU/joblib, resumable, n_workers=24). NOT yet run (user runs it). Training later uses GPU ->
     autocvd; the script prints the train command (`model=stream_fusion_ibata adapter=stream_ibata ...`).
+- Session 2026-07-11 (Ibata norho + summary-statistics + sigma-condition model — trained/eval'd on
+  the 10^5 dataset + concurrent Optuna): the Ibata 10^5 dataset was generated (by the user) to
+  `data/data_jarvis/data_agama_ibata_hydrabflow/` (`training_data_100000.npz` + `test_multistream_333.npz`;
+  all 3 ancillary observables present). Built the variant the user asked for: **exclude rho_z** (the
+  last-commit norho line, since rho_z is the only ancillary observable with no real datum), feed the
+  network the **binned stream-frame summary statistics** (`sim_summary`) instead of raw particles,
+  route the **scalar `sigma_z` as an inference condition** (like `j`), keep the **vector observables
+  `vcirc_kms`/`vterm_kms` as fusion `time_series_transformer` backbones**.
+  - **New backbone** `feature_transformer` (`networks/factory.py`): reshapes a flat rank-2
+    `(batch, F)` summary vector to `(batch, F, 1)` feature tokens and runs `bf.TimeSeriesTransformer`
+    — lets a Transformer stand in for `mlp` on `sim_summary` (the "TST test"). Drop-in with `mlp`
+    (both consume rank-2), so the Optuna study makes `sim_summary.type` a **categorical `[mlp,
+    feature_transformer]`**.
+  - **Real-data eval enabled** (what `train_ibata.sh` skipped): new `attach_observed_vterm` /
+    `attach_observed_sigma_z` preprocessing steps (`preprocessing/streams.py`) + `OBS_VTERM_KMS`
+    constant (`stream_common`; `sigma_z`=71 reuses `SIGMA_Z_OBS_MSUN_PC2`); excluding rho_z is what
+    makes this feasible. Presets `stream_real_global_ibata_sumstats` (preproc + aug).
+  - **Config quartet**: `adapter/stream_ibata_sumstats` (`summary_variables=[sim_summary, vcirc_kms,
+    vterm_kms]`, `inference_conditions=[j, sigma_z]` — **j MUST be first**, `evaluate.py:125` derives
+    the member count m from `inference_conditions[0]`; a group-level scalar first collapses m→1),
+    `augmentation/stream_global_ibata_sumstats`, `preprocessing/stream_global_log10_ibata_sumstats`
+    (drop_nan.keys pinned to npz-resident obs, not `${adapter.summary_variables}`, since sim_summary
+    is batch-only), `model[/summary_network]/stream_fusion_ibata_sumstats` (`mask_backbone: null`).
+  - **Tuning** `conf/tuning/stream_ibata_sumstats.yaml` (study `stream_ibata_sumstats_study`,
+    n_epochs=100, n_trials=50/process): categorical sim_summary.type + sim_summary/vcirc/vterm
+    backbone dims + fusion head + diffusion subnet. Objectives = RMSE + calibration (Pareto).
+    Concurrency-safe JournalStorage `.log`; launched **one process per free GPU** (0,3,5), all
+    sharing the one study — plus the test-GPU freed a 4th slot. Runners `scripts/train_ibata_sumstats.sh`
+    (test: train 300ep → eval sim → eval real) + `scripts/tune_ibata_sumstats.sh` (one GPU/process).
+  - **OOM resilience** (user request): `utils/oom.py::run_with_oom_backoff` catches JAX
+    `RESOURCE_EXHAUSTED`, halves the batch size and retries (to min 16). Wired into `train.py`
+    (fit_offline) and `tune.py` (fit + posterior sample). The tuning OOM was in the **sampling** step
+    (`inference.batch_size*num_samples`=256*1000=256k rows through the diffusion integrator with the
+    search space's large nets); the tune runner also pins `inference.batch_size=32 num_samples=500`
+    (16k rows) as the primary fix, backoff as the safety net.
+  - **Results (TST test, 300 epochs, sim_summary=feature_transformer)**: sim **base RMSE 0.733 /
+    calib 0.022**, **compositional RMSE 0.669 / calib 0.053** (pooling improves accuracy; well
+    calibrated). Real (Gaia) MMD 3.09, per-member percentile Pal5 94.6 / NGC3201 90.1 / **M68 100**
+    (M68 most atypical — consistent with every prior generation). Run:
+    `outputs/ibata_sumstats/tst_test/{train,eval_sim_333,eval_real}`. Mild overfit flagged
+    (val_loss 1.11x best) but best-weights restore handles it. Tests: `feature_transformer` forward,
+    `attach_observed_*` shapes, 5 OOM-backoff tests — full suite green (97).
 
 ## graphify
 

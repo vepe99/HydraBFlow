@@ -95,6 +95,16 @@ SIGMA_Z_OBS_MSUN_PC2 = 71.0         # Sigma(1.1 kpc) observed (Kuijken & Gilmore
 SIGMA_Z_ERR_MSUN_PC2 = 6.0         # its 1-sigma
 RHO_Z_REL_ERR = 0.1                 # assumed per-point relative uncertainty for rho(z) resampling
 
+# Observed central values, entering ONLY at real-data inference time (simulated observables carry
+# their own per-row model values). v_term: HI terminal velocity, McClure-Griffiths & Dickey (2016),
+# on the VTERM_L_DEG grid (== assets/terminal_velocity.csv `vterm_kms`). Sigma(1.1 kpc) reuses
+# SIGMA_Z_OBS_MSUN_PC2 above. (rho(z) observed data is a documented TODO — no constant here yet.)
+OBS_VTERM_KMS = np.array([
+    113.67, 107.16, 101.03, 93.33, 89.82, 79.18, 75.71, 71.22, 70.21, 69.24,
+    68.42, 64.28, 50.48, 45.97, 42.65, 38.55, 34.12, 27.52, 21.87,
+])
+assert OBS_VTERM_KMS.shape == VTERM_L_DEG.shape, "OBS_VTERM_KMS must align with VTERM_L_DEG"
+
 
 def vcirc_from_potential(pot, R) -> np.ndarray:
     """Circular velocity vc(R) [km/s] in the midplane; vc^2 = R dPhi/dR = -R F_R. NaN where <0."""

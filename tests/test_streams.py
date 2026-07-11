@@ -353,6 +353,32 @@ def test_mask_vcirc_radii_trims_grid():
     assert out["vcirc_kms"].shape == (2, (OBS_R_KPC >= 5.5).sum(), 1)
 
 
+def test_attach_observed_vterm_tiles_observed_curve():
+    from hydrabflow.preprocessing.streams import AttachObservedVterm
+    from hydrabflow.simulators.stream_common import OBS_VTERM_KMS, VTERM_L_DEG
+
+    step = AttachObservedVterm()
+    # A real dataset carrying only the star cloud (no vterm_kms) gets the observed curve attached.
+    data = {"sim_data_projected": np.zeros((3, 4, 6))}
+    out = step.transform(data)
+    assert out["vterm_kms"].shape == (3, VTERM_L_DEG.size, 1)
+    assert np.allclose(out["vterm_kms"][0, :, 0], OBS_VTERM_KMS)
+    # Idempotent when the key is already present (e.g. simulated data).
+    present = {"vterm_kms": np.ones((2, VTERM_L_DEG.size, 1))}
+    assert step.transform(present)["vterm_kms"].shape == (2, VTERM_L_DEG.size, 1)
+
+
+def test_attach_observed_sigma_z_tiles_scalar():
+    from hydrabflow.preprocessing.streams import AttachObservedSigmaZ
+    from hydrabflow.simulators.stream_common import SIGMA_Z_OBS_MSUN_PC2
+
+    step = AttachObservedSigmaZ()
+    data = {"sim_data_projected": np.zeros((5, 4, 6))}
+    out = step.transform(data)
+    assert out["sigma_z"].shape == (5, 1)
+    assert np.allclose(out["sigma_z"], SIGMA_Z_OBS_MSUN_PC2)
+
+
 def test_registries_contain_stream_components():
     import hydrabflow.augmentation  # noqa: F401  (discovery)
     import hydrabflow.preprocessing  # noqa: F401
@@ -366,6 +392,8 @@ def test_registries_contain_stream_components():
         "stream_observation_stats",
         "mask_vcirc_radii",
         "attach_observed_vcirc",
+        "attach_observed_vterm",
+        "attach_observed_sigma_z",
     ):
         assert step in available_steps()
     for aug in (

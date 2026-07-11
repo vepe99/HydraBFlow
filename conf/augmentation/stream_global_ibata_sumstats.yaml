@@ -1,0 +1,35 @@
+# Ibata sumstats augmentation (norho): the stream_global chain + the vterm/sigma_z observational
+# noise + the hand-crafted per-stream summary statistics. `stream_summary_statistics` runs AFTER
+# log10_vcirc (the observable still has its 6 raw channels) and BEFORE the concatenations, writing
+# batch["sim_summary"]. NO rho_z steps (rho_z is excluded from this variant). The particle
+# concatenations still run (harmless — the raw star cloud is dropped by the adapter). Pair with
+# adapter=stream_ibata_sumstats and model=stream_fusion_ibata_sumstats.
+defaults:
+  - stream_global
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_summary_statistics
+  - add_noise_to_vterm     # + N(0, 6.2 km/s) per longitude bin (Ibata terminal-velocity error)
+  - add_noise_to_sigma_z   # + N(0, 6.0 Msun/pc^2) (Kuijken & Gilmore 1991 surface-density error)
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  # Bin counts derived from the real Gaia member/vlos counts (Pal5 129/69, NGC3201 195/37,
+  # M68 297/29): tracks support ~10 bins, v_los only ~3 (limited by M68). Same frame is fitted
+  # from the real observed-streams npz for sim and real -> comparable summaries.
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

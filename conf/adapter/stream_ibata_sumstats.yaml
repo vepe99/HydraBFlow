@@ -1,0 +1,25 @@
+# Ibata adapter, summary-statistics + sigma-condition variant (norho). The network sees ONLY the
+# binned per-stream summary statistics (sim_summary) plus the two vector potential observables
+# (vcirc_kms, vterm_kms) as fusion summary backbones; the raw star cloud sim_data_projected is NOT
+# fed to the network (it is kept only as the augmentation input that builds sim_summary, hence it is
+# listed in `drop`). The scalar surface density sigma_z enters as an inference CONDITION (like the
+# stream index j) rather than a summary backbone. rho_z is excluded entirely (no real-data datum).
+# Pair with model=stream_fusion_ibata_sumstats, augmentation=stream_global_ibata_sumstats,
+# preprocessing=stream_global_log10_ibata_sumstats, simulator=stream_agama_ibata, composition=global.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_summary
+  - vcirc_kms
+  - vterm_kms
+inference_conditions:
+  # j (the per-member stream index) MUST be first: the compositional eval derives the member count
+  # m from `inference_conditions[0]`'s shape (n, m, ...) — sigma_z is a group-level scalar (n, 1),
+  # so listing it first would collapse m to 1. Both are concatenated as conditions regardless.
+  - j
+  - sigma_z
+drop:
+  - sim_data_projected
+attention_mask_key: attention_mask

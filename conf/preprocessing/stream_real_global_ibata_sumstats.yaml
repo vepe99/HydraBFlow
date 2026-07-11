@@ -1,0 +1,27 @@
+# Real-data (Gaia) preprocessing for the Ibata sumstats model (norho). The real npz carries only the
+# star cloud + masks, so the potential observables are attached here from their observed values:
+#   attach_observed_vcirc   -> the observed MW rotation curve (Zhou u Huang, OBS grid)
+#   attach_observed_vterm   -> the observed HI terminal-velocity curve (OBS_VTERM_KMS)
+#   attach_observed_sigma_z -> the observed Sigma(1.1 kpc) = 71 Msun/pc^2 (the inference condition)
+# mask_vcirc_radii trims the rotation curve to r >= 5.5 kpc exactly as in training. log10_transform
+# is a no-op on real data (no parameter-truth columns) but declares the reparametrized keys so the
+# prior score operates in the same space. rho_z is NOT attached (excluded from this variant; it has
+# no real datum). Pair with augmentation=stream_real_global_ibata_sumstats.
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: attach_observed_vcirc
+  - name: attach_observed_vterm
+  - name: attach_observed_sigma_z
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+      - Sigma_thick_Disk
+      - r_thick_Disk
