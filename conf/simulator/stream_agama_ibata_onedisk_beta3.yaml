@@ -1,0 +1,39 @@
+# Ibata particle-spray simulator with a SINGLE stellar disk + the McMillan (2017) bulge.
+#
+# Full Ibata OBSERVABLE set (extended Zhou u Huang vcirc + banded rejection prior, and the three
+# ancillary potential observables v_term / Sigma_z / rho_z; Chen+2024 spray; freed halo outer
+# slope beta[2,4]; halo truncated at r_t=1000 kpc; exponential stellar-disk vertical profile;
+# fixed HI/H2 gas disks) but with the potential's STELLAR disk reverted to a single free thin disk
+# and the fixed bulge changed to McMillan's value:
+#   1. thick_disk: false        -> one free thin stellar disk (no thin+thick split).
+#   2. bulge_density_norm: 9.93e10 -> McMillan (2017) fixed bulge (was the class default 9.6e10),
+#      via the params.bulge_density_norm knob added to stream_agama._host_potential.
+#
+# Built on stream_agama_spray_huang (NOT stream_agama_ibata) so the thick-disk priors
+# (r_thick_Disk / dz_thick_Disk / Sigma_thick_Disk) are never introduced rather than
+# inherited-then-deleted; the remaining Ibata potential settings are set explicitly here.
+# The Ibata training stack (model=stream_fusion_ibata, adapter=stream_ibata,
+# augmentation=stream_global_ibata, preprocessing=stream_global_log10_ibata) works unchanged:
+# the log10 step skips the now-absent thick keys and the adapter derives the inferred parameters
+# from this simulator's priors_global (so no thick-disk parameters are inferred).
+defaults:
+  - stream_agama_spray_huang
+
+name: stream_agama
+params:
+  priors_global:
+    rho_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [1.0e6, 0.5e8]
+    beta_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [3.0]
+  halo_r_t_kpc: 1000.0        # truncate the dark halo at r_t = 1000 kpc (Ibata)
+  gas_disks: true             # fixed McMillan HI + H2 gas disks (inner-Galaxy terminal velocity)
+  thick_disk: false           # SINGLE stellar disk (the requested "one disk")
+  disk_vertical: exponential  # McMillan/Ibata stellar disk is exponential (exp(-|z|/h))
+  bulge_density_norm: 9.93e10 # McMillan (2017) fixed bulge (new_constrains.md); class default 9.6e10
+  ancillary_observables:
+    - vterm
+    - sigma_z
+    - rho_z
