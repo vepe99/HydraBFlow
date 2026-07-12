@@ -1,0 +1,22 @@
+# Real-data (Gaia) augmentation for the Ibata gridded-summary model (norho): mirrors
+# stream_real_global_ibata_sumstats but with `stream_summary_grid` (the φ1 time-series layout)
+# instead of `stream_summary_statistics`, using the SAME great-circle frame fitted from the real
+# members so sim and real summaries live in the same φ1 grid. Pair with
+# preprocessing=stream_real_global_ibata_sumstats and adapter=stream_ibata_sumstats.
+defaults:
+  - stream_real_global
+
+steps:
+  - sample_obs_error
+  - impute_vlos
+  - log10_vcirc
+  - stream_summary_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

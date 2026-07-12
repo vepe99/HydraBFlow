@@ -1,0 +1,35 @@
+# As stream_global_log10_ibata_sumstats, but ADDS a z-score standardization of the scalar inference
+# condition `sigma_z` (local surface density) as a final preprocessing step. BayesFlow's
+# `training.standardize` can only act on whole role groups (inference_conditions = j + sigma_z
+# concatenated), so it cannot standardize sigma_z WITHOUT also standardizing the categorical stream
+# index j. Doing it here — before the adapter concatenates the conditions — standardizes sigma_z
+# only, leaving j raw. Fit on the train split, saved to preprocessing_state.npz, and replayed
+# identically on the observed 71 Msun/pc^2 at real-data eval (see the _sigmastd real variant).
+# Everything else is identical to stream_global_log10_ibata_sumstats. Pair with
+# adapter=stream_ibata_sumstats and augmentation=stream_global_ibata_grid (or _sumstats).
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+      - vterm_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+      - Sigma_thick_Disk
+      - r_thick_Disk
+  # standardize ONLY sigma_z (fit on the train split; j is deliberately left untouched):
+  - name: standardize
+    keys:
+      - sigma_z

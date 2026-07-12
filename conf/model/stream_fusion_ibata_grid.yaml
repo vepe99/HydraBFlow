@@ -1,0 +1,17 @@
+# Ibata gridded-summary fusion model (norho, sigma-condition): the φ1-gridded per-stream summary
+# statistics fed to a single TimeSeriesTransformer (φ1 = time axis) + vcirc/vterm vector observables
+# through a fusion summary network, sigma_z + j as inference conditions. Pair with
+# adapter=stream_ibata_sumstats, augmentation=stream_global_ibata_grid,
+# preprocessing=stream_global_log10_ibata_sumstats, simulator=stream_agama_ibata_onedisk,
+# composition=global.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_ibata_grid
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_ibata_grid
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

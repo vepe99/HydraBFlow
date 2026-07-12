@@ -104,10 +104,17 @@ def _time_series_transformer(cfg) -> Any:
     import bayesflow as bf
 
     blocks = int(cfg.num_blocks)
+    kwargs: Dict[str, Any] = {}
+    # Optional ``params.time_axis``: index of the input channel to use as the time coordinate for
+    # the time2vec embedding (default: implicit integer sequence position). E.g. the φ1-gridded
+    # summary (``stream_summary_grid``) carries the φ1 bin-centre in its last channel -> time_axis=-1.
+    if cfg.params and cfg.params.get("time_axis") is not None:
+        kwargs["time_axis"] = int(cfg.params["time_axis"])
     return bf.networks.TimeSeriesTransformer(
         summary_dim=int(cfg.summary_dim),
         embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
+        **kwargs,
     )
 
 

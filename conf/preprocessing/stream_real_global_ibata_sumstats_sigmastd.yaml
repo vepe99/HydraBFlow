@@ -1,0 +1,28 @@
+# Real-data (Gaia) counterpart of stream_global_log10_ibata_sumstats_sigmastd: identical to
+# stream_real_global_ibata_sumstats, but ADDS the same final `standardize` step on sigma_z so the
+# observed Sigma(1.1 kpc) = 71 Msun/pc^2 condition is z-scored with the mean/std FIT ON THE TRAINING
+# SET (loaded from preprocessing_state.npz — the standardize step appears once in both chains, so its
+# state key `standardize#0.sigma_z__*` round-trips). It MUST come after attach_observed_sigma_z (which
+# creates sigma_z on real data). Use this whenever training used the _sigmastd preprocessing. Pair
+# with augmentation=stream_real_global_ibata_grid (or _sumstats).
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: attach_observed_vcirc
+  - name: attach_observed_vterm
+  - name: attach_observed_sigma_z
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+      - Sigma_thick_Disk
+      - r_thick_Disk
+  - name: standardize
+    keys:
+      - sigma_z

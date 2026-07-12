@@ -1,0 +1,47 @@
+# Ibata gridded-summary fusion summary network (norho, sigma-condition). Three backbones:
+#   sim_summary  -> time_series_transformer with params.time_axis=-1: the φ1-gridded per-stream
+#                   summary (n, K_phi1, 12) is consumed DIRECTLY as a time series, φ1 (last channel,
+#                   the bin-centre) as the time coordinate and the 10 per-observable [median, std] +
+#                   j (at -2) as the per-step features. (This is the whole point of the grid layout:
+#                   a real TimeSeriesTransformer over φ1, not a feature_transformer over a flat vector.)
+#   vcirc_kms    -> time_series_transformer  (50-radii rotation curve)
+#   vterm_kms    -> time_series_transformer  (19-longitude HI terminal-velocity curve)
+# No particle/set backbone -> mask_backbone is null. sigma_z is routed to inference_conditions by the
+# adapter (stream_ibata_sumstats), not a backbone here. Pair with adapter=stream_ibata_sumstats,
+# augmentation=stream_global_ibata_grid.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: null
+  backbones:
+    sim_summary:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+        time_axis: -1          # last channel of sim_summary is the φ1 bin-centre (the time coord)
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+    vterm_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+  head:
+    width: 64
+    depth: 4
+    output_dim: 72

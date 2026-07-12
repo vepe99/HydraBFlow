@@ -36,6 +36,8 @@ class Standardizer(PreprocessStep):
     def transform(self, data: Dataset) -> Dataset:
         out = dict(data)
         for key in self.keys:
+            if key not in data:  # e.g. a condition/observable absent from this dict — skip (cf. Log10Transform)
+                continue
             if key not in self._mean:
                 raise RuntimeError(f"Standardizer not fitted for key '{key}'")
             out[key] = (np.asarray(data[key]) - self._mean[key]) / self._std[key]
@@ -44,6 +46,8 @@ class Standardizer(PreprocessStep):
     def inverse_transform(self, data: Dataset) -> Dataset:
         out = dict(data)
         for key in self.keys:
+            if key not in data:  # posterior-sample dicts hold only inference_variables — skip conditions
+                continue
             out[key] = np.asarray(data[key]) * self._std[key] + self._mean[key]
         return out
 

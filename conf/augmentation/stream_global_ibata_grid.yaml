@@ -1,0 +1,35 @@
+# Ibata gridded-summary augmentation (norho): identical to stream_global_ibata_sumstats EXCEPT the
+# summary step is `stream_summary_grid` instead of `stream_summary_statistics`. It writes
+# batch["sim_summary"] as a rank-3 φ1 time series (n, K_phi1, 12): per φ1 bin, [median, std] for
+# each of the 5 stream-frame observables (φ2, parallax, μ_φ1, μ_φ2, v_los), then j (once, at -2) and
+# the φ1 bin-centre (last, the time axis). Pair with model=stream_fusion_ibata_grid (its sim_summary
+# backbone is a time_series_transformer with params.time_axis=-1), adapter=stream_ibata_sumstats,
+# preprocessing=stream_global_log10_ibata_sumstats.
+defaults:
+  - stream_global
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_summary_grid
+  - add_noise_to_vterm     # + N(0, 6.2 km/s) per longitude bin (Ibata terminal-velocity error)
+  - add_noise_to_sigma_z   # + N(0, 6.0 Msun/pc^2) (Kuijken & Gilmore 1991 surface-density error)
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  # K_phi1 (the time-axis length); all 5 observables share this φ1 grid. Same great-circle frame +
+  # quantile edges as the flat sumstats variant, fitted once from the real Gaia members.
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
