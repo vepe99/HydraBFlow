@@ -56,7 +56,8 @@ TUNING=${TUNING:-stream_ibata_grid}
 # STANDARDIZE_SIGMA_Z=1 z-scores ONLY the sigma_z inference condition (in preprocessing, so j stays
 # raw). Applies to BOTH the tuning trials and the milestone sim/Gaia evals (they share this PREPROC
 # and the one fit-once preprocessing_state.npz). Off by default; explicit PREPROC/REAL_PREPROC win.
-case "${STANDARDIZE_SIGMA_Z:-0}" in 1|true|yes|on) SIGMASTD=1;; *) SIGMASTD=0;; esac
+# In case I want to change I need to put in the following line STANDARDIZE_SIGMA_Z=1
+case "${STANDARDIZE_SIGMA_Z:-1}" in 1|true|yes|on) SIGMASTD=1;; *) SIGMASTD=0;; esac
 if [ "${SIGMASTD}" = 1 ]; then
   PREPROC=${PREPROC:-stream_global_log10_ibata_sumstats_sigmastd}
   REAL_PREPROC=${REAL_PREPROC:-stream_real_global_ibata_sumstats_sigmastd}

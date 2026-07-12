@@ -61,7 +61,7 @@ REAL_AUG=${REAL_AUG:-stream_real_global_ibata_grid}
 # raw — BayesFlow's role-level training.standardize cannot separate the two). Off by default.
 # Explicit PREPROC / REAL_PREPROC still win.
 # In case I want to change I need to put in the following line STANDARDIZE_SIGMA_Z=1
-case "${STANDARDIZE_SIGMA_Z:-0}" in 1|true|yes|on) SIGMASTD=1;; *) SIGMASTD=0;; esac
+case "${STANDARDIZE_SIGMA_Z:-1}" in 1|true|yes|on) SIGMASTD=1;; *) SIGMASTD=0;; esac
 if [ "${SIGMASTD}" = 1 ]; then
   PREPROC=${PREPROC:-stream_global_log10_ibata_sumstats_sigmastd}
   REAL_PREPROC=${REAL_PREPROC:-stream_real_global_ibata_sumstats_sigmastd}
@@ -71,7 +71,7 @@ else
   REAL_PREPROC=${REAL_PREPROC:-stream_real_global_ibata_sumstats}
 fi
 
-RUNS_DIR=${RUNS_DIR:-outputs/ibata_onedisk_grid/default}
+RUNS_DIR=${RUNS_DIR:-outputs/ibata_onedisk_grid_standardizesigma/default}
 MODEL_DIR=${MODEL_DIR:-${RUNS_DIR}/train}
 EVAL_DIR=${EVAL_DIR:-${RUNS_DIR}/eval_sim_${N_TEST}}
 REAL_DIR=${REAL_DIR:-${RUNS_DIR}/eval_real}
