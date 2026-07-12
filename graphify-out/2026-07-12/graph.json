@@ -19,7 +19,7 @@
       "source_file": "notebooks/explore.py",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "home_giuseppe_hydrabflow_notebooks_explore",
+      "id": "export_data_vgiusepp_hydrabflow_notebooks_explore",
       "community": 19,
       "norm_label": "_()"
     },
@@ -1259,62 +1259,6 @@
       "norm_label": "train_ibata_sumstats.sh script"
     },
     {
-      "label": "train_ibata_wdisk_beta3.sh",
-      "file_type": "code",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "file"
-      },
-      "_origin": "ast",
-      "id": "scripts_train_ibata_wdisk_beta3",
-      "community": 137,
-      "norm_label": "train_ibata_wdisk_beta3.sh"
-    },
-    {
-      "label": "train_ibata_wdisk_beta3.sh script",
-      "file_type": "code",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_entrypoint"
-      },
-      "_origin": "ast",
-      "id": "scripts_train_ibata_wdisk_beta3_sh__entry",
-      "community": 137,
-      "norm_label": "train_ibata_wdisk_beta3.sh script"
-    },
-    {
-      "label": "SIM",
-      "file_type": "code",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L29",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_train_ibata_wdisk_beta3_sim",
-      "community": 137,
-      "norm_label": "sim"
-    },
-    {
-      "label": "DATA_DIR",
-      "file_type": "code",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L30",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_train_ibata_wdisk_beta3_data_dir",
-      "community": 137,
-      "norm_label": "data_dir"
-    },
-    {
       "label": "training_eval_agama_1e6.sh",
       "file_type": "code",
       "source_file": "scripts/training_eval_agama_1e6.sh",
@@ -1657,7 +1601,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry",
-      "community": 4,
+      "community": 132,
       "norm_label": "registry.py"
     },
     {
@@ -1667,7 +1611,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_register_augmentation",
-      "community": 4,
+      "community": 132,
       "norm_label": "register_augmentation()"
     },
     {
@@ -1677,7 +1621,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_build_augmentations",
-      "community": 54,
+      "community": 132,
       "norm_label": "build_augmentations()"
     },
     {
@@ -1687,7 +1631,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_py_augmentation",
-      "community": 54,
+      "community": 132,
       "norm_label": "augmentation"
     },
     {
@@ -1707,7 +1651,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_rationale_1",
-      "community": 4,
+      "community": 132,
       "norm_label": "name -> augmentation-factory registry and builder.  an augmentation factory rece"
     },
     {
@@ -1717,7 +1661,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_rationale_40",
-      "community": 54,
+      "community": 132,
       "norm_label": "build the ordered augmentation list from ``cfg.augmentation`` (an ``augmentation"
     },
     {
@@ -2367,7 +2311,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_summarynetworkconfig",
-      "community": 35,
+      "community": 3,
       "norm_label": "summarynetworkconfig"
     },
     {
@@ -2527,7 +2471,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_rationale_47",
-      "community": 35,
+      "community": 3,
       "norm_label": "hyperparameters for a single bayesflow summary network.      ``type`` is resolve"
     },
     {
@@ -2627,7 +2571,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_register_summary_network",
-      "community": 32,
+      "community": 123,
       "norm_label": "register_summary_network()"
     },
     {
@@ -2647,7 +2591,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_build_summary_network",
-      "community": 32,
+      "community": 123,
       "norm_label": "build_summary_network()"
     },
     {
@@ -2667,7 +2611,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_build_inference_network",
-      "community": 32,
+      "community": 123,
       "norm_label": "build_inference_network()"
     },
     {
@@ -2767,7 +2711,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_rationale_31",
-      "community": 32,
+      "community": 123,
       "norm_label": "decorator registering a summary-network builder under ``name`` (the config ``typ"
     },
     {
@@ -2787,7 +2731,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_rationale_51",
-      "community": 32,
+      "community": 123,
       "norm_label": "return the summary network selected by ``cfg.type`` (a ``summarynetworkconfig``)"
     },
     {
@@ -2797,7 +2741,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_rationale_62",
-      "community": 32,
+      "community": 123,
       "norm_label": "return the inference (posterior) network selected by ``cfg.type`` (an ``inferenc"
     },
     {
@@ -2837,7 +2781,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion",
-      "community": 35,
+      "community": 137,
       "norm_label": "fusion.py"
     },
     {
@@ -2847,7 +2791,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork",
-      "community": 35,
+      "community": 15,
       "norm_label": "maskedfusionnetwork"
     },
     {
@@ -2856,8 +2800,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "src_hydrabflow_networks_fusion_py_summarynetwork",
-      "community": 35,
+      "id": "summarynetwork",
+      "community": 47,
       "norm_label": "summarynetwork"
     },
     {
@@ -2867,7 +2811,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_init",
-      "community": 35,
+      "community": 15,
       "norm_label": ".__init__()"
     },
     {
@@ -2877,7 +2821,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_py_layer",
-      "community": 35,
+      "community": 15,
       "norm_label": "layer"
     },
     {
@@ -2887,7 +2831,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_build",
-      "community": 35,
+      "community": 15,
       "norm_label": ".build()"
     },
     {
@@ -2897,7 +2841,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "shape",
-      "community": 35,
+      "community": 15,
       "norm_label": "shape"
     },
     {
@@ -2907,7 +2851,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_compute_output_shape",
-      "community": 35,
+      "community": 15,
       "norm_label": ".compute_output_shape()"
     },
     {
@@ -2917,7 +2861,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_backbone_kwargs",
-      "community": 35,
+      "community": 15,
       "norm_label": "._backbone_kwargs()"
     },
     {
@@ -2927,7 +2871,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_py_tensor",
-      "community": 35,
+      "community": 15,
       "norm_label": "tensor"
     },
     {
@@ -2937,7 +2881,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_call",
-      "community": 35,
+      "community": 15,
       "norm_label": ".call()"
     },
     {
@@ -2947,7 +2891,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_compute_metrics",
-      "community": 35,
+      "community": 15,
       "norm_label": ".compute_metrics()"
     },
     {
@@ -2957,7 +2901,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_get_config",
-      "community": 35,
+      "community": 15,
       "norm_label": ".get_config()"
     },
     {
@@ -2967,7 +2911,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_from_config",
-      "community": 35,
+      "community": 15,
       "norm_label": ".from_config()"
     },
     {
@@ -2977,7 +2921,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_fusion",
-      "community": 35,
+      "community": 137,
       "norm_label": "_fusion()"
     },
     {
@@ -2987,7 +2931,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_rationale_1",
-      "community": 35,
+      "community": 137,
       "norm_label": "multi-observable fusion summary network (attention-mask aware).  consumes the di"
     },
     {
@@ -2997,7 +2941,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_rationale_42",
-      "community": 35,
+      "community": 15,
       "norm_label": "fuse one summary backbone per named input; route the attention mask to one of th"
     },
     {
@@ -3007,7 +2951,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_rationale_152",
-      "community": 35,
+      "community": 137,
       "norm_label": "build a :class:`maskedfusionnetwork` from ``cfg.params`` (see module docstring)."
     },
     {
@@ -3017,7 +2961,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer",
-      "community": 32,
+      "community": 47,
       "norm_label": "masked_set_transformer.py"
     },
     {
@@ -3027,18 +2971,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer",
-      "community": 32,
+      "community": 47,
       "norm_label": "maskedsettransformer"
-    },
-    {
-      "label": "SummaryNetwork",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "src_hydrabflow_networks_masked_set_transformer_py_summarynetwork",
-      "community": 32,
-      "norm_label": "summarynetwork"
     },
     {
       "label": ".__init__()",
@@ -3047,7 +2981,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_init",
-      "community": 32,
+      "community": 47,
       "norm_label": ".__init__()"
     },
     {
@@ -3057,7 +2991,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_py_layer",
-      "community": 32,
+      "community": 47,
       "norm_label": "layer"
     },
     {
@@ -3067,7 +3001,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_build",
-      "community": 32,
+      "community": 47,
       "norm_label": ".build()"
     },
     {
@@ -3077,7 +3011,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_compute_output_shape",
-      "community": 32,
+      "community": 47,
       "norm_label": ".compute_output_shape()"
     },
     {
@@ -3087,7 +3021,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_call",
-      "community": 32,
+      "community": 47,
       "norm_label": ".call()"
     },
     {
@@ -3097,7 +3031,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_py_tensor",
-      "community": 32,
+      "community": 47,
       "norm_label": "tensor"
     },
     {
@@ -3107,7 +3041,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_get_config",
-      "community": 32,
+      "community": 47,
       "norm_label": ".get_config()"
     },
     {
@@ -3117,7 +3051,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_from_config",
-      "community": 32,
+      "community": 47,
       "norm_label": ".from_config()"
     },
     {
@@ -3127,7 +3061,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_masked_set_transformer",
-      "community": 32,
+      "community": 47,
       "norm_label": "_masked_set_transformer()"
     },
     {
@@ -3137,7 +3071,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_rationale_1",
-      "community": 32,
+      "community": 47,
       "norm_label": "missingness-aware settransformer for stars without a measured line-of-sight velo"
     },
     {
@@ -3147,7 +3081,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_rationale_46",
-      "community": 32,
+      "community": 47,
       "norm_label": "zero masked feature channels, add a learned missing-value embedding, run a settr"
     },
     {
@@ -3157,7 +3091,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_masked_set_transformer_rationale_124",
-      "community": 32,
+      "community": 47,
       "norm_label": "build a :class:`maskedsettransformer` from a ``summarynetworkconfig`` (see modul"
     },
     {
@@ -3437,7 +3371,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint",
-      "community": 47,
+      "community": 56,
       "norm_label": "checkpoint.py"
     },
     {
@@ -3447,7 +3381,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_save_approximator",
-      "community": 47,
+      "community": 56,
       "norm_label": "save_approximator()"
     },
     {
@@ -3457,7 +3391,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_py_any",
-      "community": 47,
+      "community": 56,
       "norm_label": "any"
     },
     {
@@ -3467,7 +3401,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_fix_keras_model",
-      "community": 47,
+      "community": 56,
       "norm_label": "fix_keras_model()"
     },
     {
@@ -3477,7 +3411,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_load_approximator",
-      "community": 47,
+      "community": 56,
       "norm_label": "load_approximator()"
     },
     {
@@ -3487,7 +3421,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_1",
-      "community": 47,
+      "community": 56,
       "norm_label": "model save/load helpers, including the bayesflow ``.keras`` deserialization work"
     },
     {
@@ -3497,7 +3431,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_30",
-      "community": 47,
+      "community": 56,
       "norm_label": "return a path to a load-safe copy of ``model_path`` (patching the arrayimpl tag)"
     },
     {
@@ -3507,7 +3441,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_47",
-      "community": 47,
+      "community": 56,
       "norm_label": "load a saved approximator, applying the arrayimpl fix first."
     },
     {
@@ -3637,7 +3571,7 @@
       "source_location": "L311",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_apply_augmentations_once",
-      "community": 54,
+      "community": 132,
       "norm_label": "apply_augmentations_once()"
     },
     {
@@ -3737,7 +3671,7 @@
       "source_location": "L312",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_rationale_312",
-      "community": 54,
+      "community": 132,
       "norm_label": "replay the configured augmentation chain once (fixed draw) on flattened rows."
     },
     {
@@ -4504,7 +4438,7 @@
       "label": "_suggest()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L53",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_suggest",
       "community": 58,
@@ -4514,7 +4448,7 @@
       "label": "_trial_dir()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L67",
+      "source_location": "L63",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_trial_dir",
       "community": 58,
@@ -4524,7 +4458,7 @@
       "label": "_save_shared_preprocessing()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L72",
+      "source_location": "L68",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_save_shared_preprocessing",
       "community": 58,
@@ -4534,7 +4468,7 @@
       "label": "_objective()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L88",
+      "source_location": "L84",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_objective",
       "community": 58,
@@ -4544,7 +4478,7 @@
       "label": "run_tuning()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L173",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_run_tuning",
       "community": 58,
@@ -4554,7 +4488,7 @@
       "label": "_report()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L226",
+      "source_location": "L202",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_report",
       "community": 58,
@@ -4574,9 +4508,9 @@
       "label": "Per-trial artifact directory, keyed by the study-global Optuna trial number.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L68",
+      "source_location": "L64",
       "_origin": "ast",
-      "id": "src_hydrabflow_pipeline_tune_rationale_68",
+      "id": "src_hydrabflow_pipeline_tune_rationale_64",
       "community": 58,
       "norm_label": "per-trial artifact directory, keyed by the study-global optuna trial number."
     },
@@ -4584,9 +4518,9 @@
       "label": "Save the fit-once preprocessing state, shared by every trial/model.      Written",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L73",
+      "source_location": "L69",
       "_origin": "ast",
-      "id": "src_hydrabflow_pipeline_tune_rationale_73",
+      "id": "src_hydrabflow_pipeline_tune_rationale_69",
       "community": 58,
       "norm_label": "save the fit-once preprocessing state, shared by every trial/model.      written"
     },
@@ -4686,8 +4620,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "src_hydrabflow_preprocessing_base_py_abc",
-      "community": 0,
+      "id": "abc",
+      "community": 6,
       "norm_label": "abc"
     },
     {
@@ -5477,7 +5411,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_py_ndarray",
-      "community": 118,
+      "community": 133,
       "norm_label": "ndarray"
     },
     {
@@ -5487,7 +5421,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize",
-      "community": 118,
+      "community": 133,
       "norm_label": "perstreamparameterstandardize"
     },
     {
@@ -5497,7 +5431,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize_init",
-      "community": 132,
+      "community": 11,
       "norm_label": ".__init__()"
     },
     {
@@ -5527,7 +5461,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize_state",
-      "community": 118,
+      "community": 133,
       "norm_label": ".state()"
     },
     {
@@ -5537,7 +5471,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_perstreamparameterstandardize_load_state",
-      "community": 118,
+      "community": 133,
       "norm_label": ".load_state()"
     },
     {
@@ -5587,7 +5521,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_streamobservationstats_state",
-      "community": 118,
+      "community": 133,
       "norm_label": ".state()"
     },
     {
@@ -5597,7 +5531,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_streamobservationstats_load_state",
-      "community": 118,
+      "community": 133,
       "norm_label": ".load_state()"
     },
     {
@@ -5747,7 +5681,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_rationale_48",
-      "community": 118,
+      "community": 133,
       "norm_label": "z-score each stream's local parameters with that stream's prior mean/std."
     },
     {
@@ -5839,16 +5773,6 @@
       "id": "src_hydrabflow_simulators_base_basesimulator",
       "community": 6,
       "norm_label": "basesimulator"
-    },
-    {
-      "label": "ABC",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_py_abc",
-      "community": 6,
-      "norm_label": "abc"
     },
     {
       "label": ".__init__()",
@@ -6097,7 +6021,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_get_simulator",
-      "community": 4,
+      "community": 96,
       "norm_label": "get_simulator()"
     },
     {
@@ -6137,7 +6061,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_rationale_32",
-      "community": 4,
+      "community": 96,
       "norm_label": "instantiate the simulator selected by ``cfg.simulator`` (a ``simulatorconfig``)."
     },
     {
@@ -6244,7 +6168,7 @@
       "label": "_resolve_pot_cfg()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg",
       "community": 115,
@@ -6254,7 +6178,7 @@
       "label": "_thin_disk_params()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L111",
+      "source_location": "L110",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_thin_disk_params",
       "community": 115,
@@ -6264,7 +6188,7 @@
       "label": "_thick_disk_params()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L122",
+      "source_location": "L121",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_thick_disk_params",
       "community": 115,
@@ -6274,7 +6198,7 @@
       "label": "_halo_params()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L135",
+      "source_location": "L134",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_halo_params",
       "community": 115,
@@ -6284,7 +6208,7 @@
       "label": "_host_potential()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L150",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_host_potential",
       "community": 115,
@@ -6294,7 +6218,7 @@
       "label": "_stellar_disk_potential()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L172",
+      "source_location": "L170",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
       "community": 115,
@@ -6304,10 +6228,10 @@
       "label": "_rj_vj_R()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L184",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
-      "community": 123,
+      "community": 115,
       "norm_label": "_rj_vj_r()"
     },
     {
@@ -6324,57 +6248,57 @@
       "label": "_ic_particle_spray()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L214",
+      "source_location": "L212",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
-      "community": 123,
+      "community": 115,
       "norm_label": "_ic_particle_spray()"
     },
     {
       "label": "_ic_chen_spray()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L254",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
-      "community": 123,
+      "community": 115,
       "norm_label": "_ic_chen_spray()"
     },
     {
       "label": "_spray_stream()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L293",
+      "source_location": "L291",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_spray_stream",
-      "community": 123,
+      "community": 115,
       "norm_label": "_spray_stream()"
     },
     {
       "label": "_vcirc()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L340",
+      "source_location": "L338",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_vcirc",
-      "community": 115,
+      "community": 114,
       "norm_label": "_vcirc()"
     },
     {
       "label": "_vcirc_accept_worker()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L347",
+      "source_location": "L345",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
-      "community": 115,
+      "community": 114,
       "norm_label": "_vcirc_accept_worker()"
     },
     {
       "label": "_ancillary_observables()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L384",
+      "source_location": "L382",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
       "community": 115,
@@ -6384,7 +6308,7 @@
       "label": "_simulate_one()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L405",
+      "source_location": "L403",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "community": 115,
@@ -6394,7 +6318,7 @@
       "label": "AgamaStreamSimulator",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L448",
+      "source_location": "L446",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "community": 11,
@@ -6404,7 +6328,7 @@
       "label": "._priors_global()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L452",
+      "source_location": "L450",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_priors_global",
       "community": 11,
@@ -6414,7 +6338,7 @@
       "label": "._priors_local()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L456",
+      "source_location": "L454",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_priors_local",
       "community": 11,
@@ -6424,7 +6348,7 @@
       "label": ".target_streams()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L460",
+      "source_location": "L458",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams",
       "community": 11,
@@ -6434,7 +6358,7 @@
       "label": "._n_particles()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L464",
+      "source_location": "L462",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_n_particles",
       "community": 11,
@@ -6444,7 +6368,7 @@
       "label": "._n_workers()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L468",
+      "source_location": "L466",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_n_workers",
       "community": 11,
@@ -6454,7 +6378,7 @@
       "label": "._obs_r_split()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L472",
+      "source_location": "L470",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_split",
       "community": 11,
@@ -6464,7 +6388,7 @@
       "label": ".obs_r_kpc()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L477",
+      "source_location": "L475",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_kpc",
       "community": 119,
@@ -6474,7 +6398,7 @@
       "label": ".obs_sigma_vc()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L489",
+      "source_location": "L487",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_sigma_vc",
       "community": 119,
@@ -6484,7 +6408,7 @@
       "label": ".obs_vc_kms()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L503",
+      "source_location": "L501",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_vc_kms",
       "community": 119,
@@ -6494,7 +6418,7 @@
       "label": "._pot_cfg()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L517",
+      "source_location": "L515",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_pot_cfg",
       "community": 11,
@@ -6504,7 +6428,7 @@
       "label": "._ancillary_names()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L533",
+      "source_location": "L527",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_names",
       "community": 11,
@@ -6514,7 +6438,7 @@
       "label": ".vterm_l_deg()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L547",
+      "source_location": "L541",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vterm_l_deg",
       "community": 114,
@@ -6524,7 +6448,7 @@
       "label": ".rho_z_kpc()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L554",
+      "source_location": "L548",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rho_z_kpc",
       "community": 114,
@@ -6534,7 +6458,7 @@
       "label": "._ancillary_spec()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L560",
+      "source_location": "L554",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_spec",
       "community": 11,
@@ -6544,7 +6468,7 @@
       "label": ".ancillary_observable_keys()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L568",
+      "source_location": "L562",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_observable_keys",
       "community": 11,
@@ -6554,7 +6478,7 @@
       "label": "._as_dict()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L576",
+      "source_location": "L570",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
       "community": 11,
@@ -6564,7 +6488,7 @@
       "label": ".parameter_names()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L586",
+      "source_location": "L580",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_parameter_names",
       "community": 11,
@@ -6574,27 +6498,27 @@
       "label": ".global_parameter_names()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L590",
+      "source_location": "L584",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_global_parameter_names",
-      "community": 132,
+      "community": 11,
       "norm_label": ".global_parameter_names()"
     },
     {
       "label": ".local_parameter_names()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L594",
+      "source_location": "L588",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_local_parameter_names",
-      "community": 132,
+      "community": 11,
       "norm_label": ".local_parameter_names()"
     },
     {
       "label": ".context_keys()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L599",
+      "source_location": "L593",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_context_keys",
       "community": 11,
@@ -6604,7 +6528,7 @@
       "label": ".observable_keys()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L603",
+      "source_location": "L597",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_observable_keys",
       "community": 11,
@@ -6614,7 +6538,7 @@
       "label": ".prior_spec_global()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L607",
+      "source_location": "L601",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_prior_spec_global",
       "community": 11,
@@ -6624,7 +6548,7 @@
       "label": ".prior_spec_local()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L612",
+      "source_location": "L606",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_prior_spec_local",
       "community": 11,
@@ -6634,7 +6558,7 @@
       "label": "._vcirc_rejection()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L624",
+      "source_location": "L618",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_rejection",
       "community": 11,
@@ -6644,7 +6568,7 @@
       "label": "._build_accept_bands()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L635",
+      "source_location": "L629",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
       "community": 114,
@@ -6654,7 +6578,7 @@
       "label": "._vcirc_accept_mask()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L677",
+      "source_location": "L671",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
       "community": 114,
@@ -6664,7 +6588,7 @@
       "label": "._rejection_sample()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L701",
+      "source_location": "L695",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
       "community": 114,
@@ -6674,7 +6598,7 @@
       "label": ".sample_prior()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L723",
+      "source_location": "L717",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_prior",
       "community": 114,
@@ -6684,7 +6608,7 @@
       "label": ".simulate()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L733",
+      "source_location": "L727",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "community": 114,
@@ -6694,7 +6618,7 @@
       "label": ".sample_compositional()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L780",
+      "source_location": "L774",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "community": 114,
@@ -6724,9 +6648,9 @@
       "label": "Assemble the Milky Way host potential from one parameter row.      Legacy model",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L151",
+      "source_location": "L150",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_151",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_150",
       "community": 115,
       "norm_label": "assemble the milky way host potential from one parameter row.      legacy model"
     },
@@ -6734,9 +6658,9 @@
       "label": "The stellar-disk component(s) alone (thin [+ thick]) \u2014 the ``disk_pot`` for the",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L173",
+      "source_location": "L171",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_173",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_171",
       "community": 115,
       "norm_label": "the stellar-disk component(s) alone (thin [+ thick]) \u2014 the ``disk_pot`` for the"
     },
@@ -6744,69 +6668,69 @@
       "label": "Jacobi radius, velocity offset, and host->satellite rotation matrices along the",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L185",
+      "source_location": "L183",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_185",
-      "community": 123,
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_183",
+      "community": 115,
       "norm_label": "jacobi radius, velocity offset, and host->satellite rotation matrices along the"
     },
     {
       "label": "Fardal+2015 initial conditions for particles escaping through the Lagrange point",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L218",
+      "source_location": "L216",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_218",
-      "community": 123,
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_216",
+      "community": 115,
       "norm_label": "fardal+2015 initial conditions for particles escaping through the lagrange point"
     },
     {
       "label": "Chen+2024 initial conditions: one trailing + one leading particle per orbit seed",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L258",
+      "source_location": "L256",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_258",
-      "community": 123,
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_256",
+      "community": 115,
       "norm_label": "chen+2024 initial conditions: one trailing + one leading particle per orbit seed"
     },
     {
       "label": "Particle-spray stream including the progenitor's own (moving Plummer) potential.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L298",
+      "source_location": "L296",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_298",
-      "community": 123,
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_296",
+      "community": 115,
       "norm_label": "particle-spray stream including the progenitor's own (moving plummer) potential."
     },
     {
       "label": "Model circular velocity [km/s] at the observed radii; NaN where v^2 < 0.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L341",
+      "source_location": "L339",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_341",
-      "community": 115,
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_339",
+      "community": 114,
       "norm_label": "model circular velocity [km/s] at the observed radii; nan where v^2 < 0."
     },
     {
       "label": "joblib worker: does each parameter row's model rotation curve pass the rejection",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L350",
+      "source_location": "L348",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_350",
-      "community": 115,
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_348",
+      "community": 114,
       "norm_label": "joblib worker: does each parameter row's model rotation curve pass the rejection"
     },
     {
       "label": "Ibata (2023) potential-derived observables for one row, per ``spec`` (an empty/N",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L387",
+      "source_location": "L385",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_387",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_385",
       "community": 115,
       "norm_label": "ibata (2023) potential-derived observables for one row, per ``spec`` (an empty/n"
     },
@@ -6814,9 +6738,9 @@
       "label": "joblib worker: one stream realization + the rotation curve of its potential (+ t",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L410",
+      "source_location": "L408",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_410",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_408",
       "community": 115,
       "norm_label": "joblib worker: one stream realization + the rotation curve of its potential (+ t"
     },
@@ -6824,9 +6748,9 @@
       "label": "Stellar streams in a parametrized Milky Way potential, simulated with AGAMA.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L449",
+      "source_location": "L447",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_449",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_447",
       "community": 11,
       "norm_label": "stellar streams in a parametrized milky way potential, simulated with agama."
     },
@@ -6834,9 +6758,9 @@
       "label": "Split radius for the extended (Zhou u Huang) rotation-curve grid.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L473",
+      "source_location": "L471",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_473",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_471",
       "community": 11,
       "norm_label": "split radius for the extended (zhou u huang) rotation-curve grid."
     },
@@ -6844,9 +6768,9 @@
       "label": "Radii the model rotation curve is evaluated on (also the ``vcirc_kms`` grid).",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L478",
+      "source_location": "L476",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_478",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_476",
       "community": 119,
       "norm_label": "radii the model rotation curve is evaluated on (also the ``vcirc_kms`` grid)."
     },
@@ -6854,9 +6778,9 @@
       "label": "Per-bin observed 1-sigma on the rotation curve, aligned with ``obs_r_kpc``.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L490",
+      "source_location": "L488",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_490",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_488",
       "community": 119,
       "norm_label": "per-bin observed 1-sigma on the rotation curve, aligned with ``obs_r_kpc``."
     },
@@ -6864,9 +6788,9 @@
       "label": "Observed Milky Way circular velocity aligned with ``obs_r_kpc`` \u2014 the fixed curv",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L504",
+      "source_location": "L502",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_504",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_502",
       "community": 119,
       "norm_label": "observed milky way circular velocity aligned with ``obs_r_kpc`` \u2014 the fixed curv"
     },
@@ -6874,9 +6798,9 @@
       "label": "Host-potential configuration threaded to the joblib workers. Legacy default (all",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L518",
+      "source_location": "L516",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_518",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_516",
       "community": 11,
       "norm_label": "host-potential configuration threaded to the joblib workers. legacy default (all"
     },
@@ -6884,9 +6808,9 @@
       "label": "Requested Ibata ancillary observables (``params.ancillary_observables``); empty",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L534",
+      "source_location": "L528",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_534",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_528",
       "community": 11,
       "norm_label": "requested ibata ancillary observables (``params.ancillary_observables``); empty"
     },
@@ -6894,9 +6818,9 @@
       "label": "Galactic longitudes [deg] the terminal-velocity curve is evaluated on (single so",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L548",
+      "source_location": "L542",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_548",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_542",
       "community": 114,
       "norm_label": "galactic longitudes [deg] the terminal-velocity curve is evaluated on (single so"
     },
@@ -6904,9 +6828,9 @@
       "label": "Heights z [kpc] the vertical stellar-density profile is evaluated on.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L555",
+      "source_location": "L549",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_555",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_549",
       "community": 114,
       "norm_label": "heights z [kpc] the vertical stellar-density profile is evaluated on."
     },
@@ -6914,9 +6838,9 @@
       "label": "Spec passed to the joblib worker: requested names + their fixed grids (or None).",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L561",
+      "source_location": "L555",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_561",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_555",
       "community": 11,
       "norm_label": "spec passed to the joblib worker: requested names + their fixed grids (or none)."
     },
@@ -6924,9 +6848,9 @@
       "label": "Dataset keys the requested ancillary observables are stored under (``vterm``->``",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L569",
+      "source_location": "L563",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_569",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_563",
       "community": 11,
       "norm_label": "dataset keys the requested ancillary observables are stored under (``vterm``->``"
     },
@@ -6934,9 +6858,9 @@
       "label": "Prior spec of the inferred global parameters (used for compositional prior score",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L608",
+      "source_location": "L602",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_608",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_602",
       "community": 11,
       "norm_label": "prior spec of the inferred global parameters (used for compositional prior score"
     },
@@ -6944,9 +6868,9 @@
       "label": "Per-stream prior spec of the inferred local parameters (drives their normalizati",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L613",
+      "source_location": "L607",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_613",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_607",
       "community": 11,
       "norm_label": "per-stream prior spec of the inferred local parameters (drives their normalizati"
     },
@@ -6954,9 +6878,9 @@
       "label": "Optional rotation-curve rejection prior (``params.vcirc_rejection``), else None.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L625",
+      "source_location": "L619",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_625",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_619",
       "community": 11,
       "norm_label": "optional rotation-curve rejection prior (``params.vcirc_rejection``), else none."
     },
@@ -6964,9 +6888,9 @@
       "label": "Resolve ``vcirc_rejection`` into a list of band specs for the accept worker.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L636",
+      "source_location": "L630",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_636",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_630",
       "community": 114,
       "norm_label": "resolve ``vcirc_rejection`` into a list of band specs for the accept worker."
     },
@@ -6974,9 +6898,9 @@
       "label": "Screen each draw's global potential against the observed rotation curve.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L678",
+      "source_location": "L672",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_678",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_672",
       "community": 114,
       "norm_label": "screen each draw's global potential against the observed rotation curve."
     },
@@ -6984,9 +6908,9 @@
       "label": "Draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L702",
+      "source_location": "L696",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_702",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_696",
       "community": 114,
       "norm_label": "draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut."
     },
@@ -6994,9 +6918,9 @@
       "label": "One shared global draw per dataset, one stream realization per target stream.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L781",
+      "source_location": "L775",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_781",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_775",
       "community": 114,
       "norm_label": "one shared global draw per dataset, one stream realization per target stream."
     },
@@ -7267,7 +7191,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_common_inferred_names",
-      "community": 132,
+      "community": 11,
       "norm_label": "inferred_names()"
     },
     {
@@ -7377,7 +7301,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_common_rationale_184",
-      "community": 132,
+      "community": 11,
       "norm_label": "names of the non-fixed (inferred) entries of a prior-spec mapping, in config ord"
     },
     {
@@ -8037,7 +7961,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest",
-      "community": 133,
+      "community": 10,
       "norm_label": "conftest.py"
     },
     {
@@ -8047,7 +7971,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_conftest_compose_cfg",
-      "community": 133,
+      "community": 10,
       "norm_label": "compose_cfg()"
     },
     {
@@ -8057,7 +7981,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_conftest_cfg",
-      "community": 133,
+      "community": 10,
       "norm_label": "cfg()"
     },
     {
@@ -8067,7 +7991,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "tests_conftest_compose",
-      "community": 15,
+      "community": 10,
       "norm_label": "compose()"
     },
     {
@@ -8077,7 +8001,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest_rationale_1",
-      "community": 133,
+      "community": 10,
       "norm_label": "shared test fixtures."
     },
     {
@@ -8087,7 +8011,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_conftest_rationale_13",
-      "community": 133,
+      "community": 10,
       "norm_label": "compose the root config with the structured schemas registered.      ``fill=true"
     },
     {
@@ -8097,7 +8021,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "tests_conftest_rationale_40",
-      "community": 15,
+      "community": 10,
       "norm_label": "expose the composer so tests can build configs with custom overrides."
     },
     {
@@ -8214,7 +8138,7 @@
       "label": "test_ibata_config_computes_ancillary_observables()",
       "file_type": "code",
       "source_file": "tests/test_ancillary_observables.py",
-      "source_location": "L138",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "tests_test_ancillary_observables_test_ibata_config_computes_ancillary_observables",
       "community": 116,
@@ -8477,7 +8401,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_config",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_config.py"
     },
     {
@@ -8487,7 +8411,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_test_config_test_root_config_composes",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_root_config_composes()"
     },
     {
@@ -8497,7 +8421,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_test_config_test_interpolations_resolve",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_interpolations_resolve()"
     },
     {
@@ -8507,7 +8431,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "tests_test_config_test_adapter_derived_from_simulator",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_adapter_derived_from_simulator()"
     },
     {
@@ -8517,7 +8441,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "tests_test_config_test_adapter_explicit_config_wins",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_adapter_explicit_config_wins()"
     },
     {
@@ -8527,7 +8451,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "tests_test_config_test_group_override",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_group_override()"
     },
     {
@@ -8537,7 +8461,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_config_rationale_1",
-      "community": 15,
+      "community": 10,
       "norm_label": "config composition + schema validation smoke tests."
     },
     {
@@ -8647,7 +8571,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "tests_test_masked_vlos_test_real_global_chain_includes_impute_vlos",
-      "community": 107,
+      "community": 10,
       "norm_label": "test_real_global_chain_includes_impute_vlos()"
     },
     {
@@ -8727,7 +8651,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "tests_test_masked_vlos_test_maskedvlos_model_config_composes",
-      "community": 107,
+      "community": 10,
       "norm_label": "test_maskedvlos_model_config_composes()"
     },
     {
@@ -8997,7 +8921,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registries",
-      "community": 4,
+      "community": 96,
       "norm_label": "test_registries.py"
     },
     {
@@ -9017,7 +8941,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_test_registries_test_skeleton_simulator_raises",
-      "community": 4,
+      "community": 96,
       "norm_label": "test_skeleton_simulator_raises()"
     },
     {
@@ -9037,7 +8961,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_test_registries_test_augmentation_registry_builds",
-      "community": 54,
+      "community": 132,
       "norm_label": "test_augmentation_registry_builds()"
     },
     {
@@ -9047,7 +8971,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_registries_test_unknown_simulator_errors",
-      "community": 4,
+      "community": 96,
       "norm_label": "test_unknown_simulator_errors()"
     },
     {
@@ -9057,7 +8981,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "tests_test_registries_test_network_registries_list_available_on_unknown_type",
-      "community": 32,
+      "community": 123,
       "norm_label": "test_network_registries_list_available_on_unknown_type()"
     },
     {
@@ -9067,7 +8991,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "tests_test_registries_test_custom_network_builder_registers",
-      "community": 32,
+      "community": 123,
       "norm_label": "test_custom_network_builder_registers()"
     },
     {
@@ -9077,7 +9001,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registries_rationale_1",
-      "community": 4,
+      "community": 96,
       "norm_label": "registry resolution + skeleton-simulator behavior."
     },
     {
@@ -9177,7 +9101,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_mlp_backbone_forward",
-      "community": 35,
+      "community": 123,
       "norm_label": "test_mlp_backbone_forward()"
     },
     {
@@ -9187,7 +9111,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_feature_transformer_backbone_forward",
-      "community": 35,
+      "community": 123,
       "norm_label": "test_feature_transformer_backbone_forward()"
     },
     {
@@ -9197,7 +9121,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_compose_hybrid",
-      "community": 35,
+      "community": 10,
       "norm_label": "test_compose_hybrid()"
     },
     {
@@ -9267,7 +9191,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "tests_test_stream_summary_rationale_166",
-      "community": 35,
+      "community": 123,
       "norm_label": "the transformer alternative to `mlp` on the flat summary vector: reshapes (n, f)"
     },
     {
@@ -9277,7 +9201,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_streams",
-      "community": 15,
+      "community": 131,
       "norm_label": "test_streams.py"
     },
     {
@@ -9287,7 +9211,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_test_streams_test_stream_config_composes",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_stream_config_composes()"
     },
     {
@@ -9297,7 +9221,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_streams_test_simulator_declares_hierarchy",
-      "community": 15,
+      "community": 131,
       "norm_label": "test_simulator_declares_hierarchy()"
     },
     {
@@ -9307,7 +9231,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "tests_test_streams_test_adapter_derivation_follows_composition_level",
-      "community": 15,
+      "community": 131,
       "norm_label": "test_adapter_derivation_follows_composition_level()"
     },
     {
@@ -9327,7 +9251,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "tests_test_streams_test_per_stream_parameter_standardize_roundtrip",
-      "community": 118,
+      "community": 133,
       "norm_label": "test_per_stream_parameter_standardize_roundtrip()"
     },
     {
@@ -9457,7 +9381,7 @@
       "source_location": "L409",
       "_origin": "ast",
       "id": "tests_test_streams_test_per_stream_parameter_standardize_rejects_non_normal",
-      "community": 118,
+      "community": 133,
       "norm_label": "test_per_stream_parameter_standardize_rejects_non_normal()"
     },
     {
@@ -9487,7 +9411,7 @@
       "source_location": "L466",
       "_origin": "ast",
       "id": "tests_test_streams_test_stream_global_log10_and_nolos_presets_compose",
-      "community": 15,
+      "community": 10,
       "norm_label": "test_stream_global_log10_and_nolos_presets_compose()"
     },
     {
@@ -9497,7 +9421,7 @@
       "source_location": "L489",
       "_origin": "ast",
       "id": "tests_test_streams_test_stream_noerr_and_nolos_variants_compose",
-      "community": 15,
+      "community": 131,
       "norm_label": "test_stream_noerr_and_nolos_variants_compose()"
     },
     {
@@ -9507,7 +9431,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_1",
-      "community": 15,
+      "community": 131,
       "norm_label": "stream-project components: config composition, hierarchy derivation, per-stream"
     },
     {
@@ -9607,7 +9531,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "tests_test_workflow_test_build_networks",
-      "community": 32,
+      "community": 123,
       "norm_label": "test_build_networks()"
     },
     {
@@ -11760,7 +11684,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -12109,7 +12033,7 @@
       "source_location": "L40",
       "weight": 1.0,
       "source": "notebooks_explore",
-      "target": "home_giuseppe_hydrabflow_notebooks_explore",
+      "target": "export_data_vgiusepp_hydrabflow_notebooks_explore",
       "confidence_score": 1.0
     },
     {
@@ -13730,36 +13654,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L30",
-      "weight": 1.0,
-      "source": "scripts_train_ibata_wdisk_beta3",
-      "target": "scripts_train_ibata_wdisk_beta3_data_dir",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_train_ibata_wdisk_beta3",
-      "target": "scripts_train_ibata_wdisk_beta3_sh__entry",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/train_ibata_wdisk_beta3.sh",
-      "source_location": "L29",
-      "weight": 1.0,
-      "source": "scripts_train_ibata_wdisk_beta3",
-      "target": "scripts_train_ibata_wdisk_beta3_sim",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/training_eval_agama_1e6.sh",
@@ -14095,7 +13989,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L191",
+      "source_location": "L167",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_tune_run_tuning",
       "target": "src_hydrabflow_augmentation_registry_build_augmentations"
@@ -16664,7 +16558,7 @@
       "source_location": "L41",
       "weight": 1.0,
       "source": "src_hydrabflow_networks_fusion_maskedfusionnetwork",
-      "target": "src_hydrabflow_networks_fusion_py_summarynetwork",
+      "target": "summarynetwork",
       "confidence_score": 1.0
     },
     {
@@ -16675,6 +16569,16 @@
       "weight": 1.0,
       "source": "src_hydrabflow_networks_fusion_rationale_42",
       "target": "src_hydrabflow_networks_fusion_maskedfusionnetwork",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/networks/masked_set_transformer.py",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer",
+      "target": "summarynetwork",
       "confidence_score": 1.0
     },
     {
@@ -16896,16 +16800,6 @@
       "weight": 1.0,
       "source": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer",
       "target": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer_init",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "inherits",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/networks/masked_set_transformer.py",
-      "source_location": "L45",
-      "weight": 1.0,
-      "source": "src_hydrabflow_networks_masked_set_transformer_maskedsettransformer",
-      "target": "src_hydrabflow_networks_masked_set_transformer_py_summarynetwork",
       "confidence_score": 1.0
     },
     {
@@ -17342,7 +17236,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L185",
+      "source_location": "L161",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_tune_run_tuning",
       "target": "src_hydrabflow_pipeline_adapter_select_adapter_keys"
@@ -19895,17 +19789,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L122",
-      "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_tune_objective",
-      "target": "src_hydrabflow_pipeline_train_restore_best_weights"
-    },
-    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/train.py",
@@ -20033,9 +19916,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L68",
+      "source_location": "L64",
       "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_tune_rationale_68",
+      "source": "src_hydrabflow_pipeline_tune_rationale_64",
       "target": "src_hydrabflow_pipeline_tune_trial_dir",
       "confidence_score": 1.0
     },
@@ -20054,9 +19937,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L73",
+      "source_location": "L69",
       "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_tune_rationale_73",
+      "source": "src_hydrabflow_pipeline_tune_rationale_69",
       "target": "src_hydrabflow_pipeline_tune_save_shared_preprocessing",
       "confidence_score": 1.0
     },
@@ -20088,7 +19971,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/pipeline/tune.py",
-      "source_location": "L121",
+      "source_location": "L107",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_tune_objective",
       "target": "src_hydrabflow_utils_oom_run_with_oom_backoff"
@@ -20243,6 +20126,17 @@
       "target": "src_hydrabflow_preprocessing_init"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/preprocessing/base.py",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_hydrabflow_preprocessing_base",
+      "target": "abc",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydraflow/preprocessing/base.py",
@@ -20261,17 +20155,6 @@
       "confidence_score": 1.0,
       "source": "src_hydrabflow_preprocessing_base",
       "target": "src_hydrabflow_preprocessing_base_preprocessstep"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/preprocessing/base.py",
-      "source_location": "L17",
-      "weight": 1.0,
-      "source": "src_hydrabflow_preprocessing_base",
-      "target": "src_hydrabflow_preprocessing_base_py_abc",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -20326,6 +20209,16 @@
       "target": "src_hydrabflow_preprocessing_base_preprocessstep"
     },
     {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/preprocessing/base.py",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "src_hydrabflow_preprocessing_base_preprocessstep",
+      "target": "abc",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydraflow/preprocessing/base.py",
@@ -20374,16 +20267,6 @@
       "confidence_score": 1.0,
       "source": "src_hydrabflow_preprocessing_base_preprocessstep",
       "target": "src_hydrabflow_preprocessing_base_preprocessstep_transform"
-    },
-    {
-      "relation": "inherits",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/preprocessing/base.py",
-      "source_location": "L25",
-      "weight": 1.0,
-      "source": "src_hydrabflow_preprocessing_base_preprocessstep",
-      "target": "src_hydrabflow_preprocessing_base_py_abc",
-      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -20534,6 +20417,27 @@
       "source": "src_hydrabflow_preprocessing_streams_streamobservationstats",
       "target": "src_hydrabflow_preprocessing_base_preprocessstep",
       "confidence_score": 0.5
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/base.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_base",
+      "target": "abc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/base.py",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_base_basesimulator",
+      "target": "abc",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -22353,17 +22257,6 @@
       "target": "src_hydrabflow_simulators_base_basesimulator"
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L18",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base",
-      "target": "src_hydrabflow_simulators_base_py_abc",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydraflow/simulators/base.py",
@@ -22474,16 +22367,6 @@
       "target": "src_hydrabflow_simulators_base_basesimulator_simulate"
     },
     {
-      "relation": "inherits",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L24",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_basesimulator",
-      "target": "src_hydrabflow_simulators_base_py_abc",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydraflow/simulators/base.py",
@@ -22518,7 +22401,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L448",
+      "source_location": "L446",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_base_basesimulator",
@@ -22934,7 +22817,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L448",
+      "source_location": "L446",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
@@ -22944,7 +22827,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L384",
+      "source_location": "L382",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
@@ -22954,7 +22837,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L135",
+      "source_location": "L134",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_halo_params",
@@ -22964,7 +22847,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L150",
+      "source_location": "L149",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_host_potential",
@@ -22974,7 +22857,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L254",
+      "source_location": "L252",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
@@ -22984,7 +22867,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L214",
+      "source_location": "L212",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
@@ -22994,7 +22877,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg",
@@ -23004,7 +22887,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L184",
+      "source_location": "L182",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
@@ -23014,7 +22897,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L405",
+      "source_location": "L403",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_simulate_one",
@@ -23024,7 +22907,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L293",
+      "source_location": "L291",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_spray_stream",
@@ -23034,7 +22917,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L172",
+      "source_location": "L170",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
@@ -23044,7 +22927,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L122",
+      "source_location": "L121",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_thick_disk_params",
@@ -23054,7 +22937,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L111",
+      "source_location": "L110",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_thin_disk_params",
@@ -23064,7 +22947,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L340",
+      "source_location": "L338",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc",
@@ -23074,7 +22957,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L347",
+      "source_location": "L345",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
@@ -23116,7 +22999,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L412",
+      "source_location": "L410",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "target": "src_hydrabflow_simulators_stream_agama_agama",
@@ -23127,7 +23010,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L358",
+      "source_location": "L356",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
       "target": "src_hydrabflow_simulators_stream_agama_agama",
@@ -23138,10 +23021,32 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L159",
+      "source_location": "L158",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_host_potential",
       "target": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama.py",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
+      "target": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama.py",
+      "source_location": "L164",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_host_potential",
+      "target": "src_hydrabflow_simulators_stream_agama_thin_disk_params",
       "confidence_score": 1.0
     },
     {
@@ -23152,7 +23057,7 @@
       "source_location": "L175",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
-      "target": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg",
+      "target": "src_hydrabflow_simulators_stream_agama_thin_disk_params",
       "confidence_score": 1.0
     },
     {
@@ -23163,7 +23068,7 @@
       "source_location": "L166",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_host_potential",
-      "target": "src_hydrabflow_simulators_stream_agama_thin_disk_params",
+      "target": "src_hydrabflow_simulators_stream_agama_thick_disk_params",
       "confidence_score": 1.0
     },
     {
@@ -23174,17 +23079,6 @@
       "source_location": "L177",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
-      "target": "src_hydrabflow_simulators_stream_agama_thin_disk_params",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L168",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_host_potential",
       "target": "src_hydrabflow_simulators_stream_agama_thick_disk_params",
       "confidence_score": 1.0
     },
@@ -23193,18 +23087,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L179",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
-      "target": "src_hydrabflow_simulators_stream_agama_thick_disk_params",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L165",
+      "source_location": "L163",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_host_potential",
       "target": "src_hydrabflow_simulators_stream_agama_halo_params",
@@ -23214,9 +23097,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L151",
+      "source_location": "L150",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_151",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_150",
       "target": "src_hydrabflow_simulators_stream_agama_host_potential",
       "confidence_score": 1.0
     },
@@ -23236,7 +23119,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L419",
+      "source_location": "L417",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "target": "src_hydrabflow_simulators_stream_agama_host_potential",
@@ -23247,7 +23130,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L363",
+      "source_location": "L361",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
       "target": "src_hydrabflow_simulators_stream_agama_host_potential",
@@ -23258,7 +23141,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L400",
+      "source_location": "L398",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
       "target": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
@@ -23268,9 +23151,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L173",
+      "source_location": "L171",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_173",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_171",
       "target": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential",
       "confidence_score": 1.0
     },
@@ -23278,9 +23161,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L185",
+      "source_location": "L183",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_185",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_183",
       "target": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
       "confidence_score": 1.0
     },
@@ -23289,7 +23172,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L184",
+      "source_location": "L182",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23300,7 +23183,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L310",
+      "source_location": "L308",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_spray_stream",
       "target": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
@@ -23311,7 +23194,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L635",
+      "source_location": "L629",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23322,7 +23205,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L477",
+      "source_location": "L475",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_kpc",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23333,7 +23216,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L489",
+      "source_location": "L487",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_sigma_vc",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23344,7 +23227,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L503",
+      "source_location": "L501",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_vc_kms",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23355,7 +23238,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L701",
+      "source_location": "L695",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23366,7 +23249,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L554",
+      "source_location": "L548",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rho_z_kpc",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23377,7 +23260,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L780",
+      "source_location": "L774",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23388,7 +23271,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L723",
+      "source_location": "L717",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_prior",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23399,7 +23282,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L733",
+      "source_location": "L727",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23410,7 +23293,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L677",
+      "source_location": "L671",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23421,7 +23304,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L547",
+      "source_location": "L541",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vterm_l_deg",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23432,7 +23315,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L384",
+      "source_location": "L382",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23443,7 +23326,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L254",
+      "source_location": "L252",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23454,7 +23337,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L214",
+      "source_location": "L212",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23465,7 +23348,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L405",
+      "source_location": "L403",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23476,7 +23359,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L293",
+      "source_location": "L291",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_spray_stream",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23487,7 +23370,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L340",
+      "source_location": "L338",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_vcirc",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23498,7 +23381,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L347",
+      "source_location": "L345",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -23508,31 +23391,10 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L218",
+      "source_location": "L216",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_218",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_216",
       "target": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L314",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_spray_stream",
-      "target": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L258",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_258",
-      "target": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
       "confidence_score": 1.0
     },
     {
@@ -23543,6 +23405,27 @@
       "source_location": "L312",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_spray_stream",
+      "target": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama.py",
+      "source_location": "L256",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_256",
+      "target": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama.py",
+      "source_location": "L310",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_spray_stream",
       "target": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
       "confidence_score": 1.0
     },
@@ -23550,9 +23433,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L298",
+      "source_location": "L296",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_298",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_296",
       "target": "src_hydrabflow_simulators_stream_agama_spray_stream",
       "confidence_score": 1.0
     },
@@ -23561,7 +23444,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L432",
+      "source_location": "L430",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "target": "src_hydrabflow_simulators_stream_agama_spray_stream",
@@ -23571,9 +23454,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L341",
+      "source_location": "L339",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_341",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_339",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc",
       "confidence_score": 1.0
     },
@@ -23593,7 +23476,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L444",
+      "source_location": "L442",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc",
@@ -23604,7 +23487,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L363",
+      "source_location": "L361",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc",
@@ -23615,7 +23498,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L694",
+      "source_location": "L688",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
@@ -23625,22 +23508,11 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L350",
+      "source_location": "L348",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_350",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_348",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L398",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
-      "target": "src_hydrabflow_simulators_stream_common_surface_density"
     },
     {
       "relation": "calls",
@@ -23651,6 +23523,17 @@
       "source_location": "L396",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
+      "target": "src_hydrabflow_simulators_stream_common_surface_density"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/hydrabflow/simulators/stream_agama.py",
+      "source_location": "L394",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
       "target": "src_hydrabflow_simulators_stream_common_terminal_velocity"
     },
     {
@@ -23659,7 +23542,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L401",
+      "source_location": "L399",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
       "target": "src_hydrabflow_simulators_stream_common_vertical_density_profile"
@@ -23668,9 +23551,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L387",
+      "source_location": "L385",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_387",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_385",
       "target": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
       "confidence_score": 1.0
     },
@@ -23679,7 +23562,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L443",
+      "source_location": "L441",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "target": "src_hydrabflow_simulators_stream_agama_ancillary_observables",
@@ -23690,7 +23573,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L755",
+      "source_location": "L749",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_agama_simulate_one",
@@ -23700,9 +23583,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L410",
+      "source_location": "L408",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_410",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_408",
       "target": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "confidence_score": 1.0
     },
@@ -23710,7 +23593,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L533",
+      "source_location": "L527",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_names",
@@ -23720,7 +23603,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L568",
+      "source_location": "L562",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_observable_keys",
@@ -23730,7 +23613,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L560",
+      "source_location": "L554",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_spec",
@@ -23740,7 +23623,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L576",
+      "source_location": "L570",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
@@ -23750,7 +23633,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L635",
+      "source_location": "L629",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
@@ -23760,7 +23643,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L599",
+      "source_location": "L593",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_context_keys",
@@ -23770,7 +23653,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L590",
+      "source_location": "L584",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_global_parameter_names",
@@ -23780,7 +23663,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L594",
+      "source_location": "L588",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_local_parameter_names",
@@ -23790,7 +23673,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L464",
+      "source_location": "L462",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_n_particles",
@@ -23800,7 +23683,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L468",
+      "source_location": "L466",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_n_workers",
@@ -23810,7 +23693,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L477",
+      "source_location": "L475",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_kpc",
@@ -23820,7 +23703,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L472",
+      "source_location": "L470",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_split",
@@ -23830,7 +23713,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L489",
+      "source_location": "L487",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_sigma_vc",
@@ -23840,7 +23723,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L503",
+      "source_location": "L501",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_vc_kms",
@@ -23850,7 +23733,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L603",
+      "source_location": "L597",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_observable_keys",
@@ -23860,7 +23743,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L586",
+      "source_location": "L580",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_parameter_names",
@@ -23870,7 +23753,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L517",
+      "source_location": "L515",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_pot_cfg",
@@ -23880,7 +23763,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L607",
+      "source_location": "L601",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_prior_spec_global",
@@ -23890,7 +23773,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L612",
+      "source_location": "L606",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_prior_spec_local",
@@ -23900,7 +23783,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L452",
+      "source_location": "L450",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_priors_global",
@@ -23910,7 +23793,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L456",
+      "source_location": "L454",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_priors_local",
@@ -23920,7 +23803,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L701",
+      "source_location": "L695",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
@@ -23930,7 +23813,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L554",
+      "source_location": "L548",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rho_z_kpc",
@@ -23940,7 +23823,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L780",
+      "source_location": "L774",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
@@ -23950,7 +23833,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L723",
+      "source_location": "L717",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_prior",
@@ -23960,7 +23843,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L733",
+      "source_location": "L727",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
@@ -23970,7 +23853,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L460",
+      "source_location": "L458",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams",
@@ -23980,7 +23863,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L677",
+      "source_location": "L671",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
@@ -23990,7 +23873,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L624",
+      "source_location": "L618",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_rejection",
@@ -24000,7 +23883,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L547",
+      "source_location": "L541",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vterm_l_deg",
@@ -24010,9 +23893,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L449",
+      "source_location": "L447",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_449",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_447",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "confidence_score": 1.0
     },
@@ -24042,7 +23925,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_ancillary_observables.py",
-      "source_location": "L149",
+      "source_location": "L148",
       "weight": 1.0,
       "source": "tests_test_ancillary_observables_test_ibata_config_computes_ancillary_observables",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator"
@@ -24063,7 +23946,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L453",
+      "source_location": "L451",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_priors_global",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
@@ -24074,7 +23957,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L457",
+      "source_location": "L455",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_priors_local",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
@@ -24085,7 +23968,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L461",
+      "source_location": "L459",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
@@ -24095,9 +23978,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L473",
+      "source_location": "L471",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_473",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_471",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_split",
       "confidence_score": 1.0
     },
@@ -24107,7 +23990,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L485",
+      "source_location": "L483",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_kpc",
       "target": "src_hydrabflow_simulators_stream_common_extended_rotation_curve"
@@ -24116,9 +23999,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L478",
+      "source_location": "L476",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_478",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_476",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_r_kpc",
       "confidence_score": 1.0
     },
@@ -24128,7 +24011,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L499",
+      "source_location": "L497",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_sigma_vc",
       "target": "src_hydrabflow_simulators_stream_common_extended_rotation_curve"
@@ -24137,9 +24020,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L490",
+      "source_location": "L488",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_490",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_488",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_sigma_vc",
       "confidence_score": 1.0
     },
@@ -24149,7 +24032,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L509",
+      "source_location": "L507",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_vc_kms",
       "target": "src_hydrabflow_simulators_stream_common_extended_rotation_curve"
@@ -24158,9 +24041,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L504",
+      "source_location": "L502",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_504",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_502",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_obs_vc_kms",
       "confidence_score": 1.0
     },
@@ -24168,9 +24051,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L518",
+      "source_location": "L516",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_518",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_516",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_pot_cfg",
       "confidence_score": 1.0
     },
@@ -24179,7 +24062,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L539",
+      "source_location": "L533",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_names",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
@@ -24189,9 +24072,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L534",
+      "source_location": "L528",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_534",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_528",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_names",
       "confidence_score": 1.0
     },
@@ -24199,10 +24082,20 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L548",
+      "source_location": "L542",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_548",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_542",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vterm_l_deg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama.py",
+      "source_location": "L549",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_549",
+      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rho_z_kpc",
       "confidence_score": 1.0
     },
     {
@@ -24212,16 +24105,6 @@
       "source_location": "L555",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rationale_555",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rho_z_kpc",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L561",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_561",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_spec",
       "confidence_score": 1.0
     },
@@ -24229,9 +24112,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L569",
+      "source_location": "L563",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_569",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_563",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_ancillary_observable_keys",
       "confidence_score": 1.0
     },
@@ -24240,7 +24123,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L633",
+      "source_location": "L627",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_rejection",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_as_dict",
@@ -24252,7 +24135,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L591",
+      "source_location": "L585",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_global_parameter_names",
       "target": "src_hydrabflow_simulators_stream_common_inferred_names"
@@ -24263,7 +24146,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L596",
+      "source_location": "L590",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_local_parameter_names",
       "target": "src_hydrabflow_simulators_stream_common_inferred_names"
@@ -24272,9 +24155,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L608",
+      "source_location": "L602",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_608",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_602",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_prior_spec_global",
       "confidence_score": 1.0
     },
@@ -24282,9 +24165,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L613",
+      "source_location": "L607",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_613",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_607",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_prior_spec_local",
       "confidence_score": 1.0
     },
@@ -24292,9 +24175,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L625",
+      "source_location": "L619",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_625",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_619",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_rejection",
       "confidence_score": 1.0
     },
@@ -24304,7 +24187,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L644",
+      "source_location": "L638",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
       "target": "src_hydrabflow_simulators_stream_common_extended_rotation_curve"
@@ -24314,7 +24197,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L682",
+      "source_location": "L676",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
@@ -24324,9 +24207,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L636",
+      "source_location": "L630",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_636",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_630",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_build_accept_bands",
       "confidence_score": 1.0
     },
@@ -24335,7 +24218,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L710",
+      "source_location": "L704",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
@@ -24345,9 +24228,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L678",
+      "source_location": "L672",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_678",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_672",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_vcirc_accept_mask",
       "confidence_score": 1.0
     },
@@ -24357,7 +24240,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L716",
+      "source_location": "L710",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
       "target": "runtimeerror"
@@ -24367,7 +24250,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L795",
+      "source_location": "L789",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
@@ -24378,7 +24261,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L731",
+      "source_location": "L725",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_prior",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
@@ -24388,9 +24271,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L702",
+      "source_location": "L696",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_702",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_696",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
       "confidence_score": 1.0
     },
@@ -24399,7 +24282,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L806",
+      "source_location": "L800",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
@@ -24411,7 +24294,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L765",
+      "source_location": "L759",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_common_sky_projection"
@@ -24420,9 +24303,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L781",
+      "source_location": "L775",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_781",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_775",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "confidence_score": 1.0
     },
@@ -26137,7 +26020,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_ancillary_observables.py",
-      "source_location": "L138",
+      "source_location": "L137",
       "weight": 1.0,
       "source": "tests_test_ancillary_observables",
       "target": "tests_test_ancillary_observables_test_ibata_config_computes_ancillary_observables",
@@ -26251,7 +26134,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_ancillary_observables.py",
-      "source_location": "L139",
+      "source_location": "L138",
       "weight": 1.0,
       "source": "tests_test_ancillary_observables_test_ibata_config_computes_ancillary_observables",
       "target": "tests_test_ancillary_observables_base_params",
@@ -29997,5 +29880,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f4879d4e825a46d0ebec707809d6b1e3626e456d"
+  "built_at_commit": "bb618d71263f1d5451543bb1c3740145f3bf2dfd"
 }
