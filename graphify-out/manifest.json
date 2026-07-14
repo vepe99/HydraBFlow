@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1784013795.910488,
-    "ast_hash": "a7e60a3a7eeaae30768a458ea376e7d6",
+    "mtime": 1784015513.952615,
+    "ast_hash": "9ffacf067d4238867109e077a18614cb",
     "semantic_hash": ""
   },
   "README.md": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1784013714.3291712,
-    "ast_hash": "993f53c665fd8bbdb079cd49bbf40b23",
+    "mtime": 1784015456.3694367,
+    "ast_hash": "835eb01104e75933e2e5ac4ff9d97753",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1784013184.685531,
-    "ast_hash": "5f003bd766add3000bfa78d0af174e97",
+    "mtime": 1784014506.2480376,
+    "ast_hash": "d9cf63837817d9cab5679cb88c2d0211",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_common.py": {
@@ -600,8 +600,8 @@
     "semantic_hash": ""
   },
   "scripts/corner_parameters.py": {
-    "mtime": 1783502976.2296865,
-    "ast_hash": "f4ef958ff9466d5a7c21edcd20cd7011",
+    "mtime": 1784014739.9797661,
+    "ast_hash": "a938d075b160f15c92d24aff881fcd4d",
     "semantic_hash": ""
   },
   "scripts/extend_vcirc_huang.py": {
@@ -1050,13 +1050,28 @@
     "semantic_hash": ""
   },
   "tests/test_m200c_halo.py": {
-    "mtime": 1784013235.5704181,
-    "ast_hash": "ee1f9a9a5fe6604e6b16cc11e8552158",
+    "mtime": 1784015296.4614882,
+    "ast_hash": "7bbb94bb483cfad3f6d1703471c79f47",
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_ibata_onedisk_beta3_m200c.yaml": {
     "mtime": 1784013206.345331,
     "ast_hash": "045df57600d537542a5f555c9ccd53e2",
+    "semantic_hash": ""
+  },
+  "scripts/create_ibata_m200c_dataset.sh": {
+    "mtime": 1784014882.2491362,
+    "ast_hash": "5ea740a28137b741abbf3070324fa5f9",
+    "semantic_hash": ""
+  },
+  "scripts/train_ibata_m200c.sh": {
+    "mtime": 1784014903.4268177,
+    "ast_hash": "feef4d9748602f01af366b04d8500e26",
+    "semantic_hash": ""
+  },
+  "scripts/tune_ibata_m200c.sh": {
+    "mtime": 1784014950.8773696,
+    "ast_hash": "20ba63bf218b2a8e330beabea08c032e",
     "semantic_hash": ""
   }
 }

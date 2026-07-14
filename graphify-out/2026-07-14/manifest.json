@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1783847597.5193062,
-    "ast_hash": "604be9e1210f569dff197055f3ede72f",
+    "mtime": 1784013795.910488,
+    "ast_hash": "a7e60a3a7eeaae30768a458ea376e7d6",
     "semantic_hash": ""
   },
   "README.md": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1783853949.1260386,
-    "ast_hash": "fc373bd1b7fcce082b8ea8c7eb49b1a9",
+    "mtime": 1784013714.3291712,
+    "ast_hash": "993f53c665fd8bbdb079cd49bbf40b23",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -415,13 +415,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1784008681.6982,
-    "ast_hash": "c9166d89b18c317784b49e8986e1488b",
+    "mtime": 1784013184.685531,
+    "ast_hash": "5f003bd766add3000bfa78d0af174e97",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_common.py": {
-    "mtime": 1783847597.5423071,
-    "ast_hash": "44414b4747d3b196ef0ad5c405fe1e5a",
+    "mtime": 1784013140.123902,
+    "ast_hash": "c6b4fcad7fbd17eaa5af20d36bbec136",
     "semantic_hash": ""
   },
   "tests/test_streams.py": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "tests/test_ancillary_observables.py": {
-    "mtime": 1783847597.5693083,
-    "ast_hash": "a881b9aa64343d8a59a9b5b6fa21b68c",
+    "mtime": 1784013634.1089354,
+    "ast_hash": "89ba119f389c41c763ec97248cadf655",
     "semantic_hash": ""
   },
   "conf/adapter/stream_ibata.yaml": {
@@ -1000,8 +1000,8 @@
     "semantic_hash": ""
   },
   "scripts/create_ibata_onedisk_beta3_dataset.sh": {
-    "mtime": 1784008823.0964983,
-    "ast_hash": "b2af6e42b82280f172fd44ff8bd1bb3e",
+    "mtime": 1784010774.093261,
+    "ast_hash": "dd2bb5e0a46b8089d0dba210b4daab75",
     "semantic_hash": ""
   },
   "scripts/optuna_results.py": {
@@ -1047,6 +1047,16 @@
   "src/hydrabflow/utils/quiet.py": {
     "mtime": 1784008638.7392857,
     "ast_hash": "0d5688bd90a7618457138be2916b3473",
+    "semantic_hash": ""
+  },
+  "tests/test_m200c_halo.py": {
+    "mtime": 1784013235.5704181,
+    "ast_hash": "ee1f9a9a5fe6604e6b16cc11e8552158",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_agama_ibata_onedisk_beta3_m200c.yaml": {
+    "mtime": 1784013206.345331,
+    "ast_hash": "045df57600d537542a5f555c9ccd53e2",
     "semantic_hash": ""
   }
 }
