@@ -1,138 +1,135 @@
-# Graph Report - HydraBFlow  (2026-07-13)
+# Graph Report - HydraBFlow  (2026-07-14)
 
 ## Corpus Check
-- 112 files · ~392,469 words
+- 114 files · ~392,384 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1218 nodes · 1756 edges · 150 communities (102 shown, 48 thin omitted)
-- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 264 edges (avg confidence: 0.75)
+- 1238 nodes · 1776 edges · 147 communities (100 shown, 47 thin omitted)
+- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 267 edges (avg confidence: 0.75)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ea889942`
+- Built from commit: `7cdda9d0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Preprocessing Pipeline & Steps|Preprocessing Pipeline & Steps]]
-- [[_COMMUNITY_Eval  Checkpoint Stages|Eval / Checkpoint Stages]]
-- [[_COMMUNITY_Design Principles & Configs|Design Principles & Configs]]
-- [[_COMMUNITY_Augmentation Registry & Tests|Augmentation Registry & Tests]]
-- [[_COMMUNITY_Simulate Stage & Registries|Simulate Stage & Registries]]
-- [[_COMMUNITY_Example Simulators (SkeletonTwoMoons)|Example Simulators (Skeleton/TwoMoons)]]
-- [[_COMMUNITY_Config Schemas|Config Schemas]]
-- [[_COMMUNITY_Network Factory & Adapter|Network Factory & Adapter]]
-- [[_COMMUNITY_Graphify Tooling|Graphify Tooling]]
-- [[_COMMUNITY_Config Composition Tests|Config Composition Tests]]
-- [[_COMMUNITY_Community 11|Community 11]]
-- [[_COMMUNITY_Dataset IO|Dataset IO]]
-- [[_COMMUNITY_Hydra App Boilerplate|Hydra App Boilerplate]]
-- [[_COMMUNITY_JAX Backend Pin|JAX Backend Pin]]
-- [[_COMMUNITY_Logging Helper|Logging Helper]]
-- [[_COMMUNITY_Augmentation Package Init|Augmentation Package Init]]
-- [[_COMMUNITY_Package Root Init|Package Root Init]]
-- [[_COMMUNITY_Marimo Notebook|Marimo Notebook]]
-- [[_COMMUNITY_Pipeline Package Init|Pipeline Package Init]]
-- [[_COMMUNITY_Preprocessing Package Init|Preprocessing Package Init]]
-- [[_COMMUNITY_Simulators Package Init|Simulators Package Init]]
-- [[_COMMUNITY_PackageInit cluster 24|Package/Init cluster 24]]
-- [[_COMMUNITY_Community 31|Community 31]]
-- [[_COMMUNITY_Community 32|Community 32]]
-- [[_COMMUNITY_Community 33|Community 33]]
-- [[_COMMUNITY_Community 34|Community 34]]
-- [[_COMMUNITY_Community 35|Community 35]]
-- [[_COMMUNITY_Community 36|Community 36]]
-- [[_COMMUNITY_Community 37|Community 37]]
-- [[_COMMUNITY_streams.py|streams.py]]
-- [[_COMMUNITY_Community 39|Community 39]]
-- [[_COMMUNITY_Community 40|Community 40]]
-- [[_COMMUNITY_Community 41|Community 41]]
-- [[_COMMUNITY_Community 42|Community 42]]
-- [[_COMMUNITY_Community 43|Community 43]]
-- [[_COMMUNITY_Community 44|Community 44]]
-- [[_COMMUNITY_Part B — Support a file format other than `.npz`|Part B — Support a file format other than `.npz`]]
-- [[_COMMUNITY_MaskedFusionNetwork|MaskedFusionNetwork]]
-- [[_COMMUNITY_compositional.py|compositional.py]]
-- [[_COMMUNITY_Community 56|Community 56]]
-- [[_COMMUNITY_Community 57|Community 57]]
-- [[_COMMUNITY_run_tuning|run_tuning]]
-- [[_COMMUNITY_build_workflow|build_workflow]]
-- [[_COMMUNITY_MaskedFusionNetwork|MaskedFusionNetwork]]
-- [[_COMMUNITY_Run stages (5 entry points)|Run stages (5 entry points)]]
-- [[_COMMUNITY_hooks|hooks]]
-- [[_COMMUNITY_PreToolUse|PreToolUse]]
-- [[_COMMUNITY_permissions|permissions]]
-- [[_COMMUNITY_allow|allow]]
-- [[_COMMUNITY_AST Structural Extraction|AST Structural Extraction]]
-- [[_COMMUNITY_EXTRACTEDINFERREDAMBIGUOUS Audit Trail|EXTRACTED/INFERRED/AMBIGUOUS Audit Trail]]
-- [[_COMMUNITY_Community Detection|Community Detection]]
-- [[_COMMUNITY_Detect Files Step|Detect Files Step]]
-- [[_COMMUNITY_Existing-Graph Fast Path|Existing-Graph Fast Path]]
-- [[_COMMUNITY_Gemini Extraction Backend|Gemini Extraction Backend]]
-- [[_COMMUNITY_God Nodes|God Nodes]]
-- [[_COMMUNITY_graph.json Output|graph.json Output]]
-- [[_COMMUNITY_GRAPH_REPORT.md Output|GRAPH_REPORT.md Output]]
-- [[_COMMUNITY_Python Interpreter Detection|Python Interpreter Detection]]
-- [[_COMMUNITY_Knowledge Graph|Knowledge Graph]]
-- [[_COMMUNITY_Obsidian Vault Export|Obsidian Vault Export]]
-- [[_COMMUNITY_Semantic Extraction Cache|Semantic Extraction Cache]]
-- [[_COMMUNITY_Semantic LLM Extraction|Semantic LLM Extraction]]
-- [[_COMMUNITY_Parallel Subagent Dispatch|Parallel Subagent Dispatch]]
-- [[_COMMUNITY_hydrabflow|hydrabflow]]
-- [[_COMMUNITY_BaseSimulator|BaseSimulator]]
-- [[_COMMUNITY_test_streams.py|test_streams.py]]
-- [[_COMMUNITY_reporting.py|reporting.py]]
-- [[_COMMUNITY_Stream project (compositional score modeling)|Stream project (compositional score modeling)]]
-- [[_COMMUNITY_PerStreamParameterStandardize|PerStreamParameterStandardize]]
-- [[_COMMUNITY_load_approximator|load_approximator]]
-- [[_COMMUNITY_Running a full pipeline with the Two Moons simulator|Running a full pipeline with the Two Moons simulator]]
-- [[_COMMUNITY__load_clean|_load_clean]]
-- [[_COMMUNITY_ppc_prior_predictive.py|ppc_prior_predictive.py]]
-- [[_COMMUNITY_corner_parameters.py|corner_parameters.py]]
-- [[_COMMUNITY_StreamObservationStats|StreamObservationStats]]
-- [[_COMMUNITY_test_streams.py|test_streams.py]]
-- [[_COMMUNITY_2. The four commands (full run)|2. The four commands (full run)]]
-- [[_COMMUNITY_compose_cfg|compose_cfg]]
-- [[_COMMUNITY__vcirc_worker|_vcirc_worker]]
-- [[_COMMUNITY_create_rnbody_huang_dataset.sh|create_rnbody_huang_dataset.sh]]
-- [[_COMMUNITY_training_eval_missing_vlos_ablation.sh|training_eval_missing_vlos_ablation.sh]]
-- [[_COMMUNITY_training_eval_rnbody_huand_dataset.sh|training_eval_rnbody_huand_dataset.sh]]
-- [[_COMMUNITY_ndarray|ndarray]]
-- [[_COMMUNITY_stream_agama.py|stream_agama.py]]
-- [[_COMMUNITY_stream_common.py|stream_common.py]]
-- [[_COMMUNITY_assetsgaia — portable static inputs for the stream project|assets/gaia — portable static inputs for the stream project]]
-- [[_COMMUNITY_StreamObservationStats|StreamObservationStats]]
-- [[_COMMUNITY_extended_rotation_curve|extended_rotation_curve]]
-- [[_COMMUNITY_compose|compose]]
-- [[_COMMUNITY_PerStreamParameterStandardize|PerStreamParameterStandardize]]
-- [[_COMMUNITY_prior_score_from_spec|prior_score_from_spec]]
-- [[_COMMUNITY_test_config.py|test_config.py]]
-- [[_COMMUNITY_get_run_dir|get_run_dir]]
-- [[_COMMUNITY_prior_score_from_kde|prior_score_from_kde]]
-- [[_COMMUNITY_eval_rnbody_huand_dataset_kde_prior.sh|eval_rnbody_huand_dataset_kde_prior.sh]]
-- [[_COMMUNITY_training_eval_agama_1e6.sh|training_eval_agama_1e6.sh]]
-- [[_COMMUNITY_training_eval_rnbody_huand_dataset copy.sh|training_eval_rnbody_huand_dataset copy.sh]]
-- [[_COMMUNITY_PerStreamParameterStandardize|PerStreamParameterStandardize]]
-- [[_COMMUNITY_load_approximator|load_approximator]]
-- [[_COMMUNITY_prior_score_from_spec|prior_score_from_spec]]
-- [[_COMMUNITY_MaskVcircRadii|MaskVcircRadii]]
-- [[_COMMUNITY_compose_cfg|compose_cfg]]
-- [[_COMMUNITY_ppc_ancillary_observables.py|ppc_ancillary_observables.py]]
-- [[_COMMUNITY__spray_stream|_spray_stream]]
-- [[_COMMUNITY_test_config.py|test_config.py]]
-- [[_COMMUNITY_test_workflow.py|test_workflow.py]]
-- [[_COMMUNITY_inferred_names|inferred_names]]
-- [[_COMMUNITY_create_ibata_dataset.sh|create_ibata_dataset.sh]]
-- [[_COMMUNITY_train_ibata_sumstats.sh|train_ibata_sumstats.sh]]
-- [[_COMMUNITY_tune_ibata_sumstats.sh|tune_ibata_sumstats.sh]]
-- [[_COMMUNITY_main|main]]
-- [[_COMMUNITY_4. Adding a SummaryNetwork that isn't shipped|4. Adding a SummaryNetwork that isn't shipped]]
-- [[_COMMUNITY_5. Adding an InferenceNetwork that isn't shipped|5. Adding an InferenceNetwork that isn't shipped]]
-- [[_COMMUNITY_apply_bayesflow_patches|apply_bayesflow_patches]]
-- [[_COMMUNITY_AttachObservedVterm|AttachObservedVterm]]
-- [[_COMMUNITY_MaskVcircRadii|MaskVcircRadii]]
-- [[_COMMUNITY_create_ibata_onedisk_beta3_dataset.sh|create_ibata_onedisk_beta3_dataset.sh]]
+- Preprocessing Pipeline & Steps
+- Eval / Checkpoint Stages
+- Design Principles & Configs
+- Augmentation Registry & Tests
+- Simulate Stage & Registries
+- Example Simulators (Skeleton/TwoMoons)
+- Config Schemas
+- Network Factory & Adapter
+- Graphify Tooling
+- Config Composition Tests
+- Community 11
+- Dataset IO
+- Hydra App Boilerplate
+- JAX Backend Pin
+- Logging Helper
+- Augmentation Package Init
+- Package Root Init
+- Marimo Notebook
+- Pipeline Package Init
+- Preprocessing Package Init
+- Simulators Package Init
+- Package/Init cluster 24
+- Community 31
+- Community 32
+- Community 33
+- Community 34
+- Community 35
+- Community 36
+- Community 37
+- streams.py
+- Community 39
+- Community 40
+- Community 41
+- Community 42
+- Community 43
+- Community 44
+- Part B — Support a file format other than `.npz`
+- MaskedFusionNetwork
+- compositional.py
+- Community 56
+- Community 57
+- run_tuning
+- build_workflow
+- MaskedFusionNetwork
+- Run stages (5 entry points)
+- hooks
+- PreToolUse
+- permissions
+- allow
+- AST Structural Extraction
+- EXTRACTED/INFERRED/AMBIGUOUS Audit Trail
+- Community Detection
+- Detect Files Step
+- Existing-Graph Fast Path
+- Gemini Extraction Backend
+- God Nodes
+- graph.json Output
+- GRAPH_REPORT.md Output
+- Python Interpreter Detection
+- Knowledge Graph
+- Obsidian Vault Export
+- Semantic Extraction Cache
+- Semantic LLM Extraction
+- Parallel Subagent Dispatch
+- hydrabflow
+- BaseSimulator
+- test_streams.py
+- reporting.py
+- Stream project (compositional score modeling)
+- PerStreamParameterStandardize
+- load_approximator
+- Running a full pipeline with the Two Moons simulator
+- _load_clean
+- ppc_prior_predictive.py
+- corner_parameters.py
+- StreamObservationStats
+- test_streams.py
+- 2. The four commands (full run)
+- compose_cfg
+- _vcirc_worker
+- create_rnbody_huang_dataset.sh
+- training_eval_missing_vlos_ablation.sh
+- training_eval_rnbody_huand_dataset.sh
+- ndarray
+- stream_agama.py
+- stream_common.py
+- assets/gaia — portable static inputs for the stream project
+- StreamObservationStats
+- extended_rotation_curve
+- compose
+- PerStreamParameterStandardize
+- prior_score_from_spec
+- test_config.py
+- get_run_dir
+- prior_score_from_kde
+- eval_rnbody_huand_dataset_kde_prior.sh
+- training_eval_agama_1e6.sh
+- training_eval_rnbody_huand_dataset copy.sh
+- PerStreamParameterStandardize
+- load_approximator
+- prior_score_from_spec
+- MaskVcircRadii
+- compose_cfg
+- ppc_ancillary_observables.py
+- _spray_stream
+- test_config.py
+- test_workflow.py
+- inferred_names
+- create_ibata_dataset.sh
+- train_ibata_sumstats.sh
+- tune_ibata_sumstats.sh
+- main
+- 4. Adding a SummaryNetwork that isn't shipped
+- 5. Adding an InferenceNetwork that isn't shipped
+- create_ibata_onedisk_beta3_dataset.sh
 
 ## God Nodes (most connected - your core abstractions)
 1. `AgamaStreamSimulator` - 37 edges
@@ -149,39 +146,39 @@
 ## Surprising Connections (you probably didn't know these)
 - `test_build_workflow()` --calls--> `build_workflow()`  [INFERRED]
   tests/test_workflow.py → src/hydrabflow/pipeline/workflow.py
-- `test_two_moons_shapes_and_reproducibility()` --calls--> `get_simulator()`  [INFERRED]
-  tests/test_augmentation.py → src/hydrabflow/simulators/registry.py
 - `test_unknown_simulator_errors()` --calls--> `get_simulator()`  [INFERRED]
   tests/test_registries.py → src/hydrabflow/simulators/registry.py
-- `main()` --calls--> `register_configs()`  [INFERRED]
-  scripts/probe_vcirc_acceptance.py → src/hydrabflow/config/schema.py
 - `main()` --calls--> `get_simulator()`  [INFERRED]
   scripts/probe_vcirc_acceptance.py → src/hydrabflow/simulators/registry.py
+- `main()` --calls--> `sample_stream_prior()`  [INFERRED]
+  scripts/probe_vcirc_acceptance.py → src/hydrabflow/simulators/stream_common.py
+- `main()` --calls--> `compose()`  [INFERRED]
+  scripts/probe_vcirc_acceptance.py → tests/conftest.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (150 total, 48 thin omitted)
+## Communities (147 total, 47 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
 Cohesion: 0.06
-Nodes (32): PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty, Return a transformed copy/view of ``data``. (+24 more)
+Nodes (33): PreprocessPipeline, PreprocessStep, ABC, Dataset, ndarray, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty (+25 more)
 
 ### Community 1 - "Eval / Checkpoint Stages"
 Cohesion: 0.33
 Nodes (6): Model Default Config, Diffusion Inference Network Config, Flow Matching Inference Network Config, DeepSet Summary Network Config, SetTransformer Summary Network Config, TimeSeriesTransformer Summary Network Config
 
 ### Community 2 - "Design Principles & Configs"
-Cohesion: 0.29
-Nodes (9): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Load the best-val-loss weights BayesFlow checkpointed during training back into, Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., Train the approximator and return (workflow, history)., _restore_best_weights(), run_training(), _save_history_and_convergence() (+1 more)
+Cohesion: 0.19
+Nodes (12): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Load the best-val-loss weights BayesFlow checkpointed during training back into, Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., Train the approximator and return (workflow, history)., _restore_best_weights(), run_training(), _save_history_and_convergence() (+4 more)
 
 ### Community 3 - "Augmentation Registry & Tests"
-Cohesion: 0.10
-Nodes (30): feature_dropout(), gaussian_noise(), multiplicative_noise(), Augmentation, Example augmentations. Use as templates for problem-specific ones.  Augmentation, Add zero-mean Gaussian noise to one observable key (additive observational noise, Scale an observable by ``(1 + N(0, mult_scale))`` — multiplicative / gain jitter, Randomly zero out entries of an observable with probability ``dropout_prob`` (Be (+22 more)
+Cohesion: 0.07
+Nodes (38): _band_pass_worker(), main(), ndarray, Measure the vcirc-rejection acceptance rate of a stream simulator's prior (calib, (n_rows, n_bands) bool: does each row's model curve pass each band? (one vc eval, feature_dropout(), gaussian_noise(), multiplicative_noise() (+30 more)
 
 ### Community 4 - "Simulate Stage & Registries"
-Cohesion: 0.15
-Nodes (20): _batch(), _build_one(), _compose_aug(), Two Moons simulator + the augmentation reproducibility/stochasticity contract., Same seed + same step list -> identical end-to-end result through build_augmenta, A step's random stream is its own spawn child, so it doesn't depend on trailing, Build a single augmentation through the public registry with a seeded generator., At non-trivial strength, each augmentation changes the batch. (+12 more)
+Cohesion: 0.07
+Nodes (34): available_augmentations(), Name -> augmentation-factory registry and builder.  An augmentation factory rece, available_steps(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``., register_step(), available_simulators(), Name -> simulator-class registry.  New simulators self-register with the ``@regi (+26 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
 Cohesion: 0.10
@@ -189,11 +186,11 @@ Nodes (19): BaseException, RuntimeError, Dataset, ndarray, Per-feature z-score s
 
 ### Community 6 - "Config Schemas"
 Cohesion: 0.05
-Nodes (21): ABC, BaseSimulator, BaseSimulator, Any, ndarray, Base interface every forward model implements.  A simulator is the ONLY piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Ordered names of the inferred parameters (become ``inference_variables``). (+13 more)
+Nodes (21): BaseSimulator, BaseSimulator, ABC, Any, ndarray, Base interface every forward model implements.  A simulator is the ONLY piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Ordered names of the inferred parameters (become ``inference_variables``). (+13 more)
 
 ### Community 7 - "Network Factory & Adapter"
-Cohesion: 0.18
-Nodes (11): 0. Prerequisites & install, 1. The five stages at a glance, 3. Using `conf/`, 6. Hyperparameter tuning, 7. Changing the values studied, 8. End-to-end recap (Gaussian example), Common edits, HydraBFlow — End-to-End Pipeline Guide (+3 more)
+Cohesion: 0.07
+Nodes (28): 0. Prerequisites & install, 1. The five stages at a glance, 2. Changing the simulator, 2a. Write the simulator class, 2b. Registration is automatic, 2c. Add the simulator config, 2d. The adapter wires itself, 2e. Shape contract cheat-sheet (+20 more)
 
 ### Community 10 - "Config Composition Tests"
 Cohesion: 0.08
@@ -204,8 +201,8 @@ Cohesion: 0.07
 Nodes (12): AgamaStreamSimulator, Stellar streams in a parametrized Milky Way potential, simulated with AGAMA., Split radius for the extended (Zhou u Huang) rotation-curve grid., Host-potential configuration threaded to the joblib workers. Legacy default (all, Requested Ibata ancillary observables (``params.ancillary_observables``); empty, Spec passed to the joblib worker: requested names + their fixed grids (or None)., Dataset keys the requested ancillary observables are stored under (``vterm``->``, Prior spec of the inferred global parameters (used for compositional prior score (+4 more)
 
 ### Community 12 - "Dataset IO"
-Cohesion: 0.29
-Nodes (12): concatenate_chunks(), load_chunk(), load_dataset(), _n_rows(), Dataset, Dataset IO. Datasets are ``.npz`` archives where each key maps to an array whose, Concatenate a list of dataset dicts along the leading (simulation) axis., Write a chunk ``.npz`` atomically (temp file + rename), so a crash mid-write can (+4 more)
+Cohesion: 0.17
+Nodes (17): concatenate_chunks(), load_chunk(), load_dataset(), _n_rows(), Dataset, Dataset IO. Datasets are ``.npz`` archives where each key maps to an array whose, Concatenate a list of dataset dicts along the leading (simulation) axis., Write a chunk ``.npz`` atomically (temp file + rename), so a crash mid-write can (+9 more)
 
 ### Community 13 - "Hydra App Boilerplate"
 Cohesion: 0.33
@@ -216,8 +213,8 @@ Cohesion: 0.13
 Nodes (23): _bf_mmd(), member_summaries(), mmd_test(), _null_mmd(), per_member_scores(), ndarray, Summary-space model misspecification test (observed group vs simulated reference, Mahalanobis OOD score of each observed member vs its own stream's reference clou (+15 more)
 
 ### Community 15 - "Logging Helper"
-Cohesion: 0.15
-Nodes (13): compose(), Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override(), test_maskedvlos_model_config_composes(), test_real_global_chain_includes_impute_vlos() (+5 more)
+Cohesion: 0.25
+Nodes (10): compose(), Expose the composer so tests can build configs with custom overrides., test_maskedvlos_model_config_composes(), test_real_global_chain_includes_impute_vlos(), Stream-project components: config composition, hierarchy derivation, per-stream, test_adapter_derivation_follows_composition_level(), test_simulator_declares_hierarchy(), test_stream_config_composes() (+2 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
@@ -225,7 +222,7 @@ Nodes (23): For /graphify add and --watch, For /graphify query, For the commit h
 
 ### Community 32 - "Community 32"
 Cohesion: 0.06
-Nodes (42): available_augmentations(), Name -> augmentation-factory registry and builder.  An augmentation factory rece, build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _feature_transformer() (+34 more)
+Nodes (37): build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _feature_transformer(), _flow_matching(), _mlp() (+29 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.20
@@ -236,16 +233,16 @@ Cohesion: 0.17
 Nodes (11): Core Design Principles, Decisions Log, Folder Structure (finalized), Goal, graphify, HydraBFlow: SBI Pipeline Template with BayesFlow, Output Directory Convention, Run stages (6 entry points) (+3 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.14
-Nodes (8): _masked_set_transformer(), MaskedSetTransformer, Layer, Tensor, Missingness-aware SetTransformer for stars without a measured line-of-sight velo, Build a :class:`MaskedSetTransformer` from a ``SummaryNetworkConfig`` (see modul, Zero masked feature channels, add a learned missing-value embedding, run a SetTr, SummaryNetwork
+Cohesion: 0.12
+Nodes (25): _np_fit_frame(), _np_phi1(), _np_unit_vec(), Hand-crafted per-stream summary statistics in a data-driven stream-aligned frame, Per-stream summary statistics laid out as a **φ1 time series** for a single, Rows of R are [x, y, z]: z = normal to best-fit plane (great-circle pole), x = m, Per-stream great-circle rotation ``R_j`` and φ1 bin edges, fitted once from the, _stream_frames() (+17 more)
 
 ### Community 37 - "Community 37"
 Cohesion: 0.07
 Nodes (30): 1. How the config system works, 2. The root master config — `config.yaml`, 3.10 `tuning/`, 3.1 `simulator/`, 3.2 `model/`, 3.3 `data/`, 3.4 `training/`, 3.5 `preprocessing/` (+22 more)
 
 ### Community 38 - "streams.py"
-Cohesion: 0.06
-Nodes (60): _np_fit_frame(), _np_phi1(), _np_unit_vec(), Hand-crafted per-stream summary statistics in a data-driven stream-aligned frame, Per-stream summary statistics laid out as a **φ1 time series** for a single, Rows of R are [x, y, z]: z = normal to best-fit plane (great-circle pole), x = m, Per-stream great-circle rotation ``R_j`` and φ1 bin edges, fitted once from the, _stream_frames() (+52 more)
+Cohesion: 0.09
+Nodes (45): _add_noise_to_rho_z(), _add_noise_to_sigma_z(), _add_noise_to_vcirc(), _add_noise_to_vterm(), _apply_obs_error(), _compact_to_attended(), _concatenate_magnitudes(), _concatenate_sigma_errors() (+37 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.36
@@ -268,8 +265,8 @@ Cohesion: 0.12
 Nodes (18): build_augmentations(), Augmentation, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, apply_augmentations_once(), build_prior_score(), composition_level(), flatten_members(), group_members() (+10 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.20
-Nodes (16): condition_keys(), Raw batch keys that act as sampling conditions (everything the adapter consumes, _evaluate_real_compositional(), _max_particles(), _prepare_real_members(), Stage 5: application to real (observed) data.  Like :mod:`evaluate`, but the inp, Load the observed group and normalize it to flat member rows.      Expected layo, Overlay corner plot of the pooled *global* posterior and each *single-stream* po (+8 more)
+Cohesion: 0.25
+Nodes (13): condition_keys(), Raw batch keys that act as sampling conditions (everything the adapter consumes, _evaluate_real_compositional(), _max_particles(), _prepare_real_members(), Stage 5: application to real (observed) data.  Like :mod:`evaluate`, but the inp, Load the observed group and normalize it to flat member rows.      Expected layo, Overlay corner plot of the pooled *global* posterior and each *single-stream* po (+5 more)
 
 ### Community 57 - "Community 57"
 Cohesion: 0.50
@@ -280,36 +277,36 @@ Cohesion: 0.29
 Nodes (10): _objective(), Stage 4: hyperparameter tuning with Optuna.  Runs a (by default multi-objective), Per-trial artifact directory, keyed by the study-global Optuna trial number., Save the fit-once preprocessing state, shared by every trial/model.      Written, _report(), run_tuning(), _save_shared_preprocessing(), _suggest() (+2 more)
 
 ### Community 59 - "build_workflow"
-Cohesion: 0.33
-Nodes (5): build_workflow(), Any, Assemble the BayesFlow workflow from config.  Single-level inference (the defaul, Build a ``bf.BasicWorkflow`` from the root ``cfg``., Build a ``bf.BasicWorkflow`` (or ``bf.CompositionalWorkflow``) from the root ``c
+Cohesion: 0.20
+Nodes (9): apply_bayesflow_patches(), _patch_compositional_condition_reshape(), Targeted runtime fixes for known BayesFlow bugs (version-checked, applied once)., Idempotently install the fixes. Called when a compositional workflow is built., build_workflow(), Any, Assemble the BayesFlow workflow from config.  Single-level inference (the defaul, Build a ``bf.BasicWorkflow`` from the root ``cfg``. (+1 more)
 
 ### Community 60 - "MaskedFusionNetwork"
 Cohesion: 0.18
 Nodes (10): 1. The canonical set: 6D stream tracks in stream-aligned coordinates, 2. Width, dispersion and length (second-moment tracks), 3. Action–angle / frequency-space summaries (most directly potential-sensitive), 4. Orbital-pole / great-circle summaries, 5. Density-structure / power-spectrum summaries (mostly for substructure — lower priority for you), 6. Progenitor / global scalars, Key references, Recommended concrete feature block to concatenate with the SetTransformer embedding (+2 more)
 
 ### Community 96 - "test_streams.py"
-Cohesion: 0.12
-Nodes (14): Stage 1b: compositional (grouped) dataset generation.  Like :mod:`simulate`, but, Generate the compositional dataset described by ``cfg`` and return its path., run_multistream_simulation(), Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), get_run_dir(), Run-directory helpers and shared artifact filenames. (+6 more)
+Cohesion: 0.13
+Nodes (14): Stage 1b: compositional (grouped) dataset generation.  Like :mod:`simulate`, but, Generate the compositional dataset described by ``cfg`` and return its path., run_multistream_simulation(), Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), get_simulator(), Instantiate the simulator selected by ``cfg.simulator`` (a ``SimulatorConfig``). (+6 more)
 
 ### Community 97 - "reporting.py"
 Cohesion: 0.20
 Nodes (13): _finite(), _has_nonfinite(), inspect_history(), _load_json(), _metrics_table(), Any, _rate(), Training-convergence inspection and Markdown report generation.  Two pure-Python (+5 more)
 
 ### Community 98 - "Stream project (compositional score modeling)"
-Cohesion: 0.14
-Nodes (14): 1. What more flexible potential family, 2. More realistic stream simulation with agama — straight from their bundled examples, Adding your own simulator, Configuration used explicitly, Data generation, Design at a glance, Evaluation (plots + metrics), Future work (TODO) (+6 more)
+Cohesion: 0.29
+Nodes (7): 1. What more flexible potential family, 2. More realistic stream simulation with agama — straight from their bundled examples, Adding your own simulator, Design at a glance, Future work (TODO), HydraBFlow, Quickstart
 
 ### Community 99 - "PerStreamParameterStandardize"
-Cohesion: 0.17
-Nodes (12): 0. What you're running, 1. Prerequisites, 2.1 Generate the training set, 2.2 Generate a held-out test set, 2.3 Train, 2.4 Evaluate, 2. The four commands (full run), 3. Fast smoke run (≈1 minute) (+4 more)
+Cohesion: 0.29
+Nodes (7): 0. What you're running, 1. Prerequisites, 3. Fast smoke run (≈1 minute), 4. Optional: train with observational noise (augmentations), 5. Tuning the prior / observation knobs (optional), 6. Command recap, Running a full pipeline with the Two Moons simulator
 
 ### Community 100 - "load_approximator"
-Cohesion: 0.17
-Nodes (15): Exception, _assert_reached(), _OrbitCapExceeded, _plummer_sample(), ndarray, Restricted N-body stellar-stream forward model on AGAMA (CPU, joblib).  Same pri, Restricted N-body stream: forward-integrate Plummer particles from the rewound o, joblib worker: one restricted-N-body stream + the rotation curve of its potentia (+7 more)
+Cohesion: 0.15
+Nodes (17): Exception, _assert_reached(), _OrbitCapExceeded, _plummer_sample(), ndarray, Restricted N-body stellar-stream forward model on AGAMA (CPU, joblib).  Same pri, Restricted N-body stream: forward-integrate Plummer particles from the rewound o, joblib worker: one restricted-N-body stream + the rotation curve of its potentia (+9 more)
 
 ### Community 101 - "Running a full pipeline with the Two Moons simulator"
-Cohesion: 0.18
-Nodes (6): AttachObservedSigmaZ, AttachObservedVcirc, Stream-specific preprocessing: per-stream normalization and rotation-curve trimm, Attach the *observed* Milky Way rotation curve to a real dataset that lacks one., Attach the *observed* local surface density Sigma(1.1 kpc) to a real dataset tha, test_attach_observed_sigma_z_tiles_scalar()
+Cohesion: 0.25
+Nodes (8): _ic_chen_spray(), _ic_particle_spray(), Jacobi radius, velocity offset, and host->satellite rotation matrices along the, Fardal+2015 initial conditions for particles escaping through the Lagrange point, Chen+2024 initial conditions: one trailing + one leading particle per orbit seed, Particle-spray stream including the progenitor's own (moving Plummer) potential., _rj_vj_R(), _spray_stream()
 
 ### Community 102 - "_load_clean"
 Cohesion: 0.43
@@ -333,19 +330,19 @@ Nodes (19): _build(), Missing-v_los handling: fill modes (mask_vlos / impute_vlo
 
 ### Community 108 - "2. The four commands (full run)"
 Cohesion: 0.29
-Nodes (7): 2. Changing the simulator, 2a. Write the simulator class, 2b. Registration is automatic, 2c. Add the simulator config, 2d. The adapter wires itself, 2e. Shape contract cheat-sheet, 2f. Generate the dataset
+Nodes (7): quiet_worker(), Silence noisy C-extension output (AGAMA) during simulation.  AGAMA writes diagno, True unless ``HYDRABFLOW_SIM_QUIET`` is set to a falsy value., Redirect fd 1 & 2 to ``/dev/null`` for the duration of the block (C-level output, Decorator: run a (joblib) worker with its C-level stdout/stderr redirected to /d, sim_quiet_enabled(), suppress_c_stdio()
 
 ### Community 110 - "_vcirc_worker"
 Cohesion: 0.27
 Nodes (11): _agama(), extended_rotation_curve(), _host_potential(), _load_posterior(), main(), Posterior-predictive check on the *model rotation curve* only.  Takes a complete, Model circular velocity [km/s] at obs_r; NaN where v^2 < 0., Zhou up to split, Huang beyond; sorted by radius. (r, vc, sigma). (+3 more)
 
 ### Community 114 - "ndarray"
-Cohesion: 0.15
-Nodes (11): ndarray, Model circular velocity [km/s] at the observed radii; NaN where v^2 < 0., joblib worker: does each parameter row's model rotation curve pass the rejection, Galactic longitudes [deg] the terminal-velocity curve is evaluated on (single so, Heights z [kpc] the vertical stellar-density profile is evaluated on., Resolve ``vcirc_rejection`` into a list of band specs for the accept worker., Screen each draw's global potential against the observed rotation curve., Draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut. (+3 more)
+Cohesion: 0.18
+Nodes (7): ndarray, Galactic longitudes [deg] the terminal-velocity curve is evaluated on (single so, Heights z [kpc] the vertical stellar-density profile is evaluated on., Resolve ``vcirc_rejection`` into a list of band specs for the accept worker., Screen each draw's global potential against the observed rotation curve., Draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut., One shared global draw per dataset, one stream realization per target stream.
 
 ### Community 115 - "stream_agama.py"
-Cohesion: 0.14
-Nodes (23): _agama(), _ancillary_observables(), _halo_params(), _host_potential(), _ic_chen_spray(), _ic_particle_spray(), Stellar-stream forward model built on AGAMA (CPU, parallelized with joblib).  Po, Assemble the Milky Way host potential from one parameter row.      Legacy model (+15 more)
+Cohesion: 0.18
+Nodes (19): _agama(), _ancillary_observables(), _halo_params(), _host_potential(), Stellar-stream forward model built on AGAMA (CPU, parallelized with joblib).  Po, Assemble the Milky Way host potential from one parameter row.      Legacy model, The stellar-disk component(s) alone (thin [+ thick]) — the ``disk_pot`` for the, Model circular velocity [km/s] at the observed radii; NaN where v^2 < 0. (+11 more)
 
 ### Community 116 - "stream_common.py"
 Cohesion: 0.09
@@ -356,8 +353,8 @@ Cohesion: 0.50
 Nodes (3): assets/gaia — portable static inputs for the stream project, Contents, Using these on a new cluster
 
 ### Community 118 - "StreamObservationStats"
-Cohesion: 0.14
-Nodes (11): PerStreamParameterStandardize, Dataset, ndarray, Fit per-stream observation stats + log10(vcirc) per-bin stats on the (clean) tra, Integer stream ids broadcastable against ``like``.      ``j``'s leading axes alw, z-score each stream's local parameters with that stream's prior mean/std., _stream_index(), StreamObservationStats (+3 more)
+Cohesion: 0.07
+Nodes (23): AttachObservedSigmaZ, AttachObservedVcirc, AttachObservedVterm, MaskVcircRadii, PerStreamParameterStandardize, Dataset, ndarray, Stream-specific preprocessing: per-stream normalization and rotation-curve trimm (+15 more)
 
 ### Community 119 - "extended_rotation_curve"
 Cohesion: 0.22
@@ -376,8 +373,8 @@ Cohesion: 0.67
 Nodes (3): GPU_IDS, run_arm(), training_eval_summary_stats.sh script
 
 ### Community 123 - "test_config.py"
-Cohesion: 0.10
-Nodes (23): Shape, Hyperparameters for a single BayesFlow summary network.      ``type`` is resolve, SummaryNetworkConfig, _fusion(), MaskedFusionNetwork, Layer, Tensor, Multi-observable fusion summary network (attention-mask aware).  Consumes the di (+15 more)
+Cohesion: 0.16
+Nodes (9): Shape, _fusion(), MaskedFusionNetwork, Layer, SummaryNetwork, Tensor, Multi-observable fusion summary network (attention-mask aware).  Consumes the di, Build a :class:`MaskedFusionNetwork` from ``cfg.params`` (see module docstring). (+1 more)
 
 ### Community 124 - "get_run_dir"
 Cohesion: 0.43
@@ -420,43 +417,35 @@ Cohesion: 0.50
 Nodes (3): DATA_DIR, train_ibata_wdisk_beta3.sh script, SIM
 
 ### Community 142 - "main"
-Cohesion: 0.40
-Nodes (5): _band_pass_worker(), main(), ndarray, Measure the vcirc-rejection acceptance rate of a stream simulator's prior (calib, (n_rows, n_bands) bool: does each row's model curve pass each band? (one vc eval
+Cohesion: 0.29
+Nodes (7): Configuration used explicitly, Data generation, Evaluation (plots + metrics), GPU, Hyperparameter tuning, Stream project (compositional score modeling), Training
 
 ### Community 143 - "4. Adding a SummaryNetwork that isn't shipped"
-Cohesion: 0.40
-Nodes (5): 4. Adding a SummaryNetwork that isn't shipped, Step 1 — drop a builder module into the networks package, Step 2 — hyperparameters: reuse typed fields, or use `params`, Step 3 — add a selectable config file, Use it
+Cohesion: 0.29
+Nodes (4): Config composition + schema validation smoke tests., test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override()
 
 ### Community 144 - "5. Adding an InferenceNetwork that isn't shipped"
 Cohesion: 0.40
-Nodes (5): 5. Adding an InferenceNetwork that isn't shipped, Step 1 — drop a builder module, Step 2 — hyperparameters, Step 3 — selectable config, Use it
+Nodes (5): 2.1 Generate the training set, 2.2 Generate a held-out test set, 2.3 Train, 2.4 Evaluate, 2. The four commands (full run)
 
-### Community 145 - "apply_bayesflow_patches"
+### Community 148 - "create_ibata_onedisk_beta3_dataset.sh"
 Cohesion: 0.50
-Nodes (4): apply_bayesflow_patches(), _patch_compositional_condition_reshape(), Targeted runtime fixes for known BayesFlow bugs (version-checked, applied once)., Idempotently install the fixes. Called when a compositional workflow is built.
-
-### Community 146 - "AttachObservedVterm"
-Cohesion: 0.40
-Nodes (3): AttachObservedVterm, Attach the *observed* HI terminal-velocity curve to a real dataset that lacks on, test_attach_observed_vterm_tiles_observed_curve()
-
-### Community 147 - "MaskVcircRadii"
-Cohesion: 0.40
-Nodes (3): MaskVcircRadii, Keep only rotation-curve bins with ``r >= r_min`` on the observed radii grid., test_mask_vcirc_radii_trims_grid()
+Nodes (3): HYDRABFLOW_NUM_GPUS, HYDRABFLOW_SIM_QUIET, create_ibata_onedisk_beta3_dataset.sh script
 
 ## Knowledge Gaps
-- **191 isolated node(s):** `hydrabflow`, `create_ibata_dataset.sh script`, `create_ibata_onedisk_beta3_dataset.sh script`, `create_rnbody_huang_dataset.sh script`, `eval_rnbody_huand_dataset_kde_prior.sh script` (+186 more)
+- **193 isolated node(s):** `hydrabflow`, `create_ibata_dataset.sh script`, `create_ibata_onedisk_beta3_dataset.sh script`, `HYDRABFLOW_NUM_GPUS`, `HYDRABFLOW_SIM_QUIET` (+188 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **47 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_simulator()` connect `Community 56` to `test_streams.py`, `Community 32`, `Simulate Stage & Registries`, `Config Schemas`, `Community 40`, `Config Composition Tests`, `JAX Backend Pin`, `main`, `extended_rotation_curve`?**
+- **Why does `get_simulator()` connect `test_streams.py` to `Community 32`, `Augmentation Registry & Tests`, `Simulate Stage & Registries`, `Config Schemas`, `Community 40`, `Config Composition Tests`, `JAX Backend Pin`, `Logging Helper`, `extended_rotation_curve`, `Community 56`?**
   _High betweenness centrality (0.101) - this node is a cross-community bridge._
 - **Why does `AgamaStreamSimulator` connect `Community 11` to `load_approximator`, `Config Schemas`, `ndarray`, `stream_agama.py`, `stream_common.py`, `extended_rotation_curve`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
-- **Why does `BaseSimulator` connect `Config Schemas` to `Community 56`, `Community 11`?**
-  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+  _High betweenness centrality (0.095) - this node is a cross-community bridge._
+- **Why does `PreprocessStep` connect `Preprocessing Pipeline & Steps` to `Example Simulators (Skeleton/TwoMoons)`, `StreamObservationStats`, `Community 39`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `AgamaStreamSimulator` (e.g. with `_OrbitCapExceeded` and `RestrictedNbodyStreamSimulator`) actually correct?**
   _`AgamaStreamSimulator` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 2 inferred relationships involving `_jax()` (e.g. with `_stream_summary_grid()` and `_stream_summary_statistics()`) actually correct?**
