@@ -37,6 +37,8 @@ from hydrabflow.simulators.stream_agama import (
     _vcirc,
 )
 from hydrabflow.simulators.stream_common import sky_projection
+from hydrabflow.utils.progress import joblib_row_progress
+from hydrabflow.utils.quiet import quiet_worker
 
 _PLUMMER_MMAX = 0.99  # truncate the sampled enclosed-mass fraction (r <~ 12 scale radii)
 
@@ -184,6 +186,7 @@ def _rnbody_stream(
     return xv
 
 
+@quiet_worker
 def _simulate_one_rnbody(
     p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int, opts: Dict[str, float]
 ):
@@ -273,10 +276,13 @@ class RestrictedNbodyStreamSimulator(AgamaStreamSimulator):
         # batch_size=1: restricted-N-body rows vary wildly in cost (fast rows vs the multi-minute
         # t_end=4 rows), so one row per dispatch keeps all n_workers busy instead of letting
         # joblib's 'auto' batching hand a few workers oversized batches while the rest idle.
-        results = Parallel(n_jobs=self._n_workers, batch_size=1)(
-            delayed(_simulate_one_rnbody)(row, self._n_particles, self.obs_r_kpc, int(seed), opts)
-            for row, seed in zip(rows, seeds)
-        )
+        with joblib_row_progress():  # advance the run_chunked bar once per finished row
+            results = Parallel(n_jobs=self._n_workers, batch_size=1)(
+                delayed(_simulate_one_rnbody)(
+                    row, self._n_particles, self.obs_r_kpc, int(seed), opts
+                )
+                for row, seed in zip(rows, seeds)
+            )
         xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
         vcirc = np.stack([r[1] for r in results], axis=0)[..., None]  # (n, n_radii, 1)
 

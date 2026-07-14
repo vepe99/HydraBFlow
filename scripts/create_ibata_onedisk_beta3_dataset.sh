@@ -22,11 +22,18 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Dataset generation is CPU-only (AGAMA/joblib) — never touch a GPU. This stops every joblib
+# worker from probing for GPUs via autocvd (which, on a GPU-less box, prints a warning per worker
+# and slows worker startup). AGAMA's own C-level chatter is silenced by HYDRABFLOW_SIM_QUIET
+# (default on; set to 0 to see it when debugging a simulator). Net effect: a single tqdm bar.
+export HYDRABFLOW_NUM_GPUS=${HYDRABFLOW_NUM_GPUS:-0}
+export HYDRABFLOW_SIM_QUIET=${HYDRABFLOW_SIM_QUIET:-1}
+
 SIM=${SIM:-stream_agama_ibata_onedisk_beta3}
 DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_ibata_onedisk_beta3_hydrabflow}
 SEED=${SEED:-2026}
-N_WORKERS=${N_WORKERS:-30}
-N_FULL=${N_FULL:-100000}
+N_WORKERS=${N_WORKERS:-60}
+N_FULL=${N_FULL:-300000}
 N_GROUPS=${N_GROUPS:-333}
 RUN_PILOT=${RUN_PILOT:-1}
 PPC_DIR="${DATA_DIR}/ppc"

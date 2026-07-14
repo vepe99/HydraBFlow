@@ -52,6 +52,8 @@ from hydrabflow.simulators.stream_common import (
     terminal_velocity,
     vertical_density_profile,
 )
+from hydrabflow.utils.progress import joblib_row_progress
+from hydrabflow.utils.quiet import quiet_worker
 
 # Fixed bulge component of the host potential (not inferred), from the reference project.
 BULGE_PARAMS = dict(
@@ -344,6 +346,7 @@ def _vcirc(pot_host, obs_r: np.ndarray) -> np.ndarray:
     return np.sqrt(np.where(v2 > 0, v2, np.nan))
 
 
+@quiet_worker
 def _vcirc_accept_worker(
     rows: list, obs_r: np.ndarray, bands: list, pot_cfg: Mapping | None = None
 ) -> np.ndarray:
@@ -402,6 +405,7 @@ def _ancillary_observables(
     return out
 
 
+@quiet_worker
 def _simulate_one(
     p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int,
     spray_method: str = "fardal", pot_cfg: Mapping | None = None,
@@ -751,12 +755,14 @@ class AgamaStreamSimulator(BaseSimulator):
         # batches to a handful of workers, starving the rest and serializing the slow tail. One
         # row per dispatch keeps all n_workers busy; the per-task overhead is negligible next to a
         # multi-second row.
-        results = Parallel(n_jobs=self._n_workers, batch_size=1)(
-            delayed(_simulate_one)(
-                row, self._n_particles, self.obs_r_kpc, int(seed), spray_method, pot_cfg, ancillary
+        with joblib_row_progress():  # advance the run_chunked bar once per finished row
+            results = Parallel(n_jobs=self._n_workers, batch_size=1)(
+                delayed(_simulate_one)(
+                    row, self._n_particles, self.obs_r_kpc, int(seed), spray_method, pot_cfg,
+                    ancillary,
+                )
+                for row, seed in zip(rows, seeds)
             )
-            for row, seed in zip(rows, seeds)
-        )
         xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
         vcirc = np.stack([r[1] for r in results], axis=0)[..., None]  # (n, n_radii, 1)
 
