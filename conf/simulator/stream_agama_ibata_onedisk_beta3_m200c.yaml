@@ -50,3 +50,13 @@ params:
     a_TwoPowerTriaxial_halo:
       type: identity
       prior_parameters: [19.6]                  # unused (m200_c ignores it); kept as fixed constant
+    # HI terminal-velocity fix (cf. stream_agama_ibata_wdisk_beta3, commit 57ddaee): the base
+    # Sigma_Disk ceiling of 1.5e9 caps the inner-disk mass below MGD16, so the Zhou u Huang-accepted
+    # prior under-predicts the observed v_term (v_term probes v_circ at R = R0*|sin l| = 4.2-7.5 kpc)
+    # by a median ~ -15.8 km/s (obs at the ~8.7% upper tail). Raising the ceiling to 3.0e9 halves the
+    # gap and brings the observed terminal velocity into the prior BULK (~41% within ~1 sigma) at
+    # negligible acceptance cost. This is the ONLY disk-mass lever on the one-disk model (no thick
+    # disk); it does not affect the halo reparameterization or the rejection prior.
+    Sigma_Disk:
+      type: uniform
+      prior_parameters: [1.0e7, 3.0e9]
