@@ -653,6 +653,30 @@ Every run saves:
   M200 at 200 rho_crit but c_v' at ~94 rho_crit is McMillan's own split; the 94->200 conversion +
   (2-gamma) factor reconcile them. This is a genuine prior reparameterization (new training set); the
   rejection prior now carves the (M200,c) plane (still a hard indicator, score valid).
+- Session 2026-07-14 (m200_c: save AGAMA-passed rho/a + dataset/train/tune scripts): follow-up to
+  the above so the user can scp-and-run. (1) **Derived halo diagnostics saved**: `_simulate_one`
+  now also returns the `(densityNorm, scaleRadius)` AGAMA actually received per row (only when
+  `halo_parameterization=m200_c`; `_resolve_pot_cfg` guard, computed via `_halo_params_m200c`), and
+  `simulate` stores them as `rho_TwoPowerTriaxial_halo_derived` / `a_TwoPowerTriaxial_halo_derived`
+  `(n,1)`; `sample_compositional` reshapes them per-group `(n,1)` like `vcirc_kms`. These are
+  diagnostics ONLY — the adapter drops them (verified in the smoke log: "Dropping dataset keys the
+  adapter does not use: [... rho/a_..._derived ...]"), inference stays on log10_M200/ln_cvprime; the
+  identity rho/a stay fixed constants alongside. 2 new tests in `test_m200c_halo.py` (derived keys
+  match `_halo_params_m200c` per row; absent for rho_a); suite green (114). (2) **Corner script**:
+  `corner_parameters.py` NON_PARAM_KEYS now also excludes the ancillary observables (vterm_kms,
+  sigma_z, rho_z) so they aren't mistaken for scalar params. (3) **Three scripts** (per user, the
+  training/tuning use the SUMMARY-STATISTICS stack, NOT the raw-particle SetTransformer):
+  `scripts/create_ibata_m200c_dataset.sh` (standalone; pilot+full 10^5 flat + 333 multistream, the
+  vcirc rejection cut applied per draw, PPC + `prior_after_cut_corner.png` over all inferred globals
+  + derived rho/a); `scripts/train_ibata_m200c.sh` + `scripts/tune_ibata_m200c.sh` (thin wrappers
+  delegating to `train_ibata_onedisk_grid.sh` / `tune_ibata_onedisk_grid.sh` — the gridded
+  sim_summary TimeSeriesTransformer + vcirc + vterm backbones, sigma_z+j conditions, raw particles
+  dropped; NOT overriding STUDY since tune.py reads study_name from the yaml and DATA_DIR already
+  isolates the study log). Dataset dir convention mirrors the onedisk pair: gen under
+  `data_jarvis/data_agama_ibata_onedisk_beta3_m200c_hydrabflow`, train/tune read
+  `data/data_jarvis/...`. Smoke-verified end-to-end on CPU (64-row flat + 8-group multistream, 1
+  epoch): train → eval_sim (base+compositional) → eval_real all produce full artifacts; derived
+  keys land in both flat and multistream npz. **Full dataset gen + GPU train/tune deferred to user.**
 
 ## graphify
 

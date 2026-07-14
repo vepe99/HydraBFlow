@@ -503,7 +503,14 @@ def _simulate_one(
         method=spray_method,
     )
     anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary)
-    return xv, _vcirc(pot_host, obs_r), anc
+    # When the halo is parameterized by (M200, c_v'), also return the (densityNorm, scaleRadius)
+    # actually handed to AGAMA for this row, so they can be stored in the dataset for traceability
+    # (they are NOT inferred — the identity-prior rho/a stay fixed constants). None otherwise.
+    halo_derived = None
+    if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) == "m200_c":
+        h = _halo_params_m200c(agama, p, pot_cfg)
+        halo_derived = (float(h["densityNorm"]), float(h["scaleRadius"]))
+    return xv, _vcirc(pot_host, obs_r), anc, halo_derived
 
 
 @register_simulator("stream_agama")
@@ -836,6 +843,13 @@ class AgamaStreamSimulator(BaseSimulator):
         # Ibata ancillary observables (only present when requested): vterm_kms (n, n_l, 1),
         # sigma_z (n, 1), rho_z (n, n_z, 1). Each is a deterministic function of the shared
         # potential; the noisy "observed" counterparts are added later by the augmentation chain.
+        # (M200, c_v') halo: store the per-row densityNorm / scaleRadius AGAMA received. These are
+        # derived diagnostics (not inferred); the identity rho/a params stay fixed constants.
+        halo_list = [r[3] for r in results]
+        if halo_list[0] is not None:
+            derived = np.asarray(halo_list, dtype=float)  # (n, 2): [densityNorm, scaleRadius]
+            out["rho_TwoPowerTriaxial_halo_derived"] = derived[:, 0:1]
+            out["a_TwoPowerTriaxial_halo_derived"] = derived[:, 1:2]
         anc_list = [r[2] for r in results]
         if ancillary:
             for key in ("vterm_kms", "rho_z"):
@@ -888,4 +902,8 @@ class AgamaStreamSimulator(BaseSimulator):
                 out[key] = sims[key].reshape(n, m, -1, 1)[:, 0]
         if "sigma_z" in sims:  # (n*m, 1) -> (n, 1)
             out["sigma_z"] = sims["sigma_z"].reshape(n, m, 1)[:, 0]
+        # Derived (M200, c_v') halo params depend only on the shared potential -> one per group.
+        for key in ("rho_TwoPowerTriaxial_halo_derived", "a_TwoPowerTriaxial_halo_derived"):
+            if key in sims:  # (n*m, 1) -> (n, 1)
+                out[key] = sims[key].reshape(n, m, 1)[:, 0]
         return out

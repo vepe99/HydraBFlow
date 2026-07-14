@@ -12,6 +12,7 @@ import pytest
 agama = pytest.importorskip("agama")
 
 from hydrabflow.simulators.stream_agama import (  # noqa: E402
+    AgamaStreamSimulator,
     _halo_params,
     _halo_params_m200c,
     _host_potential,
@@ -111,3 +112,76 @@ def test_host_potential_dispatch_matches_equivalent_rho_a():
     pot_rhoa = _host_potential(agama, p_rhoa, cfg_rhoa)
     x = [15.0, 0.0, 3.0]
     assert np.allclose(pot.force(x), pot_rhoa.force(x), rtol=1e-6)
+
+
+# ----------------------------------------------------------------------------------------------- #
+# simulate() stores the (densityNorm, scaleRadius) AGAMA received per row under *_derived keys when
+# the halo is parameterized by (M200, c_v') — diagnostics only, NOT inferred. Absent for rho_a.
+# ----------------------------------------------------------------------------------------------- #
+
+def _priors_local_ident():
+    ident = lambda v: {"type": "identity", "prior_parameters": [v]}  # noqa: E731
+    norm = lambda m, s: {"type": "normal", "prior_parameters": [m, s]}  # noqa: E731
+    return dict(m_progenitor=ident(5e4), a_progenitor=ident(6.0), t_end=ident(1.5),
+                ra=ident(180.0), dec=ident(-20.0), vr=norm(-58.6, 0.2), r=norm(20.6, 0.2),
+                mu_ra_cosdec=norm(-2.736, 0.05), mu_dec=norm(-2.646, 0.05))
+
+
+def _m200c_params():
+    return dict(
+        n_particles=200, n_workers=2,
+        halo_parameterization="m200_c", halo_H0_kms_mpc=70.4,
+        halo_Delta_mass=200.0, halo_Delta_c=94.0, halo_r_t_kpc=1000.0,
+        target_streams={"Pal5": 0},
+        priors_global=dict(
+            log10_M200_TwoPowerTriaxial_halo={"type": "uniform", "prior_parameters": [11.7, 12.4]},
+            ln_cvprime_TwoPowerTriaxial_halo={"type": "normal", "prior_parameters": [2.56, 0.272]},
+            gamma_TwoPowerTriaxial_halo={"type": "uniform", "prior_parameters": [-2.0, 1.5]},
+            beta_TwoPowerTriaxial_halo={"type": "identity", "prior_parameters": [3.0]},
+            q_TwoPowerTriaxial_halo={"type": "uniform", "prior_parameters": [0.5, 1.5]},
+            rho_TwoPowerTriaxial_halo={"type": "identity", "prior_parameters": [8.54e6]},
+            a_TwoPowerTriaxial_halo={"type": "identity", "prior_parameters": [19.6]},
+            r_Disk={"type": "normal", "prior_parameters": [2.6, 0.5]},
+            z_Disk={"type": "normal", "prior_parameters": [0.3, 0.05]},
+            Sigma_Disk={"type": "uniform", "prior_parameters": [1.0e7, 1.5e9]},
+        ),
+        priors_local=dict(Pal5=_priors_local_ident()),
+    )
+
+
+def test_simulate_stores_derived_rho_a_for_m200c():
+    """m200_c: simulate() emits rho/a_..._derived (n,1) equal to the per-row _halo_params_m200c
+    solve, while log10_M200/ln_cvprime are the inferred params (rho/a stay identity constants)."""
+    sim = AgamaStreamSimulator(_m200c_params())
+    assert "log10_M200_TwoPowerTriaxial_halo" in sim.global_parameter_names
+    assert "ln_cvprime_TwoPowerTriaxial_halo" in sim.global_parameter_names
+    # rho/a are identity -> NOT inferred
+    assert "rho_TwoPowerTriaxial_halo" not in sim.global_parameter_names
+    assert "a_TwoPowerTriaxial_halo" not in sim.global_parameter_names
+
+    params = sim.sample_prior(3, np.random.default_rng(0))
+    out = sim.simulate(params, np.random.default_rng(1))
+    for key in ("rho_TwoPowerTriaxial_halo_derived", "a_TwoPowerTriaxial_halo_derived"):
+        assert out[key].shape == (3, 1)
+        assert np.isfinite(out[key]).all() and np.all(out[key] > 0)
+    # match the direct conversion for each row
+    cfg = sim._pot_cfg
+    for i in range(3):
+        p = {k: float(np.asarray(v).reshape(3, -1)[i, 0]) for k, v in params.items()}
+        h = _halo_params_m200c(agama, p, cfg)
+        assert out["rho_TwoPowerTriaxial_halo_derived"][i, 0] == pytest.approx(h["densityNorm"], rel=1e-6)
+        assert out["a_TwoPowerTriaxial_halo_derived"][i, 0] == pytest.approx(h["scaleRadius"], rel=1e-6)
+
+
+def test_simulate_no_derived_keys_for_rho_a():
+    """Legacy rho_a halo: simulate() does NOT emit the *_derived diagnostic keys."""
+    params = _m200c_params()
+    params["halo_parameterization"] = "rho_a"
+    params["priors_global"]["rho_TwoPowerTriaxial_halo"] = {
+        "type": "uniform", "prior_parameters": [1.5e6, 0.5e8]}
+    params["priors_global"]["a_TwoPowerTriaxial_halo"] = {
+        "type": "uniform", "prior_parameters": [1.0, 30.0]}
+    sim = AgamaStreamSimulator(params)
+    out = sim.simulate(sim.sample_prior(2, np.random.default_rng(0)), np.random.default_rng(1))
+    assert "rho_TwoPowerTriaxial_halo_derived" not in out
+    assert "a_TwoPowerTriaxial_halo_derived" not in out

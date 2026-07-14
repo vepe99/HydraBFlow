@@ -38,8 +38,11 @@ import corner  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-# Keys that are never parameters (observables + the stream index).
-NON_PARAM_KEYS = {"sim_data_projected", "sim_data_carthesian", "vcirc_kms", "j"}
+# Keys that are never parameters (observables + the stream index). Includes the Ibata ancillary
+# potential observables (vterm_kms/sigma_z/rho_z) so they are not mistaken for scalar parameters.
+NON_PARAM_KEYS = {
+    "sim_data_projected", "sim_data_carthesian", "vcirc_kms", "vterm_kms", "sigma_z", "rho_z", "j"
+}
 
 
 def expand_inputs(paths: list[str]) -> list[str]:
