@@ -1,0 +1,16 @@
+# Ibata gridded-summary fusion model PLUS a SetTransformer over the raw star cloud. Same as
+# stream_fusion_ibata_grid but with the settransformer summary network (adds the sim_data_projected
+# set backbone). Pair with adapter=stream_ibata_grid_settransformer,
+# augmentation=stream_global_ibata_grid, preprocessing=stream_global_log10_ibata_sumstats(_sigmastd),
+# simulator=stream_agama_ibata_onedisk_beta3, composition=global.
+defaults:
+  - base_model
+  - summary_network: stream_fusion_ibata_grid_settransformer
+  - inference_network: diffusion
+  - _self_
+
+name: stream_fusion_ibata_grid_settransformer
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20

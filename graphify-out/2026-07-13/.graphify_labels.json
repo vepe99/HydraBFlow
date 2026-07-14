@@ -140,13 +140,5 @@
   "138": "inferred_names",
   "139": "create_ibata_dataset.sh",
   "140": "train_ibata_sumstats.sh",
-  "141": "tune_ibata_sumstats.sh",
-  "142": "main",
-  "143": "4. Adding a SummaryNetwork that isn't shipped",
-  "144": "5. Adding an InferenceNetwork that isn't shipped",
-  "145": "apply_bayesflow_patches",
-  "146": "AttachObservedVterm",
-  "147": "MaskVcircRadii",
-  "148": "create_ibata_onedisk_beta3_dataset.sh",
-  "149": "optuna_results.py"
+  "141": "tune_ibata_sumstats.sh"
 }

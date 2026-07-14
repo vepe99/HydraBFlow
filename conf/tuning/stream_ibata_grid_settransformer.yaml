@@ -1,0 +1,70 @@
+# Optuna search space for the Ibata gridded-summary fusion model WITH an added SetTransformer over
+# the raw star cloud (model=stream_fusion_ibata_grid_settransformer,
+# adapter=stream_ibata_grid_settransformer, augmentation=stream_global_ibata_grid).
+#
+# Identical to conf/tuning/stream_ibata_grid.yaml (the TimeSeriesTransformer backbones sim_summary /
+# vcirc_kms / vterm_kms + fusion head + diffusion subnet keep their exact ranges) and ADDS a
+# sim_data_projected SetTransformer backbone whose width/depth/heads/embed are tuned too.
+#
+# Concurrency-safe: launch once per free GPU (same study_name + storage_dir) -> one JournalStorage
+# `.log`. Driven by scripts/tune_ibata_settransformer.sh.
+defaults:
+  - base_tuning
+
+study_name: stream_ibata_grid_settransformer_study
+storage_dir: ${data.data_dir}/tuning
+n_trials: 50
+n_epochs: 300
+directions: [minimize, minimize]
+
+search_space:
+  # --- sim_data_projected backbone: the raw star cloud SetTransformer (NEW) ---------------------
+  model.summary_network.params.backbones.sim_data_projected.summary_dim:
+    { type: int, low: 16, high: 64 }
+  model.summary_network.params.backbones.sim_data_projected.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.sim_data_projected.num_heads:
+    { type: int, low: 3, high: 8 }
+  model.summary_network.params.backbones.sim_data_projected.params.embed_dim_multiplier:
+    { type: int, low: 4, high: 16 }
+  # --- sim_summary backbone: the φ1-gridded per-stream summary TimeSeriesTransformer -------------
+  model.summary_network.params.backbones.sim_summary.summary_dim:
+    { type: int, low: 16, high: 64 }
+  model.summary_network.params.backbones.sim_summary.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.sim_summary.num_heads:
+    { type: int, low: 3, high: 8 }
+  model.summary_network.params.backbones.sim_summary.params.embed_dim_multiplier:
+    { type: int, low: 4, high: 16 }
+  # --- vcirc_kms backbone (50-radii Zhou ∪ Huang rotation curve) ---------------------------------
+  model.summary_network.params.backbones.vcirc_kms.summary_dim:
+    { type: int, low: 32, high: 64 }
+  model.summary_network.params.backbones.vcirc_kms.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.vcirc_kms.num_heads:
+    { type: int, low: 3, high: 8 }
+  model.summary_network.params.backbones.vcirc_kms.params.embed_dim_multiplier:
+    { type: int, low: 4, high: 16 }
+  # --- vterm_kms backbone (19-longitude HI terminal-velocity curve) ------------------------------
+  model.summary_network.params.backbones.vterm_kms.summary_dim:
+    { type: int, low: 16, high: 48 }
+  model.summary_network.params.backbones.vterm_kms.num_blocks:
+    { type: int, low: 2, high: 5 }
+  model.summary_network.params.backbones.vterm_kms.num_heads:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.vterm_kms.params.embed_dim_multiplier:
+    { type: int, low: 4, high: 12 }
+  # --- fusion head ------------------------------------------------------------------------------
+  model.summary_network.params.head.width:
+    { type: int, low: 32, high: 256, step: 16 }
+  model.summary_network.params.head.depth:
+    { type: int, low: 1, high: 4 }
+  model.summary_network.params.head.output_dim:
+    { type: int, low: 16, high: 64 }
+  # --- inference (diffusion) subnet -------------------------------------------------------------
+  model.inference_network.mlp_depth:
+    { type: int, low: 2, high: 8 }
+  model.inference_network.mlp_width:
+    { type: int, low: 32, high: 256, step: 16 }
+  model.inference_network.time_embedding_dim:
+    { type: int, low: 16, high: 64, step: 2 }

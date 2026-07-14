@@ -1,0 +1,51 @@
+# Ibata gridded-summary fusion summary network PLUS a SetTransformer over the raw star cloud.
+# Identical to stream_fusion_ibata_grid (sim_summary / vcirc_kms / vterm_kms as TimeSeriesTransformers)
+# but ADDS a `sim_data_projected` SetTransformer backbone and routes the attention mask to it
+# (mask_backbone: sim_data_projected). Pair with adapter=stream_ibata_grid_settransformer,
+# augmentation=stream_global_ibata_grid.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: sim_data_projected     # attention mask routed only to the particle (set) backbone
+  backbones:
+    sim_data_projected:                 # NEW: raw star cloud -> SetTransformer
+      type: set_transformer
+      summary_dim: 36
+      num_blocks: 4
+      num_heads: 3
+      mlp_depth: 2
+      mlp_width: 128
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 14
+    sim_summary:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+        time_axis: -1          # last channel of sim_summary is the φ1 bin-centre (the time coord)
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+    vterm_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+  head:
+    width: 64
+    depth: 4
+    output_dim: 72

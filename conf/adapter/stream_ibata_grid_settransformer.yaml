@@ -1,0 +1,23 @@
+# Ibata gridded-summary adapter, PLUS the raw star cloud fed to a SetTransformer. Same as
+# stream_ibata_sumstats but the raw particles `sim_data_projected` are NOT dropped — they are added
+# as a fusion summary backbone (a SetTransformer) alongside the φ1-gridded summary statistics
+# (sim_summary) and the two vector potential observables (vcirc_kms, vterm_kms). The scalar surface
+# density sigma_z stays an inference CONDITION (with j). rho_z excluded (no real datum).
+# Pair with model=stream_fusion_ibata_grid_settransformer,
+# augmentation=stream_global_ibata_grid, preprocessing=stream_global_log10_ibata_sumstats(_sigmastd),
+# simulator=stream_agama_ibata_onedisk_beta3, composition=global.
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables:
+  - sim_data_projected      # raw star cloud -> SetTransformer (attention mask routed here)
+  - sim_summary             # φ1-gridded per-stream summary stats -> TimeSeriesTransformer
+  - vcirc_kms               # 50-radii rotation curve -> TimeSeriesTransformer
+  - vterm_kms               # 19-longitude HI terminal-velocity curve -> TimeSeriesTransformer
+inference_conditions:
+  # j MUST be first: the compositional eval derives member count m from inference_conditions[0]'s
+  # shape (n, m, ...); sigma_z is a group-level scalar (n, 1) and would collapse m to 1 if first.
+  - j
+  - sigma_z
+attention_mask_key: attention_mask

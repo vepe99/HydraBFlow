@@ -117,8 +117,25 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
         )
 
     # A trial may draw a large architecture that OOMs at the configured batch size; halve and retry
-    # (both the training fit and the posterior sampling below) rather than fail the whole trial.
-    history = run_with_oom_backoff(_fit, int(cfg.training.batch_size), logger=log)
+    # the training fit — but only down to batch_size=512. Training at a smaller batch is too slow to
+    # be worth a tuning trial, so if even 512 OOMs we PRUNE the trial (optuna records it PRUNED and
+    # the worker moves on to the next trial) rather than crawl through training at a tiny batch.
+    import optuna
+
+    from hydrabflow.utils.oom import is_oom_error
+
+    try:
+        history = run_with_oom_backoff(
+            _fit, int(cfg.training.batch_size), min_batch=512, logger=log
+        )
+    except Exception as exc:  # noqa: BLE001
+        if is_oom_error(exc):
+            log.warning(
+                "Trial %d: OOM at batch_size<=512; pruning (too slow to train smaller).",
+                trial.number,
+            )
+            raise optuna.TrialPruned() from exc
+        raise
     _restore_best_weights(workflow, trial_dir)  # rescue a late NaN divergence
 
     from bayesflow.diagnostics import metrics as bf_metrics
@@ -214,9 +231,15 @@ def run_tuning(cfg):
     )
     log.info("Study '%s' storage=%s artifacts=%s", cfg.tuning.study_name, log_path,
              cfg.tuning.artifacts_dir if bool(cfg.tuning.save_artifacts) else "(disabled)")
+    # `catch=(Exception,)`: a single trial that raises (most often a GPU OOM that survives the
+    # run_with_oom_backoff halving because the sampled architecture is too large to fit at any batch
+    # size) is marked FAIL and the worker moves on to the next trial, instead of the exception
+    # propagating out of optimize() and killing the whole worker process. The multi-objective TPE
+    # sampler simply gets no signal from a failed trial and learns to avoid that region.
     study.optimize(
         lambda trial: _objective(trial, cfg, train_data, val_data, param_names, augmentations),
         n_trials=int(cfg.tuning.n_trials),
+        catch=(Exception,),
     )
 
     _report(study, cfg, run_dir)
