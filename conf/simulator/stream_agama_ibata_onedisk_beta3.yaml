@@ -24,7 +24,7 @@ params:
   priors_global:
     rho_TwoPowerTriaxial_halo:
       type: uniform
-      prior_parameters: [1.0e6, 0.5e8]
+      prior_parameters: [1.5e6, 0.5e8]
     beta_TwoPowerTriaxial_halo:
       type: identity
       prior_parameters: [3.0]

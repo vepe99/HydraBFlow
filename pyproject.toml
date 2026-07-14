@@ -22,8 +22,10 @@ dependencies = [
     "joblib>=1.5.3",
     "scipy>=1.17.1",
     "pandas>=3.0.3",
+    "plotly",
     "agama>=1.0.0",
     "corner>=2.2.3",
+    "scikit-learn",
 ]
 
 # `uv sync` installs the dev group by default, so a fresh clone can run pytest immediately.

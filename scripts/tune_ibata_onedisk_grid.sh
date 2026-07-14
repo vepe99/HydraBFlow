@@ -35,16 +35,16 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # ---- knobs (mirror train_ibata_onedisk_grid.sh) ------------------------------------------------
-SIM=${SIM:-stream_agama_ibata_onedisk}
-DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_ibata_onedisk_hydrabflow}
+SIM=${SIM:-stream_agama_ibata_onedisk_beta3}
+DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_ibata_onedisk_beta3_hydrabflow}
 RES=${RES:-assets/gaia}
 REAL=${REAL:-assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz}
 SEED=${SEED:-2026}
-N_EPOCHS=${N_EPOCHS:-300}
+N_EPOCHS=${N_EPOCHS:-400}
 BATCH_SIZE=${BATCH_SIZE:-1024}
 N_TRAIN=${N_TRAIN:-100000}        # -> training_data_100000.npz
 N_TEST=${N_TEST:-333}             # -> test_multistream_333.npz
-N_TRIALS_TOTAL=${N_TRIALS_TOTAL:-50}
+N_TRIALS_TOTAL=${N_TRIALS_TOTAL:-100}
 TOP_K=${TOP_K:-3}
 
 MODEL=${MODEL:-stream_fusion_ibata_grid}

@@ -42,8 +42,8 @@ fi
 echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<cpu>}"
 
 # ---- knobs -------------------------------------------------------------------------------------
-SIM=${SIM:-stream_agama_ibata_onedisk}
-DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_ibata_onedisk_hydrabflow}
+SIM=${SIM:-stream_agama_ibata_onedisk_beta3}
+DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_ibata_onedisk_beta3_hydrabflow}
 RES=${RES:-assets/gaia}
 REAL=${REAL:-assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz}
 SEED=${SEED:-2026}
@@ -71,7 +71,7 @@ else
   REAL_PREPROC=${REAL_PREPROC:-stream_real_global_ibata_sumstats}
 fi
 
-RUNS_DIR=${RUNS_DIR:-outputs/ibata_onedisk_grid_standardizesigma/default}
+RUNS_DIR=${RUNS_DIR:-outputs/ibata_onedisk_grid_beta3/default}
 MODEL_DIR=${MODEL_DIR:-${RUNS_DIR}/train}
 EVAL_DIR=${EVAL_DIR:-${RUNS_DIR}/eval_sim_${N_TEST}}
 REAL_DIR=${REAL_DIR:-${RUNS_DIR}/eval_real}
