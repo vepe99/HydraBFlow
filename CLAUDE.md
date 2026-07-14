@@ -623,6 +623,36 @@ Every run saves:
     `outputs/ibata_sumstats/tst_test/{train,eval_sim_333,eval_real}`. Mild overfit flagged
     (val_loss 1.11x best) but best-weights restore handles it. Tests: `feature_transformer` forward,
     `attach_observed_*` shapes, 5 OOM-backoff tests — full suite green (97).
+- Session 2026-07-14 (halo prior reparameterized by virial mass + concentration — McMillan 2017):
+  optional halo parameterization by (M200, c_v') instead of (densityNorm rho, scaleRadius a), from
+  McMillan (2017, MNRAS 465, 76 = the paper the gas disks already come from). Config-driven on the
+  base `stream_agama` class via `params.halo_parameterization: rho_a|m200_c` (default `rho_a`
+  reproduces the old halo bit-for-bit; legacy configs/tests untouched). **Physics/validation**: the
+  halo is McMillan's exact profile (`rho = rho0/[x^g (1+x)^(3-g)]`, `x=r/r_h`), so the mapping
+  reproduces his Table 3 to <1% — `(M200=1.30e12, c_v'=15.4, gamma=1) -> r_h=19.6 kpc,
+  rho0=8.54e6`. Both new globals are **sampled in log space with the stock uniform/normal prior
+  types**, so NO new prior type and the analytic compositional prior score is unchanged:
+  `log10_M200_TwoPowerTriaxial_halo ~ U[11.699,12.398]` (= M200 log-U[0.5,2.5]e12, Delta=200 x
+  rho_crit, H0=70.4) and `ln_cvprime_TwoPowerTriaxial_halo ~ N(2.56,0.272)` (McMillan eq. 8 /
+  Boylan-Kolchin 2010 c-M, at the Delta_c~94 x rho_crit "virial" overdensity). Per-row conversion
+  in `stream_agama._halo_params_m200c(agama,p,cfg)`: `r200` from M200; `c200 =
+  convert_concentration(c_v', 94->200)` (`stream_common`, bisection on invariant Delta c^3/m(c),
+  NFW m — applied for all gamma per McMillan, exact only at gamma=1); `r_h = r200/[c200 (2-gamma)]`
+  (r_-2=(2-gamma)r_h); `densityNorm` from the **unit-norm `enclosedMass(r200)` solve** (exact incl.
+  the 1000 kpc cutoff taper + flattening q). **gamma capped [-2,1.5]** (was [-2,2]; user decision)
+  because (2-gamma)->0 sends r_h->inf as gamma->2 (~20% of draws had r_h>30 kpc otherwise). Cosmology
+  threaded through `_pot_cfg` (`halo_H0_kms_mpc`/`halo_Delta_mass`/`halo_Delta_c`) + `_DEFAULT_POT_CFG`.
+  Config `conf/simulator/stream_agama_ibata_onedisk_beta3_m200c.yaml` (inherits onedisk_beta3, beta
+  identity 3.0; rho/a set to identity = unused constants, so NOT inferred; adapter derives the
+  inferred set -> infers log10_M200/ln_cvprime in place of rho/a, existing train/eval stack unchanged).
+  Tests `tests/test_m200c_halo.py` (concentration roundtrip, McMillan Table 3, enclosedMass==M200
+  across gamma/mass, host-potential dispatch matches equivalent rho_a); full suite green (112).
+  Verified end-to-end: tiny `simulate` produces log10_M200 in-range, ln_cvprime ~ N(2.56,0.272),
+  rho/a stored as identity constants, finite physical vcirc. **Dataset gen deferred to user** (CPU/
+  joblib; `model=stream_fusion_ibata adapter=stream_ibata` etc. work unchanged). **Convention notes**:
+  M200 at 200 rho_crit but c_v' at ~94 rho_crit is McMillan's own split; the 94->200 conversion +
+  (2-gamma) factor reconcile them. This is a genuine prior reparameterization (new training set); the
+  rejection prior now carves the (M200,c) plane (still a hard indicator, score valid).
 
 ## graphify
 

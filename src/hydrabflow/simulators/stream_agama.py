@@ -43,6 +43,7 @@ from hydrabflow.simulators.stream_common import (
     OBS_VC_KMS,
     RHO_Z_KPC,
     VTERM_L_DEG,
+    convert_concentration,
     extended_rotation_curve,
     inferred_names,
     sample_stream_prior,
@@ -100,6 +101,10 @@ _DEFAULT_POT_CFG = dict(
     thick_disk=False,
     disk_vertical="isothermal",  # "isothermal" (sech^2, +h) | "exponential" (exp(-|z|/h), -h)
     bulge_density_norm=BULGE_PARAMS["densityNorm"],  # override the fixed bulge densityNorm
+    halo_parameterization="rho_a",  # "rho_a" (densityNorm + scaleRadius) | "m200_c" (M200 + c_v')
+    halo_H0_kms_mpc=70.4,           # McMillan (2017) cosmology, used only by the m200_c conversion
+    halo_Delta_mass=200.0,          # M200 overdensity (x rho_crit)
+    halo_Delta_c=94.0,              # c_v' concentration overdensity (x rho_crit, McMillan)
 )
 
 
@@ -149,6 +154,56 @@ def _halo_params(p: Mapping[str, float], r_t: float) -> dict:
     )
 
 
+def _halo_params_m200c(agama, p: Mapping[str, float], cfg: Mapping) -> dict:
+    """Halo ``Spheroid`` params from (virial mass, concentration) instead of (densityNorm, scale
+    radius) — the McMillan (2017) parameterization.
+
+    Sampled globals (both in log space, so the stock uniform/normal prior machinery and the
+    analytic compositional prior score need no changes):
+      * ``log10_M200_TwoPowerTriaxial_halo`` : log10(M200 / Msun); M200 is the mass enclosed at
+        ``r200`` where the mean density is ``Delta_mass * rho_crit``.
+      * ``ln_cvprime_TwoPowerTriaxial_halo`` : ln(c_v'); ``c_v' = r_v' / r_{-2}`` at the McMillan
+        ``Delta_c ~ 94 rho_crit`` "virial" overdensity (prior ``ln c_v' ~ N(2.56, 0.272)``).
+
+    Conversion (cosmology from ``cfg``; McMillan H0=70.4, Delta_mass=200, Delta_c=94):
+        rho_crit = 3 H0^2 / (8 pi G)
+        r200  = [3 M200 / (4 pi Delta_mass rho_crit)]^(1/3)
+        c200  = convert_concentration(c_v', Delta_c, Delta_mass)
+        r_h   = r200 / [c200 (2 - gamma)]      # r_{-2} = (2 - gamma) r_h; gamma capped < 2 by prior
+        rho_0 = M200 / enclosedMass(r200)      # unit-norm solve: exact incl. cutoff + flattening q
+    Validated to reproduce McMillan Table 3 (M200=1.3e12, c_v'=15.4, gamma=1 -> r_h=19.6 kpc,
+    rho_0=8.5e6 Msun/kpc^3).
+    """
+    r_t = float(cfg["halo_r_t_kpc"])
+    H0 = float(cfg["halo_H0_kms_mpc"]) / 1000.0  # km/s/Mpc -> km/s/kpc
+    D_mass = float(cfg["halo_Delta_mass"])
+    D_c = float(cfg["halo_Delta_c"])
+    rho_crit = 3.0 * H0**2 / (8.0 * np.pi * agama.G)  # Msun/kpc^3
+
+    M200 = 10.0 ** float(p["log10_M200_TwoPowerTriaxial_halo"])
+    cvp = float(np.exp(float(p["ln_cvprime_TwoPowerTriaxial_halo"])))
+    gamma = float(p["gamma_TwoPowerTriaxial_halo"])
+
+    r200 = (3.0 * M200 / (4.0 * np.pi * D_mass * rho_crit)) ** (1.0 / 3.0)
+    c200 = convert_concentration(cvp, D_c, D_mass)
+    r_h = r200 / (c200 * (2.0 - gamma))
+
+    shape = dict(
+        type="Spheroid",
+        scaleRadius=r_h,
+        densityNorm=1.0,
+        gamma=gamma,
+        alpha=1,
+        beta=float(p["beta_TwoPowerTriaxial_halo"]),
+        cutoffStrength=2,
+        outerCutoffRadius=r_t,
+        axisRatioY=1.0,
+        axisRatioZ=float(p["q_TwoPowerTriaxial_halo"]),
+    )
+    shape["densityNorm"] = M200 / agama.Potential(**shape).enclosedMass(r200)
+    return shape
+
+
 def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None):
     """Assemble the Milky Way host potential from one parameter row.
 
@@ -164,7 +219,10 @@ def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = Non
     components = [bulge]
     if cfg["gas_disks"]:
         components += [GAS_HI_PARAMS, GAS_H2_PARAMS]
-    components.append(_halo_params(p, float(cfg["halo_r_t_kpc"])))
+    if str(cfg["halo_parameterization"]) == "m200_c":
+        components.append(_halo_params_m200c(agama, p, cfg))
+    else:
+        components.append(_halo_params(p, float(cfg["halo_r_t_kpc"])))
     components.append(_thin_disk_params(p, hsign))
     if cfg["thick_disk"]:
         components.append(_thick_disk_params(p, hsign))
@@ -531,6 +589,10 @@ class AgamaStreamSimulator(BaseSimulator):
             bulge_density_norm=float(
                 self.params.get("bulge_density_norm", BULGE_PARAMS["densityNorm"])
             ),
+            halo_parameterization=str(self.params.get("halo_parameterization", "rho_a")),
+            halo_H0_kms_mpc=float(self.params.get("halo_H0_kms_mpc", 70.4)),
+            halo_Delta_mass=float(self.params.get("halo_Delta_mass", 200.0)),
+            halo_Delta_c=float(self.params.get("halo_Delta_c", 94.0)),
         )
 
     @property

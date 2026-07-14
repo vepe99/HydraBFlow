@@ -185,6 +185,31 @@ def inferred_names(priors: Mapping[str, Mapping]) -> list[str]:
     return [k for k, spec in priors.items() if spec["type"] != "identity"]
 
 
+def convert_concentration(c1: float, delta1: float, delta2: float) -> float:
+    """Convert an NFW halo concentration between spherical-overdensity definitions.
+
+    ``c_delta = r_delta / r_{-2}`` where ``r_delta`` encloses a mean density ``delta * rho_crit``.
+    Holding the (NFW) profile fixed, ``rho_0`` is invariant, so ``delta * c**3 / m(c)`` is invariant
+    with ``m(c) = ln(1+c) - c/(1+c)`` (the NFW enclosed-mass shape). Given ``c1`` at ``delta1``,
+    return ``c2`` at ``delta2``. ``delta * c**3 / m(c)`` is monotonic in ``c``, so a bisection on
+    ``[1e-3, 1e3]`` is robust. Used e.g. to map McMillan (2017)'s ``c_v'`` (delta ~ 94 rho_crit) to
+    ``c200`` (delta = 200 rho_crit); applied for all inner slopes ``gamma`` following McMillan, who
+    adopts one concentration prior independent of ``gamma`` (exact only for the NFW ``gamma = 1``).
+    """
+    def _mc(c: float) -> float:
+        return np.log1p(c) - c / (1.0 + c)
+
+    target = delta1 * c1**3 / _mc(c1)
+    lo, hi = 1e-3, 1e3
+    for _ in range(80):
+        mid = 0.5 * (lo + hi)
+        if delta2 * mid**3 / _mc(mid) > target:
+            hi = mid
+        else:
+            lo = mid
+    return 0.5 * (lo + hi)
+
+
 def sample_stream_prior(
     priors_global: Mapping[str, Mapping],
     priors_local: Mapping[str, Mapping[str, Mapping]],

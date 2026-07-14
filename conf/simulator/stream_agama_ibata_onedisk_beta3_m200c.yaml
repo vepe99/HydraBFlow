@@ -1,0 +1,52 @@
+# Ibata one-disk, beta=3 simulator with the dark halo reparametrized by VIRIAL MASS + CONCENTRATION
+# (McMillan 2017), instead of (densityNorm rho, scaleRadius a).
+#
+# Identical to stream_agama_ibata_onedisk_beta3 in every other respect (Chen spray, extended
+# Zhou u Huang vcirc + banded rejection prior, the three ancillary potential observables, freed
+# beta[2,4] -> here fixed at 3.0, halo truncated at r_t=1000 kpc, McMillan bulge + gas disks, one
+# exponential-vertical stellar disk). Only the halo PRIOR COORDINATES change:
+#   * log10_M200_TwoPowerTriaxial_halo ~ U[11.699, 12.398]  => M200 ~ log-uniform [0.5, 2.5]e12 Msun
+#       (Delta = 200 x rho_crit; McMillan cosmology H0 = 70.4 km/s/Mpc).
+#   * ln_cvprime_TwoPowerTriaxial_halo ~ N(2.56, 0.272)     => c_v' log-normal, McMillan (2017)
+#       eq. 8 (Boylan-Kolchin 2010 c-M relation) at the Delta_c ~ 94 x rho_crit "virial" overdensity.
+# Both are sampled in LOG space, so the stock uniform/normal prior machinery and the analytic
+# compositional prior score work unchanged (uniform -> zero score, normal -> analytic).
+#
+# The simulator converts (M200, c_v', gamma) -> (r_h, densityNorm) per row
+# (stream_agama._halo_params_m200c): r200 from M200; c200 = convert(c_v', 94 -> 200);
+# r_h = r200 / [c200 (2 - gamma)]; densityNorm from the unit-norm enclosedMass(r200) solve (exact
+# incl. the 1000 kpc cutoff taper and flattening q). Validated to reproduce McMillan Table 3
+# (M200=1.3e12, c_v'=15.4, gamma=1 -> r_h = 19.6 kpc, rho_0 = 8.5e6 Msun/kpc^3).
+#
+# gamma is capped at [-2, 1.5] (parent was [-2, 2]): the (2 - gamma) factor sends r_h -> inf as
+# gamma -> 2. rho / a are set to identity (unused fixed constants; the m200_c halo builder never
+# reads them, so they are NOT inferred). The training stack derives the inferred parameter set from
+# these priors, so it now infers log10_M200 / ln_cvprime in place of rho / a (no adapter/model edit
+# needed). Everything else (adapter=stream_ibata, model=stream_fusion_ibata,
+# augmentation=stream_global_ibata, preprocessing=stream_global_log10_ibata) is unchanged; the
+# log10_transform step simply skips the now-absent rho/a inference (they stay identity constants).
+defaults:
+  - stream_agama_ibata_onedisk_beta3
+
+name: stream_agama
+params:
+  halo_parameterization: m200_c
+  halo_H0_kms_mpc: 70.4       # McMillan (2017) cosmology (Komatsu et al. 2011)
+  halo_Delta_mass: 200.0      # M200 overdensity (x rho_crit)
+  halo_Delta_c: 94.0          # c_v' concentration overdensity (x rho_crit, McMillan "virial")
+  priors_global:
+    log10_M200_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [11.69897, 12.39794]   # log10(0.5e12), log10(2.5e12)
+    ln_cvprime_TwoPowerTriaxial_halo:
+      type: normal
+      prior_parameters: [2.56, 0.272]           # McMillan (2017) eq. 8, Delta_c ~ 94 rho_crit
+    gamma_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [-2.0, 1.5]             # capped from [-2, 2]: (2 - gamma) -> 0 blows up r_h
+    rho_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [8.54e6]                # unused (m200_c ignores it); kept as fixed constant
+    a_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [19.6]                  # unused (m200_c ignores it); kept as fixed constant
