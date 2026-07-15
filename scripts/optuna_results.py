@@ -5,7 +5,7 @@ from optuna.storages import JournalStorage, JournalFileStorage
 
 from optuna.visualization import plot_pareto_front, plot_param_importances
 
-storage = JournalStorage(JournalFileStorage("/export/data/vgiusepp/HydraBFlow/data/data_jarvis/data_agama_ibata_onedisk_beta3_hydrabflow/tuning/stream_ibata_grid_study.log"))
+storage = JournalStorage(JournalFileStorage("/export/data/vgiusepp/HydraBFlow/data/data_jarvis/data_agama_ibata_onedisk_beta3_m200c_hydrabflow/tuning/stream_ibata_grid_study.log"))
 
 study = optuna.load_study(
     study_name='stream_ibata_grid_study',

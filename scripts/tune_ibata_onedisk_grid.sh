@@ -42,7 +42,7 @@ REAL=${REAL:-assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz}
 SEED=${SEED:-2026}
 N_EPOCHS=${N_EPOCHS:-400}
 BATCH_SIZE=${BATCH_SIZE:-1024}
-N_TRAIN=${N_TRAIN:-100000}        # -> training_data_100000.npz
+N_TRAIN=${N_TRAIN:-300000}        # -> training_data_300000.npz
 N_TEST=${N_TEST:-333}             # -> test_multistream_333.npz
 N_TRIALS_TOTAL=${N_TRIALS_TOTAL:-100}
 TOP_K=${TOP_K:-3}
@@ -121,7 +121,7 @@ run_worker() {  # $1 = gpu id (or "cpu"), $2 = worker index
   uv run python scripts/tune.py \
     simulator="${SIM}" model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
-    tuning="${TUNING}" \
+    tuning="${TUNING}" tuning.study_name="${STUDY}" \
     data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
     tuning.n_trials="${PER}" tuning.n_epochs="${N_EPOCHS}" \
     training.batch_size="${BATCH_SIZE}" seed="${SEED}" \
