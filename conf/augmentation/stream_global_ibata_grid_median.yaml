@@ -1,0 +1,14 @@
+# MEDIANS-ONLY variant of stream_global_ibata_grid: identical chain, but the gridded summary drops
+# every per-bin std channel (params.summary_include_std: false), so batch["sim_summary"] is
+# (n, K_phi1, 7): [med_φ2, med_plx, med_μφ1, med_μφ2, med_vlos, j, φ1_centre].
+#
+# Rationale (2026-07-15 misspecification localization): the real-vs-sim MMD flag lives entirely in
+# the dispersion statistics (std_phi2 dominant — real streams are wider than any sim; M68 fluffy in
+# every std). Feeding only the medians removes the misspecified features from the network input.
+# Pair with augmentation=stream_real_global_ibata_grid_median on the real-data side (the layouts
+# must match) and the usual model=stream_fusion_ibata_grid / adapter=stream_ibata_sumstats stack.
+defaults:
+  - stream_global_ibata_grid
+
+params:
+  summary_include_std: false

@@ -36,16 +36,18 @@ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 
 import numpy as np
 
-# stream_summary_grid channel layout: 5 observables x [median, std], then j, phi1_centre.
+# stream_summary_grid channel layout: 5 observables x [median, std] (or [median] only when the
+# augmentation ran with summary_include_std=false), then j, phi1_centre. The per-observable stat
+# count is detected from the array's channel count in main().
 _OBS = ["phi2", "parallax", "mu_phi1", "mu_phi2", "vlos"]
 _UNITS = {"phi2": "deg", "parallax": "mas", "mu_phi1": "mas/yr", "mu_phi2": "mas/yr",
           "vlos": "km/s"}
-_STATS = [f"{s}_{o}" for o in _OBS for s in ("med", "std")]  # channel c = 2*obs + (0 med, 1 std)
+_STATS = [f"{s}_{o}" for o in _OBS for s in ("med", "std")]  # rebound in main() per layout
 
 
-def _stat_channels():
-    return {f"{s}_{o}": 2 * i + (0 if s == "med" else 1)
-            for i, o in enumerate(_OBS) for s in ("med", "std")}
+def _stat_channels(kinds=("med", "std")):
+    return {f"{s}_{o}": len(kinds) * i + si
+            for i, o in enumerate(_OBS) for si, s in enumerate(kinds)}
 
 
 def main():
@@ -99,7 +101,17 @@ def main():
     j_sim = np.asarray(flat_sim["j"]).reshape(-1).astype(int)
     j_real = np.asarray(flat_real["j"]).reshape(-1).astype(int)
     K = S_sim.shape[1]
-    chan = _stat_channels()
+    # Detect the per-observable stat count from the channel axis: 5*len(kinds) + 2 (j, phi1).
+    global _STATS
+    n_stat_ch = S_sim.shape[-1] - 2
+    if n_stat_ch == 2 * len(_OBS):
+        kinds = ("med", "std")
+    elif n_stat_ch == len(_OBS):
+        kinds = ("med",)  # summary_include_std=false (medians-only grid)
+    else:
+        raise SystemExit(f"unrecognized sim_summary layout: {S_sim.shape[-1]} channels")
+    _STATS = [f"{s}_{o}" for o in _OBS for s in kinds]
+    chan = _stat_channels(kinds)
 
     try:
         from hydrabflow.simulators.registry import get_simulator
@@ -206,10 +218,11 @@ def main():
     fig.savefig(f1, dpi=160, bbox_inches="tight")
     plt.close(fig)
 
-    # (2) track overlays: per stream, 2 rows (median, std) x 5 observables vs phi1
+    # (2) track overlays: per stream, len(kinds) rows (median[, std]) x 5 observables vs phi1
+    nk = len(kinds)
     colors = {"Pal5": "#d7191c", "NGC3201": "#2c7bb6", "M68": "#fdae61"}
-    fig, axes = plt.subplots(2 * len(names), len(_OBS),
-                             figsize=(3.5 * len(_OBS), 2.6 * 2 * len(names)), squeeze=False)
+    fig, axes = plt.subplots(nk * len(names), len(_OBS),
+                             figsize=(3.5 * len(_OBS), 2.6 * nk * len(names)), squeeze=False)
     for gi, name in enumerate(names):
         j = [k for k, v in jname.items() if v == name]
         j = j[0] if j else int(j_real[gi])
@@ -217,8 +230,8 @@ def main():
         x = results[name]["phi1_centres_deg"]
         i_real = int(np.flatnonzero(j_real == j)[0])
         for oi, obs in enumerate(_OBS):
-            for ri, statname in enumerate(("med", "std")):
-                ax = axes[2 * gi + ri][oi]
+            for ri, statname in enumerate(kinds):
+                ax = axes[nk * gi + ri][oi]
                 c = chan[f"{statname}_{obs}"]
                 sim_v = pool[:, :, c].astype(float)
                 sim_v[sim_v == 0.0] = np.nan  # empty-bin marker
@@ -235,7 +248,7 @@ def main():
                     ax.set_title(obs)
                 if oi == 0:
                     ax.set_ylabel(f"{name}\n{statname} [{_UNITS[obs]}]", fontsize=8)
-                if 2 * gi + ri == 2 * len(names) - 1:
+                if nk * gi + ri == nk * len(names) - 1:
                     ax.set_xlabel(r"$\phi_1$ [deg]")
                 ax.grid(alpha=0.2)
     axes[0][0].legend(fontsize=7)

@@ -141,6 +141,22 @@ def test_unmeasured_vlos_does_not_corrupt_other_features():
     assert np.isfinite(track_block).all()
 
 
+def test_summary_grid_median_only_layout():
+    """summary_include_std=false drops the per-bin std channels: (n, K, 12) -> (n, K, 7), with the
+    median / j / φ1 channels bit-identical to the full layout's."""
+    batch_full, batch_med = _toy_batch(), _toy_batch()
+    full = np.asarray(_build("stream_summary_grid", _params())(batch_full)["sim_summary"])
+    med = np.asarray(
+        _build("stream_summary_grid", _params(summary_include_std=False))(batch_med)["sim_summary"]
+    )
+    assert full.shape == (9, K_TRACK, 5 * 2 + 2)
+    assert med.shape == (9, K_TRACK, 5 + 2)
+    assert np.isfinite(med).all()
+    # medians (even channels of the full layout) + trailing j, φ1_centre are unchanged
+    np.testing.assert_array_equal(med[..., :5], full[..., 0:10:2])
+    np.testing.assert_array_equal(med[..., 5:], full[..., 10:])
+
+
 # --------------------------------------------------------------------------------------------- #
 # mlp summary backbone
 # --------------------------------------------------------------------------------------------- #
