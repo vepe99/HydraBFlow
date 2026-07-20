@@ -678,6 +678,57 @@ Every run saves:
   epoch): train → eval_sim (base+compositional) → eval_real all produce full artifacts; derived
   keys land in both flat and multistream npz. **Full dataset gen + GPU train/tune deferred to user.**
 
+- Session 2026-07-16 (rnbody m200_c dataset + "too cold streams" diagnosis -> freed-prior fix):
+  goal = the m200c config/rejection/priors with the RESTRICTED N-BODY forward model, plus a
+  per-bin summary-stat std PPC ("are the sim streams too cold?"). Five pieces:
+  - **rnbody x Ibata/m200c wiring**: base `stream_agama.simulate` refactored around a `_row_jobs`
+    hook (the forward-model seam — subclasses swap only the joblib worker, dispatch + output
+    assembly shared); `_simulate_one_rnbody` now takes `pot_cfg`/`ancillary`, computes the
+    potential-only outputs (vcirc, vterm/sigma_z/rho_z, derived m200_c rho/a) BEFORE the stream
+    try-block so they survive failed orbits, returns the same 4-tuple as the spray worker; the
+    duplicated rnbody `simulate` override was deleted. Test
+    `test_rnbody_simulate_m200c_ancillary_and_derived_keys`; suite green.
+  - **Configs** `stream_agama_rnbody_ibata_onedisk_beta3_m200c[.yaml]` (inherits the spray m200c
+    file wholesale — same priors incl. Sigma_Disk<=3e9, banded Zhou u Huang rejection, extended
+    grid, ancillary observables; `name: stream_agama_rnbody`; the inherited `spray_method: chen`
+    is ignored by the rnbody worker; t_end=4 identity for all three streams) and, after the
+    probes below, `..._m200c_wide` (Pal5 `m_progenitor ~ U[4.3e3, 3.44e4]`, M68
+    `t_end ~ U[4, 10]` Gyr). Script `create_ibata_rnbody_m200c_dataset.sh` (SIM/DATA_DIR
+    env-overridable, N_FULL=10000). Datasets in `data_jarvis/data_agama_rnbody_ibata_onedisk_
+    beta3_m200c{,_wide}_hydrabflow/` (10k flat + 333 multistream each).
+  - **Cold-stream std check, prior + posterior**: `ppc_summary_statistics.render` now also emits
+    `*_std.png` (per-bin std tracks) + a printed table (real raw / robust 1.4826*MAD / vlos
+    error-deconvolved / sim median / P(sim<real)); new
+    `scripts/ppc_posterior_summary_statistics.py` = posterior twin (reuses an
+    `evaluate_real composition=global` run's saved `posterior.npz`/`single_stream_posterior.npz`
+    — native-space, log10 keys inverted via the run's preprocessing — pairs global draws with
+    PRIOR-drawn locals (not inferred at the global level), re-simulates with the run's own
+    simulator, same renderer; `--source pooled|per-stream`, `--noise`). **`--noise` mode** (both
+    scripts): `augment_sim()` pushes the raw (N,S,P,6) sim through the TRAINING observation-model
+    prefix (`observational_window -> observed_n_stars -> compact -> sample_magnitudes ->
+    sample_obs_error -> apply_obs_error -> mask_vlos`; resources fall back to `assets/gaia` when
+    `data/` lacks the tables) so the comparison vs real Gaia is apples-to-apples; posterior
+    variant reads the TRAIN augmentation from `model_dir`'s config (the eval_real run's own node
+    is the real-data preset).
+  - **Diagnosis (key session finding)**: the raw check made everything look cold; noise
+    convolution + robust stats dissolved most of it. Explained away: Pal5 pm (Gaia noise floor
+    ~0.2 mas/yr dominates), Pal5 vlos (real 6.0 -> robust 2.5-3.0, outlier-inflated; sim ~5
+    brackets), NGC3201 everything (rnbody even slightly hot in phi2; spray-era NGC3201 phi2
+    coldness was already fixed by rnbody). GENUINE gaps: Pal5 phi2 (sim 0.13 vs robust 0.20 deg)
+    and M68 all four quantities (phi2 0.57 vs 1.38, vlos 11 vs 18.6). Detrended-per-bin check
+    ruled out great-circle-curvature inflation; sim M68 is CLOSER than real (7.3 vs ~10 kpc) so
+    geometry can't explain it. **Probes** (24-32 groups each, noise-convolved): Pal5 fixed by
+    m_progenitor x2 (present-day 4.3e3 is the wrong mass for tails shed earlier); M68 mass
+    SATURATES (x8=4.6e5 Msun still 40% short in phi2, mu_phi2 unmoved) and a_progenitor x3 does
+    nothing — **M68's lever is stripping age: t_end=8 Gyr brackets all four (P~0.54-0.58)**.
+    Freed-prior validation (the _wide config): every stream/quantity bracketed (P 0.09-0.84,
+    nothing pinned at 1.0). The freed locals are nuisance-marginalized at composition=global, so
+    the training manifold now COVERS the real widths instead of extrapolating.
+  - Cold-table snapshots (noise-convolved, robust targets): baseline rnbody m200c — Pal5 phi2
+    0.127/P=.90, M68 phi2 0.566/P=.94, M68 vlos 11.1/P=.89; wide priors — Pal5 phi2 0.196/P=.66,
+    M68 phi2 0.79/P=.72, M68 vlos 14.0/P=.70. Probe npz/pngs in the session scratchpad only;
+    dataset-level figures under each dataset's `ppc/` dir.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

@@ -1,0 +1,44 @@
+# RESTRICTED N-BODY variant of the Ibata one-disk / beta=3 / (M200, c_v') simulator: identical
+# config to stream_agama_ibata_onedisk_beta3_m200c (same priors incl. the widened Sigma_Disk
+# ceiling 3e9, same banded Zhou u Huang rotation-curve rejection prior, same extended 50-radii
+# vcirc observable, same ancillary observables v_term / Sigma_z / rho_z, same m200_c halo
+# reparameterization with gamma capped [-2, 1.5]) — but the stream itself is generated with the
+# restricted N-body method (self-consistent Plummer progenitor + periodically refit moving
+# progenitor potential) instead of particle spray.
+#
+# Purpose: check whether the self-consistent stripping produces streams whose per-bin summary-
+# statistic dispersion (track std) matches the real Gaia streams, or whether the spray streams
+# are dynamically too cold (see scripts/ppc_summary_statistics.py std figure).
+#
+# Notes:
+#   * `name: stream_agama_rnbody` -> get_simulator resolves the restricted-N-body class, which
+#     subclasses stream_agama, so all the class-level, config-driven Ibata machinery (full
+#     potential via pot_cfg, ancillary observables, m200_c conversion, banded rejection) applies
+#     unchanged through the shared simulate() dispatch (_row_jobs seam).
+#   * The inherited `spray_method: chen` (from stream_agama_spray_huang) is spray-only and is
+#     ignored by the rnbody worker — the IC here is always restricted N-body.
+#   * t_end for NGC3201/M68 is raised to 4.0 Gyr (identity), per the 2026-07-05 prior-predictive
+#     finding: self-consistent stripping cannot grow the observed ~100-degree arms in 1.5 Gyr
+#     (spray fabricates stripping uniformly over t_end so it never noticed). Pal 5 is 4.0 already.
+#   * Cost: ~10-25 s/row at 1 agama thread (vs ~4-7 s spray). n_workers=180 targets ~70% of the
+#     256-core jarvis box; total CPU load ~= n_workers * agama_num_threads.
+defaults:
+  - stream_agama_ibata_onedisk_beta3_m200c
+
+name: stream_agama_rnbody
+params:
+  n_workers: 180
+  agama_num_threads: 1
+  n_updates: 12        # moving-progenitor-potential refits over t_end (mass-loss resolution)
+  traj_per_update: 16  # center-trajectory knots per update interval
+  accuracy: 1.0e-8     # particle orbit integration accuracy (rewind/center always 1e-10)
+
+  priors_local:
+    NGC3201:
+      t_end:
+        type: identity
+        prior_parameters: [4.0]
+    M68:
+      t_end:
+        type: identity
+        prior_parameters: [4.0]

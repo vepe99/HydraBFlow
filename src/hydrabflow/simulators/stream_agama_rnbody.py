@@ -33,11 +33,12 @@ from hydrabflow.simulators.registry import register_simulator
 from hydrabflow.simulators.stream_agama import (
     AgamaStreamSimulator,
     _agama,
+    _ancillary_observables,
+    _halo_params_m200c,
     _host_potential,
+    _resolve_pot_cfg,
     _vcirc,
 )
-from hydrabflow.simulators.stream_common import sky_projection
-from hydrabflow.utils.progress import joblib_row_progress
 from hydrabflow.utils.quiet import quiet_worker
 
 _PLUMMER_MMAX = 0.99  # truncate the sampled enclosed-mass fraction (r <~ 12 scale radii)
@@ -188,13 +189,17 @@ def _rnbody_stream(
 
 @quiet_worker
 def _simulate_one_rnbody(
-    p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int, opts: Dict[str, float]
+    p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int,
+    opts: Dict[str, float], pot_cfg: Mapping | None = None, ancillary: Mapping | None = None,
 ):
-    """joblib worker: one restricted-N-body stream + the rotation curve of its potential.
+    """joblib worker: one restricted-N-body stream + the rotation curve of its potential (+ the
+    optional Ibata ancillary observables / derived m200_c halo params, same contract as
+    ``stream_agama._simulate_one``).
 
-    Any failure yields NaN particles (the rotation curve is computed first and survives), so a
-    single pathological row cannot abort a long dataset generation; downstream NaN cleaning
-    drops such rows exactly like the spray simulator's invalid seeds.
+    Any failure yields NaN particles (the potential-only outputs — rotation curve, ancillary
+    observables, derived halo params — are computed first and survive), so a single pathological
+    row cannot abort a long dataset generation; downstream NaN cleaning drops such rows exactly
+    like the spray simulator's invalid seeds.
     """
     agama = _agama()
     agama.setNumThreads(int(opts.get("agama_num_threads", 1)))
@@ -204,8 +209,13 @@ def _simulate_one_rnbody(
     tu = agama.getUnits()["time"]
     time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
 
-    pot_host = _host_potential(agama, p)
+    pot_host = _host_potential(agama, p, pot_cfg)
     vcirc = _vcirc(pot_host, obs_r)
+    anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary)
+    halo_derived = None
+    if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) == "m200_c":
+        h = _halo_params_m200c(agama, p, pot_cfg)
+        halo_derived = (float(h["densityNorm"]), float(h["scaleRadius"]))
 
     try:
         l0, b0, pml0, pmb0 = agama.transformCelestialCoords(
@@ -235,7 +245,7 @@ def _simulate_one_rnbody(
         )
     except Exception:  # _OrbitCapExceeded (pathological orbit hit the step cap) or agama failure
         xv = np.full((n_particles, 6), np.nan)
-    return xv, vcirc
+    return xv, vcirc, anc, halo_derived
 
 
 @register_simulator("stream_agama_rnbody")
@@ -260,34 +270,18 @@ class RestrictedNbodyStreamSimulator(AgamaStreamSimulator):
             "update_max_num_steps": float(self.params.get("update_max_num_steps", 1e4)),
         }
 
-    def simulate(
-        self, params: Mapping[str, np.ndarray], rng: np.random.Generator
-    ) -> Dict[str, np.ndarray]:
-        from joblib import Parallel, delayed
+    def _row_jobs(self, rows, seeds):
+        """Swap the forward-model worker for the restricted-N-body one; the base class's
+        ``simulate`` keeps the dispatch + output assembly (rotation curve, Ibata ancillary
+        observables, derived m200_c halo diagnostics — all potential-only, shared code paths)."""
+        from joblib import delayed
 
-        n = len(np.asarray(next(iter(params.values()))))
-        rows = [
-            {k: float(np.asarray(v).reshape(n, -1)[i, 0]) for k, v in params.items()}
-            for i in range(n)
-        ]
-        seeds = rng.integers(0, 2**31 - 1, size=n)
         opts = self._rnbody_opts()
-
-        # batch_size=1: restricted-N-body rows vary wildly in cost (fast rows vs the multi-minute
-        # t_end=4 rows), so one row per dispatch keeps all n_workers busy instead of letting
-        # joblib's 'auto' batching hand a few workers oversized batches while the rest idle.
-        with joblib_row_progress():  # advance the run_chunked bar once per finished row
-            results = Parallel(n_jobs=self._n_workers, batch_size=1)(
-                delayed(_simulate_one_rnbody)(
-                    row, self._n_particles, self.obs_r_kpc, int(seed), opts
-                )
-                for row, seed in zip(rows, seeds)
+        pot_cfg = self._pot_cfg
+        ancillary = self._ancillary_spec
+        return [
+            delayed(_simulate_one_rnbody)(
+                row, self._n_particles, self.obs_r_kpc, int(seed), opts, pot_cfg, ancillary
             )
-        xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
-        vcirc = np.stack([r[1] for r in results], axis=0)[..., None]  # (n, n_radii, 1)
-
-        return {
-            "sim_data_carthesian": xv,
-            "sim_data_projected": sky_projection(xv),
-            "vcirc_kms": vcirc,
-        }
+            for row, seed in zip(rows, seeds)
+        ]

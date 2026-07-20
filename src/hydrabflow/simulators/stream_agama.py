@@ -803,10 +803,28 @@ class AgamaStreamSimulator(BaseSimulator):
             return draw(n, rng)
         return self._rejection_sample(n, rng, draw)
 
+    def _row_jobs(self, rows, seeds):
+        """One joblib ``delayed`` call per row. The forward-model seam: subclasses swap the
+        worker here (``stream_agama_rnbody``) while reusing ``simulate``'s dispatch + output
+        assembly. Every worker must return the same 4-tuple
+        ``(xv, vcirc, ancillary_dict, halo_derived_or_None)``."""
+        from joblib import delayed
+
+        spray_method = str(self.params.get("spray_method", "fardal"))
+        pot_cfg = self._pot_cfg
+        ancillary = self._ancillary_spec
+        return [
+            delayed(_simulate_one)(
+                row, self._n_particles, self.obs_r_kpc, int(seed), spray_method, pot_cfg,
+                ancillary,
+            )
+            for row, seed in zip(rows, seeds)
+        ]
+
     def simulate(
         self, params: Mapping[str, np.ndarray], rng: np.random.Generator
     ) -> Dict[str, np.ndarray]:
-        from joblib import Parallel, delayed
+        from joblib import Parallel
 
         n = len(np.asarray(next(iter(params.values()))))
         rows = [
@@ -814,9 +832,6 @@ class AgamaStreamSimulator(BaseSimulator):
             for i in range(n)
         ]
         seeds = rng.integers(0, 2**31 - 1, size=n)
-        spray_method = str(self.params.get("spray_method", "fardal"))
-        pot_cfg = self._pot_cfg
-        ancillary = self._ancillary_spec
 
         # batch_size=1: forward-model rows have highly variable cost (restricted N-body rows,
         # especially the long t_end streams, run far longer than spray rows). joblib's default
@@ -826,11 +841,7 @@ class AgamaStreamSimulator(BaseSimulator):
         # multi-second row.
         with joblib_row_progress():  # advance the run_chunked bar once per finished row
             results = Parallel(n_jobs=self._n_workers, batch_size=1)(
-                delayed(_simulate_one)(
-                    row, self._n_particles, self.obs_r_kpc, int(seed), spray_method, pot_cfg,
-                    ancillary,
-                )
-                for row, seed in zip(rows, seeds)
+                self._row_jobs(rows, seeds)
             )
         xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
         vcirc = np.stack([r[1] for r in results], axis=0)[..., None]  # (n, n_radii, 1)
@@ -851,7 +862,7 @@ class AgamaStreamSimulator(BaseSimulator):
             out["rho_TwoPowerTriaxial_halo_derived"] = derived[:, 0:1]
             out["a_TwoPowerTriaxial_halo_derived"] = derived[:, 1:2]
         anc_list = [r[2] for r in results]
-        if ancillary:
+        if anc_list[0]:  # empty dict when no ancillary observables were requested
             for key in ("vterm_kms", "rho_z"):
                 if key in anc_list[0]:
                     out[key] = np.stack([a[key] for a in anc_list], axis=0)[..., None]

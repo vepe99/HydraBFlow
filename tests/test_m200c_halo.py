@@ -185,3 +185,46 @@ def test_simulate_no_derived_keys_for_rho_a():
     out = sim.simulate(sim.sample_prior(2, np.random.default_rng(0)), np.random.default_rng(1))
     assert "rho_TwoPowerTriaxial_halo_derived" not in out
     assert "a_TwoPowerTriaxial_halo_derived" not in out
+
+
+def test_rnbody_simulate_m200c_ancillary_and_derived_keys():
+    """The restricted-N-body simulator goes through the same simulate() assembly (_row_jobs
+    seam), so with an Ibata m200_c config it must emit the ancillary observables AND the derived
+    rho/a diagnostics, with the derived values matching the per-row _halo_params_m200c solve."""
+    from hydrabflow.simulators.stream_agama_rnbody import RestrictedNbodyStreamSimulator
+
+    params = _m200c_params()
+    params.update(
+        n_particles=60, n_workers=2,
+        # tiny restricted-N-body settings so the test stays fast
+        n_updates=3, traj_per_update=8, agama_num_threads=1,
+        # Ibata potential + observables (as in stream_agama_rnbody_ibata_onedisk_beta3_m200c)
+        gas_disks=True, thick_disk=False, disk_vertical="exponential",
+        bulge_density_norm=9.93e10,
+        ancillary_observables=["vterm", "sigma_z", "rho_z"],
+    )
+    params["priors_local"]["Pal5"]["t_end"] = {"type": "identity", "prior_parameters": [0.3]}
+    sim = RestrictedNbodyStreamSimulator(params)
+
+    prior = sim.sample_prior(2, np.random.default_rng(0))
+    out = sim.simulate(prior, np.random.default_rng(1))
+
+    assert out["sim_data_projected"].shape == (2, 60, 6)
+    spec = sim._ancillary_spec
+    assert out["vterm_kms"].shape == (2, spec["l_deg"].size, 1)
+    assert out["sigma_z"].shape == (2, 1)
+    assert out["rho_z"].shape == (2, spec["z_kpc"].size, 1)
+    for key in ("vterm_kms", "sigma_z", "rho_z"):
+        assert np.isfinite(out[key]).all()
+
+    cfg = sim._pot_cfg
+    for key in ("rho_TwoPowerTriaxial_halo_derived", "a_TwoPowerTriaxial_halo_derived"):
+        assert out[key].shape == (2, 1)
+        assert np.isfinite(out[key]).all() and np.all(out[key] > 0)
+    for i in range(2):
+        p = {k: float(np.asarray(v).reshape(2, -1)[i, 0]) for k, v in prior.items()}
+        h = _halo_params_m200c(agama, p, cfg)
+        assert out["rho_TwoPowerTriaxial_halo_derived"][i, 0] == pytest.approx(
+            h["densityNorm"], rel=1e-6)
+        assert out["a_TwoPowerTriaxial_halo_derived"][i, 0] == pytest.approx(
+            h["scaleRadius"], rel=1e-6)

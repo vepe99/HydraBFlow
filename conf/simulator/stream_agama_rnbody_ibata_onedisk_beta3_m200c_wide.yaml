@@ -1,0 +1,34 @@
+# "Wide" (dispersion-corrected) variant of the restricted-N-body Ibata m200_c simulator: frees
+# the two per-stream locals that the 2026-07-16 cold-stream probes identified as responsible for
+# the simulated streams being TOO COLD vs the real Gaia per-bin track std (noise-convolved +
+# contamination-robust comparison; see scripts/ppc_summary_statistics.py --noise):
+#
+#   * Pal5 m_progenitor: identity 4.3e3 (present-day cluster mass) -> uniform [4.3e3, 3.44e4].
+#     The tail stars were shed when the cluster was heavier; the fixed present-day mass gives
+#     phi2 per-bin std 0.13 deg vs the real (robust) 0.20 deg. Probe: x2 mass matches exactly;
+#     the x1..x8 span brackets it. Everything else about Pal5 was already consistent once the
+#     training observation model (Gaia noise) was applied to the sim before comparing.
+#   * M68 t_end: identity 4.0 -> uniform [4.0, 10.0] Gyr. THE M68 lever: at t_end=8 all four
+#     track dispersions (phi2 / mu_phi1 / mu_phi2 / vlos) move from P(sim<real)~0.9-1.0 to
+#     ~0.54-0.58 (bracketed). Progenitor mass saturates far below the real width (x8 = 4.6e5
+#     Msun still 40% short in phi2) and a_progenitor x3 does nothing, so the width is set by
+#     the stripping AGE, not the progenitor. Older (t_end=10) M68 rows are ~2.5x slower.
+#
+# NGC3201 needs no change (baseline already brackets the real dispersions; scaling its mass
+# only overshoots). Both freed parameters are LOCALS: at composition=global they are nuisance
+# parameters marginalized by the prior in the training data — the global network becomes robust
+# to the real streams' width instead of seeing them as off-manifold.
+defaults:
+  - stream_agama_rnbody_ibata_onedisk_beta3_m200c
+
+name: stream_agama_rnbody
+params:
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [4.3e3, 3.44e4]
+    M68:
+      t_end:
+        type: uniform
+        prior_parameters: [4.0, 10.0]
