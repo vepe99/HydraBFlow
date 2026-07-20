@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1784536691.776236,
-    "ast_hash": "f08603456c9e6e209a6bd1f610dfb2f6",
+    "mtime": 1784552610.9647114,
+    "ast_hash": "4d77536e999565422a5e0019b97a5909",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -1137,6 +1137,11 @@
   "conf/simulator/stream_agama_rnbody_ibata_onedisk_beta3_m200c_wide.yaml": {
     "mtime": 1784234078.0211477,
     "ast_hash": "11cb8b3c64944ca865be470d331a0d99",
+    "semantic_hash": ""
+  },
+  "scripts/create_ibata_rnbody_m200c_10kstars_test.sh": {
+    "mtime": 1784552566.7657444,
+    "ast_hash": "d5f18e471b54becb775ee77a61f3fa27",
     "semantic_hash": ""
   }
 }
