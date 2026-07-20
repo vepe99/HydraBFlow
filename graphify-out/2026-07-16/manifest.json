@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1784536665.9310818,
-    "ast_hash": "e3c31bdfeba0fd298780aeac18f7b83a",
+    "mtime": 1784015513.952615,
+    "ast_hash": "9ffacf067d4238867109e077a18614cb",
     "semantic_hash": ""
   },
   "README.md": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
-    "mtime": 1784536691.776236,
-    "ast_hash": "f08603456c9e6e209a6bd1f610dfb2f6",
+    "mtime": 1784015456.3694367,
+    "ast_hash": "835eb01104e75933e2e5ac4ff9d97753",
     "semantic_hash": ""
   },
   "src/hydrabflow/utils/discovery.py": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1784173148.9945865,
-    "ast_hash": "3d867d0368e89413de6b3aff210d4742",
+    "mtime": 1784014506.2480376,
+    "ast_hash": "d9cf63837817d9cab5679cb88c2d0211",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_common.py": {
@@ -585,8 +585,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama_rnbody.py": {
-    "mtime": 1784173326.5784674,
-    "ast_hash": "30d9872fadaeae05f7042ec23be84e46",
+    "mtime": 1784008704.392211,
+    "ast_hash": "66c6110978cf4bcab6367669d5bdb504",
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_rnbody.yaml": {
@@ -710,8 +710,8 @@
     "semantic_hash": ""
   },
   "scripts/ppc_summary_statistics.py": {
-    "mtime": 1784190386.1421275,
-    "ast_hash": "1751c51915dcd61396ed5ce1f6cc3dc4",
+    "mtime": 1783703100.1853635,
+    "ast_hash": "95b279fc277ce81b6240cae8aed67986",
     "semantic_hash": ""
   },
   "scripts/training_eval_summary_stats.sh": {
@@ -720,13 +720,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/augmentation/stream_summary.py": {
-    "mtime": 1784536665.957083,
-    "ast_hash": "7148614dc2b53bfd57b2f73f8739372c",
+    "mtime": 1783853223.144241,
+    "ast_hash": "45cc1f2c3210dd5d2bff6708a1467a8c",
     "semantic_hash": ""
   },
   "tests/test_stream_summary.py": {
-    "mtime": 1784536665.957083,
-    "ast_hash": "de11e231e47d0559017d0d980285b246",
+    "mtime": 1783847597.5423071,
+    "ast_hash": "366a907b677790863e8472050d920b72",
     "semantic_hash": ""
   },
   "conf/adapter/stream_sumstats_hybrid.yaml": {
@@ -960,8 +960,8 @@
     "semantic_hash": ""
   },
   "scripts/tune_ibata_onedisk_grid.sh": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "29f80e52db6f5c57353bed2fe83e92ab",
+    "mtime": 1784008152.2476575,
+    "ast_hash": "1280a5d6a9444c138bd92a292208b56b",
     "semantic_hash": ""
   },
   "conf/augmentation/stream_global_ibata_grid.yaml": {
@@ -1005,8 +1005,8 @@
     "semantic_hash": ""
   },
   "scripts/optuna_results.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "05aac922ce54cd809490476c2b6fb30a",
+    "mtime": 1784008152.2476575,
+    "ast_hash": "2cb2961e07c33d830293c2f78238926f",
     "semantic_hash": ""
   },
   "scripts/tune_ibata_settransformer.sh": {
@@ -1050,17 +1050,17 @@
     "semantic_hash": ""
   },
   "tests/test_m200c_halo.py": {
-    "mtime": 1784173422.497724,
-    "ast_hash": "2857584469320814b1db87d341257139",
+    "mtime": 1784015296.4614882,
+    "ast_hash": "7bbb94bb483cfad3f6d1703471c79f47",
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_ibata_onedisk_beta3_m200c.yaml": {
-    "mtime": 1784016388.7089427,
-    "ast_hash": "f0229a1d57f6c39e4e1b9d40a83e0d0c",
+    "mtime": 1784013206.345331,
+    "ast_hash": "045df57600d537542a5f555c9ccd53e2",
     "semantic_hash": ""
   },
   "scripts/create_ibata_m200c_dataset.sh": {
-    "mtime": 1784026746.4562542,
+    "mtime": 1784014882.2491362,
     "ast_hash": "5ea740a28137b741abbf3070324fa5f9",
     "semantic_hash": ""
   },
@@ -1072,71 +1072,6 @@
   "scripts/tune_ibata_m200c.sh": {
     "mtime": 1784014950.8773696,
     "ast_hash": "20ba63bf218b2a8e330beabea08c032e",
-    "semantic_hash": ""
-  },
-  "scripts/misspecification_per_channel.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "b38f500406c3bf771d5883fdd9bc9aa7",
-    "semantic_hash": ""
-  },
-  "scripts/mmd_potential_vs_training.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "4a17b44e330186f30c2460c22f399ed8",
-    "semantic_hash": ""
-  },
-  "scripts/mmd_stream_vs_training.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "c39a0280eeb0ea487070afeb0c2492f0",
-    "semantic_hash": ""
-  },
-  "scripts/ppc_ancillary_posterior.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "a89ed87d7daa7bd5d775552433fe1ec6",
-    "semantic_hash": ""
-  },
-  "scripts/ppc_rotation_curve_ibata.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "8dc438b9a72082acadf106c457e28be2",
-    "semantic_hash": ""
-  },
-  "scripts/sumstat_sim_vs_real.py": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "7a85c19b1fef93d2e1e977fde6af0d3a",
-    "semantic_hash": ""
-  },
-  "scripts/create_ibata_rnbody_m200c_dataset.sh": {
-    "mtime": 1784173845.2254848,
-    "ast_hash": "98801b588e3237dd6a2cb3964efe9228",
-    "semantic_hash": ""
-  },
-  "scripts/ppc_posterior_summary_statistics.py": {
-    "mtime": 1784190074.6183228,
-    "ast_hash": "a236af68ff64e1d0b4766101b8dd5da8",
-    "semantic_hash": ""
-  },
-  "scripts/tune_ibata_m200c_median.sh": {
-    "mtime": 1784536665.956083,
-    "ast_hash": "f56bc82de36391f9e1af20b31e8dafc8",
-    "semantic_hash": ""
-  },
-  "conf/augmentation/stream_global_ibata_grid_median.yaml": {
-    "mtime": 1784536665.9310818,
-    "ast_hash": "a991879ee1551e962c1c6e2a836ce37c",
-    "semantic_hash": ""
-  },
-  "conf/augmentation/stream_real_global_ibata_grid_median.yaml": {
-    "mtime": 1784536665.9310818,
-    "ast_hash": "ffe3e5380e6c2fee99916172893feed6",
-    "semantic_hash": ""
-  },
-  "conf/simulator/stream_agama_rnbody_ibata_onedisk_beta3_m200c.yaml": {
-    "mtime": 1784173361.6240225,
-    "ast_hash": "a9a3d7af9d160b393c80522d5baed09f",
-    "semantic_hash": ""
-  },
-  "conf/simulator/stream_agama_rnbody_ibata_onedisk_beta3_m200c_wide.yaml": {
-    "mtime": 1784234078.0211477,
-    "ast_hash": "11cb8b3c64944ca865be470d331a0d99",
     "semantic_hash": ""
   }
 }

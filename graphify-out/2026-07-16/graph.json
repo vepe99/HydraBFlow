@@ -477,62 +477,6 @@
       "norm_label": "hydrabflow_sim_quiet"
     },
     {
-      "label": "create_ibata_rnbody_m200c_dataset.sh",
-      "file_type": "code",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "file"
-      },
-      "_origin": "ast",
-      "id": "scripts_create_ibata_rnbody_m200c_dataset",
-      "community": 133,
-      "norm_label": "create_ibata_rnbody_m200c_dataset.sh"
-    },
-    {
-      "label": "create_ibata_rnbody_m200c_dataset.sh script",
-      "file_type": "code",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_entrypoint"
-      },
-      "_origin": "ast",
-      "id": "scripts_create_ibata_rnbody_m200c_dataset_sh__entry",
-      "community": 133,
-      "norm_label": "create_ibata_rnbody_m200c_dataset.sh script"
-    },
-    {
-      "label": "HYDRABFLOW_NUM_GPUS",
-      "file_type": "code",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L37",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_create_ibata_rnbody_m200c_dataset_hydrabflow_num_gpus",
-      "community": 133,
-      "norm_label": "hydrabflow_num_gpus"
-    },
-    {
-      "label": "HYDRABFLOW_SIM_QUIET",
-      "file_type": "code",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L38",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_create_ibata_rnbody_m200c_dataset_hydrabflow_sim_quiet",
-      "community": 133,
-      "norm_label": "hydrabflow_sim_quiet"
-    },
-    {
       "label": "create_rnbody_huang_dataset.sh",
       "file_type": "code",
       "source_file": "scripts/create_rnbody_huang_dataset.sh",
@@ -869,226 +813,6 @@
       "norm_label": "joblib worker: model rotation curve on ``obs_r`` for a chunk of parameter rows."
     },
     {
-      "label": "misspecification_per_channel.py",
-      "file_type": "code",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel",
-      "community": 14,
-      "norm_label": "misspecification_per_channel.py"
-    },
-    {
-      "label": "_flat2d()",
-      "file_type": "code",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L45",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_flat2d",
-      "community": 14,
-      "norm_label": "_flat2d()"
-    },
-    {
-      "label": "ndarray",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_py_ndarray",
-      "community": 14,
-      "norm_label": "ndarray"
-    },
-    {
-      "label": "_per_member_safe()",
-      "file_type": "code",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L50",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_per_member_safe",
-      "community": 14,
-      "norm_label": "_per_member_safe()"
-    },
-    {
-      "label": "_group_level_flags()",
-      "file_type": "code",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L73",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_group_level_flags",
-      "community": 14,
-      "norm_label": "_group_level_flags()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L87",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_main",
-      "community": 14,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Per-channel model-misspecification MMD test (localize WHERE the misspecification",
-      "file_type": "rationale",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_rationale_1",
-      "community": 14,
-      "norm_label": "per-channel model-misspecification mmd test (localize where the misspecification"
-    },
-    {
-      "label": "per_member_scores, but robust to scalar channels (F==1, e.g. sigma_z), where np.",
-      "file_type": "rationale",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L51",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_rationale_51",
-      "community": 14,
-      "norm_label": "per_member_scores, but robust to scalar channels (f==1, e.g. sigma_z), where np."
-    },
-    {
-      "label": "Which raw test-set channels are group-level (one value per potential, shared by",
-      "file_type": "rationale",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L74",
-      "_origin": "ast",
-      "id": "scripts_misspecification_per_channel_rationale_74",
-      "community": 14,
-      "norm_label": "which raw test-set channels are group-level (one value per potential, shared by"
-    },
-    {
-      "label": "mmd_potential_vs_training.py",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training",
-      "community": 143,
-      "norm_label": "mmd_potential_vs_training.py"
-    },
-    {
-      "label": "observed_vcirc()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L60",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_observed_vcirc",
-      "community": 143,
-      "norm_label": "observed_vcirc()"
-    },
-    {
-      "label": "_sqd()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L68",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_sqd",
-      "community": 143,
-      "norm_label": "_sqd()"
-    },
-    {
-      "label": "_mean_sim()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L72",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_mean_sim",
-      "community": 143,
-      "norm_label": "_mean_sim()"
-    },
-    {
-      "label": "median_gamma()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L77",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_median_gamma",
-      "community": 143,
-      "norm_label": "median_gamma()"
-    },
-    {
-      "label": "analyze()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L86",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_analyze",
-      "community": 143,
-      "norm_label": "analyze()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L122",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_main",
-      "community": 143,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Per-channel misspecification for the POTENTIAL observables (vcirc, vterm, sigma_",
-      "file_type": "rationale",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_rationale_1",
-      "community": 143,
-      "norm_label": "per-channel misspecification for the potential observables (vcirc, vterm, sigma_"
-    },
-    {
-      "label": "Mean RBF kernel similarity of each query row to the reference cloud: (n_q,).",
-      "file_type": "rationale",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L73",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_rationale_73",
-      "community": 143,
-      "norm_label": "mean rbf kernel similarity of each query row to the reference cloud: (n_q,)."
-    },
-    {
-      "label": "Median-heuristic bandwidth from a subsample of the reference (pooled pairwise sq",
-      "file_type": "rationale",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L78",
-      "_origin": "ast",
-      "id": "scripts_mmd_potential_vs_training_rationale_78",
-      "community": 143,
-      "norm_label": "median-heuristic bandwidth from a subsample of the reference (pooled pairwise sq"
-    },
-    {
-      "label": "mmd_stream_vs_training.py",
-      "file_type": "code",
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_mmd_stream_vs_training",
-      "community": 14,
-      "norm_label": "mmd_stream_vs_training.py"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L36",
-      "_origin": "ast",
-      "id": "scripts_mmd_stream_vs_training_main",
-      "community": 14,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Stream-channel (sim_summary) misspecification MMD vs a large training-set refere",
-      "file_type": "rationale",
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_mmd_stream_vs_training_rationale_1",
-      "community": 14,
-      "norm_label": "stream-channel (sim_summary) misspecification mmd vs a large training-set refere"
-    },
-    {
       "label": "optuna_results.py",
       "file_type": "code",
       "source_file": "scripts/optuna_results.py",
@@ -1177,76 +901,6 @@
       "id": "scripts_ppc_ancillary_observables_rationale_61",
       "community": 134,
       "norm_label": "median + 68/95% percentile band of `rows` (n, len(x)) vs x."
-    },
-    {
-      "label": "ppc_ancillary_posterior.py",
-      "file_type": "code",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_ppc_ancillary_posterior",
-      "community": 2,
-      "norm_label": "ppc_ancillary_posterior.py"
-    },
-    {
-      "label": "_band()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L44",
-      "_origin": "ast",
-      "id": "scripts_ppc_ancillary_posterior_band",
-      "community": 2,
-      "norm_label": "_band()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L54",
-      "_origin": "ast",
-      "id": "scripts_ppc_ancillary_posterior_main",
-      "community": 2,
-      "norm_label": "main()"
-    },
-    {
-      "label": "POSTERIOR-predictive checks for the Ibata (2023) ancillary potential observables",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_ppc_ancillary_posterior_rationale_1",
-      "community": 2,
-      "norm_label": "posterior-predictive checks for the ibata (2023) ancillary potential observables"
-    },
-    {
-      "label": "ppc_posterior_summary_statistics.py",
-      "file_type": "code",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_ppc_posterior_summary_statistics",
-      "community": 121,
-      "norm_label": "ppc_posterior_summary_statistics.py"
-    },
-    {
-      "label": "_load_posterior()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L50",
-      "_origin": "ast",
-      "id": "scripts_ppc_posterior_summary_statistics_load_posterior",
-      "community": 121,
-      "norm_label": "_load_posterior()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L55",
-      "_origin": "ast",
-      "id": "scripts_ppc_posterior_summary_statistics_main",
-      "community": 121,
-      "norm_label": "main()"
     },
     {
       "label": "ppc_prior_predictive.py",
@@ -1479,106 +1133,6 @@
       "norm_label": "model circular velocity [km/s] at obs_r; nan where v^2 < 0."
     },
     {
-      "label": "ppc_rotation_curve_ibata.py",
-      "file_type": "code",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata",
-      "community": 2,
-      "norm_label": "ppc_rotation_curve_ibata.py"
-    },
-    {
-      "label": "_build_pot_cfg()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L43",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_build_pot_cfg",
-      "community": 2,
-      "norm_label": "_build_pot_cfg()"
-    },
-    {
-      "label": "_identity_constants()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L54",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_identity_constants",
-      "community": 2,
-      "norm_label": "_identity_constants()"
-    },
-    {
-      "label": "_log10_keys()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L63",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_log10_keys",
-      "community": 2,
-      "norm_label": "_log10_keys()"
-    },
-    {
-      "label": "_load_posterior()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L74",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_load_posterior",
-      "community": 2,
-      "norm_label": "_load_posterior()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L84",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_main",
-      "community": 2,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Rotation-curve posterior-predictive check for the Ibata / m200_c potential.  Sam",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_rationale_1",
-      "community": 2,
-      "norm_label": "rotation-curve posterior-predictive check for the ibata / m200_c potential.  sam"
-    },
-    {
-      "label": "Pick the potential-config knobs out of simulator.params (missing keys fall back",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L44",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_rationale_44",
-      "community": 2,
-      "norm_label": "pick the potential-config knobs out of simulator.params (missing keys fall back"
-    },
-    {
-      "label": "Fixed globals (type=identity, e.g. beta_..._halo, or rho/a when unused) as scala",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L55",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_rationale_55",
-      "community": 2,
-      "norm_label": "fixed globals (type=identity, e.g. beta_..._halo, or rho/a when unused) as scala"
-    },
-    {
-      "label": "Keys the run's preprocessing stores in log10 space. evaluate_real saves posterio",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L64",
-      "_origin": "ast",
-      "id": "scripts_ppc_rotation_curve_ibata_rationale_64",
-      "community": 2,
-      "norm_label": "keys the run's preprocessing stores in log10 space. evaluate_real saves posterio"
-    },
-    {
       "label": "ppc_summary_statistics.py",
       "file_type": "code",
       "source_file": "scripts/ppc_summary_statistics.py",
@@ -1639,50 +1193,10 @@
       "norm_label": "binned_median()"
     },
     {
-      "label": "binned_std()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L93",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_binned_std",
-      "community": 121,
-      "norm_label": "binned_std()"
-    },
-    {
-      "label": "binned_mad_std()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L102",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_binned_mad_std",
-      "community": 121,
-      "norm_label": "binned_mad_std()"
-    },
-    {
-      "label": "binned_mean_var()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L116",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_binned_mean_var",
-      "community": 121,
-      "norm_label": "binned_mean_var()"
-    },
-    {
-      "label": "augment_sim()",
-      "file_type": "code",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L126",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_augment_sim",
-      "community": 121,
-      "norm_label": "augment_sim()"
-    },
-    {
       "label": "render()",
       "file_type": "code",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L196",
+      "source_location": "L93",
       "_origin": "ast",
       "id": "scripts_ppc_summary_statistics_render",
       "community": 121,
@@ -1692,59 +1206,19 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L366",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "scripts_ppc_summary_statistics_main",
       "community": 121,
       "norm_label": "main()"
     },
     {
-      "label": "Per-bin sample std (ddof=1); NaN for bins with fewer than ``min_count`` points.",
+      "label": "Overlay simulated per-stream summary tracks on the real Gaia streams and save to",
       "file_type": "rationale",
       "source_file": "scripts/ppc_summary_statistics.py",
       "source_location": "L94",
       "_origin": "ast",
       "id": "scripts_ppc_summary_statistics_rationale_94",
-      "community": 121,
-      "norm_label": "per-bin sample std (ddof=1); nan for bins with fewer than ``min_count`` points."
-    },
-    {
-      "label": "Per-bin robust std (1.4826 x MAD) \u2014 insensitive to member-sample contamination,",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L103",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_rationale_103",
-      "community": 121,
-      "norm_label": "per-bin robust std (1.4826 x mad) \u2014 insensitive to member-sample contamination,"
-    },
-    {
-      "label": "Per-bin mean squared measurement error \u2014 the noise floor to deconvolve from an o",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L117",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_rationale_117",
-      "community": 121,
-      "norm_label": "per-bin mean squared measurement error \u2014 the noise floor to deconvolve from an o"
-    },
-    {
-      "label": "Push raw grouped sim streams through the TRAINING observation model, so the per-",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L128",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_rationale_128",
-      "community": 121,
-      "norm_label": "push raw grouped sim streams through the training observation model, so the per-"
-    },
-    {
-      "label": "Overlay simulated per-stream summary tracks on the real Gaia streams and save to",
-      "file_type": "rationale",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L198",
-      "_origin": "ast",
-      "id": "scripts_ppc_summary_statistics_rationale_198",
       "community": 121,
       "norm_label": "overlay simulated per-stream summary tracks on the real gaia streams and save to"
     },
@@ -1755,7 +1229,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance",
-      "community": 116,
+      "community": 3,
       "norm_label": "probe_vcirc_acceptance.py"
     },
     {
@@ -1765,7 +1239,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_band_pass_worker",
-      "community": 116,
+      "community": 3,
       "norm_label": "_band_pass_worker()"
     },
     {
@@ -1775,7 +1249,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_py_ndarray",
-      "community": 116,
+      "community": 3,
       "norm_label": "ndarray"
     },
     {
@@ -1785,7 +1259,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_main",
-      "community": 116,
+      "community": 3,
       "norm_label": "main()"
     },
     {
@@ -1795,7 +1269,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_rationale_1",
-      "community": 116,
+      "community": 3,
       "norm_label": "measure the vcirc-rejection acceptance rate of a stream simulator's prior (calib"
     },
     {
@@ -1805,7 +1279,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_probe_vcirc_acceptance_rationale_28",
-      "community": 116,
+      "community": 3,
       "norm_label": "(n_rows, n_bands) bool: does each row's model curve pass each band? (one vc eval"
     },
     {
@@ -1897,46 +1371,6 @@
       "id": "scripts_simulate_multistream",
       "community": 82,
       "norm_label": "simulate_multistream.py"
-    },
-    {
-      "label": "sumstat_sim_vs_real.py",
-      "file_type": "code",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_sumstat_sim_vs_real",
-      "community": 54,
-      "norm_label": "sumstat_sim_vs_real.py"
-    },
-    {
-      "label": "_stat_channels()",
-      "file_type": "code",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L48",
-      "_origin": "ast",
-      "id": "scripts_sumstat_sim_vs_real_stat_channels",
-      "community": 54,
-      "norm_label": "_stat_channels()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L53",
-      "_origin": "ast",
-      "id": "scripts_sumstat_sim_vs_real_main",
-      "community": 54,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Per-statistic sim-vs-real comparison of the hand-crafted stream summary statisti",
-      "file_type": "rationale",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "scripts_sumstat_sim_vs_real_rationale_1",
-      "community": 54,
-      "norm_label": "per-statistic sim-vs-real comparison of the hand-crafted stream summary statisti"
     },
     {
       "label": "train.py",
@@ -2449,146 +1883,6 @@
       "norm_label": "runs_dir"
     },
     {
-      "label": "tune_ibata_m200c_median.sh",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "file"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median",
-      "community": 131,
-      "norm_label": "tune_ibata_m200c_median.sh"
-    },
-    {
-      "label": "tune_ibata_m200c_median.sh script",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_entrypoint"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_sh__entry",
-      "community": 131,
-      "norm_label": "tune_ibata_m200c_median.sh script"
-    },
-    {
-      "label": "SIM",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L29",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_sim",
-      "community": 131,
-      "norm_label": "sim"
-    },
-    {
-      "label": "DATA_DIR",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L30",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_data_dir",
-      "community": 131,
-      "norm_label": "data_dir"
-    },
-    {
-      "label": "RUNS_DIR",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L31",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_runs_dir",
-      "community": 131,
-      "norm_label": "runs_dir"
-    },
-    {
-      "label": "STUDY",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L32",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_study",
-      "community": 131,
-      "norm_label": "study"
-    },
-    {
-      "label": "AUG",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L33",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_aug",
-      "community": 131,
-      "norm_label": "aug"
-    },
-    {
-      "label": "REAL_AUG",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L34",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_real_aug",
-      "community": 131,
-      "norm_label": "real_aug"
-    },
-    {
-      "label": "N_TRAIN",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L35",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_n_train",
-      "community": 131,
-      "norm_label": "n_train"
-    },
-    {
-      "label": "N_TRIALS_TOTAL",
-      "file_type": "code",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L36",
-      "metadata": {
-        "language": "bash",
-        "kind": "code"
-      },
-      "_origin": "ast",
-      "id": "scripts_tune_ibata_m200c_median_n_trials_total",
-      "community": 131,
-      "norm_label": "n_trials_total"
-    },
-    {
       "label": "tune_ibata_onedisk_grid.sh",
       "file_type": "code",
       "source_file": "scripts/tune_ibata_onedisk_grid.sh",
@@ -2907,7 +2201,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry",
-      "community": 32,
+      "community": 4,
       "norm_label": "registry.py"
     },
     {
@@ -2917,7 +2211,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_register_augmentation",
-      "community": 32,
+      "community": 4,
       "norm_label": "register_augmentation()"
     },
     {
@@ -2927,7 +2221,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_build_augmentations",
-      "community": 58,
+      "community": 96,
       "norm_label": "build_augmentations()"
     },
     {
@@ -2937,7 +2231,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_py_augmentation",
-      "community": 58,
+      "community": 96,
       "norm_label": "augmentation"
     },
     {
@@ -2947,7 +2241,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_available_augmentations",
-      "community": 32,
+      "community": 4,
       "norm_label": "available_augmentations()"
     },
     {
@@ -2957,7 +2251,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_rationale_1",
-      "community": 32,
+      "community": 4,
       "norm_label": "name -> augmentation-factory registry and builder.  an augmentation factory rece"
     },
     {
@@ -2967,7 +2261,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_registry_rationale_40",
-      "community": 58,
+      "community": 96,
       "norm_label": "build the ordered augmentation list from ``cfg.augmentation`` (an ``augmentation"
     },
     {
@@ -3637,7 +2931,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_summarynetworkconfig",
-      "community": 3,
+      "community": 143,
       "norm_label": "summarynetworkconfig"
     },
     {
@@ -3797,7 +3091,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_config_schema_rationale_47",
-      "community": 3,
+      "community": 143,
       "norm_label": "hyperparameters for a single bayesflow summary network.      ``type`` is resolve"
     },
     {
@@ -3897,7 +3191,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_register_summary_network",
-      "community": 32,
+      "community": 155,
       "norm_label": "register_summary_network()"
     },
     {
@@ -3917,7 +3211,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_build_summary_network",
-      "community": 32,
+      "community": 143,
       "norm_label": "build_summary_network()"
     },
     {
@@ -3937,7 +3231,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_build_inference_network",
-      "community": 32,
+      "community": 143,
       "norm_label": "build_inference_network()"
     },
     {
@@ -4037,7 +3331,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_rationale_31",
-      "community": 32,
+      "community": 155,
       "norm_label": "decorator registering a summary-network builder under ``name`` (the config ``typ"
     },
     {
@@ -4057,7 +3351,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_rationale_51",
-      "community": 32,
+      "community": 143,
       "norm_label": "return the summary network selected by ``cfg.type`` (a ``summarynetworkconfig``)"
     },
     {
@@ -4067,7 +3361,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_factory_rationale_62",
-      "community": 32,
+      "community": 143,
       "norm_label": "return the inference (posterior) network selected by ``cfg.type`` (an ``inferenc"
     },
     {
@@ -4107,7 +3401,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion",
-      "community": 3,
+      "community": 143,
       "norm_label": "fusion.py"
     },
     {
@@ -4117,7 +3411,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork",
-      "community": 3,
+      "community": 145,
       "norm_label": "maskedfusionnetwork"
     },
     {
@@ -4127,7 +3421,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_py_summarynetwork",
-      "community": 3,
+      "community": 145,
       "norm_label": "summarynetwork"
     },
     {
@@ -4137,7 +3431,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_init",
-      "community": 3,
+      "community": 145,
       "norm_label": ".__init__()"
     },
     {
@@ -4147,7 +3441,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_py_layer",
-      "community": 3,
+      "community": 145,
       "norm_label": "layer"
     },
     {
@@ -4157,7 +3451,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_build",
-      "community": 3,
+      "community": 145,
       "norm_label": ".build()"
     },
     {
@@ -4167,7 +3461,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "shape",
-      "community": 3,
+      "community": 145,
       "norm_label": "shape"
     },
     {
@@ -4177,7 +3471,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_compute_output_shape",
-      "community": 3,
+      "community": 145,
       "norm_label": ".compute_output_shape()"
     },
     {
@@ -4187,7 +3481,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_backbone_kwargs",
-      "community": 3,
+      "community": 145,
       "norm_label": "._backbone_kwargs()"
     },
     {
@@ -4197,7 +3491,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_py_tensor",
-      "community": 3,
+      "community": 145,
       "norm_label": "tensor"
     },
     {
@@ -4207,7 +3501,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_call",
-      "community": 3,
+      "community": 145,
       "norm_label": ".call()"
     },
     {
@@ -4217,7 +3511,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_compute_metrics",
-      "community": 3,
+      "community": 145,
       "norm_label": ".compute_metrics()"
     },
     {
@@ -4227,7 +3521,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_get_config",
-      "community": 3,
+      "community": 145,
       "norm_label": ".get_config()"
     },
     {
@@ -4237,7 +3531,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_maskedfusionnetwork_from_config",
-      "community": 3,
+      "community": 145,
       "norm_label": ".from_config()"
     },
     {
@@ -4247,7 +3541,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_fusion",
-      "community": 3,
+      "community": 143,
       "norm_label": "_fusion()"
     },
     {
@@ -4257,7 +3551,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_rationale_1",
-      "community": 3,
+      "community": 143,
       "norm_label": "multi-observable fusion summary network (attention-mask aware).  consumes the di"
     },
     {
@@ -4267,7 +3561,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_rationale_42",
-      "community": 3,
+      "community": 145,
       "norm_label": "fuse one summary backbone per named input; route the attention mask to one of th"
     },
     {
@@ -4277,7 +3571,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "src_hydrabflow_networks_fusion_rationale_152",
-      "community": 3,
+      "community": 143,
       "norm_label": "build a :class:`maskedfusionnetwork` from ``cfg.params`` (see module docstring)."
     },
     {
@@ -4707,7 +4001,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint",
-      "community": 56,
+      "community": 47,
       "norm_label": "checkpoint.py"
     },
     {
@@ -4717,7 +4011,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_save_approximator",
-      "community": 56,
+      "community": 47,
       "norm_label": "save_approximator()"
     },
     {
@@ -4727,7 +4021,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_py_any",
-      "community": 56,
+      "community": 47,
       "norm_label": "any"
     },
     {
@@ -4737,7 +4031,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_fix_keras_model",
-      "community": 56,
+      "community": 47,
       "norm_label": "fix_keras_model()"
     },
     {
@@ -4747,7 +4041,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_load_approximator",
-      "community": 56,
+      "community": 47,
       "norm_label": "load_approximator()"
     },
     {
@@ -4757,7 +4051,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_1",
-      "community": 56,
+      "community": 47,
       "norm_label": "model save/load helpers, including the bayesflow ``.keras`` deserialization work"
     },
     {
@@ -4767,7 +4061,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_30",
-      "community": 56,
+      "community": 47,
       "norm_label": "return a path to a load-safe copy of ``model_path`` (patching the arrayimpl tag)"
     },
     {
@@ -4777,7 +4071,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_checkpoint_rationale_47",
-      "community": 56,
+      "community": 47,
       "norm_label": "load a saved approximator, applying the arrayimpl fix first."
     },
     {
@@ -4807,7 +4101,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_prior_score_from_spec",
-      "community": 125,
+      "community": 131,
       "norm_label": "prior_score_from_spec()"
     },
     {
@@ -4927,7 +4221,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_compositional_rationale_24",
-      "community": 125,
+      "community": 131,
       "norm_label": "score of the log prior for compositional sampling, from a prior-spec mapping."
     },
     {
@@ -5287,7 +4581,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io",
-      "community": 100,
+      "community": 123,
       "norm_label": "io.py"
     },
     {
@@ -5297,7 +4591,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_n_rows",
-      "community": 100,
+      "community": 123,
       "norm_label": "_n_rows()"
     },
     {
@@ -5307,7 +4601,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_py_dataset",
-      "community": 100,
+      "community": 123,
       "norm_label": "dataset"
     },
     {
@@ -5317,7 +4611,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_save_dataset",
-      "community": 100,
+      "community": 123,
       "norm_label": "save_dataset()"
     },
     {
@@ -5327,7 +4621,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_load_dataset",
-      "community": 100,
+      "community": 123,
       "norm_label": "load_dataset()"
     },
     {
@@ -5337,7 +4631,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_concatenate_chunks",
-      "community": 100,
+      "community": 123,
       "norm_label": "concatenate_chunks()"
     },
     {
@@ -5347,7 +4641,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_save_chunk_atomic",
-      "community": 100,
+      "community": 123,
       "norm_label": "_save_chunk_atomic()"
     },
     {
@@ -5357,7 +4651,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_run_chunked",
-      "community": 100,
+      "community": 123,
       "norm_label": "run_chunked()"
     },
     {
@@ -5367,7 +4661,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_load_chunk",
-      "community": 100,
+      "community": 123,
       "norm_label": "load_chunk()"
     },
     {
@@ -5377,7 +4671,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_rationale_1",
-      "community": 100,
+      "community": 123,
       "norm_label": "dataset io. datasets are ``.npz`` archives where each key maps to an array whose"
     },
     {
@@ -5387,7 +4681,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_rationale_45",
-      "community": 100,
+      "community": 123,
       "norm_label": "concatenate a list of dataset dicts along the leading (simulation) axis."
     },
     {
@@ -5397,7 +4691,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_rationale_53",
-      "community": 100,
+      "community": 123,
       "norm_label": "write a chunk ``.npz`` atomically (temp file + rename), so a crash mid-write can"
     },
     {
@@ -5407,7 +4701,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_io_rationale_71",
-      "community": 100,
+      "community": 123,
       "norm_label": "generate ``n_total`` rows in chunks, checkpointing each chunk to disk as it comp"
     },
     {
@@ -5667,7 +4961,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train",
-      "community": 58,
+      "community": 2,
       "norm_label": "train.py"
     },
     {
@@ -5677,7 +4971,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_run_training",
-      "community": 58,
+      "community": 2,
       "norm_label": "run_training()"
     },
     {
@@ -5687,7 +4981,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_restore_best_weights",
-      "community": 58,
+      "community": 2,
       "norm_label": "_restore_best_weights()"
     },
     {
@@ -5697,7 +4991,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_save_history_and_convergence",
-      "community": 58,
+      "community": 2,
       "norm_label": "_save_history_and_convergence()"
     },
     {
@@ -5707,7 +5001,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_save_loss_plot",
-      "community": 58,
+      "community": 2,
       "norm_label": "_save_loss_plot()"
     },
     {
@@ -5717,7 +5011,7 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_n",
-      "community": 58,
+      "community": 2,
       "norm_label": "_n()"
     },
     {
@@ -5727,7 +5021,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_rationale_1",
-      "community": 58,
+      "community": 2,
       "norm_label": "stage 2: training.  load dataset -> preprocessing pipeline (fit on train, save f"
     },
     {
@@ -5737,7 +5031,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_rationale_29",
-      "community": 58,
+      "community": 2,
       "norm_label": "train the approximator and return (workflow, history)."
     },
     {
@@ -5747,7 +5041,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_rationale_104",
-      "community": 58,
+      "community": 2,
       "norm_label": "load the best-val-loss weights bayesflow checkpointed during training back into"
     },
     {
@@ -5757,7 +5051,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_rationale_122",
-      "community": 58,
+      "community": 2,
       "norm_label": "persist ``history.json`` + ``convergence.json``; best-effort, never fails a run."
     },
     {
@@ -5767,7 +5061,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune",
-      "community": 123,
+      "community": 58,
       "norm_label": "tune.py"
     },
     {
@@ -5777,7 +5071,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_suggest",
-      "community": 123,
+      "community": 58,
       "norm_label": "_suggest()"
     },
     {
@@ -5787,7 +5081,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_trial_dir",
-      "community": 123,
+      "community": 58,
       "norm_label": "_trial_dir()"
     },
     {
@@ -5797,7 +5091,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_save_shared_preprocessing",
-      "community": 123,
+      "community": 58,
       "norm_label": "_save_shared_preprocessing()"
     },
     {
@@ -5807,7 +5101,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_objective",
-      "community": 123,
+      "community": 58,
       "norm_label": "_objective()"
     },
     {
@@ -5817,7 +5111,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_run_tuning",
-      "community": 123,
+      "community": 58,
       "norm_label": "run_tuning()"
     },
     {
@@ -5827,7 +5121,7 @@
       "source_location": "L249",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_report",
-      "community": 123,
+      "community": 58,
       "norm_label": "_report()"
     },
     {
@@ -5837,7 +5131,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_1",
-      "community": 123,
+      "community": 58,
       "norm_label": "stage 4: hyperparameter tuning with optuna.  runs a (by default multi-objective)"
     },
     {
@@ -5847,7 +5141,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_68",
-      "community": 123,
+      "community": 58,
       "norm_label": "per-trial artifact directory, keyed by the study-global optuna trial number."
     },
     {
@@ -5857,7 +5151,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_73",
-      "community": 123,
+      "community": 58,
       "norm_label": "save the fit-once preprocessing state, shared by every trial/model.      written"
     },
     {
@@ -6287,7 +5581,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry",
-      "community": 32,
+      "community": 4,
       "norm_label": "registry.py"
     },
     {
@@ -6297,7 +5591,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_register_step",
-      "community": 32,
+      "community": 4,
       "norm_label": "register_step()"
     },
     {
@@ -6317,7 +5611,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_available_steps",
-      "community": 32,
+      "community": 4,
       "norm_label": "available_steps()"
     },
     {
@@ -6327,7 +5621,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_rationale_1",
-      "community": 32,
+      "community": 4,
       "norm_label": "name -> preprocessing-step registry and pipeline builder."
     },
     {
@@ -6337,7 +5631,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_registry_rationale_14",
-      "community": 32,
+      "community": 4,
       "norm_label": "register a step factory (usually the step class itself) under ``name``."
     },
     {
@@ -6877,7 +6171,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_attachobservedvcirc",
-      "community": 145,
+      "community": 146,
       "norm_label": "attachobservedvcirc"
     },
     {
@@ -6887,7 +6181,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_attachobservedvcirc_init",
-      "community": 145,
+      "community": 146,
       "norm_label": ".__init__()"
     },
     {
@@ -6897,7 +6191,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_attachobservedvcirc_transform",
-      "community": 145,
+      "community": 146,
       "norm_label": ".transform()"
     },
     {
@@ -6907,7 +6201,7 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_attachobservedvterm",
-      "community": 146,
+      "community": 153,
       "norm_label": "attachobservedvterm"
     },
     {
@@ -6917,7 +6211,7 @@
       "source_location": "L211",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_attachobservedvterm_init",
-      "community": 146,
+      "community": 153,
       "norm_label": ".__init__()"
     },
     {
@@ -6927,7 +6221,7 @@
       "source_location": "L217",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_attachobservedvterm_transform",
-      "community": 146,
+      "community": 153,
       "norm_label": ".transform()"
     },
     {
@@ -7037,7 +6331,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_rationale_175",
-      "community": 145,
+      "community": 146,
       "norm_label": "attach the *observed* milky way rotation curve to a real dataset that lacks one."
     },
     {
@@ -7047,7 +6341,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_streams_rationale_201",
-      "community": 146,
+      "community": 153,
       "norm_label": "attach the *observed* hi terminal-velocity curve to a real dataset that lacks on"
     },
     {
@@ -7347,7 +6641,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry",
-      "community": 32,
+      "community": 4,
       "norm_label": "registry.py"
     },
     {
@@ -7357,7 +6651,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_register_simulator",
-      "community": 32,
+      "community": 4,
       "norm_label": "register_simulator()"
     },
     {
@@ -7377,7 +6671,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_available_simulators",
-      "community": 32,
+      "community": 4,
       "norm_label": "available_simulators()"
     },
     {
@@ -7387,7 +6681,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_rationale_1",
-      "community": 32,
+      "community": 4,
       "norm_label": "name -> simulator-class registry.  new simulators self-register with the ``@regi"
     },
     {
@@ -7397,7 +6691,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_registry_rationale_18",
-      "community": 32,
+      "community": 4,
       "norm_label": "class decorator registering a :class:`basesimulator` subclass under ``name``."
     },
     {
@@ -7587,7 +6881,7 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rj_vj_r",
-      "community": 115,
+      "community": 147,
       "norm_label": "_rj_vj_r()"
     },
     {
@@ -7607,7 +6901,7 @@
       "source_location": "L274",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ic_particle_spray",
-      "community": 115,
+      "community": 147,
       "norm_label": "_ic_particle_spray()"
     },
     {
@@ -7617,7 +6911,7 @@
       "source_location": "L314",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_ic_chen_spray",
-      "community": 115,
+      "community": 147,
       "norm_label": "_ic_chen_spray()"
     },
     {
@@ -7627,7 +6921,7 @@
       "source_location": "L353",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_spray_stream",
-      "community": 115,
+      "community": 147,
       "norm_label": "_spray_stream()"
     },
     {
@@ -7637,7 +6931,7 @@
       "source_location": "L400",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_vcirc",
-      "community": 114,
+      "community": 115,
       "norm_label": "_vcirc()"
     },
     {
@@ -7647,7 +6941,7 @@
       "source_location": "L408",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_vcirc_accept_worker",
-      "community": 114,
+      "community": 115,
       "norm_label": "_vcirc_accept_worker()"
     },
     {
@@ -7707,7 +7001,7 @@
       "source_location": "L529",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams",
-      "community": 14,
+      "community": 11,
       "norm_label": ".target_streams()"
     },
     {
@@ -7961,20 +7255,10 @@
       "norm_label": ".sample_prior()"
     },
     {
-      "label": "._row_jobs()",
-      "file_type": "code",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L806",
-      "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_row_jobs",
-      "community": 114,
-      "norm_label": "._row_jobs()"
-    },
-    {
       "label": ".simulate()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L824",
+      "source_location": "L806",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "community": 114,
@@ -7984,7 +7268,7 @@
       "label": ".sample_compositional()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L873",
+      "source_location": "L862",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "community": 114,
@@ -8047,7 +7331,7 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_245",
-      "community": 115,
+      "community": 147,
       "norm_label": "jacobi radius, velocity offset, and host->satellite rotation matrices along the"
     },
     {
@@ -8057,7 +7341,7 @@
       "source_location": "L278",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_278",
-      "community": 115,
+      "community": 147,
       "norm_label": "fardal+2015 initial conditions for particles escaping through the lagrange point"
     },
     {
@@ -8067,7 +7351,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_318",
-      "community": 115,
+      "community": 147,
       "norm_label": "chen+2024 initial conditions: one trailing + one leading particle per orbit seed"
     },
     {
@@ -8077,7 +7361,7 @@
       "source_location": "L358",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_358",
-      "community": 115,
+      "community": 147,
       "norm_label": "particle-spray stream including the progenitor's own (moving plummer) potential."
     },
     {
@@ -8087,7 +7371,7 @@
       "source_location": "L401",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_401",
-      "community": 114,
+      "community": 115,
       "norm_label": "model circular velocity [km/s] at the observed radii; nan where v^2 < 0."
     },
     {
@@ -8097,7 +7381,7 @@
       "source_location": "L411",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rationale_411",
-      "community": 114,
+      "community": 115,
       "norm_label": "joblib worker: does each parameter row's model rotation curve pass the rejection"
     },
     {
@@ -8291,22 +7575,12 @@
       "norm_label": "draw with ``sample_fn`` until ``n`` rows pass the rotation-curve cut."
     },
     {
-      "label": "One joblib ``delayed`` call per row. The forward-model seam: subclasses swap the",
-      "file_type": "rationale",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L807",
-      "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_807",
-      "community": 114,
-      "norm_label": "one joblib ``delayed`` call per row. the forward-model seam: subclasses swap the"
-    },
-    {
       "label": "One shared global draw per dataset, one stream realization per target stream.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L874",
+      "source_location": "L863",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rationale_874",
+      "id": "src_hydrabflow_simulators_stream_agama_rationale_863",
       "community": 114,
       "norm_label": "one shared global draw per dataset, one stream realization per target stream."
     },
@@ -8317,17 +7591,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody",
-      "community": 47,
+      "community": 100,
       "norm_label": "stream_agama_rnbody.py"
     },
     {
       "label": "_OrbitCapExceeded",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L47",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_orbitcapexceeded",
-      "community": 47,
+      "community": 100,
       "norm_label": "_orbitcapexceeded"
     },
     {
@@ -8337,27 +7611,27 @@
       "source_location": "",
       "_origin": "ast",
       "id": "exception",
-      "community": 47,
+      "community": 100,
       "norm_label": "exception"
     },
     {
       "label": "_assert_reached()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L55",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_assert_reached",
-      "community": 47,
+      "community": 100,
       "norm_label": "_assert_reached()"
     },
     {
       "label": "_plummer_sample()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L71",
+      "source_location": "L70",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_plummer_sample",
-      "community": 47,
+      "community": 100,
       "norm_label": "_plummer_sample()"
     },
     {
@@ -8367,58 +7641,58 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_py_ndarray",
-      "community": 47,
+      "community": 100,
       "norm_label": "ndarray"
     },
     {
       "label": "_rnbody_stream()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
-      "community": 47,
+      "community": 100,
       "norm_label": "_rnbody_stream()"
     },
     {
       "label": "_simulate_one_rnbody()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L191",
+      "source_location": "L190",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
-      "community": 47,
+      "community": 100,
       "norm_label": "_simulate_one_rnbody()"
     },
     {
       "label": "RestrictedNbodyStreamSimulator",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L252",
+      "source_location": "L242",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator",
-      "community": 47,
+      "community": 100,
       "norm_label": "restrictednbodystreamsimulator"
     },
     {
       "label": "._rnbody_opts()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L255",
+      "source_location": "L245",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_rnbody_opts",
-      "community": 47,
+      "community": 100,
       "norm_label": "._rnbody_opts()"
     },
     {
-      "label": "._row_jobs()",
+      "label": ".simulate()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L273",
+      "source_location": "L263",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_row_jobs",
-      "community": 47,
-      "norm_label": "._row_jobs()"
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
+      "community": 100,
+      "norm_label": ".simulate()"
     },
     {
       "label": "Restricted N-body stellar-stream forward model on AGAMA (CPU, joblib).  Same pri",
@@ -8427,78 +7701,68 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_1",
-      "community": 47,
+      "community": 100,
       "norm_label": "restricted n-body stellar-stream forward model on agama (cpu, joblib).  same pri"
     },
     {
       "label": "Raised when an ``agama.orbit`` call stopped at ``maxNumSteps`` instead of reachi",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L48",
+      "source_location": "L47",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_48",
-      "community": 47,
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_47",
+      "community": 100,
       "norm_label": "raised when an ``agama.orbit`` call stopped at ``maxnumsteps`` instead of reachi"
     },
     {
       "label": "Raise :class:`_OrbitCapExceeded` unless every orbit reached ``expected_final``.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L56",
+      "source_location": "L55",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_56",
-      "community": 47,
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_55",
+      "community": 100,
       "norm_label": "raise :class:`_orbitcapexceeded` unless every orbit reached ``expected_final``."
     },
     {
       "label": "Positions/velocities (relative to the center) of an isotropic Plummer sphere.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L74",
+      "source_location": "L73",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_74",
-      "community": 47,
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_73",
+      "community": 100,
       "norm_label": "positions/velocities (relative to the center) of an isotropic plummer sphere."
     },
     {
       "label": "Restricted N-body stream: forward-integrate Plummer particles from the rewound o",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L119",
+      "source_location": "L118",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_119",
-      "community": 47,
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_118",
+      "community": 100,
       "norm_label": "restricted n-body stream: forward-integrate plummer particles from the rewound o"
     },
     {
       "label": "joblib worker: one restricted-N-body stream + the rotation curve of its potentia",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L195",
+      "source_location": "L193",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_195",
-      "community": 47,
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_193",
+      "community": 100,
       "norm_label": "joblib worker: one restricted-n-body stream + the rotation curve of its potentia"
     },
     {
       "label": "Stellar streams via restricted N-body (agama example_tidal_stream method).",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L253",
+      "source_location": "L243",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_253",
-      "community": 47,
+      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_243",
+      "community": 100,
       "norm_label": "stellar streams via restricted n-body (agama example_tidal_stream method)."
-    },
-    {
-      "label": "Swap the forward-model worker for the restricted-N-body one; the base class's",
-      "file_type": "rationale",
-      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L274",
-      "_origin": "ast",
-      "id": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_274",
-      "community": 47,
-      "norm_label": "swap the forward-model worker for the restricted-n-body one; the base class's"
     },
     {
       "label": "stream_common.py",
@@ -9147,7 +8411,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_ensure_dir",
-      "community": 123,
+      "community": 58,
       "norm_label": "ensure_dir()"
     },
     {
@@ -9197,7 +8461,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress",
-      "community": 100,
+      "community": 123,
       "norm_label": "progress.py"
     },
     {
@@ -9207,7 +8471,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_set_row_tick",
-      "community": 100,
+      "community": 123,
       "norm_label": "set_row_tick()"
     },
     {
@@ -9217,7 +8481,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_row_tick",
-      "community": 100,
+      "community": 123,
       "norm_label": "row_tick()"
     },
     {
@@ -9227,7 +8491,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_joblib_row_progress",
-      "community": 114,
+      "community": 100,
       "norm_label": "joblib_row_progress()"
     },
     {
@@ -9237,7 +8501,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_rationale_1",
-      "community": 100,
+      "community": 123,
       "norm_label": "a single, live, row-granular progress bar for dataset generation.  the dataset g"
     },
     {
@@ -9247,7 +8511,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_rationale_21",
-      "community": 100,
+      "community": 123,
       "norm_label": "register (or clear, with ``none``) the callback that advances the active progres"
     },
     {
@@ -9257,7 +8521,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_rationale_27",
-      "community": 100,
+      "community": 123,
       "norm_label": "advance the active progress bar by ``n`` rows, if one is registered."
     },
     {
@@ -9267,7 +8531,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_progress_rationale_37",
-      "community": 114,
+      "community": 100,
       "norm_label": "advance the registered row tick as joblib batches complete (one tick per finishe"
     },
     {
@@ -9497,7 +8761,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed",
-      "community": 40,
+      "community": 96,
       "norm_label": "seed.py"
     },
     {
@@ -9507,7 +8771,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_seed_everything",
-      "community": 40,
+      "community": 96,
       "norm_label": "seed_everything()"
     },
     {
@@ -9517,7 +8781,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_rationale_1",
-      "community": 40,
+      "community": 96,
       "norm_label": "seeding helpers for reproducible runs."
     },
     {
@@ -9527,7 +8791,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_rationale_12",
-      "community": 40,
+      "community": 96,
       "norm_label": "seed python, numpy, and (best effort) the active keras backend.      returns a n"
     },
     {
@@ -9537,7 +8801,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest",
-      "community": 15,
+      "community": 133,
       "norm_label": "conftest.py"
     },
     {
@@ -9547,7 +8811,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_conftest_compose_cfg",
-      "community": 15,
+      "community": 133,
       "norm_label": "compose_cfg()"
     },
     {
@@ -9557,7 +8821,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_conftest_cfg",
-      "community": 15,
+      "community": 133,
       "norm_label": "cfg()"
     },
     {
@@ -9577,7 +8841,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest_rationale_1",
-      "community": 15,
+      "community": 133,
       "norm_label": "shared test fixtures."
     },
     {
@@ -9587,7 +8851,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_conftest_rationale_13",
-      "community": 15,
+      "community": 133,
       "norm_label": "compose the root config with the structured schemas registered.      ``fill=true"
     },
     {
@@ -9777,7 +9041,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "tests_test_augmentation_test_all_examples_registered",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_all_examples_registered()"
     },
     {
@@ -9867,7 +9131,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "tests_test_augmentation_test_two_moons_registered",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_two_moons_registered()"
     },
     {
@@ -10151,16 +9415,6 @@
       "norm_label": "test_simulate_no_derived_keys_for_rho_a()"
     },
     {
-      "label": "test_rnbody_simulate_m200c_ancillary_and_derived_keys()",
-      "file_type": "code",
-      "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L190",
-      "_origin": "ast",
-      "id": "tests_test_m200c_halo_test_rnbody_simulate_m200c_ancillary_and_derived_keys",
-      "community": 101,
-      "norm_label": "test_rnbody_simulate_m200c_ancillary_and_derived_keys()"
-    },
-    {
       "label": "Tests for the (M200, c_v') halo reparameterization (McMillan 2017; stream_agama.",
       "file_type": "rationale",
       "source_file": "tests/test_m200c_halo.py",
@@ -10219,16 +9473,6 @@
       "id": "tests_test_m200c_halo_rationale_177",
       "community": 101,
       "norm_label": "legacy rho_a halo: simulate() does not emit the *_derived diagnostic keys."
-    },
-    {
-      "label": "The restricted-N-body simulator goes through the same simulate() assembly (_row_",
-      "file_type": "rationale",
-      "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L191",
-      "_origin": "ast",
-      "id": "tests_test_m200c_halo_rationale_191",
-      "community": 101,
-      "norm_label": "the restricted-n-body simulator goes through the same simulate() assembly (_row_"
     },
     {
       "label": "test_masked_vlos.py",
@@ -10337,7 +9581,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "tests_test_masked_vlos_test_real_global_chain_includes_impute_vlos",
-      "community": 15,
+      "community": 107,
       "norm_label": "test_real_global_chain_includes_impute_vlos()"
     },
     {
@@ -10417,7 +9661,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "tests_test_masked_vlos_test_maskedvlos_model_config_composes",
-      "community": 15,
+      "community": 107,
       "norm_label": "test_maskedvlos_model_config_composes()"
     },
     {
@@ -10687,7 +9931,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registries",
-      "community": 32,
+      "community": 96,
       "norm_label": "test_registries.py"
     },
     {
@@ -10697,7 +9941,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_test_registries_test_simulator_registry_has_shipped_simulators",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_simulator_registry_has_shipped_simulators()"
     },
     {
@@ -10707,7 +9951,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_test_registries_test_skeleton_simulator_raises",
-      "community": 32,
+      "community": 96,
       "norm_label": "test_skeleton_simulator_raises()"
     },
     {
@@ -10717,7 +9961,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_registries_test_preprocess_registry",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_preprocess_registry()"
     },
     {
@@ -10727,7 +9971,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_test_registries_test_augmentation_registry_builds",
-      "community": 58,
+      "community": 96,
       "norm_label": "test_augmentation_registry_builds()"
     },
     {
@@ -10737,7 +9981,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_registries_test_unknown_simulator_errors",
-      "community": 32,
+      "community": 96,
       "norm_label": "test_unknown_simulator_errors()"
     },
     {
@@ -10747,7 +9991,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "tests_test_registries_test_network_registries_list_available_on_unknown_type",
-      "community": 32,
+      "community": 143,
       "norm_label": "test_network_registries_list_available_on_unknown_type()"
     },
     {
@@ -10757,7 +10001,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "tests_test_registries_test_custom_network_builder_registers",
-      "community": 32,
+      "community": 155,
       "norm_label": "test_custom_network_builder_registers()"
     },
     {
@@ -10767,7 +10011,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registries_rationale_1",
-      "community": 32,
+      "community": 96,
       "norm_label": "registry resolution + skeleton-simulator behavior."
     },
     {
@@ -10861,50 +10105,40 @@
       "norm_label": "test_unmeasured_vlos_does_not_corrupt_other_features()"
     },
     {
-      "label": "test_summary_grid_median_only_layout()",
-      "file_type": "code",
-      "source_file": "tests/test_stream_summary.py",
-      "source_location": "L144",
-      "_origin": "ast",
-      "id": "tests_test_stream_summary_test_summary_grid_median_only_layout",
-      "community": 35,
-      "norm_label": "test_summary_grid_median_only_layout()"
-    },
-    {
       "label": "test_mlp_backbone_forward()",
       "file_type": "code",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L165",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_mlp_backbone_forward",
-      "community": 32,
+      "community": 143,
       "norm_label": "test_mlp_backbone_forward()"
     },
     {
       "label": "test_feature_transformer_backbone_forward()",
       "file_type": "code",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L181",
+      "source_location": "L165",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_feature_transformer_backbone_forward",
-      "community": 32,
+      "community": 143,
       "norm_label": "test_feature_transformer_backbone_forward()"
     },
     {
       "label": "test_compose_hybrid()",
       "file_type": "code",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L217",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_compose_hybrid",
-      "community": 15,
+      "community": 35,
       "norm_label": "test_compose_hybrid()"
     },
     {
       "label": "test_compose_summaries_only_and_drop_retained()",
       "file_type": "code",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L227",
+      "source_location": "L211",
       "_origin": "ast",
       "id": "tests_test_stream_summary_test_compose_summaries_only_and_drop_retained",
       "community": 10,
@@ -10961,23 +10195,13 @@
       "norm_label": "a stream with zero measured v_los still yields finite track features (only its v"
     },
     {
-      "label": "summary_include_std=false drops the per-bin std channels: (n, K, 12) -> (n, K, 7",
-      "file_type": "rationale",
-      "source_file": "tests/test_stream_summary.py",
-      "source_location": "L145",
-      "_origin": "ast",
-      "id": "tests_test_stream_summary_rationale_145",
-      "community": 35,
-      "norm_label": "summary_include_std=false drops the per-bin std channels: (n, k, 12) -> (n, k, 7"
-    },
-    {
       "label": "The Transformer alternative to `mlp` on the flat summary vector: reshapes (n, F)",
       "file_type": "rationale",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L182",
+      "source_location": "L166",
       "_origin": "ast",
-      "id": "tests_test_stream_summary_rationale_182",
-      "community": 32,
+      "id": "tests_test_stream_summary_rationale_166",
+      "community": 143,
       "norm_label": "the transformer alternative to `mlp` on the flat summary vector: reshapes (n, f)"
     },
     {
@@ -10987,7 +10211,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_streams",
-      "community": 125,
+      "community": 15,
       "norm_label": "test_streams.py"
     },
     {
@@ -11007,7 +10231,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_streams_test_simulator_declares_hierarchy",
-      "community": 96,
+      "community": 15,
       "norm_label": "test_simulator_declares_hierarchy()"
     },
     {
@@ -11017,7 +10241,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "tests_test_streams_test_adapter_derivation_follows_composition_level",
-      "community": 125,
+      "community": 15,
       "norm_label": "test_adapter_derivation_follows_composition_level()"
     },
     {
@@ -11067,7 +10291,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_from_spec",
-      "community": 125,
+      "community": 131,
       "norm_label": "test_prior_score_from_spec()"
     },
     {
@@ -11077,7 +10301,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_applies_time_decay",
-      "community": 125,
+      "community": 131,
       "norm_label": "test_prior_score_applies_time_decay()"
     },
     {
@@ -11137,7 +10361,7 @@
       "source_location": "L356",
       "_origin": "ast",
       "id": "tests_test_streams_test_attach_observed_vterm_tiles_observed_curve",
-      "community": 146,
+      "community": 153,
       "norm_label": "test_attach_observed_vterm_tiles_observed_curve()"
     },
     {
@@ -11157,7 +10381,7 @@
       "source_location": "L382",
       "_origin": "ast",
       "id": "tests_test_streams_test_registries_contain_stream_components",
-      "community": 32,
+      "community": 4,
       "norm_label": "test_registries_contain_stream_components()"
     },
     {
@@ -11187,7 +10411,7 @@
       "source_location": "L435",
       "_origin": "ast",
       "id": "tests_test_streams_test_prior_score_log10_jacobian_correction",
-      "community": 125,
+      "community": 131,
       "norm_label": "test_prior_score_log10_jacobian_correction()"
     },
     {
@@ -11217,7 +10441,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_1",
-      "community": 125,
+      "community": 15,
       "norm_label": "stream-project components: config composition, hierarchy derivation, per-stream"
     },
     {
@@ -11227,7 +10451,7 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_160",
-      "community": 125,
+      "community": 131,
       "norm_label": "the callable's signature names a ``time`` parameter, so bayesflow's     ``prior_"
     },
     {
@@ -11277,7 +10501,7 @@
       "source_location": "L436",
       "_origin": "ast",
       "id": "tests_test_streams_rationale_436",
-      "community": 125,
+      "community": 131,
       "norm_label": "d/dy log p_y(y) for y=log10(x) must include the +ln(10) jacobian term, not just"
     },
     {
@@ -11317,7 +10541,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "tests_test_workflow_test_build_networks",
-      "community": 32,
+      "community": 143,
       "norm_label": "test_build_networks()"
     },
     {
@@ -11734,7 +10958,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "CLAUDE.md",
-      "source_location": "L794",
+      "source_location": "L681",
       "_origin": "ast",
       "id": "claude_graphify",
       "community": 34,
@@ -13257,7 +12481,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/preprocessing/registry.py",
       "source_location": "L25",
-      "community": 0,
+      "community": 39,
       "norm_label": "preprocesspipeline",
       "id": "preprocesspipeline"
     },
@@ -13470,7 +12694,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -14342,36 +13566,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L37",
-      "weight": 1.0,
-      "source": "scripts_create_ibata_rnbody_m200c_dataset",
-      "target": "scripts_create_ibata_rnbody_m200c_dataset_hydrabflow_num_gpus",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L38",
-      "weight": 1.0,
-      "source": "scripts_create_ibata_rnbody_m200c_dataset",
-      "target": "scripts_create_ibata_rnbody_m200c_dataset_hydrabflow_sim_quiet",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/create_ibata_rnbody_m200c_dataset.sh",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_create_ibata_rnbody_m200c_dataset",
-      "target": "scripts_create_ibata_rnbody_m200c_dataset_sh__entry",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/create_rnbody_huang_dataset.sh",
@@ -14833,483 +14027,6 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L45",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel",
-      "target": "scripts_misspecification_per_channel_flat2d",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L73",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel",
-      "target": "scripts_misspecification_per_channel_group_level_flags",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L87",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel",
-      "target": "scripts_misspecification_per_channel_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L50",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel",
-      "target": "scripts_misspecification_per_channel_per_member_safe",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_rationale_1",
-      "target": "scripts_misspecification_per_channel",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "return_type",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L45",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_flat2d",
-      "target": "scripts_misspecification_per_channel_py_ndarray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L163",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "scripts_misspecification_per_channel_flat2d",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L173",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "scripts_misspecification_per_channel_per_member_safe",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L55",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_per_member_safe",
-      "target": "src_hydrabflow_pipeline_misspecification_per_member_scores"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L51",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_rationale_51",
-      "target": "scripts_misspecification_per_channel_per_member_safe",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L128",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "scripts_misspecification_per_channel_group_level_flags",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L74",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_rationale_74",
-      "target": "scripts_misspecification_per_channel_group_level_flags",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L129",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_pipeline_compositional_apply_augmentations_once"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L129",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_pipeline_compositional_flatten_members"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L125",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_pipeline_evaluate_load_test_data"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L136",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_pipeline_evaluate_real_prepare_real_members"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L172",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_pipeline_misspecification_mmd_test"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L173",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_pipeline_misspecification_per_member_scores"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L134",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_preprocessing_registry_build_pipeline"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L146",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_simulators_registry_get_simulator"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "getattr",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/misspecification_per_channel.py",
-      "source_location": "L146",
-      "weight": 1.0,
-      "source": "scripts_misspecification_per_channel_main",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L86",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training",
-      "target": "scripts_mmd_potential_vs_training_analyze",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L122",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training",
-      "target": "scripts_mmd_potential_vs_training_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L72",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training",
-      "target": "scripts_mmd_potential_vs_training_mean_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L77",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training",
-      "target": "scripts_mmd_potential_vs_training_median_gamma",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L60",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training",
-      "target": "scripts_mmd_potential_vs_training_observed_vcirc",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L68",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training",
-      "target": "scripts_mmd_potential_vs_training_sqd",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_rationale_1",
-      "target": "scripts_mmd_potential_vs_training",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L150",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_main",
-      "target": "scripts_mmd_potential_vs_training_observed_vcirc",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L74",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_mean_sim",
-      "target": "scripts_mmd_potential_vs_training_sqd",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L81",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_median_gamma",
-      "target": "scripts_mmd_potential_vs_training_sqd",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L104",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_analyze",
-      "target": "scripts_mmd_potential_vs_training_mean_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L73",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_rationale_73",
-      "target": "scripts_mmd_potential_vs_training_mean_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L103",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_analyze",
-      "target": "scripts_mmd_potential_vs_training_median_gamma",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L78",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_rationale_78",
-      "target": "scripts_mmd_potential_vs_training_median_gamma",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_potential_vs_training.py",
-      "source_location": "L163",
-      "weight": 1.0,
-      "source": "scripts_mmd_potential_vs_training_main",
-      "target": "scripts_mmd_potential_vs_training_analyze",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training",
-      "target": "scripts_mmd_stream_vs_training_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_rationale_1",
-      "target": "scripts_mmd_stream_vs_training",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L91",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_pipeline_compositional_apply_augmentations_once"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L99",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_pipeline_evaluate_real_prepare_real_members"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L117",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_pipeline_misspecification_mmd_test"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L119",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_pipeline_misspecification_per_member_scores"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L71",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_preprocessing_registry_build_pipeline"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L112",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_simulators_registry_get_simulator"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "getattr",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/mmd_stream_vs_training.py",
-      "source_location": "L112",
-      "weight": 1.0,
-      "source": "scripts_mmd_stream_vs_training_main",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_ancillary_observables.py",
       "source_location": "L60",
       "weight": 1.0,
@@ -15399,177 +14116,6 @@
       "source": "scripts_ppc_ancillary_observables_rationale_61",
       "target": "scripts_ppc_ancillary_observables_band",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L37",
-      "weight": 1.0,
-      "source": "scripts_ppc_ancillary_posterior",
-      "target": "scripts_ppc_rotation_curve_ibata",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L44",
-      "weight": 1.0,
-      "source": "scripts_ppc_ancillary_posterior",
-      "target": "scripts_ppc_ancillary_posterior_band",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L54",
-      "weight": 1.0,
-      "source": "scripts_ppc_ancillary_posterior",
-      "target": "scripts_ppc_ancillary_posterior_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_ppc_ancillary_posterior_rationale_1",
-      "target": "scripts_ppc_ancillary_posterior",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L153",
-      "weight": 1.0,
-      "source": "scripts_ppc_ancillary_posterior_main",
-      "target": "scripts_ppc_ancillary_posterior_band",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_ancillary_posterior.py",
-      "source_location": "L123",
-      "weight": 1.0,
-      "source": "scripts_ppc_ancillary_posterior_main",
-      "target": "src_hydrabflow_simulators_stream_agama_stellar_disk_potential"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L44",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics",
-      "target": "scripts_ppc_summary_statistics",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L50",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics",
-      "target": "scripts_ppc_posterior_summary_statistics_load_posterior",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L55",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics",
-      "target": "scripts_ppc_posterior_summary_statistics_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L85",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "scripts_ppc_posterior_summary_statistics_load_posterior",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L168",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "scripts_ppc_summary_statistics_augment_sim"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L173",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "scripts_ppc_summary_statistics_render"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L82",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "src_hydrabflow_pipeline_compositional_log10_keys_from_pipeline"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L82",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "src_hydrabflow_preprocessing_registry_build_pipeline"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L81",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "src_hydrabflow_simulators_registry_get_simulator"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_posterior_summary_statistics.py",
-      "source_location": "L130",
-      "weight": 1.0,
-      "source": "scripts_ppc_posterior_summary_statistics_main",
-      "target": "src_hydrabflow_simulators_stream_common_sample_prior_value"
     },
     {
       "relation": "contains",
@@ -15939,185 +14485,11 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L43",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata",
-      "target": "scripts_ppc_rotation_curve_ibata_build_pot_cfg",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L54",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata",
-      "target": "scripts_ppc_rotation_curve_ibata_identity_constants",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L74",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata",
-      "target": "scripts_ppc_rotation_curve_ibata_load_posterior",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L63",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata",
-      "target": "scripts_ppc_rotation_curve_ibata_log10_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L84",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata",
-      "target": "scripts_ppc_rotation_curve_ibata_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_rationale_1",
-      "target": "scripts_ppc_rotation_curve_ibata",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L101",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_main",
-      "target": "scripts_ppc_rotation_curve_ibata_build_pot_cfg",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L44",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_rationale_44",
-      "target": "scripts_ppc_rotation_curve_ibata_build_pot_cfg",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L102",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_main",
-      "target": "scripts_ppc_rotation_curve_ibata_identity_constants",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L55",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_rationale_55",
-      "target": "scripts_ppc_rotation_curve_ibata_identity_constants",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L115",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_main",
-      "target": "scripts_ppc_rotation_curve_ibata_log10_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L64",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_rationale_64",
-      "target": "scripts_ppc_rotation_curve_ibata_log10_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_rotation_curve_ibata.py",
-      "source_location": "L116",
-      "weight": 1.0,
-      "source": "scripts_ppc_rotation_curve_ibata_main",
-      "target": "scripts_ppc_rotation_curve_ibata_load_posterior",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L126",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics",
-      "target": "scripts_ppc_summary_statistics_augment_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L102",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics",
-      "target": "scripts_ppc_summary_statistics_binned_mad_std",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L116",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics",
-      "target": "scripts_ppc_summary_statistics_binned_mean_var",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
       "source_location": "L84",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics",
       "target": "scripts_ppc_summary_statistics_binned_median",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L93",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics",
-      "target": "scripts_ppc_summary_statistics_binned_std",
       "confidence_score": 1.0
     },
     {
@@ -16134,7 +14506,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L366",
+      "source_location": "L169",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics",
       "target": "scripts_ppc_summary_statistics_main",
@@ -16154,7 +14526,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L196",
+      "source_location": "L93",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics",
       "target": "scripts_ppc_summary_statistics_render",
@@ -16207,7 +14579,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L241",
+      "source_location": "L125",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics_render",
       "target": "scripts_ppc_summary_statistics_fit_frame",
@@ -16218,7 +14590,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L242",
+      "source_location": "L126",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics_render",
       "target": "scripts_ppc_summary_statistics_project",
@@ -16229,7 +14601,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L259",
+      "source_location": "L135",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics_render",
       "target": "scripts_ppc_summary_statistics_window_subsample",
@@ -16240,135 +14612,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L270",
+      "source_location": "L142",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics_render",
       "target": "scripts_ppc_summary_statistics_binned_median",
       "confidence_score": 1.0
     },
     {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L94",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_rationale_94",
-      "target": "scripts_ppc_summary_statistics_binned_std",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L271",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_render",
-      "target": "scripts_ppc_summary_statistics_binned_std",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L103",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_rationale_103",
-      "target": "scripts_ppc_summary_statistics_binned_mad_std",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L291",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_render",
-      "target": "scripts_ppc_summary_statistics_binned_mad_std",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L117",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_rationale_117",
-      "target": "scripts_ppc_summary_statistics_binned_mean_var",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L296",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_render",
-      "target": "scripts_ppc_summary_statistics_binned_mean_var",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L180",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_augment_sim",
-      "target": "src_hydrabflow_augmentation_registry_build_augmentations"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L153",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_augment_sim",
-      "target": "src_hydrabflow_config_schema_register_configs"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L156",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_augment_sim",
-      "target": "tests_conftest_compose"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L393",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_main",
-      "target": "scripts_ppc_summary_statistics_augment_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L128",
-      "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_rationale_128",
-      "target": "scripts_ppc_summary_statistics_augment_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L396",
+      "source_location": "L183",
       "weight": 1.0,
       "source": "scripts_ppc_summary_statistics_main",
       "target": "scripts_ppc_summary_statistics_render",
@@ -16378,9 +14633,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "scripts/ppc_summary_statistics.py",
-      "source_location": "L198",
+      "source_location": "L94",
       "weight": 1.0,
-      "source": "scripts_ppc_summary_statistics_rationale_198",
+      "source": "scripts_ppc_summary_statistics_rationale_94",
       "target": "scripts_ppc_summary_statistics_render",
       "confidence_score": 1.0
     },
@@ -16583,124 +14838,6 @@
       "source": "scripts_report_cross_model_tension_rationale_44",
       "target": "scripts_report_cross_model_tension_load_clean",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L53",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real",
-      "target": "scripts_sumstat_sim_vs_real_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L48",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real",
-      "target": "scripts_sumstat_sim_vs_real_stat_channels",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_rationale_1",
-      "target": "scripts_sumstat_sim_vs_real",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L114",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "scripts_sumstat_sim_vs_real_stat_channels",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L90",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_pipeline_compositional_apply_augmentations_once"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L90",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_pipeline_compositional_flatten_members"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L87",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_pipeline_evaluate_load_test_data"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L95",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_pipeline_evaluate_real_prepare_real_members"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L93",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_preprocessing_registry_build_pipeline"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L118",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_simulators_registry_get_simulator"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "getattr",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "scripts/sumstat_sim_vs_real.py",
-      "source_location": "L118",
-      "weight": 1.0,
-      "source": "scripts_sumstat_sim_vs_real_main",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_target_streams"
     },
     {
       "relation": "defines",
@@ -16941,96 +15078,6 @@
       "weight": 1.0,
       "source": "scripts_tune_ibata_m200c",
       "target": "scripts_tune_ibata_m200c_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L33",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_aug",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L30",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_data_dir",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L35",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_n_train",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_n_trials_total",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L34",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_real_aug",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L31",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_runs_dir",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_sh__entry",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L29",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_sim",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/tune_ibata_m200c_median.sh",
-      "source_location": "L32",
-      "weight": 1.0,
-      "source": "scripts_tune_ibata_m200c_median",
-      "target": "scripts_tune_ibata_m200c_median_study",
       "confidence_score": 1.0
     },
     {
@@ -17663,7 +15710,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/stream_summary.py",
-      "source_location": "L312",
+      "source_location": "L306",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_stream_summary_stream_summary_grid",
       "target": "src_hydrabflow_augmentation_stream_summary_stream_frames",
@@ -17718,7 +15765,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/augmentation/stream_summary.py",
-      "source_location": "L292",
+      "source_location": "L287",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_stream_summary_stream_summary_grid",
       "target": "src_hydrabflow_augmentation_streams_jax"
@@ -17729,7 +15776,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/augmentation/stream_summary.py",
-      "source_location": "L293",
+      "source_location": "L288",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_stream_summary_stream_summary_grid",
       "target": "src_hydrabflow_augmentation_streams_sim_key"
@@ -19190,7 +17237,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L190",
+      "source_location": "L174",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_feature_transformer_backbone_forward",
       "target": "src_hydrabflow_config_schema_summarynetworkconfig"
@@ -19201,7 +17248,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L172",
+      "source_location": "L156",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_mlp_backbone_forward",
       "target": "src_hydrabflow_config_schema_summarynetworkconfig"
@@ -19662,7 +17709,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L199",
+      "source_location": "L183",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_feature_transformer_backbone_forward",
       "target": "src_hydrabflow_networks_factory_build_summary_network"
@@ -19673,7 +17720,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L175",
+      "source_location": "L159",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_mlp_backbone_forward",
       "target": "src_hydrabflow_networks_factory_build_summary_network"
@@ -20646,7 +18693,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L237",
+      "source_location": "L221",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_compose_summaries_only_and_drop_retained",
       "target": "src_hydrabflow_pipeline_adapter_adapter_keys"
@@ -26496,7 +24543,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L204",
+      "source_location": "L199",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_agama"
@@ -26533,17 +24580,6 @@
       "source": "src_hydrabflow_simulators_stream_agama_host_potential",
       "target": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L216",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
-      "target": "src_hydrabflow_simulators_stream_agama_resolve_pot_cfg"
     },
     {
       "relation": "calls",
@@ -26657,17 +24693,6 @@
     {
       "relation": "calls",
       "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L217",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
-      "target": "src_hydrabflow_simulators_stream_agama_halo_params_m200c"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
       "source_location": "L511",
@@ -26715,17 +24740,6 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L226",
-      "weight": 1.0,
-      "source": "tests_test_m200c_halo_test_rnbody_simulate_m200c_ancillary_and_derived_keys",
-      "target": "src_hydrabflow_simulators_stream_agama_halo_params_m200c"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "tests/test_m200c_halo.py",
       "source_location": "L171",
       "weight": 1.0,
       "source": "tests_test_m200c_halo_test_simulate_stores_derived_rho_a_for_m200c",
@@ -26747,7 +24761,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L212",
+      "source_location": "L207",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_host_potential"
@@ -26898,7 +24912,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L873",
+      "source_location": "L862",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -26920,7 +24934,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L824",
+      "source_location": "L806",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_agama_py_ndarray",
@@ -27104,7 +25118,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L213",
+      "source_location": "L208",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_vcirc"
@@ -27198,17 +25212,6 @@
     {
       "relation": "calls",
       "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L214",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
-      "target": "src_hydrabflow_simulators_stream_agama_ancillary_observables"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
       "source_location": "L505",
@@ -27222,9 +25225,9 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L817",
+      "source_location": "L829",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_row_jobs",
+      "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_agama_simulate_one",
       "confidence_score": 0.5
     },
@@ -27472,17 +25475,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L806",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_row_jobs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L873",
+      "source_location": "L862",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
@@ -27502,7 +25495,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L824",
+      "source_location": "L806",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
@@ -27931,7 +25924,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L888",
+      "source_location": "L877",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_rejection_sample",
@@ -27963,28 +25956,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L844",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_row_jobs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L807",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_807",
-      "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_row_jobs",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L899",
+      "source_location": "L888",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
@@ -27996,7 +25968,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L851",
+      "source_location": "L840",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_common_sky_projection"
@@ -28007,7 +25979,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L842",
+      "source_location": "L827",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_simulate",
       "target": "src_hydrabflow_utils_progress_joblib_row_progress"
@@ -28016,9 +25988,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama.py",
-      "source_location": "L874",
+      "source_location": "L863",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rationale_874",
+      "source": "src_hydrabflow_simulators_stream_agama_rationale_863",
       "target": "src_hydrabflow_simulators_stream_agama_agamastreamsimulator_sample_compositional",
       "confidence_score": 1.0
     },
@@ -28026,7 +25998,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L55",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_assert_reached",
@@ -28036,7 +26008,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_orbitcapexceeded",
@@ -28046,7 +26018,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L71",
+      "source_location": "L70",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_plummer_sample",
@@ -28056,7 +26028,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L252",
+      "source_location": "L242",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator",
@@ -28066,7 +26038,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
@@ -28076,7 +26048,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L191",
+      "source_location": "L190",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
@@ -28097,7 +26069,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L68",
+      "source_location": "L67",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_assert_reached",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_orbitcapexceeded",
@@ -28107,7 +26079,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_orbitcapexceeded",
       "target": "exception",
@@ -28117,9 +26089,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L48",
+      "source_location": "L47",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_48",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_47",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_orbitcapexceeded",
       "confidence_score": 1.0
     },
@@ -28127,9 +26099,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L56",
+      "source_location": "L55",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_56",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_55",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_assert_reached",
       "confidence_score": 1.0
     },
@@ -28138,7 +26110,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L137",
+      "source_location": "L136",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_assert_reached",
@@ -28149,7 +26121,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L71",
+      "source_location": "L70",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_plummer_sample",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_py_ndarray",
@@ -28159,9 +26131,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L74",
+      "source_location": "L73",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_74",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_73",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_plummer_sample",
       "confidence_score": 1.0
     },
@@ -28170,7 +26142,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L151",
+      "source_location": "L150",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_plummer_sample",
@@ -28178,10 +26150,21 @@
     },
     {
       "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
+      "source_location": "L263",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
+      "target": "src_hydrabflow_simulators_stream_agama_rnbody_py_ndarray",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_py_ndarray",
@@ -28192,7 +26175,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L191",
+      "source_location": "L190",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_py_ndarray",
@@ -28202,9 +26185,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L119",
+      "source_location": "L118",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_119",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_118",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
       "confidence_score": 1.0
     },
@@ -28213,7 +26196,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L231",
+      "source_location": "L221",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_rnbody_stream",
@@ -28223,9 +26206,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L195",
+      "source_location": "L193",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_195",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_193",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "confidence_score": 1.0
     },
@@ -28234,9 +26217,9 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L283",
+      "source_location": "L281",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_row_jobs",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_simulate_one_rnbody",
       "confidence_score": 0.5
     },
@@ -28244,9 +26227,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L253",
+      "source_location": "L243",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_253",
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_243",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator",
       "confidence_score": 1.0
     },
@@ -28254,7 +26237,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L255",
+      "source_location": "L245",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator",
       "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_rnbody_opts",
@@ -28264,10 +26247,21 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L273",
+      "source_location": "L263",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator",
-      "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_row_jobs",
+      "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
+      "source_location": "L274",
+      "weight": 1.0,
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
+      "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_rnbody_opts",
       "confidence_score": 1.0
     },
     {
@@ -28275,32 +26269,22 @@
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
-      "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L207",
+      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
+      "source_location": "L291",
       "weight": 1.0,
-      "source": "tests_test_m200c_halo_test_rnbody_simulate_m200c_ancillary_and_derived_keys",
-      "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator"
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
+      "target": "src_hydrabflow_simulators_stream_common_sky_projection"
     },
     {
       "relation": "calls",
       "context": "call",
-      "confidence": "EXTRACTED",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
       "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
       "source_location": "L279",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_row_jobs",
-      "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_rnbody_opts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/stream_agama_rnbody.py",
-      "source_location": "L274",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_stream_agama_rnbody_rationale_274",
-      "target": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_row_jobs",
-      "confidence_score": 1.0
+      "source": "src_hydrabflow_simulators_stream_agama_rnbody_restrictednbodystreamsimulator_simulate",
+      "target": "src_hydrabflow_utils_progress_joblib_row_progress"
     },
     {
       "relation": "contains",
@@ -29778,7 +27762,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L218",
+      "source_location": "L202",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_compose_hybrid",
       "target": "tests_conftest_compose"
@@ -29789,7 +27773,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L230",
+      "source_location": "L214",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_compose_summaries_only_and_drop_retained",
       "target": "tests_conftest_compose"
@@ -30531,16 +28515,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L190",
-      "weight": 1.0,
-      "source": "tests_test_m200c_halo",
-      "target": "tests_test_m200c_halo_test_rnbody_simulate_m200c_ancillary_and_derived_keys",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_m200c_halo.py",
       "source_location": "L176",
       "weight": 1.0,
       "source": "tests_test_m200c_halo",
@@ -30634,17 +28608,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L196",
-      "weight": 1.0,
-      "source": "tests_test_m200c_halo_test_rnbody_simulate_m200c_ancillary_and_derived_keys",
-      "target": "tests_test_m200c_halo_m200c_params",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_m200c_halo.py",
       "source_location": "L178",
       "weight": 1.0,
       "source": "tests_test_m200c_halo_test_simulate_no_derived_keys_for_rho_a",
@@ -30680,16 +28643,6 @@
       "weight": 1.0,
       "source": "tests_test_m200c_halo_rationale_177",
       "target": "tests_test_m200c_halo_test_simulate_no_derived_keys_for_rho_a",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_m200c_halo.py",
-      "source_location": "L191",
-      "weight": 1.0,
-      "source": "tests_test_m200c_halo_rationale_191",
-      "target": "tests_test_m200c_halo_test_rnbody_simulate_m200c_ancillary_and_derived_keys",
       "confidence_score": 1.0
     },
     {
@@ -31492,7 +29445,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L217",
+      "source_location": "L201",
       "weight": 1.0,
       "source": "tests_test_stream_summary",
       "target": "tests_test_stream_summary_test_compose_hybrid",
@@ -31502,7 +29455,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L227",
+      "source_location": "L211",
       "weight": 1.0,
       "source": "tests_test_stream_summary",
       "target": "tests_test_stream_summary_test_compose_summaries_only_and_drop_retained",
@@ -31512,7 +29465,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L181",
+      "source_location": "L165",
       "weight": 1.0,
       "source": "tests_test_stream_summary",
       "target": "tests_test_stream_summary_test_feature_transformer_backbone_forward",
@@ -31532,7 +29485,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L165",
+      "source_location": "L149",
       "weight": 1.0,
       "source": "tests_test_stream_summary",
       "target": "tests_test_stream_summary_test_mlp_backbone_forward",
@@ -31546,16 +29499,6 @@
       "weight": 1.0,
       "source": "tests_test_stream_summary",
       "target": "tests_test_stream_summary_test_pm_rotation_preserves_speed",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_stream_summary.py",
-      "source_location": "L144",
-      "weight": 1.0,
-      "source": "tests_test_stream_summary",
-      "target": "tests_test_stream_summary_test_summary_grid_median_only_layout",
       "confidence_score": 1.0
     },
     {
@@ -31613,17 +29556,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L148",
-      "weight": 1.0,
-      "source": "tests_test_stream_summary_test_summary_grid_median_only_layout",
-      "target": "tests_test_stream_summary_params",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_stream_summary.py",
       "source_location": "L132",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_summary_is_stream_aware",
@@ -31650,17 +29582,6 @@
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_unmeasured_vlos_does_not_corrupt_other_features",
       "target": "tests_test_stream_summary_params",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_stream_summary.py",
-      "source_location": "L148",
-      "weight": 1.0,
-      "source": "tests_test_stream_summary_test_summary_grid_median_only_layout",
-      "target": "tests_test_stream_summary_build",
       "confidence_score": 1.0
     },
     {
@@ -31721,17 +29642,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L147",
-      "weight": 1.0,
-      "source": "tests_test_stream_summary_test_summary_grid_median_only_layout",
-      "target": "tests_test_stream_summary_toy_batch",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_stream_summary.py",
       "source_location": "L131",
       "weight": 1.0,
       "source": "tests_test_stream_summary_test_summary_is_stream_aware",
@@ -31784,19 +29694,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_stream_summary.py",
-      "source_location": "L145",
+      "source_location": "L166",
       "weight": 1.0,
-      "source": "tests_test_stream_summary_rationale_145",
-      "target": "tests_test_stream_summary_test_summary_grid_median_only_layout",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_stream_summary.py",
-      "source_location": "L182",
-      "weight": 1.0,
-      "source": "tests_test_stream_summary_rationale_182",
+      "source": "tests_test_stream_summary_rationale_166",
       "target": "tests_test_stream_summary_test_feature_transformer_backbone_forward",
       "confidence_score": 1.0
     },
@@ -32454,7 +30354,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CLAUDE.md",
-      "source_location": "L794",
+      "source_location": "L681",
       "weight": 1.0,
       "source": "claude_hydrabflow_sbi_pipeline_template_with_bayesflow",
       "target": "claude_graphify",
@@ -34062,5 +31962,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "333161985353856ee27d554fe107a87824765917"
+  "built_at_commit": "e09ea17b114846ad0c046df352a5cc389feb44f8"
 }

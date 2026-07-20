@@ -146,10 +146,13 @@
   "144": "5. Adding an InferenceNetwork that isn't shipped",
   "145": "MaskedFusionNetwork",
   "146": "streams.py",
+  "147": "_spray_stream",
   "148": "create_ibata_onedisk_beta3_dataset.sh",
   "149": "optuna_results.py",
   "150": "train_ibata_m200c.sh",
   "151": "tune_ibata_m200c.sh",
   "152": "AttachObservedSigmaZ",
-  "154": "create_ibata_m200c_dataset.sh"
+  "153": "AttachObservedVterm",
+  "154": "create_ibata_m200c_dataset.sh",
+  "155": "register_summary_network"
 }
