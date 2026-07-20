@@ -154,5 +154,6 @@
   "152": "AttachObservedSigmaZ",
   "153": "AttachObservedVterm",
   "154": "create_ibata_m200c_dataset.sh",
-  "155": "register_summary_network"
+  "155": "register_summary_network",
+  "156": "apply_bayesflow_patches"
 }

@@ -282,6 +282,11 @@ def _stream_summary_grid(params, rng):
     ``[med_φ2, std_φ2,  med_plx, std_plx,  med_μφ1, std_μφ1,  med_μφ2, std_μφ2,
        med_vlos, std_vlos,  j,  φ1_centre]``.
 
+    ``params.summary_include_std: false`` drops every per-bin std channel (the misspecification
+    localization of 2026-07-15 found the real-vs-sim MMD flag lives in the dispersions —
+    ``std_phi2`` above all), leaving the medians-only layout
+    ``[med_φ2, med_plx, med_μφ1, med_μφ2, med_vlos, j, φ1_centre]`` (7 channels). Default true.
+
     Pair with a ``time_series_transformer`` summary backbone carrying ``params.time_axis: -1``.
     """
     jax, jnp = _jax()
@@ -291,6 +296,7 @@ def _stream_summary_grid(params, rng):
     # vlos rides the SAME φ1 grid as the astrometric tracks here (shared time axis) — k_vlos is only
     # consulted by _stream_frames' cache key / vlos edges, which this variant does not use.
     k_vlos = int(params.get("summary_vlos_bins", 3))
+    include_std = bool(params.get("summary_include_std", True))
     channels = dict(_DEFAULT_CHANNELS)
     channels.update(
         {k: int(v) for k, v in (params.get("summary_channels", {}) or {}).items() if k in channels}
@@ -366,13 +372,16 @@ def _stream_summary_grid(params, rng):
         for name in _GRID_OBSERVABLES:
             vals, mask = obs_masks[name]
             med, std = _binned(vals, mask)  # (n, K), (n, K)
-            per_obs.append(jnp.stack([med, std], axis=-1))  # (n, K, 2)
+            if include_std:
+                per_obs.append(jnp.stack([med, std], axis=-1))  # (n, K, 2)
+            else:
+                per_obs.append(med[..., None])  # (n, K, 1) — medians only
 
         # j once at -2 (constant across a stream's bins) + φ1 bin-centre last (time_axis=-1)
         centre = 0.5 * (te[:, :-1] + te[:, 1:])  # (n, K)
         grid = jnp.concatenate(
             per_obs + [j_bc[..., None], centre[..., None]], axis=-1
-        )  # (n, K, 5*2 + 2)
+        )  # (n, K, 5*(2|1) + 2)
         return jnp.nan_to_num(grid, nan=0.0).astype(jnp.float32)
 
     def aug(batch):

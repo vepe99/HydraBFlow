@@ -677,6 +677,68 @@ Every run saves:
   `data/data_jarvis/...`. Smoke-verified end-to-end on CPU (64-row flat + 8-group multistream, 1
   epoch): train → eval_sim (base+compositional) → eval_real all produce full artifacts; derived
   keys land in both flat and multistream npz. **Full dataset gen + GPU train/tune deferred to user.**
+- Session 2026-07-15 (rho_a Ibata onedisk_beta3 grid model on 3e5 streams — best-2 eval + PPC):
+  evaluated the best 2 completed trials (of 21) of the LIVE Optuna study `stream_ibata_grid_300k_study`
+  and ran both PPCs on the Gaia streams (GPU 2 via autocvd, tuning workers undisturbed; isolated
+  output under `outputs/ibata_onedisk_grid/ppc_best2/trial_{2,15}/`). **Setup**: simulator
+  `stream_agama_ibata_onedisk_beta3` with **`halo_parameterization=rho_a`** (the ORIGINAL densityNorm+
+  scaleRadius halo prior, NOT the m200_c reparam; beta identity 3.0, single exponential stellar disk,
+  gas disks on, halo r_t=1000 kpc), gridded summary-statistics fusion model
+  `stream_fusion_ibata_grid` (sim_summary/vcirc_kms/vterm_kms as TimeSeriesTransformer backbones,
+  sigma_z+j inference conditions, raw particles dropped, sigma_z standardization ON), trained on the
+  **3e5-stream** single-disk training set (`data_agama_ibata_onedisk_beta3_hydrabflow`). **Sim eval**
+  (333-group test): trial 2 base RMSE 0.474/calib 0.016, comp 0.449/0.042; trial 15 base 0.470/0.014,
+  comp 0.452/0.043 — well calibrated, pooling improves accuracy. **Key result — the two best models
+  agree closely and land on an OBLATE halo** (this prior parameterization + 3e5 streams): global
+  q_halo **0.80 [0.73,0.88]** (trial 2) / **0.78 [0.70,0.87]** (trial 15), gamma_halo 1.78/1.75,
+  a_halo ~22 kpc, rho_halo ~2.7e6, r_Disk ~3.2 kpc, z_Disk ~0.30 kpc, Sigma_Disk ~5e8. This q≈0.78–0.80
+  is the **summary-statistics representation's signature** (cf. the raw-particle models that rail to
+  prolate q≈1.3, and the earlier standalone summaries-only q≈0.76). **MMD** still flags real-data
+  misspecification (mmd ~2.96, p_strat 0.0, all 3 members ~98–100th Mahalanobis pct) — parameters
+  agree but Gaia summaries remain atypical vs the sim reference, as in every prior generation.
+  **Rotation-curve PPC** (`ppc_rotation_curve.png`): both models reproduce the Zhou∪Huang curve to
+  **<1% median |frac dev|** (Combined/Pal5/NGC3201/M68 0.5–1.0%); 95% band covers ~40–60% of obs
+  points (bands slightly narrower than the observed scatter). **Ancillary PPC**
+  (`ppc_ancillary_posterior.png`): Sigma_z medians ~70–81 Msun/pc^2 (obs 71±6; within 1sigma for
+  Combined/M68, low coverage for NGC3201); **HI terminal velocity UNDER-predicted** — only ~5–32% of
+  observed v_term points fall in the 95% posterior band (a genuine, consistent mild misspecification
+  across both best models). Full artifacts (posterior_pairs, real_global_vs_streams_corner,
+  mmd_hypothesis_test, both PPC figures + summary JSONs) under each trial's `eval_real/`.
+- Session 2026-07-15 (MMD misspecification LOCALIZED to the stream channel — per-channel + per-
+  statistic diagnostics): two new offline scripts answer WHERE the fused-summary MMD flag comes
+  from, run on m200c best_trial36 (`outputs/ibata_onedisk_grid_m200c/tuning/best_trial36/`, fused
+  MMD 2.86 p=0) and rho_a trial_2 — both give the SAME verdict, so it's a property of the
+  data/simulator pair, not the halo parameterization.
+  - `scripts/misspecification_per_channel.py`: runs the Schmitt+21 MMD test SEPARATELY on each raw
+    projected observable channel (`sim_summary`, `vcirc_kms`, `vterm_kms`, `sigma_z`) — model-free,
+    in data space, both sides through the exact eval pipelines (`_load_test_data`+`flatten_members`
+    / `_prepare_real_members`+transform) + one augmentation draw, replaying the CLI fill_* steps
+    (saved .hydra configs are pre-fill). **Result: the flag is entirely `sim_summary`** (p_strat
+    0.046/0.032; Pal5/NGC3201/M68 at 97.6/99.4/100th Mahalanobis pct). Potential channels are clean
+    when tested correctly at ONE ROW PER POTENTIAL (group-level): observed MW vcirc at 97th pct
+    (expected — the rejection prior truncates around it), vterm 25th, sigma_z 7th, p 0.6–0.99.
+    **Gotcha (bug fixed)**: group-level channel detection must use the RAW grouped test-set shapes
+    (`flatten_members`' rule, ndim>=3 & shape[1]==m), NOT post-augmentation within-group variance —
+    the noise augmentations run after flattening so the m copies differ; member-treating a group
+    channel duplicates the observed row m× and artificially drives MMD p→0.
+  - `scripts/sumstat_sim_vs_real.py`: per (stream, statistic, φ1-bin) robust z-scores of the real
+    `sim_summary` cells vs the 996-stream sim reference (zmap + track overlays). **Dominant
+    offender: `std_phi2` — the real streams are WIDER on-sky than any sim** (aggregate median |z|
+    2.08, max 10.4; Pal5 central bins z +6..+8). **M68 is fluffier in EVERY dispersion** (φ2/pm/vlos
+    std elevated in all bins, plus leading-edge track offsets med_phi2 +8.7 — member contamination
+    or under-heated sims). **NGC3201**: medians excellent, but in the last φ1 bin the SIMS grow a
+    hot dispersed edge population the real data lacks (std_mu_phi1 z −9.7, std_vlos −5.2).
+  - Interpretation: the residual misspecification is in stream MORPHOLOGY (sims too cold/thin —
+    missing heating from progenitor internal dispersion / GMC-bar-spiral perturbations — or real
+    member-selection contamination), NOT in the potential-derived observables.
+  - Also new (untested-at-scale helpers, committed): `mmd_{stream,potential}_vs_training.py`
+    (training-set-sized references instead of the thin 333-group test set),
+    `ppc_ancillary_posterior.py` + `ppc_rotation_curve_ibata.py` (the PPCs used in the best-2 eval
+    above). `optuna_results.py` now points at the m200c tuning log — NOTE: it still loads
+    `study_name='stream_ibata_grid_study'`; verify that matches the m200c study before trusting it.
+    `tune_ibata_onedisk_grid.sh`: N_TRAIN default 100000→300000 + passes `tuning.study_name`
+    explicitly. Artifacts: `misspecification_per_channel.{json,png}` +
+    `sumstat_sim_vs_real_{zmap,tracks}.png` in each run's `eval_real/`.
 
 - Session 2026-07-16 (rnbody m200_c dataset + "too cold streams" diagnosis -> freed-prior fix):
   goal = the m200c config/rejection/priors with the RESTRICTED N-BODY forward model, plus a

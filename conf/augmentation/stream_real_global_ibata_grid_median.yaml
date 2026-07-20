@@ -1,0 +1,8 @@
+# Real-data (Gaia) counterpart of stream_global_ibata_grid_median: the gridded summary emits
+# medians only (no per-bin std channels), matching the training-side layout (n, K_phi1, 7).
+# See stream_global_ibata_grid_median.yaml for the rationale.
+defaults:
+  - stream_real_global_ibata_grid
+
+params:
+  summary_include_std: false
