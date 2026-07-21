@@ -26,6 +26,7 @@ dependencies = [
     "agama>=1.0.0",
     "corner>=2.2.3",
     "scikit-learn",
+    "umap-learn>=0.5",
 ]
 
 # `uv sync` installs the dev group by default, so a fresh clone can run pytest immediately.
