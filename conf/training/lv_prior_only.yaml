@@ -1,0 +1,15 @@
+# Training config for Arm A: the unconditional (prior-only) diffusion model.
+#
+# There is no summary network and no observable, so there is nothing to standardize — and as in
+# conf/training/lv.yaml, `inference_variables` must stay un-standardized so the diffusion state is
+# exactly the simulator's log-parameter space that the guidance gradient is computed in.
+defaults:
+  - base_training
+
+n_epochs: 100
+batch_size: 512
+learning_rate: 1e-3
+optimizer: adam
+validation_fraction: 0.1
+standardize: []
+verbose: 2

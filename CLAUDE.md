@@ -151,6 +151,28 @@ Every run saves:
   (`@register_summary_network` / `@register_inference_network`) with free-form `params` in both
   network schemas for custom builders; dev deps moved to `[dependency-groups]` so `uv sync`
   installs pytest/ruff by default.
+- Session 2026-07-26 (branch `diff_lv`, simulator-gradient guidance): study of injecting
+  `∇ log p(x_obs|θ)` into the reverse diffusion process. **See `docs/guidance.md` for the full
+  findings** — the short version is that gating guidance to the last 10% of the trajectory cannot
+  work (`Δx̂₀ = σ_t²·Δscore/α_t`, so the lever arm vanishes as `t→0`; measured `dx0_rel` = 6.5e-5),
+  and applying it throughout moves samples toward an over-dispersed distribution, not the posterior.
+  Infrastructure added:
+  * `simulators/lv_jax.py` — differentiable Lotka-Volterra (JAX RK4, log-rate parameters, lognormal
+    noise); the single source of truth shared by the simulator, the guidance gradient and the
+    reference sampler, so they cannot drift apart. `simulators/lotka_volterra.py` wraps it.
+  * `networks/guided_diffusion.py` — `GuidedDiffusionModel` overriding BayesFlow's existing
+    `guidance_function` hook (`diffusion_model.py:497`); **no BayesFlow fork needed**. Guidance is
+    sampling-time only, so one trained network serves a whole sweep.
+  * New optional simulator seam: `BaseSimulator.jax_log_likelihood` / `jax_theta_clip`, so guidance
+    stays generic and the model-specific parts live in the simulator.
+  * New stages `pipeline/evaluate_guided.py` (paired guided/unguided) and
+    `pipeline/diagnose_guidance.py` (eager unroll of the reverse ODE — the only way to observe
+    anything, since the production sampler runs inside `jax.lax` loops).
+  * `preprocessing/log_transform.py` (LV's prior predictive spans ~9 orders of magnitude);
+    `eval.sample_kwargs` / `eval.guidance` threaded into the sampling stages;
+    `fill_adapter_from_simulator` now honours `adapter.drop` (needed for the unconditional arm).
+  * `pipeline/reference.py` (Laplace-whitened MALA) is **off by default and not validated** — its MAP
+    search is unreliable; to be replaced by NUTS via numpyro/blackjax (not yet dependencies).
 
 ## graphify
 

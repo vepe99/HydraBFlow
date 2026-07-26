@@ -1,0 +1,10 @@
+# No summary network: the approximator conditions on nothing (or only on
+# `adapter.inference_conditions`). Used by Arm A of the guidance study, where the diffusion model
+# learns the PRIOR only and all data information enters through the likelihood-gradient guidance
+# term — i.e. textbook diffusion posterior sampling.
+#
+# The builder registered under `none` returns None, which bf.BasicWorkflow accepts.
+defaults:
+  - base_summary_network
+
+type: none

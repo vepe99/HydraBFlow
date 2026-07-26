@@ -1,0 +1,14 @@
+# Arm B of the guidance study: a normally-conditioned posterior network, with simulator-gradient
+# guidance applied at sampling time only.
+#
+# Interpretation caveat (the whole point of also having Arm A): a conditional posterior net already
+# encodes p(theta | x_obs), so adding grad log p(x_obs | theta) targets
+# p(theta | x_obs) * p(x_obs | theta)^w — over-concentrated by construction. Expect calibration to
+# degrade even where RMSE improves; report both, always.
+defaults:
+  - base_model
+  - summary_network: time_series_transformer
+  - inference_network: guided_diffusion
+  - _self_
+
+name: lv_guided

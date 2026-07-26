@@ -1,0 +1,32 @@
+# Lotka-Volterra predator-prey ODE — the differentiable testbed for simulator-gradient guidance.
+# Forward model: src/hydrabflow/simulators/lv_jax.py (JAX RK4) wrapped by lotka_volterra.py.
+#
+# Parameters are the four LOG-rates (log_alpha, log_beta, log_gamma, log_delta) with independent
+# Normal priors — the log of the standard sbibm LogNormal prior. Log space gives unbounded support
+# (what the diffusion model wants), a roughly unit-scale prior (so no parameter standardization is
+# needed) and well-conditioned likelihood gradients. See lv_jax's module docstring.
+#
+# Observable `x` has shape (n, n_obs, 2) = prey/predator abundance at n_obs observation times, in
+# PHYSICAL units. Pair with `preprocessing=lv` (which log-transforms x for the network) and
+# `training=lv`. The raw units are kept on disk because the likelihood is defined on them.
+defaults:
+  - base_simulator
+
+name: lotka_volterra
+params:
+  # --- forward model ---
+  x0: 30.0              # initial prey abundance
+  y0: 1.0               # initial predator abundance
+  t_end: 20.0           # integration horizon
+  dt: 0.05              # fixed RK4 step (t_end/dt must be divisible by n_obs)
+  n_obs: 10             # observation times, evenly spaced at t = 2, 4, ..., 20
+  obs_sigma: 0.1        # multiplicative lognormal observation-noise scale
+  # --- prior on (log_alpha, log_beta, log_gamma, log_delta) ---
+  prior_mean: [-0.125, -3.0, -0.125, -3.0]
+  prior_std: [0.5, 0.5, 0.5, 0.5]
+  # --- numerical safety ---
+  # States are clamped into [state_min, state_max] at every RK4 stage. Guidance evaluates the model
+  # at denoised estimates that are far out of prior early in the reverse diffusion; unclamped, those
+  # overflow to inf within a few steps and poison every downstream gradient.
+  state_min: 1.0e-6
+  state_max: 1.0e6

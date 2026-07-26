@@ -32,6 +32,10 @@ def fill_adapter_from_simulator(cfg) -> None:
     is the escape hatch for datasets not produced by a registered simulator (bring-your-own-data),
     where no simulator may exist: in that case the lists are left empty here and
     :func:`build_adapter` raises with instructions.
+
+    Observables listed in ``adapter.drop`` are **not** derived: dropping an observable is how an
+    unconditional (prior-only) approximator is configured, and re-deriving it from the simulator
+    would silently put it back (see ``conf/adapter/lv_unconditional.yaml``).
     """
     from hydrabflow.simulators.registry import get_simulator
 
@@ -46,7 +50,10 @@ def fill_adapter_from_simulator(cfg) -> None:
     if needs_inference:
         cfg.adapter.inference_variables = list(simulator.parameter_names)
     if needs_summary:
-        cfg.adapter.summary_variables = list(simulator.observable_keys)
+        dropped = set(_as_list(cfg.adapter.drop))
+        cfg.adapter.summary_variables = [
+            key for key in simulator.observable_keys if key not in dropped
+        ]
 
 
 def adapter_keys(cfg) -> List[str]:

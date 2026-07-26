@@ -47,11 +47,15 @@ def run_real_evaluation(cfg):
     real_data = io.load_dataset(cfg.data.real_data_path)
     real_data = pipeline.transform(real_data)
 
-    # 3. Sample the posterior and persist it.
+    # 3. Sample the posterior and persist it. `inference.sample_kwargs` is forwarded verbatim so
+    #    sampler options (integrator method / steps) are configurable without editing this stage.
+    from hydrabflow.pipeline.evaluate import _sample_kwargs
+
     posterior = workflow.sample(
         num_samples=int(cfg.inference.num_samples),
         conditions=real_data,
         batch_size=int(cfg.inference.batch_size),
+        **_sample_kwargs(cfg.inference),
     )
     np.savez(
         os.path.join(run_dir, POSTERIOR_SAMPLES),

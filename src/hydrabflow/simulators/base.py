@@ -56,3 +56,37 @@ class BaseSimulator(ABC):
         params = self.sample_prior(n, rng)
         observables = self.simulate(params, rng)
         return {**params, **observables}
+
+    # --------------------------------------------------------------------------------------- #
+    # Optional: differentiability seam for gradient guidance.
+    #
+    # A simulator with a tractable, differentiable likelihood can opt in by implementing the two
+    # methods below. That makes it usable with the `guided_diffusion` inference network, which
+    # injects `grad log p(x_obs | theta)` into the reverse diffusion process (see
+    # `networks.guided_diffusion` and `pipeline.guidance`). Simulators that cannot do this are
+    # unaffected — the default raises only if guidance is actually requested.
+    # --------------------------------------------------------------------------------------- #
+    def jax_log_likelihood(self, x_obs: np.ndarray):
+        """Return a JAX-traceable ``(theta_batch) -> (batch,)`` log-likelihood for a fixed ``x_obs``.
+
+        ``theta_batch`` has shape ``(batch, len(parameter_names))`` in the **same order and the same
+        (physical) units** as ``parameter_names`` — that ordering is what the adapter concatenates
+        into ``inference_variables``, so it is also the layout of the diffusion state.
+
+        ``x_obs`` is a single observation in **physical units** (i.e. as written by ``simulate``,
+        before any preprocessing), with shape ``event_shape``.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement jax_log_likelihood, so it cannot be used "
+            "with gradient guidance. Implement it (a JAX-traceable log-likelihood of a fixed "
+            "observation, vectorized over a batch of parameter vectors) to opt in."
+        )
+
+    def jax_theta_clip(self):
+        """Optional smooth squash applied to parameters before the likelihood, or ``None``.
+
+        Guidance evaluates the likelihood at the diffusion model's *denoised estimate*, which early
+        in the reverse process is far outside the prior. A smooth (differentiable) squash into a
+        plausible region keeps the forward model numerically sane there. Return ``None`` for no clip.
+        """
+        return None

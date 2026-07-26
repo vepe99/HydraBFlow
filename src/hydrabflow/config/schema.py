@@ -186,6 +186,14 @@ class AdapterConfig:
 class InferenceConfig:
     num_samples: int = 1000
     batch_size: int = 256
+    # Extra kwargs forwarded verbatim to ``workflow.sample`` (e.g. integrator settings such as
+    # ``{method: rk45, steps: 200}``). BayesFlow's sampling chain is **kwargs-transparent down to
+    # DiffusionModel._inverse, so this is the general escape hatch for sampler options.
+    sample_kwargs: Dict[str, Any] = field(default_factory=dict)
+    # Sampling-time overrides of the guided network's knobs (guidance_strength, t_on, t_full,
+    # scaling, max_grad_norm, clip_theta_std, skip_outside_window). Guidance does not affect
+    # training, so one trained network serves a whole sweep. See pipeline.guidance.
+    guidance: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -198,6 +206,25 @@ class EvalConfig:
             "metrics", "recovery", "calibration_ecdf", "coverage", "z_score_contraction"
         ]
     )
+    # See InferenceConfig for these two.
+    sample_kwargs: Dict[str, Any] = field(default_factory=dict)
+    guidance: Dict[str, Any] = field(default_factory=dict)
+
+    # --- guided evaluation (pipeline.evaluate_guided) --------------------------------------- #
+    # Held-out observations to run guided vs unguided sampling on. The guided sampler is driven one
+    # observation at a time (so every particle shares x_obs and no per-row alignment is needed), so
+    # this is also the number of sequential sampling calls.
+    n_guided_obs: int = 256
+    # Of those, how many also get an exact MCMC reference posterior. Defaults to 0: the reference
+    # sampler (pipeline.reference) is not yet validated — its MAP search is unreliable and it is to
+    # be replaced by NUTS (numpyro/blackjax). Raise it only when that work lands.
+    n_reference_obs: int = 0
+    reference: Dict[str, Any] = field(default_factory=dict)  # MALA settings, see pipeline.reference
+
+    # --- guidance diagnostics (pipeline.diagnose_guidance) ---------------------------------- #
+    diagnose_index: int = 0          # which test observation to unroll
+    diagnose_num_samples: int = 256  # particles in the eager trace
+    diagnose_steps: int = 200        # explicit Euler steps from t=1 to t=0
 
 
 # --------------------------------------------------------------------------------------------- #

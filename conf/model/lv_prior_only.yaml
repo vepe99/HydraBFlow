@@ -1,0 +1,15 @@
+# Arm A of the guidance study: an UNCONDITIONAL diffusion model that learns only the prior, so all
+# data information must enter through the likelihood-gradient guidance term. This is textbook
+# diffusion posterior sampling, and unlike Arm B it is a genuine test of the method — the guided
+# samples should approach the true posterior (compare against the MALA reference), and calibration
+# is meaningful rather than broken by construction.
+#
+# Use with `adapter=lv_unconditional` (drops the observable) and `training=lv_prior_only`
+# (nothing to standardize).
+defaults:
+  - base_model
+  - summary_network: none
+  - inference_network: guided_diffusion
+  - _self_
+
+name: lv_prior_only

@@ -1,0 +1,22 @@
+# Preprocessing for Lotka-Volterra: log-transform the observable, THEN standardize.
+#
+# The LV prior predictive spans ~9 orders of magnitude (extinction floor to population explosion),
+# so standardizing raw abundances is dominated by a few exploding trajectories. The observation
+# noise is multiplicative lognormal, so `log x` is both the well-scaled and the
+# noise-homoscedastic representation. Order matters: log before standardize.
+#
+# Parameters are NOT touched — they are already log-scale with a ~unit Normal prior, which keeps the
+# guidance gradient in the same space as the diffusion state (see conf/training/lv.yaml).
+defaults:
+  - base_preprocessing
+
+steps:
+  - name: drop_nan
+    keys: ${adapter.summary_variables}
+  - name: log_transform
+    keys: ${adapter.summary_variables}
+    floor: 1.0e-6       # matches simulator.params.state_min; avoids log(0) on extinct populations
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: standardize
+    keys: ${adapter.summary_variables}

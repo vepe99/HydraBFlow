@@ -1,0 +1,16 @@
+# Adapter for Arm A (unconditional prior-only diffusion): the observable `x` is DROPPED, so the
+# approximator sees no conditions at all and the diffusion model learns p(theta).
+#
+# `summary_variables` is left empty and `x` is listed under `drop`;
+# `pipeline.adapter.fill_adapter_from_simulator` skips deriving observables that are explicitly
+# dropped, so the "empty means derive from the simulator" default does not put `x` back.
+#
+# `inference_variables` is still derived from the simulator (the four LV log-rates).
+defaults:
+  - base_adapter
+
+inference_variables: []
+summary_variables: []
+inference_conditions: []
+drop:
+  - x

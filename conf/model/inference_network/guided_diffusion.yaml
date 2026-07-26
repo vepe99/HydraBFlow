@@ -1,0 +1,43 @@
+# Diffusion model whose reverse-time score can be nudged by the simulator's likelihood gradient.
+# Implementation: src/hydrabflow/networks/guided_diffusion.py
+#
+# Guidance is a SAMPLING-time modification: none of these knobs affect training, so one trained
+# network serves an entire guidance sweep. They can also be overridden at eval time via
+# `eval.guidance` (see conf/eval/lv_guided.yaml) without retraining.
+defaults:
+  - base_inference_network
+
+type: guided_diffusion
+mlp_depth: 4
+mlp_width: 128
+dropout: 0.05
+time_embedding_dim: 32
+
+params:
+  # --- guidance strength and gating ---
+  # Sampling integrates t = 1 -> 0. Guidance is off for t >= t_on and ramps smoothly (smoothstep) to
+  # full strength by t <= t_full. t_on=0.1 is the "last 10% only" variant under study; t_on=1.0
+  # recovers standard DPS (guidance everywhere) and is the reference point of a t_on sweep.
+  guidance_strength: 1.0
+  t_on: 0.10
+  t_full: 0.05
+  # none | snr | norm_matched. `none` is literal DPS-lite and the correct choice when the diffusion
+  # model represents the prior (Arm A). `snr` (alpha^2/sigma^2) makes guidance grow with the score as
+  # t -> 0. `norm_matched` keeps only the gradient direction, at |guidance| = strength * |score|.
+  scaling: none
+
+  # --- numerical safety (pick these with scripts/diagnose_guidance.py, don't guess) ---
+  max_grad_norm: 1.0e3    # per-row gradient-norm clip; non-finite rows are zeroed first
+  clip_theta_std: 4.0     # smooth tanh squash of the denoised estimate into +-N prior std
+  # Skip the simulator entirely (via jax.lax.cond) for t > t_on. The ramp alone only *masks* the
+  # result — inside a traced loop the gradient would still be computed at every step, wasting ~90%
+  # of the work at t_on=0.1. Set false only to debug the gating itself.
+  skip_outside_window: true
+
+  # --- sampler ---
+  # Fixed-step deterministic ODE, overriding BayesFlow's default {two_step_adaptive, adaptive},
+  # which is stochastic AND adaptive: an adaptive solver collapses its step size at the guidance
+  # switch-on point, and on JAX the stochastic path preallocates max_steps noise arrays.
+  integrate:
+    method: rk45
+    steps: 200

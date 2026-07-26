@@ -31,6 +31,8 @@ hydrabflow-train = "hydrabflow.pipeline.train:cli"
 hydrabflow-evaluate = "hydrabflow.pipeline.evaluate:cli"
 hydrabflow-evaluate-real = "hydrabflow.pipeline.evaluate_real:cli"
 hydrabflow-tune = "hydrabflow.pipeline.tune:cli"
+hydrabflow-evaluate-guided = "hydrabflow.pipeline.evaluate_guided:cli"
+hydrabflow-diagnose-guidance = "hydrabflow.pipeline.diagnose_guidance:cli"
 
 [build-system]
 requires = ["hatchling"]

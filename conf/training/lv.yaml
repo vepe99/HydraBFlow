@@ -1,0 +1,23 @@
+# Training config for the Lotka-Volterra guidance study.
+#
+# CRITICAL for guidance: `standardize` deliberately OMITS `inference_variables`. BayesFlow's
+# internal standardizer would otherwise insert a *learned* affine map between the physical
+# log-parameters and the space the diffusion model denoises in — so the guidance gradient
+# (computed on physical log-rates) would have to be chain-ruled through moments that are only
+# known after training. Dropping it makes the diffusion state *identical* to the simulator's
+# log-parameter space, so the gradient composition is auditable. This costs nothing here because
+# the log-rate prior is already ~unit scale (Normal(mean, 0.5)).
+#
+# `networks.guided_diffusion.build_theta_untransform` still handles the standardized case if the
+# moments are present, so this is a clarity choice, not a hard requirement.
+defaults:
+  - base_training
+
+n_epochs: 100
+batch_size: 512
+learning_rate: 1e-3
+optimizer: adam
+validation_fraction: 0.1
+standardize:
+  - summary_variables
+verbose: 2

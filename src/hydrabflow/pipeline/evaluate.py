@@ -25,6 +25,16 @@ from hydrabflow.utils.seed import seed_everything
 log = get_logger(__name__)
 
 
+def _sample_kwargs(node) -> dict:
+    """Resolve ``<node>.sample_kwargs`` into a plain dict of extra ``workflow.sample`` arguments."""
+    from omegaconf import OmegaConf
+
+    extra = getattr(node, "sample_kwargs", None)
+    if not extra:
+        return {}
+    return dict(OmegaConf.to_container(extra, resolve=True))
+
+
 def _require_model_dir(cfg) -> str:
     if not cfg.model_dir:
         raise ValueError(
@@ -50,11 +60,14 @@ def run_evaluation(cfg):
     pipeline.load(os.path.join(model_dir, PREPROCESSING_STATE))
     test_data = pipeline.transform(test_data)
 
-    # 3. Sample the posterior for every test observation.
+    # 3. Sample the posterior for every test observation. `eval.sample_kwargs` is forwarded verbatim
+    #    (BayesFlow's sampling chain is **kwargs-transparent), so sampler options such as the
+    #    integrator method / step count are configurable without touching this stage.
     posterior = workflow.sample(
         num_samples=int(cfg.eval.num_samples),
         conditions=test_data,
         batch_size=int(cfg.eval.batch_size),
+        **_sample_kwargs(cfg.eval),
     )
     np.savez(os.path.join(run_dir, POSTERIOR_SAMPLES), **{k: np.asarray(v) for k, v in posterior.items()})
 
