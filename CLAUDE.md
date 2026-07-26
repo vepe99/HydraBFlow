@@ -187,9 +187,11 @@ Every run saves:
     monotonically **worse** in K — a smoothed score biases the reverse ODE. The plain point gradient
     wins. Methodological lesson: `cos(g, θ_true − x̂₀)` is a point-estimator metric and does not
     predict posterior quality; do not gate on it.
-  * **Observation density is what actually helped**: `n_obs` 10 → 50 gives RMSE −46% and a 34%
-    tighter posterior (matched 200-epoch budgets; the 60-epoch comparison is confounded by
-    under-training and inverts the calibration conclusion).
+  * **Observation density is what actually helped**: `n_obs` 10 → 50 gives RMSE −31% on the full
+    2000-row test set (0.1052 → 0.0731), matched 200-epoch budgets. Two traps here: the 60-epoch
+    comparison is confounded by under-training and inverts the calibration conclusion, and the
+    48-observation subset overstated the gain as −46% with absolute errors ~1.8× too good. Use the
+    full test set for absolute numbers; small subsets are only safe for *paired* comparisons.
   * Two bugs worth remembering: the particle cloud width must be the *capped* denoising-posterior std
     `s·σ_t/√(α_t²s²+σ_t²)`, not `σ_t/α_t` (which hits 80 at t=1 and silently zeroed guidance via
     soft-clip saturation); and diagnostics must be measured **counterfactually** along the unguided

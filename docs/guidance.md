@@ -248,17 +248,27 @@ second. An in-situ direction diagnostic cannot substitute for measuring the post
 
 ## R2.5 Observation density — the one thing that clearly helped
 
-Arm B (conditional posterior network), 48 test observations × 300 draws, **both arms trained for 200
-epochs** so the comparison is matched:
+Arm B (conditional posterior network), **both models trained for 200 epochs** so the comparison is
+matched. Numbers on the **full 2000-row test set** (`evaluate` stage, 500 draws each):
 
-| n_obs | spacing | rmse | post_std | calib | mean abs z |
-|---|---|---|---|---|---|
-| 10 | 2.0 | 0.0596 | 0.0594 | **0.0324** | 0.747 |
-| **50** | 0.4 | **0.0321** | **0.0390** | 0.0475 | **0.612** |
+| n_obs | spacing | rmse | calibration error |
+|---|---|---|---|
+| 10 | 2.0 | 0.1052 | **0.0324** |
+| **50** | 0.4 | **0.0731** | 0.0392 |
 
-**5× more observation times: RMSE −46%, posterior 34% tighter.** Calibration is marginally worse
-(0.0324 → 0.0475) while `|z|` *improves* (0.747 → 0.612), so this is not over-concentration; both models
-still reported "loss still descending", so some of it is residual under-training.
+**5× more observation times: RMSE −31%.** Calibration is marginally worse but both values are small.
+
+⚠ **Sample-size caveat — and a correction.** These were first measured on the 48-observation subset the
+(expensive) guided runs use, which gave rmse 0.0596 → 0.0321, i.e. "−46%" and absolute errors ~1.8×
+*better* than the truth. The full test set gives −31%. The direction of the conclusion held, the
+magnitude did not. Absolute RMSEs quoted anywhere in this document from 8–48-observation runs should be
+read with the same suspicion; the *paired* guided-vs-unguided comparisons are more trustworthy, since
+both arms share the same observations and seeds, but their absolute levels are not.
+
+Coverage on the dense model (`coverage.png`) sits **above** the diagonal for all four parameters —
+credible intervals are conservative (over-wide), most visibly for `log_alpha` and `log_gamma`. Recovery
+is excellent (`r = 0.994–0.998`). Both models still logged "loss still descending" at 200 epochs, so the
+over-wide intervals are most likely residual under-training rather than a modelling defect.
 
 Matching the epoch budget mattered. At 60 epochs the dense model looked *worse*-calibrated
 (0.0516 → 0.0794) purely because it had not converged — the denser observable is a harder fit. The
