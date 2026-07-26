@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1785103725.5271509,
-    "ast_hash": "e5081a8ad66ef51ed081ed413d59c6a3",
+    "mtime": 1785100897.3844345,
+    "ast_hash": "9dca284adad9cb860331a291aeaee1c1",
     "semantic_hash": ""
   },
   "README.md": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/guided_diffusion.py": {
-    "mtime": 1785102263.6593914,
-    "ast_hash": "55508c294ba44562666295bd783173e4",
+    "mtime": 1785098152.5851884,
+    "ast_hash": "eae153193f78340dd2b37e94bc89456a",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/diagnose_guidance.py": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/guidance.py": {
-    "mtime": 1785102229.887097,
-    "ast_hash": "9883a2031a0ba91c49215b65f54632d9",
+    "mtime": 1785097697.3144476,
+    "ast_hash": "82ca9d2b5db6adfb104a1ad166c5fcc1",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/reference.py": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "tests/test_guidance.py": {
-    "mtime": 1785102263.6673915,
-    "ast_hash": "e1adf52be7c468edd25822f079671b3f",
+    "mtime": 1785098246.6578236,
+    "ast_hash": "f4cd9b65c7b1d7f840c4442de3e8ff0e",
     "semantic_hash": ""
   },
   "tests/test_lv_jax.py": {
@@ -520,8 +520,8 @@
     "semantic_hash": ""
   },
   "docs/guidance.md": {
-    "mtime": 1785103710.9630375,
-    "ast_hash": "77e350466686a36a983306ad05c5928c",
+    "mtime": 1785100879.188304,
+    "ast_hash": "d4eb3e82b79736254c600b2b75d13cee",
     "semantic_hash": ""
   },
   "conf/simulator/lotka_volterra_dense.yaml": {

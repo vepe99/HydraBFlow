@@ -192,6 +192,17 @@ Every run saves:
     comparison is confounded by under-training and inverts the calibration conclusion, and the
     48-observation subset overstated the gain as −46% with absolute errors ~1.8× too good. Use the
     full test set for absolute numbers; small subsets are only safe for *paired* comparisons.
+  * Round 3: the **lever arm `Δx̂₀ = (σ_t²/α_t)·Δscore` spans 80 (t=1) → 1e-8 (t→0)**, crossing 1 at
+    t≈0.46, and **‖∇log p‖/‖score‖ ≈ 5e4 early / 6e2 late** (‖∇log p‖ is flat in t, ‖score‖ grows
+    1.8→3206). Together these mean guidance is either overwhelming or invisible — no constant
+    `guidance_strength` works, and `scaling=snr` is impossible (α²/σ² spans 1.6e-4→5e6). The `t_on`
+    sweep on the 100k model confirms it: exactly inert for t_on≤0.1, +0.0024 at 0.2, +2.28 at 0.5,
+    +93 at 1.0. `guidance_point="state"` (evaluate ∇ at z_t, not x̂₀) is the best-behaved variant —
+    20× less divergent at t_on=1.0 and the only setting that tightened the posterior without hurting
+    RMSE — but it fixes gradient *quality*, not *stability*. Next candidate: ΠGDM-style variance
+    inflation, which compensates for σ_t²/α_t explicitly.
+  * **Dataset size dominates everything**: dense Arm B 20k→100k gives rmse 0.0731→0.0374, calib
+    0.0392→0.0141. Ranking: more data/training ≫ observation density (−31%) ≫ any guidance variant.
   * Two bugs worth remembering: the particle cloud width must be the *capped* denoising-posterior std
     `s·σ_t/√(α_t²s²+σ_t²)`, not `σ_t/α_t` (which hits 80 at t=1 and silently zeroed guidance via
     soft-clip saturation); and diagnostics must be measured **counterfactually** along the unguided

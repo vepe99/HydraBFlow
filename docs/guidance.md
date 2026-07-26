@@ -350,6 +350,64 @@ Two reasons the second is worth measuring rather than dismissing as "the crude v
 
 The two coincide as `t→0` (`α→1`, `σ→0`), so any difference is an early/mid-trajectory effect.
 
+## R3.4 The lever arm spans ten orders of magnitude — this is the core result
+
+`Δx̂₀ = (σ_t²/α_t)·Δscore`, so `σ_t²/α_t` is how strongly a score correction moves the denoised
+parameters. Computed exactly from the cosine schedule:
+
+| t | 1.000 | 0.750 | 0.501 | 0.417 | 0.334 | 0.168 | 0.001 |
+|---|---|---|---|---|---|---|---|
+| α_t | 0.013 | 0.067 | 0.529 | 0.845 | 0.978 | 1.000 | 1.000 |
+| σ_t | 1.000 | 0.998 | 0.849 | 0.535 | 0.211 | 0.013 | 0.000 |
+| **σ²/α** | **80.0** | 14.8 | 1.36 | 0.338 | 0.046 | 1.6e-4 | **1.1e-8** |
+
+**Ten orders of magnitude, crossing unity at t ≈ 0.46.** Combined with R3.1, the induced parameter
+shift is `lever × ‖update‖`: early, `80 × 0.2 × 1.8 ≈ 29` against a prior std of 0.5 — catastrophic;
+late, `1e-6 × 0.2 × 3206 ≈ 6e-4` against a posterior std of 0.02 — invisible.
+
+So the framing that guidance is "too weak" or "too strong" is wrong. **The coupling between the score
+and the parameters varies by 10 orders of magnitude along the trajectory**, and the window where
+guidance has moderate influence is only ~0.1 wide in `t` (around 0.3–0.5). No fixed
+`guidance_strength` can be right outside that sliver. Any workable scheme has to compensate for
+`σ_t²/α_t` explicitly — ΠGDM-style variance inflation is the natural candidate and remains untried.
+
+### The t_on sweep confirms it quantitatively
+
+Arm B, dense 100k model (the best model in the study: full-test-set rmse 0.0374), 16 observations ×
+300 draws, paired against its own unguided baseline (rmse 0.0251, post_std 0.0203):
+
+| variant | t_on=0.05 | 0.1 | 0.2 | 0.5 | 1.0 |
+|---|---|---|---|---|---|
+| tweedie, norm_matched s=0.2 | −0.0000 | −0.0000 | −0.0000 | +0.0000 | +0.0007 |
+| **state**, norm_matched s=0.2 | −0.0000 | −0.0000 | −0.0000 | **−0.0001** | **−0.0001** |
+| tweedie, none (clip 1e3) | −0.0000 | −0.0000 | +0.0024 | **+2.28** | **+92.98** |
+| state, none (clip 1e3) | −0.0000 | −0.0000 | +0.0022 | +1.68 | **+4.60** |
+
+(cells are Δrmse vs unguided; positive = worse)
+
+Three readings:
+
+1. **Late-gated guidance is exactly inert.** For `t_on ≤ 0.1` every variant reproduces the unguided
+   posterior to four decimal places. This is the lever arm at 1e-4 or below — guidance restricted to
+   the end of the trajectory cannot move anything, on any setting. That is the definitive answer to
+   "does guidance help only in the final part": it neither helps nor harms, because it does nothing.
+2. **Extending it earlier is destructive, monotonically**: inert → +0.0024 → +2.28 → +93. The
+   transition happens exactly where the lever arm crosses 1 (t≈0.46).
+3. **`state` degrades far more gracefully than `tweedie`** in the raw-gradient regime — 4.60 vs 92.98
+   at `t_on=1.0`, a 20× difference, with post_std 13.3 vs 84.0. The gap is concentrated at `t_on=1.0`,
+   i.e. the only setting that includes `t≈1` where `1/α_t = 80` inflates `x̂₀` — exactly as the
+   boundedness argument predicts. Neither is usable, but the mechanism is confirmed.
+
+**The best guidance result in the study is `state` + `norm_matched` + `t_on=1.0`**: Δrmse −0.0001 with
+the posterior *tightening* (0.0203 → 0.0181). It is the only variant anywhere that neither hurt RMSE
+nor widened the posterior. The effect is within noise at 16 observations, so it is a direction to
+pursue, not a win to claim.
+
+Note also what this says about a *well-trained* model: at `norm_matched s=0.2` the sharp conditional
+posterior is essentially immune to guidance — the model's own score dominates and the reverse ODE is
+self-correcting. The room for guidance to help shrinks as the network gets better, which is the
+opposite of what one wants from a correction mechanism.
+
 ## 4. Pros, cons, pitfalls
 
 **Pros.** Sampling-time only — no retraining, one network per sweep. Uses information the network
