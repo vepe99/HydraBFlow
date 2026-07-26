@@ -2,8 +2,8 @@
 outputs/
 multirun/
 
-# Generated datasets
-data/
+# Generated datasets (root-anchored: must not swallow conf/data/)
+/data/
 
 # Python
 __pycache__/

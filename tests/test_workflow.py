@@ -35,3 +35,17 @@ def test_build_workflow(cfg):
 
     workflow = build_workflow(cfg)
     assert hasattr(workflow, "approximator")
+
+
+def test_build_workflow_checkpointing(cfg, tmp_path):
+    """Passing run_dir turns on BayesFlow best-weights checkpointing; omitting it leaves it off."""
+    from hydrabflow.pipeline.workflow import BEST_WEIGHTS_NAME, build_workflow
+
+    off = build_workflow(cfg)
+    assert getattr(off, "checkpoint_filepath", None) is None
+
+    on = build_workflow(cfg, run_dir=str(tmp_path))
+    assert on.checkpoint_filepath == str(tmp_path)
+    assert on.checkpoint_name == BEST_WEIGHTS_NAME
+    assert on.save_best_only is True
+    assert on.save_weights_only is True

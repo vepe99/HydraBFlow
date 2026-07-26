@@ -1,0 +1,10 @@
+# Dataset generation + on-disk layout. `dataset_name` is interpolated against n_simulations so
+# datasets of different sizes coexist in one data_dir (and eval's test_data_* follows the same
+# pattern).
+defaults:
+  - base_data
+
+data_dir: data
+n_simulations: 10000
+chunk_size: 1000
+dataset_name: training_data_${data.n_simulations}.npz

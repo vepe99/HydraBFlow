@@ -12,6 +12,7 @@ import numpy as np
 from tqdm import tqdm
 
 from hydrabflow.utils.logging import get_logger
+from hydrabflow.utils.progress import set_row_tick
 
 log = get_logger(__name__)
 Dataset = Dict[str, np.ndarray]
@@ -81,23 +82,37 @@ def run_chunked(
     chunk_dir = stem + ".chunks"
     os.makedirs(chunk_dir, exist_ok=True)
 
+    # One row-granular bar for the whole run. A joblib simulator advances it per finished row via
+    # utils.progress (published below); simulators with no per-row hook leave it untouched and we
+    # step it per chunk instead. This is the only thing printed during generation — AGAMA's own
+    # chatter is redirected to /dev/null in the workers (utils.quiet).
     starts = list(range(0, n_total, chunk))
-    for idx, start in enumerate(tqdm(starts, desc=desc)):
-        n = min(chunk, n_total - start)
-        cpath = os.path.join(chunk_dir, f"chunk_{idx:05d}.npz")
-        if os.path.exists(cpath):
-            try:
-                existing = load_chunk(cpath)
-                if _n_rows(existing) == n:
-                    log.info("resume: chunk %d/%d present (%d rows), skipping", idx + 1, len(starts), n)
-                    continue
-                log.warning(
-                    "chunk %d row mismatch (%d != %d), regenerating", idx, _n_rows(existing), n
-                )
-            except Exception as exc:  # corrupt/partial file -> regenerate
-                log.warning("chunk %d unreadable (%s), regenerating", idx, exc)
-        rng = np.random.default_rng(np.random.SeedSequence([int(base_seed), int(start)]))
-        _save_chunk_atomic(cpath, sample_fn(n, rng))
+    bar = tqdm(total=n_total, desc=desc, unit="row", dynamic_ncols=True, smoothing=0.02)
+    set_row_tick(bar.update)
+    try:
+        for idx, start in enumerate(starts):
+            n = min(chunk, n_total - start)
+            cpath = os.path.join(chunk_dir, f"chunk_{idx:05d}.npz")
+            if os.path.exists(cpath):
+                try:
+                    existing = load_chunk(cpath)
+                    if _n_rows(existing) == n:
+                        log.info("resume: chunk %d/%d present (%d rows), skipping", idx + 1, len(starts), n)
+                        bar.update(n)
+                        continue
+                    log.warning(
+                        "chunk %d row mismatch (%d != %d), regenerating", idx, _n_rows(existing), n
+                    )
+                except Exception as exc:  # corrupt/partial file -> regenerate
+                    log.warning("chunk %d unreadable (%s), regenerating", idx, exc)
+            rng = np.random.default_rng(np.random.SeedSequence([int(base_seed), int(start)]))
+            before = bar.n
+            _save_chunk_atomic(cpath, sample_fn(n, rng))
+            if bar.n == before:  # simulator did not report per-row progress -> step per chunk
+                bar.update(n)
+    finally:
+        set_row_tick(None)
+        bar.close()
 
     chunks = [
         load_chunk(os.path.join(chunk_dir, f"chunk_{idx:05d}.npz")) for idx in range(len(starts))

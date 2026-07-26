@@ -49,6 +49,37 @@ def fill_adapter_from_simulator(cfg) -> None:
         cfg.adapter.summary_variables = list(simulator.observable_keys)
 
 
+def adapter_keys(cfg) -> List[str]:
+    """All dataset keys the adapter (``cfg.adapter``) consumes, in a stable order.
+
+    ``drop`` is included so keys the adapter drops still survive :func:`select_adapter_keys`: a
+    dropped key may be a *per-batch augmentation input* that the network must NOT see — it has to
+    reach the augmentation chain, then the adapter's ``.drop()`` removes it before the approximator.
+    """
+    return (
+        _as_list(cfg.adapter.inference_variables)
+        + _as_list(cfg.adapter.summary_variables)
+        + _as_list(cfg.adapter.inference_conditions)
+        + _as_list(cfg.adapter.drop)
+    )
+
+
+def select_adapter_keys(data: dict, cfg) -> dict:
+    """Keep only the dataset keys the adapter consumes (the generalized ``keys_to_drop``).
+
+    Simulator datasets carry extra arrays (fixed constants, intermediate coordinates) that the
+    model must not see; BayesFlow would otherwise pass them through to the approximator.
+    Keys created later, per batch, by augmentations are unaffected.
+    """
+    wanted = set(adapter_keys(cfg))
+    dropped = [k for k in data if k not in wanted]
+    if dropped:
+        from hydrabflow.utils.logging import get_logger
+
+        get_logger(__name__).info("Dropping dataset keys the adapter does not use: %s", dropped)
+    return {k: v for k, v in data.items() if k in wanted}
+
+
 def build_adapter(cfg) -> Any:
     """Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``)."""
     import bayesflow as bf

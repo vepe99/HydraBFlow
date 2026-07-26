@@ -41,6 +41,11 @@ class PreprocessStep(ABC):
     def load_state(self, state: Dict[str, np.ndarray]) -> None:  # noqa: B027
         """Restore arrays produced by :meth:`state`."""
 
+    def inverse_transform(self, data: Dataset) -> Dataset:
+        """Undo :meth:`transform` where meaningful (e.g. map normalized posterior samples back
+        to physical units). Steps without a meaningful inverse return ``data`` unchanged."""
+        return data
+
 
 class SplitStep(PreprocessStep):
     """Marker base for the train/validation split (handled specially by the pipeline)."""
@@ -81,22 +86,46 @@ class PreprocessPipeline:
             data = step.transform(data)
         return data
 
+    def inverse_transform(self, data: Dataset) -> Dataset:
+        """Undo the fitted element-wise steps in reverse order (posterior samples -> physical
+        units). Steps without an inverse pass through unchanged."""
+        for step in reversed(self.steps):
+            if isinstance(step, SplitStep):
+                continue
+            data = step.inverse_transform(data)
+        return data
+
+    def get_step(self, name: str) -> Optional[PreprocessStep]:
+        """First step registered under ``name`` (augmentations use this to read fitted state)."""
+        for step in self.steps:
+            if step.name == name:
+                return step
+        return None
+
     # ----------------------------------------------------------------------------------------- #
-    # Persistence: one flat .npz, keys prefixed by step index + name to stay unambiguous.
+    # Persistence: one flat .npz. Keys are prefixed by step name + occurrence index (not list
+    # position), so state fitted under the training pipeline still loads when an inference-time
+    # pipeline variant (e.g. a real-data preset) arranges the same steps differently.
     # ----------------------------------------------------------------------------------------- #
+    def _prefixes(self) -> list[str]:
+        seen: Dict[str, int] = {}
+        prefixes = []
+        for step in self.steps:
+            occurrence = seen.get(step.name, 0)
+            seen[step.name] = occurrence + 1
+            prefixes.append(f"{step.name}#{occurrence}.")
+        return prefixes
+
     def save(self, path: str) -> None:
         flat: Dict[str, np.ndarray] = {}
-        for i, step in enumerate(self.steps):
+        for prefix, step in zip(self._prefixes(), self.steps):
             for key, arr in step.state().items():
-                flat[f"{i}.{step.name}.{key}"] = arr
+                flat[f"{prefix}{key}"] = arr
         np.savez(path, **flat)
 
     def load(self, path: str) -> None:
         raw = np.load(path, allow_pickle=True)
-        for i, step in enumerate(self.steps):
-            prefix = f"{i}.{step.name}."
-            state = {
-                k[len(prefix):]: raw[k] for k in raw.files if k.startswith(prefix)
-            }
+        for prefix, step in zip(self._prefixes(), self.steps):
+            state = {k[len(prefix):]: raw[k] for k in raw.files if k.startswith(prefix)}
             if state:
                 step.load_state(state)
