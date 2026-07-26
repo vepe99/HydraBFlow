@@ -25,11 +25,15 @@ search_space:
     type: int
     low: 2
     high: 8
-  model.summary_network.embed_dim:
+  # Attention width is searched PER HEAD (params.embed_dim_multiplier), not as a raw embed_dim:
+  # multi-head attention requires embed_dim % num_heads == 0, so sampling the two independently
+  # would keep drawing invalid pairs (e.g. embed_dim=128, num_heads=5) and failing those trials.
+  # Effective embed_dim = num_heads * multiplier, i.e. 16-256 for the ranges here.
+  model.summary_network.params.embed_dim_multiplier:
     type: int
-    low: 32
-    high: 128
-    step: 16
+    low: 8
+    high: 32
+    step: 8
   model.inference_network.mlp_depth:
     type: int
     low: 2

@@ -59,6 +59,8 @@ class SummaryNetworkConfig:
     summary_dim: int = 32
     num_blocks: int = 2
     num_heads: int = 4
+    # Raw attention width. ``params.embed_dim_multiplier`` (width PER HEAD) overrides it and keeps
+    # embed_dim % num_heads == 0 by construction — prefer it when tuning (see networks.factory).
     embed_dim: int = 64
     mlp_depth: int = 2
     mlp_width: int = 128

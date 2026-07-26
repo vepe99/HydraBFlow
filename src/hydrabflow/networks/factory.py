@@ -74,6 +74,21 @@ def build_inference_network(cfg) -> Any:
 # --------------------------------------------------------------------------------------------- #
 
 
+def _embed_dim(cfg) -> int:
+    """Attention embedding width for the block-wise transformer backbones.
+
+    Multi-head attention requires ``embed_dim % num_heads == 0``, so a tuner that samples
+    ``embed_dim`` and ``num_heads`` independently will keep drawing invalid combinations (e.g.
+    embed_dim=128 with num_heads=5). ``params.embed_dim_multiplier`` expresses the width *per
+    head* instead — the product is divisible by construction — and takes precedence over the raw
+    ``embed_dim`` when set. Search the multiplier, not the width (see conf/tuning/default.yaml).
+    """
+    multiplier = cfg.params.get("embed_dim_multiplier") if cfg.params else None
+    if multiplier:
+        return int(cfg.num_heads) * int(multiplier)
+    return int(cfg.embed_dim)
+
+
 @register_summary_network("set_transformer")
 def _set_transformer(cfg) -> Any:
     import bayesflow as bf
@@ -81,7 +96,7 @@ def _set_transformer(cfg) -> Any:
     blocks = int(cfg.num_blocks)
     return bf.networks.SetTransformer(
         summary_dim=int(cfg.summary_dim),
-        embed_dims=(int(cfg.embed_dim),) * blocks,
+        embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
         mlp_depths=(int(cfg.mlp_depth),) * blocks,
         mlp_widths=(int(cfg.mlp_width),) * blocks,
@@ -96,7 +111,7 @@ def _time_series_transformer(cfg) -> Any:
     blocks = int(cfg.num_blocks)
     return bf.networks.TimeSeriesTransformer(
         summary_dim=int(cfg.summary_dim),
-        embed_dims=(int(cfg.embed_dim),) * blocks,
+        embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
     )
 
