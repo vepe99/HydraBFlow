@@ -250,12 +250,13 @@ def test_guidance_gradient_is_clipped_and_finite(guided_class):
     from hydrabflow.networks.guided_diffusion import GuidanceTarget
 
     net = guided_class(max_grad_norm=10.0)
+    time = jnp.full((3, 1), 0.05)
 
     # Enormous but finite gradients -> clipped to max_grad_norm.
     net.set_guidance_target(
         GuidanceTarget(log_likelihood_batch=lambda th: 1e12 * jnp.sum(th, axis=-1))
     )
-    grad = net.guidance_gradient(jnp.ones((3, 4)))
+    grad = net.guidance_gradient(jnp.ones((3, 4)), time)
     norms = np.linalg.norm(np.asarray(grad), axis=-1)
     assert np.allclose(norms, 10.0, rtol=1e-4)
 
@@ -263,7 +264,7 @@ def test_guidance_gradient_is_clipped_and_finite(guided_class):
     net.set_guidance_target(
         GuidanceTarget(log_likelihood_batch=lambda th: jnp.sum(jnp.log(th - th), axis=-1))
     )
-    grad = net.guidance_gradient(jnp.ones((2, 4)))
+    grad = net.guidance_gradient(jnp.ones((2, 4)), jnp.full((2, 1), 0.05))
     assert np.isfinite(np.asarray(grad)).all()
 
 
@@ -285,19 +286,145 @@ def test_guidance_untransform_is_chain_ruled(guided_class):
             untransform=lambda x: 3.0 * x + 1.0,
         )
     )
-    grad = np.asarray(net.guidance_gradient(jnp.zeros((2, 4))))
+    grad = np.asarray(net.guidance_gradient(jnp.zeros((2, 4)), jnp.full((2, 1), 0.05)))
     assert np.allclose(grad, 3.0)
+
+
+# --------------------------------------------------------------------------------------------- #
+# Particle (median) guidance
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_single_particle_is_bit_identical_to_point(guided_class):
+    """K=1 must reproduce the plain Tweedie gradient EXACTLY, not a one-sample cloud.
+
+    Same role as the guidance_strength=0 test: without this, every particle result is confounded
+    with a silent change to the un-particled path.
+    """
+    jnp = pytest.importorskip("jax.numpy")
+
+    from hydrabflow.networks.guided_diffusion import GuidanceTarget
+
+    target = GuidanceTarget(log_likelihood_batch=lambda th: -jnp.sum(jnp.square(th - 0.3), axis=-1))
+    x_pred = jnp.asarray([[0.1, -0.2, 0.4, 0.9], [1.0, 0.0, -1.0, 0.5]])
+    time = jnp.full((2, 1), 0.4)
+
+    point = guided_class(guidance_particles=1, guidance_reduce="median", max_grad_norm=1e9)
+    point.set_guidance_target(target)
+    reference = np.asarray(point.guidance_gradient(x_pred, time))
+
+    # "point" reduction with many particles must also bypass the cloud entirely.
+    explicit = guided_class(guidance_particles=32, guidance_reduce="point", max_grad_norm=1e9)
+    explicit.set_guidance_target(target)
+    assert np.array_equal(np.asarray(explicit.guidance_gradient(x_pred, time)), reference)
+
+    # Sanity: it really is the analytic gradient of the objective, -2*(x-0.3).
+    assert np.allclose(reference, -2.0 * (np.asarray(x_pred) - 0.3), rtol=1e-5)
+
+
+def test_particle_width_scales_with_diffusion_time(guided_class):
+    """The cloud must be wide early (t->1) and narrow late (t->0): width = sigma_t/alpha_t."""
+    jnp = pytest.importorskip("jax.numpy")
+
+    net = guided_class(guidance_particles=8, particle_width=1.0)
+    widths = [float(np.mean(np.asarray(net.particle_width_at(jnp.full((1, 1), t))))) for t in (0.9, 0.5, 0.1)]
+    assert widths[0] > widths[1] > widths[2] > 0.0
+    # particle_width is a linear multiplier on that spread.
+    doubled = guided_class(guidance_particles=8, particle_width=2.0)
+    assert float(np.mean(np.asarray(doubled.particle_width_at(jnp.full((1, 1), 0.5))))) == pytest.approx(
+        2.0 * widths[1], rel=1e-5
+    )
+
+
+def test_particle_gradients_shape_and_batching(guided_class):
+    """K*B batching must equal a per-particle loop — the folding is an optimization, not a change."""
+    jnp = pytest.importorskip("jax.numpy")
+
+    from hydrabflow.networks.guided_diffusion import GuidanceTarget
+
+    num_particles, batch, dim = 8, 3, 4
+    net = guided_class(guidance_particles=num_particles, guidance_reduce="median", max_grad_norm=1e9)
+    net.set_guidance_target(
+        GuidanceTarget(log_likelihood_batch=lambda th: -jnp.sum(jnp.square(th), axis=-1))
+    )
+    x_pred = jnp.asarray(np.random.default_rng(0).normal(size=(batch, dim)), dtype="float32")
+    time = jnp.full((batch, 1), 0.5)
+
+    grads = net.particle_gradients(x_pred, time)
+    assert grads.shape == (num_particles, batch, dim)
+
+    # Reproduce particle k independently: gradient of -sum(theta^2) is -2*theta.
+    eps = net._unit_perturbations(num_particles, dim)
+    width = net.particle_width_at(time)
+    for k in range(num_particles):
+        expected = -2.0 * np.asarray(x_pred + width * eps[k])
+        assert np.allclose(np.asarray(grads[k]), expected, rtol=1e-5)
+
+
+def test_median_survives_heavy_tails_where_mean_does_not(guided_class):
+    """The mechanism: one extreme particle destroys the mean but not the componentwise median.
+
+    This is why the offline study found the mean's alignment collapsing to ~0 while the median held
+    ~0.65 at a wide denoising spread.
+    """
+    jnp = pytest.importorskip("jax.numpy")
+
+    from hydrabflow.networks.guided_diffusion import GuidanceTarget
+
+    num_particles, dim = 33, 4
+
+    # A likelihood whose gradient is +1 per component almost everywhere, but enormous and
+    # sign-flipped once the first component is far out — so a minority of the cloud are outliers.
+    # The threshold is a single component (not all four) so it stays reachable regardless of the
+    # cloud width, which is capped by particle_data_std.
+    def heavy_tailed(theta):
+        outlier = theta[..., :1] > 1.0
+        weight = jnp.where(outlier, -1e6, 1.0)
+        return jnp.sum(weight * theta, axis=-1)
+
+    x_pred = jnp.zeros((1, dim))
+    time = jnp.full((1, 1), 0.6)
+
+    kwargs = dict(guidance_particles=num_particles, max_grad_norm=1e12, particle_width=2.0)
+    median_net = guided_class(guidance_reduce="median", **kwargs)
+    mean_net = guided_class(guidance_reduce="mean", **kwargs)
+    for net in (median_net, mean_net):
+        net.set_guidance_target(GuidanceTarget(log_likelihood_batch=heavy_tailed))
+
+    grads = np.asarray(median_net.particle_gradients(x_pred, time))
+    assert (np.abs(grads) > 1e5).any(), "test setup failed to produce an outlier particle"
+
+    g_median = np.asarray(median_net.guidance_gradient(x_pred, time))
+    g_mean = np.asarray(mean_net.guidance_gradient(x_pred, time))
+
+    # The median ignores the outlier and recovers the bulk direction (+1 per component).
+    assert np.allclose(g_median, 1.0, rtol=1e-5)
+    # The mean is dominated by it: wrong sign and orders of magnitude too large.
+    assert np.linalg.norm(g_mean) > 1e3 * np.linalg.norm(g_median)
+    assert np.all(g_mean < 0.0)
+
+
+def test_invalid_particle_settings_rejected(guided_class):
+    with pytest.raises(ValueError, match="guidance_reduce"):
+        guided_class(guidance_reduce="mode")
+    with pytest.raises(ValueError, match="guidance_particles"):
+        guided_class(guidance_particles=0)
+    with pytest.raises(ValueError, match="particle_width"):
+        guided_class(particle_width=-1.0)
 
 
 def test_get_config_roundtrip(guided_class):
     net = guided_class(
         guidance_strength=2.5, t_on=0.4, t_full=0.2, scaling="snr",
         max_grad_norm=55.0, clip_theta_std=3.0, skip_outside_window=False,
+        guidance_particles=16, guidance_reduce="mean", particle_width=0.5, particle_seed=7,
     )
     config = net.get_config()
     for key, expected in (
         ("guidance_strength", 2.5), ("t_on", 0.4), ("t_full", 0.2), ("scaling", "snr"),
         ("max_grad_norm", 55.0), ("clip_theta_std", 3.0), ("skip_outside_window", False),
+        ("guidance_particles", 16), ("guidance_reduce", "mean"), ("particle_width", 0.5),
+        ("particle_seed", 7),
     ):
         assert config[key] == expected, key
     # Guidance settings must survive a save/load cycle, since evaluate replaces the approximator
@@ -305,6 +432,8 @@ def test_get_config_roundtrip(guided_class):
     revived = guided_class.from_config(config)
     assert revived.scaling == "snr"
     assert revived.t_on == 0.4
+    assert revived.guidance_particles == 16
+    assert revived.guidance_reduce == "mean"
 
 
 # --------------------------------------------------------------------------------------------- #

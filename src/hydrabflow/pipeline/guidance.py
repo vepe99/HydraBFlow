@@ -38,6 +38,11 @@ GUIDANCE_OVERRIDE_KEYS = (
     "max_grad_norm",
     "clip_theta_std",
     "skip_outside_window",
+    "guidance_particles",
+    "guidance_reduce",
+    "particle_width",
+    "particle_data_std",
+    "particle_seed",
 )
 
 

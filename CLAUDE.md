@@ -173,6 +173,27 @@ Every run saves:
     `fill_adapter_from_simulator` now honours `adapter.drop` (needed for the unconditional arm).
   * `pipeline/reference.py` (Laplace-whitened MALA) is **off by default and not validated** — its MAP
     search is unreliable; to be replaced by NUTS via numpyro/blackjax (not yet dependencies).
+- Session 2026-07-26 round 2 (`diff_lv`, why the gradient is strong + median-particle guidance).
+  Full numbers in `docs/guidance.md` "Round 2"; the short version:
+  * **Why ‖∇log p‖ ≈ 1e4**: `1/σ = 10` times a Jacobian that accumulates *coherently* over observation
+    times, so the norm grows ~linearly in `n_obs` (13k/36k/72k/146k for 10/25/50/100) while alignment
+    with the truth stays flat. More data does not tame it.
+  * **Refuted**: the likelihood is *not* jagged (1 local max per slice, multi-start MAP 100%, and
+    `n_obs=10` is above Nyquist) — it is *anisotropic* (Fisher condition number ≈1000). Also refuted:
+    Fisher/Gauss-Newton preconditioning fixes the magnitude (1e4 → 1.5) but not the direction.
+  * **Median-particle guidance** added (`guidance_particles` / `guidance_reduce` / `particle_width` /
+    `particle_data_std`, K folded into the batch axis, fixed common-random-number perturbations). It
+    improves the *direction* (cos to truth 0.646 → 0.731 mid-trajectory) but makes the *posterior*
+    monotonically **worse** in K — a smoothed score biases the reverse ODE. The plain point gradient
+    wins. Methodological lesson: `cos(g, θ_true − x̂₀)` is a point-estimator metric and does not
+    predict posterior quality; do not gate on it.
+  * **Observation density is what actually helped**: `n_obs` 10 → 50 gives RMSE −46% and a 34%
+    tighter posterior (matched 200-epoch budgets; the 60-epoch comparison is confounded by
+    under-training and inverts the calibration conclusion).
+  * Two bugs worth remembering: the particle cloud width must be the *capped* denoising-posterior std
+    `s·σ_t/√(α_t²s²+σ_t²)`, not `σ_t/α_t` (which hits 80 at t=1 and silently zeroed guidance via
+    soft-clip saturation); and diagnostics must be measured **counterfactually** along the unguided
+    trajectory (`cf_*` columns), else a diverged guided run reports its own damage as zero gradient.
 
 ## graphify
 

@@ -1,16 +1,16 @@
 # Graph Report - HydraBFlow  (2026-07-26)
 
 ## Corpus Check
-- 78 files · ~49,731 words
+- 78 files · ~54,089 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 812 nodes · 1065 edges · 106 communities (71 shown, 35 thin omitted)
-- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 163 edges (avg confidence: 0.75)
+- 832 nodes · 1098 edges · 104 communities (70 shown, 34 thin omitted)
+- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 166 edges (avg confidence: 0.75)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2413769a`
+- Built from commit: `d67f50dd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -69,7 +69,6 @@
 - [[_COMMUNITY_load_approximator|load_approximator]]
 - [[_COMMUNITY_quiet.py|quiet.py]]
 - [[_COMMUNITY_compose_cfg|compose_cfg]]
-- [[_COMMUNITY_build_augmentations|build_augmentations]]
 - [[_COMMUNITY_PreToolUse|PreToolUse]]
 - [[_COMMUNITY_allow|allow]]
 - [[_COMMUNITY_AST Structural Extraction|AST Structural Extraction]]
@@ -88,7 +87,6 @@
 - [[_COMMUNITY_Semantic LLM Extraction|Semantic LLM Extraction]]
 - [[_COMMUNITY_Parallel Subagent Dispatch|Parallel Subagent Dispatch]]
 - [[_COMMUNITY_hydrabflow|hydrabflow]]
-- [[_COMMUNITY_Ordered list of preprocessing steps. Each entry is ``{name registry key, ...p|Ordered list of preprocessing steps. Each entry is ``{name: <registry key>, ...p]]
 - [[_COMMUNITY_BaseSimulator|BaseSimulator]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -99,30 +97,30 @@
 5. `build_workflow()` - 16 edges
 6. `LVConfig` - 16 edges
 7. `BaseSimulator` - 15 edges
-8. `run_diagnose_guidance()` - 14 edges
-9. `run_training()` - 14 edges
-10. `get_simulator()` - 14 edges
+8. `guided_class()` - 15 edges
+9. `run_diagnose_guidance()` - 14 edges
+10. `run_training()` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `test_unknown_simulator_errors()` --calls--> `get_simulator()`  [INFERRED]
-  tests/test_registries.py → src/hydrabflow/simulators/registry.py
-- `_compose_aug()` --calls--> `build_augmentations()`  [INFERRED]
-  tests/test_augmentation.py → src/hydrabflow/augmentation/registry.py
 - `test_augmentation_registry_builds()` --calls--> `build_augmentations()`  [INFERRED]
   tests/test_registries.py → src/hydrabflow/augmentation/registry.py
 - `compose_cfg()` --calls--> `register_configs()`  [INFERRED]
   tests/conftest.py → src/hydrabflow/config/schema.py
 - `guided_class()` --calls--> `guided_diffusion_class()`  [INFERRED]
   tests/test_guidance.py → src/hydrabflow/networks/guided_diffusion.py
+- `compose_cfg()` --calls--> `fill_adapter_from_simulator()`  [INFERRED]
+  tests/conftest.py → src/hydrabflow/pipeline/adapter.py
+- `test_build_adapter()` --calls--> `build_adapter()`  [INFERRED]
+  tests/test_workflow.py → src/hydrabflow/pipeline/adapter.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (106 total, 35 thin omitted)
+## Communities (104 total, 34 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
 Cohesion: 0.07
-Nodes (31): ABC, PreprocessPipeline, PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state. (+23 more)
+Nodes (30): PreprocessPipeline, PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that orchestrates them.  A :class:`, Element-wise (dataset-in, dataset-out) transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty (+22 more)
 
 ### Community 1 - "Eval / Checkpoint Stages"
 Cohesion: 0.33
@@ -137,8 +135,8 @@ Cohesion: 0.10
 Nodes (30): feature_dropout(), gaussian_noise(), multiplicative_noise(), Augmentation, Example augmentations. Use as templates for problem-specific ones.  Augmentation, Add zero-mean Gaussian noise to one observable key (additive observational noise, Scale an observable by ``(1 + N(0, mult_scale))`` — multiplicative / gain jitter, Randomly zero out entries of an observable with probability ``dropout_prob`` (Be (+22 more)
 
 ### Community 4 - "Simulate Stage & Registries"
-Cohesion: 0.12
-Nodes (22): available_augmentations(), Name -> augmentation-factory registry and builder.  An augmentation factory rece, _batch(), _build_one(), _compose_aug(), Two Moons simulator + the augmentation reproducibility/stochasticity contract., Same seed + same step list -> identical end-to-end result through build_augmenta, A step's random stream is its own spawn child, so it doesn't depend on trailing (+14 more)
+Cohesion: 0.10
+Nodes (26): available_augmentations(), build_augmentations(), Augmentation, Name -> augmentation-factory registry and builder.  An augmentation factory rece, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, _batch(), _build_one(), _compose_aug() (+18 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
 Cohesion: 0.10
@@ -146,15 +144,15 @@ Nodes (19): BaseException, RuntimeError, Dataset, ndarray, Per-feature z-score s
 
 ### Community 6 - "Config Schemas"
 Cohesion: 0.06
-Nodes (18): BaseSimulator, BaseSimulator, Any, ndarray, Base interface every forward model implements.  A simulator is the ONLY piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Ordered names of the inferred parameters (become ``inference_variables``)., Keys of the observable arrays. One key = single observable; >1 enables fusion. (+10 more)
+Nodes (19): ABC, BaseSimulator, BaseSimulator, Any, ndarray, Base interface every forward model implements.  A simulator is the ONLY piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Ordered names of the inferred parameters (become ``inference_variables``). (+11 more)
 
 ### Community 7 - "Network Factory & Adapter"
 Cohesion: 0.07
 Nodes (28): 0. Prerequisites & install, 1. The five stages at a glance, 2. Changing the simulator, 2a. Write the simulator class, 2b. Registration is automatic, 2c. Add the simulator config, 2d. The adapter wires itself, 2e. Shape contract cheat-sheet (+20 more)
 
 ### Community 10 - "Config Composition Tests"
-Cohesion: 0.20
-Nodes (9): compose(), Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override(), `adapter.drop` must survive the derive-from-simulator default.      Arm A is con, test_lv_arm_configs_compose() (+1 more)
+Cohesion: 0.16
+Nodes (11): compose(), Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override(), `adapter.drop` must survive the derive-from-simulator default.      Arm A is con, test_lv_arm_configs_compose() (+3 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.29
@@ -169,12 +167,12 @@ Cohesion: 0.33
 Nodes (5): conf_path(), make_cli(), Shared Hydra-app boilerplate for the five run stages., Absolute path to the repo-root ``conf/`` directory., Wrap a ``run_fn(cfg)`` into a Hydra console entry point.      Registers the stru
 
 ### Community 14 - "JAX Backend Pin"
-Cohesion: 0.20
-Nodes (9): Logger, limit_gpus(), Pin compute settings *before* keras/bayesflow/JAX are imported anywhere.  Two th, Pin ``CUDA_VISIBLE_DEVICES`` to the least-used GPU(s) before JAX/CUDA initialize, Set ``KERAS_BACKEND`` unless the user already chose one. Returns the active back, set_backend(), get_logger(), Minimal logging helper so all pipeline stages log consistently. (+1 more)
+Cohesion: 0.07
+Nodes (31): Logger, adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), Any, Build the BayesFlow ``Adapter`` from ``AdapterConfig``.  The adapter is the stru, Fill empty adapter variable lists from the simulator's own declaration (in place (+23 more)
 
 ### Community 15 - "Logging Helper"
 Cohesion: 0.07
-Nodes (43): _norm(), _plot_trace(), Any, ndarray, Diagnostic stage: how does the guidance term compare with the diffusion model's, Four-panel diagnostic figure; best-effort (never aborts the stage)., Integrate ``dz = (f - 0.5 g^2 score) dt`` from ``t=1`` to ``t=0`` with explicit, run_diagnose_guidance() (+35 more)
+Nodes (47): _cos(), _norm(), _particle_diagnostics(), _plot_trace(), Any, ndarray, Diagnostic stage: how does the guidance term compare with the diffusion model's, Integrate ``dz = (f - 0.5 g^2 score) dt`` from ``t=1`` to ``t=0`` with explicit (+39 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
@@ -193,8 +191,8 @@ Cohesion: 0.17
 Nodes (11): Core Design Principles, Decisions Log, Folder Structure (finalized), Goal, graphify, HydraBFlow: SBI Pipeline Template with BayesFlow, Output Directory Convention, Run stages (5 entry points) (+3 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.19
-Nodes (15): GuidanceTarget, Runtime (non-serialized) guidance target: what to compute the likelihood gradien, guided_class(), Tests for the LV simulator contract, the guided diffusion network, and the confi, No target attached => the hook must return the score untouched (a plain Diffusio, A likelihood that produces huge / non-finite gradients must not poison the score, The gradient must be taken w.r.t. the diffusion state, through the untransform., test_apply_guidance_overrides() (+7 more)
+Cohesion: 0.13
+Nodes (24): GuidanceTarget, Runtime (non-serialized) guidance target: what to compute the likelihood gradien, guided_class(), Tests for the LV simulator contract, the guided diffusion network, and the confi, No target attached => the hook must return the score untouched (a plain Diffusio, A likelihood that produces huge / non-finite gradients must not poison the score, The gradient must be taken w.r.t. the diffusion state, through the untransform., K=1 must reproduce the plain Tweedie gradient EXACTLY, not a one-sample cloud. (+16 more)
 
 ### Community 37 - "Community 37"
 Cohesion: 0.07
@@ -213,8 +211,8 @@ Cohesion: 0.14
 Nodes (7): LotkaVolterraSimulator, ndarray, Lotka-Volterra simulator: the differentiable testbed for simulator-gradient guid, The validated forward-model settings (also used by the guidance and reference st, ``(theta_batch) -> (batch,)`` log-likelihood of a single observation ``x_obs``., Smooth tanh squash of the log-rates into ``prior_mean +- n_std * prior_std``., ``(theta_batch) -> (batch,)`` log-prior — used by the MALA reference sampler.
 
 ### Community 46 - "Community 46"
-Cohesion: 0.05
-Nodes (50): build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, Build BayesFlow networks from structured dataclass configs (no ``_target_``).  B (+42 more)
+Cohesion: 0.10
+Nodes (27): build_inference_network(), build_summary_network(), _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, Build BayesFlow networks from structured dataclass configs (no ``_target_``).  B (+19 more)
 
 ### Community 47 - "test_lv_jax.py"
 Cohesion: 0.13
@@ -233,8 +231,8 @@ Cohesion: 0.50
 Nodes (3): import_submodules(), Auto-import the modules of a package so ``@register_*`` decorators run.  The reg, Import every non-underscore module directly inside a package.      Call from a p
 
 ### Community 58 - "Simulator-gradient guidance in diffusion sampling"
-Cohesion: 0.17
-Nodes (11): 1. Where the guidance term goes, 2. The two arms, 3. Measured results, 3a. Guidance vs the model's own prediction (`diagnose_guidance`, Arm B), 3b. Does guidance carry real information? (Arm A, 8 observations, 200 draws), 3c. The blow-up is not a solver artifact, 4. Pros, cons, pitfalls, 5. Reference posterior — status (+3 more)
+Cohesion: 0.10
+Nodes (20): 1. Where the guidance term goes, 2. The two arms, 3. Measured results, 3a. Guidance vs the model's own prediction (`diagnose_guidance`, Arm B), 3b. Does guidance carry real information? (Arm A, 8 observations, 200 draws), 3c. The blow-up is not a solver artifact, 4. Pros, cons, pitfalls, 5. Reference posterior — status (+12 more)
 
 ### Community 59 - "get_run_dir"
 Cohesion: 0.22
@@ -245,8 +243,8 @@ Cohesion: 0.29
 Nodes (9): _n(), Stage 2: training.  Load dataset -> preprocessing pipeline (fit on train, save f, Load the best-val-loss weights BayesFlow checkpointed during training back into, Persist ``history.json`` + ``convergence.json``; best-effort, never fails a run., Train the approximator and return (workflow, history)., _restore_best_weights(), run_training(), _save_history_and_convergence() (+1 more)
 
 ### Community 61 - "test_registries.py"
-Cohesion: 0.20
-Nodes (8): available_steps(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``., register_step(), Registry resolution + skeleton-simulator behavior., test_preprocess_registry(), test_skeleton_simulator_raises(), test_unknown_simulator_errors()
+Cohesion: 0.33
+Nodes (5): available_steps(), Name -> preprocessing-step registry and pipeline builder., Register a step factory (usually the step class itself) under ``name``., register_step(), test_preprocess_registry()
 
 ### Community 62 - "run_evaluation"
 Cohesion: 0.33
@@ -261,8 +259,8 @@ Cohesion: 0.25
 Nodes (5): LogTransform, Dataset, Natural-log transform for strictly positive observables.  Motivating case: the L, Stateless ``x -> log(max(x, floor))``, inverted by ``exp``., test_log_transform_roundtrip()
 
 ### Community 65 - "get_simulator"
-Cohesion: 0.22
-Nodes (9): get_simulator(), Instantiate the simulator selected by ``cfg.simulator`` (a ``SimulatorConfig``)., test_two_moons_shapes_and_reproducibility(), Same seed => bit-identical dataset, including the JAX-side observation noise., A simulator that does not opt in must raise a clear error, not fail obscurely., test_base_simulator_guidance_seam_is_optional(), test_lv_jax_log_likelihood_seam(), test_lv_simulator_contract() (+1 more)
+Cohesion: 0.20
+Nodes (10): get_simulator(), Instantiate the simulator selected by ``cfg.simulator`` (a ``SimulatorConfig``)., test_two_moons_shapes_and_reproducibility(), Same seed => bit-identical dataset, including the JAX-side observation noise., A simulator that does not opt in must raise a clear error, not fail obscurely., test_base_simulator_guidance_seam_is_optional(), test_lv_simulator_is_reproducible(), Registry resolution + skeleton-simulator behavior. (+2 more)
 
 ### Community 66 - "load_approximator"
 Cohesion: 0.32
@@ -276,24 +274,20 @@ Nodes (7): quiet_worker(), Silence noisy C-extension output during simulation.  
 Cohesion: 0.50
 Nodes (4): cfg(), compose_cfg(), Shared test fixtures., Compose the root config with the structured schemas registered.      ``fill=True
 
-### Community 69 - "build_augmentations"
-Cohesion: 0.50
-Nodes (4): build_augmentations(), Augmentation, Build the ordered augmentation list from ``cfg.augmentation`` (an ``Augmentation, test_augmentation_registry_builds()
-
 ## Knowledge Gaps
-- **144 isolated node(s):** `hydrabflow`, `graphify`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)` (+139 more)
+- **151 isolated node(s):** `hydrabflow`, `graphify`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)` (+146 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_simulator()` connect `get_simulator` to `Config Schemas`, `Community 11`, `Community 46`, `Logging Helper`, `get_run_dir`, `test_registries.py`?**
-  _High betweenness centrality (0.154) - this node is a cross-community bridge._
-- **Why does `BaseSimulator` connect `Config Schemas` to `Preprocessing Pipeline & Steps`, `get_simulator`, `Community 40`?**
-  _High betweenness centrality (0.140) - this node is a cross-community bridge._
-- **Why does `run_guided_evaluation()` connect `Logging Helper` to `get_simulator`, `load_approximator`, `Community 39`, `Community 46`, `get_run_dir`, `run_evaluation`, `seed_everything`?**
-  _High betweenness centrality (0.099) - this node is a cross-community bridge._
+- **Why does `get_simulator()` connect `get_simulator` to `Config Schemas`, `Config Composition Tests`, `Community 11`, `JAX Backend Pin`, `Logging Helper`, `get_run_dir`?**
+  _High betweenness centrality (0.152) - this node is a cross-community bridge._
+- **Why does `BaseSimulator` connect `Config Schemas` to `Community 40`, `get_simulator`?**
+  _High betweenness centrality (0.136) - this node is a cross-community bridge._
+- **Why does `run_guided_evaluation()` connect `Logging Helper` to `get_simulator`, `load_approximator`, `Community 39`, `JAX Backend Pin`, `get_run_dir`, `run_evaluation`, `seed_everything`?**
+  _High betweenness centrality (0.096) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `PreprocessStep` (e.g. with `PreprocessPipeline` and `LogTransform`) actually correct?**
   _`PreprocessStep` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 16 inferred relationships involving `compose()` (e.g. with `_compose_aug()` and `test_adapter_derived_from_simulator()`) actually correct?**

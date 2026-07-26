@@ -1,0 +1,36 @@
+# Lotka-Volterra with a DENSER observation grid: 50 observation times instead of 10, at the same
+# horizon (t_end=20, spacing 0.4 instead of 2.0). Everything else is identical to
+# conf/simulator/lotka_volterra.yaml.
+#
+# Purpose: separate two questions that the sparse grid conflates.
+#
+#   * Posterior estimation — more time points means more information and a better-identified
+#     problem, so the amortized posterior should tighten. This is the reason to run it.
+#   * Guidance — it will NOT tame the likelihood gradient. Measured on the sparse grid, the gradient
+#     norm grows roughly LINEARLY with the number of observation times (13k / 36k / 72k / 146k for
+#     n_obs = 10 / 25 / 50 / 100) because the Jacobian d log f / d theta accumulates coherently
+#     across times, while its alignment with the direction to the truth is unchanged
+#     (0.545 / 0.597 / 0.585 / 0.582). More data makes the gradient stronger, not more indicative.
+#
+# Densified at FIXED t_end deliberately: extending the horizon instead would add oscillation-phase
+# drift and grow d log f / d theta further, confounding "more data" with "harder geometry".
+# Note the sparse grid was already above Nyquist (prey period ~10.5 time units, so 5.3 samples per
+# period at n_obs=10) — this is not an aliasing fix.
+defaults:
+  - base_simulator
+
+# Same registered forward model as conf/simulator/lotka_volterra.yaml — observation density is a
+# `params` knob, not a new simulator, so `name` must stay the registry key. Runs are told apart by
+# `data.dataset_name` (and Hydra's timestamped run dir).
+name: lotka_volterra
+params:
+  x0: 30.0
+  y0: 1.0
+  t_end: 20.0
+  dt: 0.05              # 400 solver steps, divisible by n_obs=50 (stride 8)
+  n_obs: 50             # observation times at t = 0.4, 0.8, ..., 20.0
+  obs_sigma: 0.1
+  prior_mean: [-0.125, -3.0, -0.125, -3.0]
+  prior_std: [0.5, 0.5, 0.5, 0.5]
+  state_min: 1.0e-6
+  state_max: 1.0e6

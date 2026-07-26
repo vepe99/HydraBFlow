@@ -39,6 +39,24 @@ Two notes on this that matter for interpreting results:
   ``{"method": "two_step_adaptive", "steps": "adaptive"}`` (``networks/defaults.py:50``), which is
   both stochastic and adaptive and preallocates ``max_steps`` noise arrays on JAX.
 
+Particle (median) guidance
+--------------------------
+``x_hat_0`` is the *mean* of the denoising posterior ``p(x_0 | z_t)``, which has spread
+``sigma_t/alpha_t``. For a nonlinear forward model the gradient *at the mean* is not the gradient
+*over the spread* — and early in sampling the spread is 1-4 prior standard deviations, so the two
+directions have little to do with each other. Measured on Lotka-Volterra, sweeping the spread from
+0.1 to 4 prior sd:
+
+* ``cos(g_point, g_averaged)`` falls from 0.997 to **0.000** — the point gradient stops representing
+  the cloud entirely;
+* the **mean** over particles collapses in alignment (0.367 -> **0.000** toward the truth) because the
+  per-particle gradients are heavy-tailed and cancel;
+* the **componentwise median** holds up (0.308 -> **0.652**).
+
+So ``guidance_particles`` (K) gradients are evaluated across the denoising spread and reduced by
+``guidance_reduce``. ``median`` is the point of the exercise; ``mean`` is available for comparison and
+``point`` (or ``K=1``) reproduces the plain Tweedie behaviour bit-for-bit.
+
 Scaling
 -------
 ``|score| ~ 1/sigma_t`` blows up as ``t -> 0``, so a fixed ``guidance_strength`` becomes
@@ -89,6 +107,9 @@ except ImportError:  # pragma: no cover - environment dependent
 
 #: Recognised values of ``scaling``.
 SCALING_MODES = ("none", "snr", "norm_matched")
+
+#: Recognised values of ``guidance_reduce`` — how per-particle gradients are combined.
+REDUCE_MODES = ("point", "mean", "median")
 
 
 @dataclass
@@ -174,11 +195,26 @@ def _make_guided_class():
             max_grad_norm: float = 1.0e3,
             clip_theta_std: float = 4.0,
             skip_outside_window: bool = True,
+            guidance_particles: int = 1,
+            guidance_reduce: str = "median",
+            particle_width: float = 1.0,
+            particle_data_std: float = 1.0,
+            particle_seed: int = 0,
             **kwargs,
         ):
             super().__init__(*args, **kwargs)
             if scaling not in SCALING_MODES:
                 raise ValueError(f"scaling must be one of {SCALING_MODES}, got {scaling!r}")
+            if guidance_reduce not in REDUCE_MODES:
+                raise ValueError(
+                    f"guidance_reduce must be one of {REDUCE_MODES}, got {guidance_reduce!r}"
+                )
+            if int(guidance_particles) < 1:
+                raise ValueError(f"guidance_particles must be >= 1, got {guidance_particles}")
+            if float(particle_width) < 0.0:
+                raise ValueError(f"particle_width must be >= 0, got {particle_width}")
+            if float(particle_data_std) <= 0.0:
+                raise ValueError(f"particle_data_std must be > 0, got {particle_data_std}")
             if not 0.0 <= t_full <= t_on <= 1.0:
                 raise ValueError(
                     f"require 0 <= t_full <= t_on <= 1 (guidance ramps in as t decreases), "
@@ -191,7 +227,13 @@ def _make_guided_class():
             self.max_grad_norm = float(max_grad_norm)
             self.clip_theta_std = float(clip_theta_std)
             self.skip_outside_window = bool(skip_outside_window)
+            self.guidance_particles = int(guidance_particles)
+            self.guidance_reduce = str(guidance_reduce)
+            self.particle_width = float(particle_width)
+            self.particle_data_std = float(particle_data_std)
+            self.particle_seed = int(particle_seed)
             self._guidance_target: GuidanceTarget | None = None
+            self._unit_perturbation_cache: dict = {}
 
         # -- configuration round-trip ------------------------------------------------------------ #
         def get_config(self):
@@ -205,6 +247,11 @@ def _make_guided_class():
                 "max_grad_norm": self.max_grad_norm,
                 "clip_theta_std": self.clip_theta_std,
                 "skip_outside_window": self.skip_outside_window,
+                "guidance_particles": self.guidance_particles,
+                "guidance_reduce": self.guidance_reduce,
+                "particle_width": self.particle_width,
+                "particle_data_std": self.particle_data_std,
+                "particle_seed": self.particle_seed,
             }
 
         # -- runtime target ---------------------------------------------------------------------- #
@@ -237,11 +284,11 @@ def _make_guided_class():
             u = jnp.clip((self.t_on - time) / (self.t_on - self.t_full), 0.0, 1.0)
             return jnp.square(u) * (3.0 - 2.0 * u)
 
-        def guidance_gradient(self, x_pred):
-            """``grad_{x_pred} sum_batch log p(x_obs | theta(x_pred))``, sanitized and norm-clipped.
+        def _raw_gradient(self, points):
+            """``grad sum_rows log p(x_obs | theta(points))`` for a ``(N, dim)`` batch.
 
-            Summing over the batch is exact per row: each row's likelihood depends only on that
-            row's parameters, so the sum's gradient is the per-row gradient.
+            Summing over rows is exact per row: each row's likelihood depends only on that row's
+            parameters, so the sum's gradient is the per-row gradient.
             """
             import jax
             import jax.numpy as jnp
@@ -254,10 +301,106 @@ def _make_guided_class():
                     theta = target.clip(theta)
                 return jnp.sum(target.log_likelihood_batch(theta))
 
-            grad = jax.grad(objective)(x_pred)
+            return jax.grad(objective)(points)
 
-            # Zero out non-finite rows BEFORE measuring the norm, or the clip factor is NaN too.
-            grad = jnp.nan_to_num(grad, nan=0.0, posinf=0.0, neginf=0.0)
+        def _unit_perturbations(self, num_particles: int, dim: int):
+            """Fixed ``(K, 1, dim)`` unit normals, cached and reused at **every** integration step.
+
+            Deliberately not resampled per step. Fresh noise each step would make the ODE vector
+            field stochastic and fight the integrator; common random numbers keep the field smooth
+            and keep sampling reproducible without threading a PRNG key through ``jax.lax`` loops.
+            The cost is a fixed bias — the particle cloud is not independent across steps — which is
+            why ``guidance_particles`` should be >= 16 so the fixed set is representative.
+            """
+            import jax.numpy as jnp
+            import numpy as np
+
+            key = (num_particles, dim)
+            if key not in self._unit_perturbation_cache:
+                rng = np.random.default_rng(self.particle_seed)
+                # Cache as NUMPY, not jnp. This method is first called from inside the traced
+                # `lax.cond` guidance branch; a jnp array created there belongs to that trace, and
+                # reusing it on the next sampling call raises UnexpectedTracerError. Converting a
+                # numpy constant per call yields a fresh trace-local constant instead, which is free.
+                self._unit_perturbation_cache[key] = rng.standard_normal(
+                    (num_particles, 1, dim)
+                ).astype("float32")
+            return jnp.asarray(self._unit_perturbation_cache[key])
+
+        def particle_width_at(self, time):
+            """Std of the denoising posterior ``p(x_0 | z_t)``, which the particle cloud samples.
+
+            For a Gaussian prior ``x_0 ~ N(mu, s^2)`` and ``z_t = alpha_t x_0 + sigma_t eps``, the
+            exact posterior std is::
+
+                s * sigma_t / sqrt(alpha_t^2 s^2 + sigma_t^2)
+
+            with ``s = particle_data_std``. This equals ``sigma_t/alpha_t`` in the low-noise limit but
+            **saturates at s** as the noise grows — the denoising posterior can never be wider than
+            the prior it came from.
+
+            The naive ``sigma_t/alpha_t`` is unusable: measured on this model it reaches **80** at
+            ``t=1`` against a prior std of 0.5, i.e. a cloud 160 prior-sd wide. Every particle then
+            lands in the parameter soft-clip's saturation region, where the gradient underflows to
+            exactly zero, and guidance silently becomes a no-op at large ``t``.
+            """
+            import jax.numpy as jnp
+
+            log_snr = self.noise_schedule.get_log_snr(t=time, training=False)
+            alpha_t, sigma_t = self.noise_schedule.get_alpha_sigma(log_snr_t=log_snr)
+            data_std = jnp.asarray(self.particle_data_std, dtype=sigma_t.dtype)
+            posterior_std = (
+                data_std * sigma_t / jnp.sqrt(jnp.square(alpha_t * data_std) + jnp.square(sigma_t))
+            )
+            return jnp.asarray(self.particle_width, dtype=sigma_t.dtype) * posterior_std
+
+        def particle_gradients(self, x_pred, time):
+            """Per-particle likelihood gradients, shape ``(K, batch, dim)``.
+
+            All ``K * batch`` points go through a **single** vmapped gradient call: guidance is
+            launch-bound rather than FLOP-bound (measured ~7 s/observation at ``euler/200``), so
+            folding the particle axis into the batch makes ``K = 32`` nearly free. Never loop over
+            particles.
+            """
+            import jax.numpy as jnp
+
+            num_particles = self.guidance_particles
+            dim = int(jnp.shape(x_pred)[-1])
+            batch = int(jnp.shape(x_pred)[0])
+
+            eps = self._unit_perturbations(num_particles, dim)  # (K, 1, dim)
+            width = self.particle_width_at(time)  # (batch, 1), broadcast over particles
+            cloud = x_pred[None, ...] + width[None, ...] * eps  # (K, batch, dim)
+
+            grads = self._raw_gradient(jnp.reshape(cloud, (num_particles * batch, dim)))
+            return jnp.reshape(grads, (num_particles, batch, dim))
+
+        def guidance_gradient(self, x_pred, time):
+            """The guidance direction: gradient(s) reduced over particles, sanitized, norm-clipped.
+
+            With ``guidance_particles == 1`` (or ``guidance_reduce == "point"``) this is the plain
+            Tweedie-point gradient, bit-for-bit identical to the un-particled implementation — the
+            unperturbed ``x_pred`` is used, not a one-sample cloud.
+            """
+            import jax.numpy as jnp
+
+            def sanitize(values):
+                return jnp.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0)
+
+            if self.guidance_particles <= 1 or self.guidance_reduce == "point":
+                grad = sanitize(self._raw_gradient(x_pred))
+            else:
+                # Sanitize per particle BEFORE reducing: a single NaN particle would otherwise
+                # propagate through jnp.median and poison the whole row.
+                grads = sanitize(self.particle_gradients(x_pred, time))
+                if self.guidance_reduce == "mean":
+                    grad = jnp.mean(grads, axis=0)
+                else:
+                    # Componentwise median. Per-particle gradients are heavy-tailed and cancel under
+                    # averaging (measured: the mean's alignment collapses to ~0 at a 4-prior-sd
+                    # spread while the median holds ~0.65); the median is robust to that.
+                    grad = jnp.median(grads, axis=0)
+
             norm = jnp.linalg.norm(grad, axis=-1, keepdims=True)
             factor = jnp.minimum(1.0, self.max_grad_norm / (norm + 1e-12))
             return grad * factor
@@ -279,7 +422,7 @@ def _make_guided_class():
             """The additive score correction ``w(t) * s * scale(t) * grad`` (no gating shortcut)."""
             import jax.numpy as jnp
 
-            grad = self.guidance_gradient(x_pred)
+            grad = self.guidance_gradient(x_pred, time)
             if self.scaling == "norm_matched":
                 # Direction only: normalize the gradient, then take the score's magnitude.
                 grad = grad / (jnp.linalg.norm(grad, axis=-1, keepdims=True) + 1e-12)
@@ -364,6 +507,11 @@ def _guided_diffusion(cfg) -> Any:
         max_grad_norm=float(params.get("max_grad_norm", 1.0e3)),
         clip_theta_std=float(params.get("clip_theta_std", 4.0)),
         skip_outside_window=bool(params.get("skip_outside_window", True)),
+        guidance_particles=int(params.get("guidance_particles", 1)),
+        guidance_reduce=str(params.get("guidance_reduce", "median")),
+        particle_width=float(params.get("particle_width", 1.0)),
+        particle_data_std=float(params.get("particle_data_std", 1.0)),
+        particle_seed=int(params.get("particle_seed", 0)),
     )
 
 

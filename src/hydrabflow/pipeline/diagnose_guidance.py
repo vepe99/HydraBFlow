@@ -70,6 +70,62 @@ def _norm(x):
     return jnp.linalg.norm(x, axis=-1, keepdims=True)
 
 
+def _cos(a, b):
+    import jax.numpy as jnp
+
+    return jnp.sum(a * b, axis=-1, keepdims=True) / (_norm(a) * _norm(b) + 1e-30)
+
+
+def _particle_diagnostics(net, x_hat0, time, reduced_grad, theta_true) -> Dict[str, float]:
+    """Whether particle guidance actually differs from point guidance **on real trajectories**.
+
+    The offline study that motivated median-particle guidance perturbed theta isotropically around a
+    synthetic point. This records the same quantities against the true denoising spread at the actual
+    integration time, which is the check that the offline result transferred:
+
+    * ``width`` — the ``sigma_t/alpha_t`` spread actually used, so the offline blob-width sweep can be
+      mapped onto real trajectories;
+    * ``cos_point_reduced`` — agreement between the point gradient and the reduced one. Offline this
+      fell from 0.997 to 0.000 as the spread grew; if it stays ~1 here, particles change nothing;
+    * ``particle_spread`` — mean pairwise cosine between per-particle gradients (how heavy-tailed the
+      cloud is; low values are what makes the mean cancel and the median win);
+    * ``cos_point_truth`` / ``cos_reduced_truth`` — the direct "is guidance pointing at the answer"
+      metric, ``cos(g, theta_true - x_hat_0)``. The reduced one exceeding the point one is the
+      success criterion.
+    """
+    import jax.numpy as jnp
+
+    out: Dict[str, float] = {}
+    out["width"] = float(jnp.mean(net.particle_width_at(time)))
+
+    if theta_true is not None:
+        to_truth = jnp.asarray(theta_true, dtype=x_hat0.dtype) - x_hat0
+        out["cos_reduced_truth"] = float(jnp.mean(_cos(reduced_grad, to_truth)))
+
+    if net.guidance_particles <= 1 or net.guidance_reduce == "point":
+        return out
+
+    point_grad = jnp.nan_to_num(net._raw_gradient(x_hat0), nan=0.0, posinf=0.0, neginf=0.0)  # noqa: SLF001
+    out["cos_point_reduced"] = float(jnp.mean(_cos(point_grad, reduced_grad)))
+    if theta_true is not None:
+        to_truth = jnp.asarray(theta_true, dtype=x_hat0.dtype) - x_hat0
+        out["cos_point_truth"] = float(jnp.mean(_cos(point_grad, to_truth)))
+
+    grads = jnp.nan_to_num(
+        net.particle_gradients(x_hat0, time), nan=0.0, posinf=0.0, neginf=0.0
+    )  # (K, batch, dim)
+    unit = grads / (_norm(grads) + 1e-30)
+    # Mean pairwise cosine == (|mean unit vector|^2 * K - 1) / (K - 1); computed via the Gram trick to
+    # avoid materializing a K x K matrix per batch row.
+    num_particles = grads.shape[0]
+    mean_unit = jnp.mean(unit, axis=0)
+    mean_sq = jnp.sum(jnp.square(mean_unit), axis=-1)
+    out["particle_spread"] = float(
+        jnp.mean((mean_sq * num_particles - 1.0) / max(num_particles - 1, 1))
+    )
+    return out
+
+
 def unroll_reverse_ode(
     net,
     z0,
@@ -77,12 +133,19 @@ def unroll_reverse_ode(
     steps: int,
     guided: bool,
     theta_true: np.ndarray | None = None,
+    apply_guidance: bool = True,
 ) -> tuple[Any, List[Dict[str, float]]]:
     """Integrate ``dz = (f - 0.5 g^2 score) dt`` from ``t=1`` to ``t=0`` with explicit Euler, eagerly.
 
     Deliberately a plain Euler scheme rather than the production RK45: the point is observability,
     not accuracy, and every stage of a Runge-Kutta step would triple the bookkeeping for no
     diagnostic gain. Endpoint values will differ slightly from a production sample.
+
+    ``apply_guidance=False`` with ``guided=True`` records what guidance *would* do at each step but
+    integrates the **unguided** trajectory. That counterfactual mode is the one to trust for judging
+    the guidance *direction*: with guidance applied, an unstable run drives the state far out of prior
+    within a few steps, the parameter soft-clip saturates, and every subsequent gradient reads as
+    zero — so the diagnostics end up describing a diverged trajectory rather than the guidance itself.
 
     Returns ``(z_final, records)``. ``records`` is empty when ``guided`` is False except for the
     score/x0 columns, so the two runs can be compared column-wise.
@@ -121,9 +184,10 @@ def unroll_reverse_ode(
 
         score = score_plain
         if guided and target is not None:
-            raw_grad = net.guidance_gradient(x_hat0)
+            raw_grad = net.guidance_gradient(x_hat0, time)
             update = net.guidance_update(x_hat0, time, score_plain)
-            score = score_plain + update
+            if apply_guidance:
+                score = score_plain + update
 
             update_norm = _norm(update)
             row.update(
@@ -143,6 +207,7 @@ def unroll_reverse_ode(
                 nonfinite_frac=float(jnp.mean(~jnp.isfinite(raw_grad))),
                 clipped_frac=float(jnp.mean(_norm(raw_grad) >= net.max_grad_norm * 0.999)),
             )
+            row.update(_particle_diagnostics(net, x_hat0, time, raw_grad, theta_true))
 
         records.append(row)
 
@@ -215,6 +280,14 @@ def run_diagnose_guidance(cfg):
         net, z0, conditions, steps, guided=True, theta_true=theta_true
     )
 
+    # Counterfactual pass: what guidance WOULD do along the unguided trajectory. Direction quality
+    # has to be read off this one — see unroll_reverse_ode's docstring on why applying guidance
+    # contaminates its own diagnostics once the run destabilizes.
+    log.info("Unrolling %d Euler steps, %d particles (counterfactual) ...", steps, num_samples)
+    _, rec_counterfactual = unroll_reverse_ode(
+        net, z0, conditions, steps, guided=True, theta_true=theta_true, apply_guidance=False
+    )
+
     # 4. Persist the trace + a summary restricted to the gated window (where guidance is live).
     trace = {
         key: np.asarray([row.get(key, np.nan) for row in rec_guided], dtype=np.float64)
@@ -223,6 +296,12 @@ def run_diagnose_guidance(cfg):
     trace["x0_err_unguided"] = np.asarray(
         [row.get("x0_err", np.nan) for row in rec_unguided], dtype=np.float64
     )
+    # Counterfactual columns (cf_*): guidance measured along the UNGUIDED path. These are the ones to
+    # judge the guidance direction by; the un-prefixed ones describe the guided run, warts and all.
+    for key in sorted({k for row in rec_counterfactual for k in row}):
+        trace[f"cf_{key}"] = np.asarray(
+            [row.get(key, np.nan) for row in rec_counterfactual], dtype=np.float64
+        )
     np.savez(os.path.join(run_dir, GUIDANCE_TRACE), **trace)
 
     active = trace["t"] <= net.t_on
@@ -238,7 +317,10 @@ def run_diagnose_guidance(cfg):
             "fraction_of_trajectory": float(active.mean()),
         },
     }
-    for key in ("ratio", "cosine", "grad_norm", "score_norm", "update_norm", "dx0_rel"):
+    for key in (
+        "ratio", "cosine", "grad_norm", "score_norm", "update_norm", "dx0_rel",
+        "width", "cos_point_reduced", "particle_spread", "cos_point_truth", "cos_reduced_truth",
+    ):
         values = trace.get(key)
         if values is None:
             continue
@@ -312,12 +394,22 @@ def _plot_trace(trace, net, run_dir: str) -> None:
 
         ax = axes[1, 0]
         if "cosine" in trace:
-            ax.plot(t, trace["cosine"], color="C2")
+            ax.plot(t, trace["cosine"], color="C2", label="vs score")
+        # The success criterion for particle guidance: does the reduced direction point at the truth
+        # better than the point (Tweedie) direction does?
+        for key, style, label in (
+            ("cos_point_truth", "--", "point vs truth"),
+            ("cos_reduced_truth", "-", "reduced vs truth"),
+            ("cos_point_reduced", ":", "point vs reduced"),
+        ):
+            if key in trace and np.isfinite(trace[key]).any():
+                ax.plot(t, trace[key], style, lw=1.2, label=label)
         ax.axhline(0.0, ls=":", c="k", lw=0.8)
         ax.set_ylim(-1.05, 1.05)
-        ax.set_ylabel("cos(update, score)")
+        ax.set_ylabel("cosine")
         ax.set_xlabel("diffusion time t  (sampling runs right to left)")
         ax.set_title("Agreement in direction")
+        ax.legend(fontsize=7)
 
         ax = axes[1, 1]
         if "x0_err" in trace:

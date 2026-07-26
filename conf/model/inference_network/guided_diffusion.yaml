@@ -26,6 +26,33 @@ params:
   # t -> 0. `norm_matched` keeps only the gradient direction, at |guidance| = strength * |score|.
   scaling: none
 
+  # --- particle (median) guidance ---
+  # x_hat_0 is the MEAN of the denoising posterior p(x_0 | z_t), whose spread is sigma_t/alpha_t. For a
+  # nonlinear forward model the gradient at that mean is not representative of the gradient over the
+  # spread: measured over a 0.1 -> 4 prior-sd spread, cos(g_point, g_averaged) falls 0.997 -> 0.000.
+  # Evaluating the gradient at K particles across the spread and taking the COMPONENTWISE MEDIAN keeps
+  # the direction aligned (~0.65 toward the truth at a 4-sd spread) where the MEAN cancels to ~0.00 --
+  # per-particle gradients are heavy-tailed, and the median is robust to that.
+  #
+  # guidance_particles=1 is the plain Tweedie-point gradient (bit-for-bit the pre-particle behaviour).
+  # K is folded into the batch axis, so one gradient call covers all particles: guidance is
+  # launch-bound, not FLOP-bound, and K=32 is nearly free. Use K >= 16 (see particle_seed).
+  guidance_particles: 1
+  guidance_reduce: median   # point | mean | median
+  particle_width: 1.0       # multiplier on the denoising-posterior std
+  # Scale of the parameters the diffusion model was trained on (for LV: the log-rate prior std, 0.5).
+  # The cloud width is the EXACT Gaussian denoising-posterior std,
+  #   s * sigma_t / sqrt(alpha_t^2 s^2 + sigma_t^2),
+  # which equals sigma_t/alpha_t at low noise but saturates at s -- the denoising posterior can never
+  # be wider than the prior. Using the naive sigma_t/alpha_t instead is unusable: it reaches 80 at
+  # t=1 against a prior std of 0.5, so every particle saturates the parameter soft-clip and the
+  # gradient underflows to exactly zero, silently disabling guidance at large t.
+  particle_data_std: 0.5
+  # The K unit normals are drawn once from this seed and REUSED at every integration step (common
+  # random numbers): fresh noise per step would make the ODE vector field stochastic and fight the
+  # integrator. The cost is a fixed bias, mitigated by using enough particles.
+  particle_seed: 0
+
   # --- numerical safety (pick these with scripts/diagnose_guidance.py, don't guess) ---
   max_grad_norm: 1.0e3    # per-row gradient-norm clip; non-finite rows are zeroed first
   clip_theta_std: 4.0     # smooth tanh squash of the denoised estimate into +-N prior std

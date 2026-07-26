@@ -114,6 +114,161 @@ distribution. The likely culprit is the dropped `∂x̂₀/∂z_t` Jacobian: for
 (σ=0.1 over 20 data points, raw ‖∇‖ ≈ 1.7e4 against an O(1) prior score), the DPS-lite
 approximation is not accurate enough. Full DPS is the next thing to try (§7).
 
+---
+
+# Round 2 — why the gradient is so strong, and median-particle guidance
+
+Round 1 left three open questions: *why* is the gradient so large, is the likelihood landscape jagged,
+and can a less noisy direction be extracted. Each was measured. **Two hypotheses were refuted and one
+was confirmed** — the refutations are as useful as the confirmation, because they close off
+plausible-looking directions.
+
+## R2.1 Why the gradient is so strong
+
+Analytically, `∇_θ log p = Σ_{t,s}(z_ts/σ)·∂log f_ts/∂θ`, so
+`‖∇‖ ~ (√(2T)/σ)·‖∂log f/∂θ‖·|z̄|`. Two factors dominate: `1/σ = 10`, and a Jacobian that accumulates
+**coherently** across observation times (a rate change shifts the oscillation phase, and that error
+compounds along the trajectory). Measured, the norm grows roughly **linearly** in the number of
+observation times, while its alignment with the direction to the truth is flat:
+
+| n_obs | 10 | 25 | 50 | 100 |
+|---|---|---|---|---|
+| median ‖∇‖ | 13 360 | 35 611 | 71 708 | 146 016 |
+| cos(∇, →truth) | 0.545 | 0.597 | 0.585 | 0.582 |
+
+**More observation times makes the gradient stronger, not tamer, and no more indicative.** Adding data
+is therefore not a fix for guidance (it is still worth doing for posterior estimation — see R2.5).
+
+## R2.2 The landscape is not jagged — it is anisotropic (hypothesis refuted)
+
+The natural guess was that sparse sampling of an oscillatory ODE aliases the signal and produces a
+multimodal, jagged likelihood. **It does not.** The prey oscillation period is 10.55 time units and
+`n_obs=10` samples it 5.3×/period — comfortably above Nyquist. Measured over a 1-D slice spanning ±2
+prior sd, at every `n_obs ∈ {10, 25, 50, 100}`:
+
+* **exactly 1 local maximum** — the slice is unimodal;
+* **multi-start MAP succeeds in 100% of trials** (6 restarts).
+
+So the round-1 `log p = −764` MAP failure was a *single-start* artifact, already fixed by the
+multi-start `laplace_preconditioner`. What is extreme is not ruggedness but **anisotropy: the Fisher
+condition number is ≈1000**. The likelihood is a smooth, narrow, strongly-correlated ridge.
+
+## R2.3 Fisher preconditioning fixes magnitude, not direction (hypothesis refuted)
+
+Given the anisotropy, the natural fix is a natural-gradient/Gauss-Newton step
+`(JᵀJ/σ² + prior_prec)⁻¹∇`. It does fix the scale — `‖H⁻¹∇‖ ≈ 1.5` versus `‖∇‖ ≈ 1e4`, a principled
+O(1) step in natural units — but **not the direction**: `cos(H⁻¹∇, →truth) = 0.27` versus `0.33` for
+the raw gradient. A local quadratic model is simply not valid 1σ out on a nonlinear forward map. Left
+unimplemented; `max_grad_norm` / `norm_matched` already handle scale empirically.
+
+## R2.4 Median-particle guidance (confirmed)
+
+`x̂₀` is the *mean* of the denoising posterior `p(x₀|z_t)`. For a nonlinear forward model the gradient
+*at the mean* is not the gradient *over the spread*. Sweeping an isotropic spread offline:
+
+| spread (prior sd) | cos(g_point, g_avg) | cos(g_point,→truth) | cos(g_**mean**,→truth) | cos(g_**median**,→truth) |
+|---|---|---|---|---|
+| 0.1 | 0.997 | 0.291 | 0.367 | 0.308 |
+| 0.3 | 0.984 | 0.514 | **0.676** | 0.589 |
+| 1.0 | 0.675 | 0.374 | 0.543 | 0.593 |
+| 2.0 | 0.098 | 0.547 | 0.282 | 0.525 |
+| 4.0 | 0.000 | 0.553 | 0.000 | **0.652** |
+
+Per-particle gradients are heavy-tailed: under averaging they **cancel** (the mean's alignment
+collapses to 0.000 at a 4-sd spread) while the **componentwise median holds** (0.652). Hence
+`guidance_particles` / `guidance_reduce` in `networks/guided_diffusion.py`, with `K` folded into the
+batch axis (guidance is launch-bound, so `K=32` is cheap) and a **fixed** unit-normal set reused at
+every step — common random numbers, so the ODE vector field stays smooth and sampling stays
+reproducible without threading a PRNG key through `jax.lax` loops.
+
+### The particle width must be the denoising-posterior std, not σ_t/α_t
+
+The first implementation used `σ_t/α_t` as the cloud width. That is **wrong at large t** and was caught
+only by the in-situ diagnostic: it reaches **80** at `t=1` against a prior std of 0.5, i.e. a cloud 160
+prior-sd wide. Every particle then lands in the parameter soft-clip's saturation region, where the
+derivative underflows to exactly zero in float32 — guidance silently became a **no-op** (`|grad|` = 0.0
+for `t ≥ 0.8`).
+
+The correct width is the exact Gaussian denoising-posterior std,
+`s·σ_t/√(α_t²s² + σ_t²)` with `s = particle_data_std`, which equals `σ_t/α_t` at low noise but
+**saturates at `s`** — a denoising posterior can never be wider than the prior it came from.
+
+A consequence worth stating: with the correct width the cloud never exceeds ~1 prior sd, so the 2–4 sd
+regime where the median dominated in the offline table is **physically unreachable**. The offline
+sweep's most dramatic rows describe a spread the algorithm cannot produce.
+
+### In-situ confirmation
+
+Measured **counterfactually** — guidance evaluated along the *unguided* trajectory. This distinction
+matters: with guidance applied, an unstable run leaves the prior within a few steps, the soft-clip
+saturates, and every later gradient reads as zero, so the diagnostics end up describing a diverged
+trajectory instead of the guidance. `diagnose_guidance` now records both (`cf_*` columns are the
+counterfactual ones).
+
+| trajectory stage | cos(point,→truth) | cos(**median**,→truth) | cos(pt,med) | width |
+|---|---|---|---|---|
+| early `t>0.5` | 0.614 | **0.651** | 0.955 | 0.500 |
+| mid `0.2<t<0.5` | 0.646 | **0.731** | 0.923 | 0.237 |
+| late `t<0.2` | 0.619 | 0.619 | 1.000 | 0.003 |
+
+The median beats the point gradient at every stage, peaking at **0.913** alignment around `t=0.6` — the
+direction is genuinely informative. The gain is real but modest (+0.04 to +0.09), smaller than the
+offline sweep suggested, precisely because of the width cap above. Late in the trajectory the two
+coincide, as they must (width → 0). `|grad|` stays ≈2.5e4 throughout, so **magnitude control remains
+the open problem** — a better direction does not by itself make guidance usable.
+
+### …and the better direction makes the posterior WORSE
+
+Arm A, 8 observations × 200 draws, all at `t_on=1.0` (guidance throughout), `particle_data_std=0.5`:
+
+| setting | rmse | post_std | calib |
+|---|---|---|---|
+| unguided (= the prior) | 0.4527 | 0.5001 | 0.1130 |
+| **point** (K=1), norm_matched s=0.2 | **0.3665** | 0.5044 | **0.1175** |
+| median K=8, norm_matched s=0.2 | 0.3737 | 0.5067 | 0.1259 |
+| median K=32, norm_matched s=0.2 | 0.3837 | 0.4970 | 0.1387 |
+| median K=64, norm_matched s=0.2 | 0.3987 | 0.5041 | 0.1552 |
+| mean K=32, norm_matched s=0.2 | 0.3887 | 0.5011 | 0.1419 |
+| point, none, clip=10 | 5.299 | 0.9415 | 0.3184 |
+| median K=32, none, clip=10 | 6.108 | 0.9085 | 0.4092 |
+
+**Both RMSE and calibration degrade monotonically in K** (0.3665 → 0.3737 → 0.3837 → 0.3987;
+0.1175 → 0.1259 → 0.1387 → 0.1552). More particles is *worse*, and the plain point gradient wins.
+No setting brings `post_std` below the prior's 0.500.
+
+Monotonic-in-K rules out Monte-Carlo noise — more particles would reduce that. It is a **systematic
+bias**: the particle median is a *smoothed* score, smoothed on the scale of the denoising posterior
+(~0.5, i.e. the whole prior). Smoothing the score changes the stationary distribution of the reverse
+ODE, and it destroys exactly the fine-scale structure that would concentrate the posterior.
+
+**The most useful lesson is methodological: the gate metric was wrong.** `cos(g, θ_true − x̂₀)` asks
+"does this point at the answer?", which is what a *point estimator* wants. A posterior sampler needs an
+unbiased *score*, and those are different objectives — the median improved the first while damaging the
+second. An in-situ direction diagnostic cannot substitute for measuring the posterior.
+
+## R2.5 Observation density — the one thing that clearly helped
+
+Arm B (conditional posterior network), 48 test observations × 300 draws, **both arms trained for 200
+epochs** so the comparison is matched:
+
+| n_obs | spacing | rmse | post_std | calib | mean abs z |
+|---|---|---|---|---|---|
+| 10 | 2.0 | 0.0596 | 0.0594 | **0.0324** | 0.747 |
+| **50** | 0.4 | **0.0321** | **0.0390** | 0.0475 | **0.612** |
+
+**5× more observation times: RMSE −46%, posterior 34% tighter.** Calibration is marginally worse
+(0.0324 → 0.0475) while `|z|` *improves* (0.747 → 0.612), so this is not over-concentration; both models
+still reported "loss still descending", so some of it is residual under-training.
+
+Matching the epoch budget mattered. At 60 epochs the dense model looked *worse*-calibrated
+(0.0516 → 0.0794) purely because it had not converged — the denser observable is a harder fit. The
+naive 60-epoch comparison would have supported the opposite conclusion.
+
+Note the contrast with R2.1, on the same change: denser observations **help the amortized posterior a
+lot** and **do nothing for the guidance gradient** (norm grows ~linearly, alignment flat). The two
+questions decouple, which is worth remembering before reaching for guidance at all — for this problem,
+spending the effort on data and training beat every guidance variant tried.
+
 ## 4. Pros, cons, pitfalls
 
 **Pros.** Sampling-time only — no retraining, one network per sweep. Uses information the network

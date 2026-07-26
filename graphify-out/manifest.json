@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1785088785.8159678,
-    "ast_hash": "01c4e02e378c9af21bc2efccc0eab64e",
+    "mtime": 1785100897.3844345,
+    "ast_hash": "9dca284adad9cb860331a291aeaee1c1",
     "semantic_hash": ""
   },
   "README.md": {
@@ -390,13 +390,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/guided_diffusion.py": {
-    "mtime": 1785083091.777495,
-    "ast_hash": "a63ef35bc80667544d21f3d8bb3f515f",
+    "mtime": 1785098152.5851884,
+    "ast_hash": "eae153193f78340dd2b37e94bc89456a",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/diagnose_guidance.py": {
-    "mtime": 1785088660.2069755,
-    "ast_hash": "a3b931a2ae9d33ccaf81cc5a81891e22",
+    "mtime": 1785097730.018619,
+    "ast_hash": "319c22730edec58468d4b2a661d2fa9c",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate_guided.py": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/guidance.py": {
-    "mtime": 1785083197.8903484,
-    "ast_hash": "508af8cbb10ab6840594b4b7e263ff4e",
+    "mtime": 1785097697.3144476,
+    "ast_hash": "82ca9d2b5db6adfb104a1ad166c5fcc1",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/reference.py": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "tests/test_guidance.py": {
-    "mtime": 1785088092.6865482,
-    "ast_hash": "b7f0511aae6c58c2e562986646d62b86",
+    "mtime": 1785098246.6578236,
+    "ast_hash": "f4cd9b65c7b1d7f840c4442de3e8ff0e",
     "semantic_hash": ""
   },
   "tests/test_lv_jax.py": {
@@ -480,8 +480,8 @@
     "semantic_hash": ""
   },
   "conf/model/inference_network/guided_diffusion.yaml": {
-    "mtime": 1785083095.4655247,
-    "ast_hash": "62a84dc2881f9ca4ac19f1391d459db4",
+    "mtime": 1785097737.6226597,
+    "ast_hash": "dbdd11edd356c76535a9f0e268599d3c",
     "semantic_hash": ""
   },
   "conf/model/lv_guided.yaml": {
@@ -520,8 +520,13 @@
     "semantic_hash": ""
   },
   "docs/guidance.md": {
-    "mtime": 1785088771.1998522,
-    "ast_hash": "e06eb24fadcbcd0e38b031992cb8ce59",
+    "mtime": 1785100879.188304,
+    "ast_hash": "d4eb3e82b79736254c600b2b75d13cee",
+    "semantic_hash": ""
+  },
+  "conf/simulator/lotka_volterra_dense.yaml": {
+    "mtime": 1785098155.1372054,
+    "ast_hash": "5159cb685da49d978bb7dcf3084ab343",
     "semantic_hash": ""
   }
 }
