@@ -43,6 +43,7 @@ GUIDANCE_OVERRIDE_KEYS = (
     "particle_width",
     "particle_data_std",
     "particle_seed",
+    "guidance_point",
 )
 
 

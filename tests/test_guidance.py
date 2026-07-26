@@ -466,3 +466,34 @@ def test_get_guided_network_rejects_plain_diffusion(compose):
     workflow = build_workflow(cfg)
     with pytest.raises(TypeError, match="does not support guidance"):
         get_guided_network(workflow)
+
+
+def test_guidance_eval_point_modes(guided_class):
+    """`state` must recover z_t exactly, and coincide with `tweedie` as t -> 0."""
+    jnp = pytest.importorskip("jax.numpy")
+
+    x_pred = jnp.asarray([[0.4, -0.3, 1.2, 0.0]])
+    score = jnp.asarray([[2.0, -1.0, 0.5, 3.0]])
+
+    tweedie = guided_class(guidance_point="tweedie")
+    state = guided_class(guidance_point="state")
+
+    for t in (0.9, 0.5, 0.1):
+        time = jnp.full((1, 1), t)
+        assert np.array_equal(
+            np.asarray(tweedie.guidance_eval_point(x_pred, time, score)), np.asarray(x_pred)
+        )
+        # z_t = alpha*x_hat0 - sigma^2*score, per the inverted Tweedie identity.
+        log_snr = state.noise_schedule.get_log_snr(t=time, training=False)
+        alpha_t, sigma_t = state.noise_schedule.get_alpha_sigma(log_snr_t=log_snr)
+        expected = np.asarray(alpha_t * x_pred - jnp.square(sigma_t) * score)
+        assert np.allclose(np.asarray(state.guidance_eval_point(x_pred, time, score)), expected)
+
+    # As t -> 0 (alpha -> 1, sigma -> 0) the two evaluation points converge.
+    late = jnp.full((1, 1), 1e-4)
+    assert np.allclose(
+        np.asarray(state.guidance_eval_point(x_pred, late, score)), np.asarray(x_pred), atol=1e-3
+    )
+
+    with pytest.raises(ValueError, match="guidance_point"):
+        guided_class(guidance_point="noisy")

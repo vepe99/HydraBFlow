@@ -279,6 +279,77 @@ lot** and **do nothing for the guidance gradient** (norm grows ~linearly, alignm
 questions decouple, which is worth remembering before reaching for guidance at all — for this problem,
 spending the effort on data and training beat every guidance variant tried.
 
+---
+
+# Round 3 — gradient vs score magnitude, dataset size, and where to evaluate the gradient
+
+## R3.1 How large is the likelihood gradient compared with the diffusion model's score?
+
+This is the number that explains every earlier failure. Measured counterfactually on the dense
+(`n_obs=50`) model with the clip effectively disabled (`max_grad_norm=1e9`):
+
+| t | α_t | σ_t | ‖score‖ | ‖∇log p‖ | **ratio** | α²/σ² |
+|---|---|---|---|---|---|---|
+| 1.00 | 0.012 | 1.000 | 1.79 | 91 894 | **51 277** | 1.6e-4 |
+| 0.84 | 0.035 | 0.999 | 1.80 | 131 467 | 73 228 | 1.2e-3 |
+| 0.60 | 0.229 | 0.973 | 1.83 | 83 353 | 45 456 | 5.6e-2 |
+| 0.44 | 0.771 | 0.637 | 2.81 | 90 439 | 32 188 | 1.47 |
+| 0.28 | 0.995 | 0.097 | 15.5 | 127 475 | 8 246 | 106 |
+| 0.20 | 1.000 | 0.024 | 33.7 | 126 631 | 3 761 | 1 668 |
+| 0.12 | 1.000 | 0.004 | 94.9 | 123 273 | 1 299 | 5.2e4 |
+| 0.04 | 1.000 | 0.000 | 3 206 | 121 166 | **38** | 5.0e6 |
+
+Summary by stage: early `t>0.5` ‖grad‖ ≈ 1.1e5 vs ‖score‖ ≈ 1.8 (ratio 6.3e4); mid ratio 1.7e4; late
+`t<0.2` ratio 6.4e2. Median over the trajectory **≈ 4.7e4**, minimum **6.5** (only at `t→0`, where the
+score itself explodes).
+
+**The likelihood gradient is 2–5 orders of magnitude larger than the score everywhere.** Notice also
+that ‖∇log p‖ is essentially *flat* in `t` (~1.2e5) — it is a property of the likelihood, not of the
+diffusion process — while ‖score‖ grows from 1.8 to 3206. So there is no `t` at which the two are
+naturally comparable, and `guidance_strength` cannot be a single constant.
+
+This also **rules out `scaling=snr`** for this problem: α²/σ² spans 1.6e-4 → 5.0e6, so matching the
+score would require a strength of 3.6e-3 early and 1.5e-8 late — six orders apart. Only
+`norm_matched` (which rescales to ‖score‖ by construction) or `none` with a `t`-dependent clip are
+usable. This is why the round-1 sweep found a knife-edge between "inert" and "divergent".
+
+## R3.2 Dataset size is the single biggest lever found
+
+Dense (`n_obs=50`) Arm B on the full 2000-row test set, 500 draws:
+
+| training set | epochs | rmse | calibration error |
+|---|---|---|---|
+| 20 000 | 200 | 0.0731 | 0.0392 |
+| **100 000** | 300 | **0.0374** | **0.0141** |
+
+5× the data: **RMSE −49%, calibration error −64%.** For comparison, the best guidance result anywhere
+in this study was a 19% RMSE gain on a *prior-only* model, and on a properly-trained conditional model
+guidance never helped at all. Combined with R2.5 (denser observations: −31%), the ranking for this
+problem is unambiguous: **more data and more training ≫ observation density ≫ any guidance variant
+tried.** Worth stating plainly, since the guidance machinery is the interesting part but not the
+effective part.
+
+(The 100k run logged both "possible overfitting: val_loss 1.19× its best" and "loss still descending" —
+best-val weights are restored on save, so the saved model is the best checkpoint, but the val loss is
+noisy and this is still not a converged run.)
+
+## R3.3 Evaluating the gradient at the state instead of the Tweedie estimate
+
+`guidance_point` now selects where the likelihood gradient is taken:
+
+* `"tweedie"` — at `x̂₀`, the denoised estimate (standard DPS-lite, previous behaviour);
+* `"state"` — at the raw integration state `z_t`, recovered exactly inside the hook by inverting the
+  Tweedie identity, `z_t = α_t·x̂₀ − σ_t²·score`.
+
+Two reasons the second is worth measuring rather than dismissing as "the crude version":
+
+1. **Dimensional consistency.** The score is `∇_z log p(z)`, so `∇_z log p(x_obs|z)` lives in the same
+   space. DPS-lite instead adds a gradient taken in `x̂₀` space and silently drops `∂x̂₀/∂z_t`.
+2. **Boundedness.** `α_t = 0.012` at `t=1`, so `x̂₀ = (z + σ²·score)/α_t` is inflated ~80× early — this
+   is exactly the saturation bug found in R2.4 — whereas `z_t` stays O(1) by construction.
+
+The two coincide as `t→0` (`α→1`, `σ→0`), so any difference is an early/mid-trajectory effect.
+
 ## 4. Pros, cons, pitfalls
 
 **Pros.** Sampling-time only — no retraining, one network per sweep. Uses information the network

@@ -39,6 +39,14 @@ Two notes on this that matter for interpreting results:
   ``{"method": "two_step_adaptive", "steps": "adaptive"}`` (``networks/defaults.py:50``), which is
   both stochastic and adaptive and preallocates ``max_steps`` noise arrays on JAX.
 
+Where the gradient is evaluated
+-------------------------------
+``guidance_point`` selects the point at which the likelihood gradient is taken: ``"tweedie"`` (the
+denoised estimate ``x_hat_0``, standard DPS-lite) or ``"state"`` (the raw integration state ``z_t``,
+recovered by inverting the Tweedie identity). See ``guidance_eval_point`` for why the second is worth
+measuring — it is dimensionally the cleaner thing to add to a score, and it stays bounded early where
+``x_hat_0`` is inflated by ``1/alpha_t``.
+
 Particle (median) guidance
 --------------------------
 ``x_hat_0`` is the *mean* of the denoising posterior ``p(x_0 | z_t)``, which has spread
@@ -110,6 +118,9 @@ SCALING_MODES = ("none", "snr", "norm_matched")
 
 #: Recognised values of ``guidance_reduce`` — how per-particle gradients are combined.
 REDUCE_MODES = ("point", "mean", "median")
+
+#: Where the likelihood gradient is evaluated. See ``GuidedDiffusionModel.guidance_eval_point``.
+EVAL_POINTS = ("tweedie", "state")
 
 
 @dataclass
@@ -200,6 +211,7 @@ def _make_guided_class():
             particle_width: float = 1.0,
             particle_data_std: float = 1.0,
             particle_seed: int = 0,
+            guidance_point: str = "tweedie",
             **kwargs,
         ):
             super().__init__(*args, **kwargs)
@@ -215,6 +227,10 @@ def _make_guided_class():
                 raise ValueError(f"particle_width must be >= 0, got {particle_width}")
             if float(particle_data_std) <= 0.0:
                 raise ValueError(f"particle_data_std must be > 0, got {particle_data_std}")
+            if guidance_point not in EVAL_POINTS:
+                raise ValueError(
+                    f"guidance_point must be one of {EVAL_POINTS}, got {guidance_point!r}"
+                )
             if not 0.0 <= t_full <= t_on <= 1.0:
                 raise ValueError(
                     f"require 0 <= t_full <= t_on <= 1 (guidance ramps in as t decreases), "
@@ -232,6 +248,7 @@ def _make_guided_class():
             self.particle_width = float(particle_width)
             self.particle_data_std = float(particle_data_std)
             self.particle_seed = int(particle_seed)
+            self.guidance_point = str(guidance_point)
             self._guidance_target: GuidanceTarget | None = None
             self._unit_perturbation_cache: dict = {}
 
@@ -252,6 +269,7 @@ def _make_guided_class():
                 "particle_width": self.particle_width,
                 "particle_data_std": self.particle_data_std,
                 "particle_seed": self.particle_seed,
+                "guidance_point": self.guidance_point,
             }
 
         # -- runtime target ---------------------------------------------------------------------- #
@@ -375,6 +393,37 @@ def _make_guided_class():
             grads = self._raw_gradient(jnp.reshape(cloud, (num_particles * batch, dim)))
             return jnp.reshape(grads, (num_particles, batch, dim))
 
+        def guidance_eval_point(self, x_pred, time, score):
+            """Where to evaluate the likelihood gradient: the Tweedie estimate, or the raw state.
+
+            ``"tweedie"`` (default) uses ``x_hat_0``, the denoised estimate — standard DPS-lite.
+
+            ``"state"`` uses the *current integration state* ``z_t`` itself, recovered exactly by
+            inverting the Tweedie identity (``diffusion_model.py:495``)::
+
+                z_t = alpha_t * x_hat_0 - sigma_t**2 * score
+
+            i.e. the crude approximation ``p(x_obs | z_t) ~ p(x_obs | x_0 = z_t)``, with no denoising.
+            Two reasons it is worth measuring rather than dismissing:
+
+            * It is dimensionally the *cleaner* thing to add to a score: the score is
+              ``grad_z log p(z)``, so ``grad_z log p(x_obs | z)`` lives in the same space, whereas
+              DPS-lite adds a gradient taken in ``x_hat_0`` space and silently drops
+              ``d x_hat_0 / d z_t``.
+            * It stays bounded early on. ``alpha_t = 0.012`` at ``t=1``, so ``x_hat_0 = (z + ...)/alpha``
+              is inflated ~80x and saturates the parameter soft-clip, while ``z_t`` remains O(1).
+
+            The two coincide as ``t -> 0`` (``alpha -> 1``, ``sigma -> 0``), so any difference between
+            them is an early/mid-trajectory effect.
+            """
+            import jax.numpy as jnp
+
+            if self.guidance_point == "tweedie":
+                return x_pred
+            log_snr = self.noise_schedule.get_log_snr(t=time, training=False)
+            alpha_t, sigma_t = self.noise_schedule.get_alpha_sigma(log_snr_t=log_snr)
+            return alpha_t * x_pred - jnp.square(sigma_t) * score
+
         def guidance_gradient(self, x_pred, time):
             """The guidance direction: gradient(s) reduced over particles, sanitized, norm-clipped.
 
@@ -422,7 +471,7 @@ def _make_guided_class():
             """The additive score correction ``w(t) * s * scale(t) * grad`` (no gating shortcut)."""
             import jax.numpy as jnp
 
-            grad = self.guidance_gradient(x_pred, time)
+            grad = self.guidance_gradient(self.guidance_eval_point(x_pred, time, score), time)
             if self.scaling == "norm_matched":
                 # Direction only: normalize the gradient, then take the score's magnitude.
                 grad = grad / (jnp.linalg.norm(grad, axis=-1, keepdims=True) + 1e-12)
@@ -512,6 +561,7 @@ def _guided_diffusion(cfg) -> Any:
         particle_width=float(params.get("particle_width", 1.0)),
         particle_data_std=float(params.get("particle_data_std", 1.0)),
         particle_seed=int(params.get("particle_seed", 0)),
+        guidance_point=str(params.get("guidance_point", "tweedie")),
     )
 
 
