@@ -203,6 +203,20 @@ Every run saves:
     inflation, which compensates for σ_t²/α_t explicitly.
   * **Dataset size dominates everything**: dense Arm B 20k→100k gives rmse 0.0731→0.0374, calib
     0.0392→0.0141. Ranking: more data/training ≫ observation density (−31%) ≫ any guidance variant.
+  * Round 4 (**PiGDM**, `precondition=pigdm`): `g = (s_obs^2 I + r_t^2 J^T J)^-1 J^T r`, needing the
+    forward-model Jacobian (new seam `BaseSimulator.jax_gaussian_observation_model`). It **solves the
+    magnitude problem**: stable at t_on=1.0 where the raw gradient gave rmse 93 (now 0.0405, ~2300x
+    less damage), makes `t_on` irrelevant (no gating knob needed), and is *cheaper* than the raw path
+    (3.5-5.4 vs ~7 s/obs). But it **loses on quality**: on Arm B it double-counts monotonically
+    (|z| 1.00 -> 1.57 -> 3.08 -> 9.57 across strengths, optimum at zero dose), and on Arm A **every
+    setting is worse than doing nothing** while round 2's crude `norm_matched s=0.2` is the only thing
+    that helps (-17%, reproducing round 2's -19%). Two reasons: a bounded O(1) step cannot contract the
+    prior (std 0.5) to the posterior (std 0.007-0.1); and fixing the magnitude **exposed that the
+    direction was never good enough** — the crude methods worked slightly *because* they were weak, and
+    removing the accidental protection of clipping/tiny steps made things worse.
+    Also: PiGDM does NOT compose with `guidance_point="state"` (the r_t^2 inflation is the variance of
+    x_0 around x_hat_0, so re-centring at z_t breaks the error model; degradation scales as 1/alpha_t).
+    **Verdict: direction, not magnitude, is the binding constraint for guidance on this problem.**
   * Two bugs worth remembering: the particle cloud width must be the *capped* denoising-posterior std
     `s·σ_t/√(α_t²s²+σ_t²)`, not `σ_t/α_t` (which hits 80 at t=1 and silently zeroed guidance via
     soft-clip saturation); and diagnostics must be measured **counterfactually** along the unguided

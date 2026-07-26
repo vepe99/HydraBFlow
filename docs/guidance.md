@@ -408,6 +408,104 @@ posterior is essentially immune to guidance — the model's own score dominates 
 self-correcting. The room for guidance to help shrinks as the network gets better, which is the
 opposite of what one wants from a correction mechanism.
 
+---
+
+# Round 4 — PiGDM: the magnitude problem solved, and why that makes things worse
+
+`precondition="pigdm"` implements `g = (σ_obs² I + r_t² JᵀJ)⁻¹ Jᵀ r` (see `guidance_pigdm`). It needs
+the forward-model **Jacobian**, not the scalar log-likelihood gradient — hence the new
+`BaseSimulator.jax_gaussian_observation_model` seam. For LV the Gaussian model is exact, since
+multiplicative lognormal noise is additive-Gaussian in log space.
+
+## R4.1 It does solve what it was designed to solve
+
+| property | before (raw gradient) | with PiGDM |
+|---|---|---|
+| stability at `t_on=1.0` | rmse **93.0** | rmse **0.0405** (~2300× less damage) |
+| sensitivity to `t_on` | inert → +93 across the range | 0.5 and 1.0 agree to 4 decimals |
+| hand-tuned knobs | `t_on`, `max_grad_norm` both critical | **neither needed** |
+| cost | ~7 s/obs | **3.5–5.4 s/obs** (faster) |
+
+The `t_on` insensitivity is the positive result, not a null one: PiGDM damps the early trajectory
+analytically, so the gating window stops mattering. It also confirms the offline prediction that the
+induced shift is 0.012 at `t=1` and peaks near `t=0.33`. And it was *cheaper* than the raw path —
+four `jacfwd` JVPs through the LV solve vectorize better than one VJP through the log-likelihood.
+
+## R4.2 Arm B (well-trained conditional posterior): monotone harm, optimum at zero dose
+
+Baseline rmse 0.0283, post_std 0.0206, calib 0.0922, |z| 1.00 (12 obs × 300 draws):
+
+| setting | rmse | post_std | calib | **\|z\|** |
+|---|---|---|---|---|
+| pigdm tweedie s=0.3 | 0.0327 | 0.0168 | 0.0984 | 1.57 |
+| pigdm tweedie s=1.0 | 0.0405 | 0.0111 | 0.1528 | 3.08 |
+| pigdm tweedie s=3.0 | 0.0381 | 0.0129 | 0.2169 | **9.57** |
+| pigdm **state** s=1.0, t_on=0.5 | 0.2602 | 0.1701 | 0.1750 | 0.54 |
+| pigdm **state** s=1.0, t_on=1.0 | 0.3807 | 0.2525 | 0.1660 | 0.39 |
+
+Textbook double-counting: each increment concentrates the posterior (0.0206 → 0.0168 → 0.0111) and
+makes it correspondingly over-confident (|z| 1.00 → 1.57 → 3.08 → 9.57). `|z| ≈ 3` at strength 1 is
+about what adding a second full copy of the likelihood precision should give. (RMSE and post_std are
+*not* monotone at s=3 — trust |z| and calibration there, not the small RMSE differences.)
+
+**PiGDM does not compose with `guidance_point="state"`, for a principled reason.** The inflation term
+`r_t²` is the variance of `x₀` *around `x̂₀`*, and the derivation linearizes at `x̂₀`. Centre it at `z_t`
+instead and the linearization point no longer matches the error model being propagated, so information
+is destroyed rather than added (|z| 0.39–0.54 = under-confident, posterior widened 8–12×). The
+degradation grows with window size because the mismatch scales as `1/α_t`. `state` was a workaround for
+a problem PiGDM solves properly; combined, only its downside survives.
+
+## R4.3 Arm A (prior-only): PiGDM is beaten by the crude method — the key result
+
+Baseline (= the prior) rmse 0.4677, post_std 0.4959, calib 0.0942:
+
+| setting | rmse | Δrmse | post_std | calib |
+|---|---|---|---|---|
+| pigdm tweedie s=0.3 | 0.5943 | +0.127 | 0.3955 | 0.1840 |
+| pigdm tweedie s=1.0 | 0.9406 | +0.473 | 0.4914 | 0.2172 |
+| pigdm tweedie s=3.0 | 1.2988 | +0.831 | 0.5890 | 0.1211 |
+| pigdm state s=1.0 | 0.9501 | +0.482 | 0.6302 | 0.1674 |
+| **raw gradient, norm_matched s=0.2** (round-2 best) | **0.3902** | **−0.078** | 0.5046 | **0.0797** |
+
+**Every PiGDM setting is worse than doing nothing, while the crude round-2 method is the only thing
+that helps** (−17%, replicating round 2's −19% on a different model — a clean reproduction).
+
+Two reasons, and the second is the important one:
+
+1. **A bounded step cannot create information.** PiGDM's design principle is an O(1)-per-step shift
+   (~1 prior sd). Turning the prior (std 0.50) into the true posterior (std 0.007–0.1) needs a 5–70×
+   contraction. That is impossible by construction, and was visible in the offline table before the
+   run — Arm A was never winnable by this method.
+2. **Fixing the magnitude exposed that the direction was never good enough.** Round 2 measured
+   Gauss-Newton directions as *no better aligned* than raw ones (cos 0.27 vs 0.33 at 1σ out). The crude
+   `norm_matched` variant takes a small, conservative step in a roughly-right direction; PiGDM takes a
+   *correctly sized* step in the same mediocre direction — and therefore lands confidently wrong. **The
+   crude methods worked slightly because they were weak.** Removing the accidental protection that
+   clipping and tiny steps provided made results worse, not better.
+
+## R4.4 Where this leaves guidance
+
+| problem | status |
+|---|---|
+| magnitude / stability (10-orders-of-magnitude lever arm) | **solved** by PiGDM: stable, knob-free, cheap |
+| direction quality (cos ≈ 0.3–0.6 at best) | **unsolved by everything tried** — point, median, particle, Fisher, PiGDM |
+| double-counting on a trained conditional posterior | structural; no setting avoids it |
+
+Best guidance result in the whole study remains round 2's `norm_matched s=0.2` on the prior-only
+model: RMSE −17…−19% with **no** posterior contraction. For comparison, raising the training set from
+20k to 100k gave −49% RMSE and −64% calibration error.
+
+The honest conclusion is that **direction, not magnitude, is the binding constraint**, and DPS-style
+guidance on this problem is direction-limited in a way none of these variants address. The remaining
+untried idea in this family is full DPS (differentiating `x̂₀` through the network), which is the only
+one that changes the direction rather than its scale.
+
+**Importance sampling is a better-posed use of the same differentiable simulator** and sidesteps all of
+this: re-weighting draws by `w ∝ p(x_obs|θ)p(θ)/q(θ|x_obs)` never has to *move* a sample, so neither the
+lever arm nor the direction quality matters, and it is asymptotically exact with ESS as an honest
+diagnostic. Feasibility is confirmed: `approximator.log_prob` returns finite densities for the guided
+diffusion model at ~21 s per 200 draws (`method="rk45", steps=100`), which is affordable.
+
 ## 4. Pros, cons, pitfalls
 
 **Pros.** Sampling-time only — no retraining, one network per sweep. Uses information the network
