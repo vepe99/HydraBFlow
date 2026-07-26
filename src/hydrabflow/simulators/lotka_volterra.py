@@ -86,6 +86,28 @@ class LotkaVolterraSimulator(BaseSimulator):
 
         return log_likelihood_batch
 
+    def jax_gaussian_observation_model(self, x_obs: np.ndarray):
+        """The LV forward model as a Gaussian model in **log** space (see BaseSimulator).
+
+        The observation noise is multiplicative lognormal, so ``log x`` is exactly where it becomes
+        additive Gaussian with variance ``obs_sigma**2`` — this model is exact, not an approximation.
+        Returns ``(forward_log, observation_log, obs_variance)`` with ``forward_log`` flattening the
+        ``(n_obs, 2)`` trajectory to ``(2*n_obs,)``.
+        """
+        import jax.numpy as jnp
+
+        cfg = self.lv_config
+        obs = jnp.asarray(x_obs, dtype=jnp.float32)
+        expected = (cfg.n_obs, 2)
+        if obs.shape != expected:
+            raise ValueError(f"x_obs must have shape {expected}, got {tuple(obs.shape)}")
+
+        def forward_log(theta):
+            return jnp.log(lv_jax.lv_states(theta, cfg)).reshape(-1)
+
+        observation_log = jnp.log(jnp.maximum(obs, cfg.state_min)).reshape(-1)
+        return forward_log, observation_log, float(cfg.obs_sigma**2)
+
     def jax_theta_clip(self, n_std: float = 4.0):
         """Smooth tanh squash of the log-rates into ``prior_mean +- n_std * prior_std``."""
         cfg = self.lv_config

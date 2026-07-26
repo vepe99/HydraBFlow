@@ -82,6 +82,32 @@ class BaseSimulator(ABC):
             "observation, vectorized over a batch of parameter vectors) to opt in."
         )
 
+    def jax_gaussian_observation_model(self, x_obs: np.ndarray):
+        """Optional: expose the forward model as a **Gaussian** observation model.
+
+        Required only by uncertainty-inflated (PiGDM-style) guidance, which cannot work from a scalar
+        log-likelihood: it needs the *Jacobian* of the forward map, so it can inflate the observation
+        covariance by the diffusion model's current denoising uncertainty. See
+        ``networks.guided_diffusion.GuidedDiffusionModel.guidance_pigdm``.
+
+        Return ``(forward_log, observation_log, obs_variance)`` describing the model
+
+            observation_log = forward_log(theta) + N(0, obs_variance)
+
+        where ``forward_log`` maps a **single** parameter vector ``(n_params,)`` to the noise-free
+        transformed observation ``(n_data,)``, and ``observation_log`` is the same transform applied to
+        ``x_obs``. "log" in the names reflects that the transform is usually a log for multiplicative
+        noise; any transform that makes the noise additive-Gaussian is valid.
+
+        ``forward_log`` must be JAX-traceable and differentiable, and must accept one parameter vector
+        (it is ``vmap``-ed and ``jacfwd``-ed by the caller).
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement jax_gaussian_observation_model, so it cannot "
+            "be used with precondition='pigdm'. Implement it (forward_log, observation_log, "
+            "obs_variance) to opt in, or use precondition='none'."
+        )
+
     def jax_theta_clip(self):
         """Optional smooth squash applied to parameters before the likelihood, or ``None``.
 

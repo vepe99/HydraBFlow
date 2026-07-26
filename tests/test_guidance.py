@@ -497,3 +497,160 @@ def test_guidance_eval_point_modes(guided_class):
 
     with pytest.raises(ValueError, match="guidance_point"):
         guided_class(guidance_point="noisy")
+
+
+# --------------------------------------------------------------------------------------------- #
+# PiGDM (uncertainty-inflated) guidance
+# --------------------------------------------------------------------------------------------- #
+
+
+@pytest.fixture
+def pigdm_target():
+    """A linear-Gaussian observation model, where PiGDM has a closed form to check against."""
+    jnp = pytest.importorskip("jax.numpy")
+
+    from hydrabflow.networks.guided_diffusion import GuidanceTarget
+
+    rng = np.random.default_rng(0)
+    amat = jnp.asarray(rng.normal(size=(6, 4)), dtype="float32")   # forward operator
+    obs = jnp.asarray(rng.normal(size=(6,)), dtype="float32")
+    obs_var = 0.01
+
+    def forward_log(theta):
+        return amat @ theta
+
+    def log_likelihood_batch(theta):
+        resid = obs[None, :] - theta @ amat.T
+        return -0.5 * jnp.sum(jnp.square(resid), axis=-1) / obs_var
+
+    return amat, obs, obs_var, GuidanceTarget(
+        log_likelihood_batch=log_likelihood_batch,
+        forward_log=forward_log,
+        observation_log=obs,
+        obs_variance=obs_var,
+    )
+
+
+def test_pigdm_matches_closed_form(guided_class, pigdm_target):
+    """g must equal (s_obs^2 I + r_t^2 A^T A)^-1 A^T r for a linear-Gaussian model."""
+    jnp = pytest.importorskip("jax.numpy")
+
+    amat, obs, obs_var, target = pigdm_target
+    net = guided_class(precondition="pigdm", max_grad_norm=1e12)
+    net.set_guidance_target(target)
+
+    point = jnp.asarray([[0.2, -0.4, 0.1, 0.7]], dtype="float32")
+    for t in (0.9, 0.5, 0.2):
+        time = jnp.full((1, 1), t)
+        log_snr = net.noise_schedule.get_log_snr(t=time, training=False)
+        alpha_t, sigma_t = net.noise_schedule.get_alpha_sigma(log_snr_t=log_snr)
+        r_t2 = float(np.asarray(sigma_t / alpha_t).ravel()[0]) ** 2
+
+        a = np.asarray(amat)
+        resid = np.asarray(obs) - a @ np.asarray(point).ravel()
+        expected = np.linalg.solve(obs_var * np.eye(4) + r_t2 * (a.T @ a), a.T @ resid)
+        got = np.asarray(net.guidance_pigdm(point, time)).ravel()
+        assert np.allclose(got, expected, rtol=1e-3, atol=1e-5), (t, got, expected)
+
+
+def test_pigdm_reduces_to_plain_gradient_as_noise_vanishes(guided_class, pigdm_target):
+    """As r_t -> 0 (t -> 0) PiGDM must recover the plain gradient A^T r / s_obs^2.
+
+    This is what makes it a strict generalization of DPS-lite rather than a different method.
+    """
+    jnp = pytest.importorskip("jax.numpy")
+
+    _, _, _, target = pigdm_target
+    pig = guided_class(precondition="pigdm", max_grad_norm=1e12)
+    plain = guided_class(precondition="none", max_grad_norm=1e12)
+    for net in (pig, plain):
+        net.set_guidance_target(target)
+
+    point = jnp.asarray([[0.2, -0.4, 0.1, 0.7]], dtype="float32")
+    time = jnp.full((1, 1), 1e-4)  # alpha ~ 1, sigma ~ 0  =>  r_t ~ 0
+    got = np.asarray(pig.guidance_pigdm(point, time)).ravel()
+    ref = np.asarray(plain.guidance_gradient(point, time)).ravel()
+    assert np.allclose(got, ref, rtol=1e-2, atol=1e-4), (got, ref)
+
+
+def test_pigdm_shift_is_bounded_across_time(guided_class, pigdm_target):
+    """The induced parameter shift lever*|g| must stay bounded, unlike the raw gradient's.
+
+    This is the property the whole method exists for: the raw gradient's shift spans many orders of
+    magnitude because |g| is ~constant while lever = sigma^2/alpha sweeps 80 -> 1e-8.
+    """
+    jnp = pytest.importorskip("jax.numpy")
+
+    _, _, _, target = pigdm_target
+    pig = guided_class(precondition="pigdm", max_grad_norm=1e12)
+    plain = guided_class(precondition="none", max_grad_norm=1e12)
+    for net in (pig, plain):
+        net.set_guidance_target(target)
+
+    point = jnp.asarray([[0.2, -0.4, 0.1, 0.7]], dtype="float32")
+    pig_shift, plain_shift = [], []
+    for t in np.linspace(0.99, 0.02, 12):
+        time = jnp.full((1, 1), float(t))
+        log_snr = pig.noise_schedule.get_log_snr(t=time, training=False)
+        alpha_t, sigma_t = pig.noise_schedule.get_alpha_sigma(log_snr_t=log_snr)
+        lever = float(np.asarray(jnp.square(sigma_t) / alpha_t).ravel()[0])
+        pig_shift.append(lever * float(np.linalg.norm(np.asarray(pig.guidance_pigdm(point, time)))))
+        plain_shift.append(
+            lever * float(np.linalg.norm(np.asarray(plain.guidance_gradient(point, time))))
+        )
+
+    spread = lambda v: max(v) / max(min(v), 1e-30)  # noqa: E731
+    # The raw gradient's shift varies by many orders of magnitude; PiGDM's is far more even.
+    assert spread(plain_shift) > 1e6
+    assert spread(pig_shift) < spread(plain_shift) / 1e3
+    assert max(pig_shift) < 100.0  # bounded, not explosive
+
+
+def test_pigdm_requires_the_gaussian_model_and_rejects_particles(guided_class):
+    jnp = pytest.importorskip("jax.numpy")
+
+    from hydrabflow.networks.guided_diffusion import GuidanceTarget
+
+    net = guided_class(precondition="pigdm")
+    net.set_guidance_target(
+        GuidanceTarget(log_likelihood_batch=lambda th: jnp.sum(th, axis=-1))
+    )
+    with pytest.raises(ValueError, match="Gaussian observation model"):
+        net.guidance_pigdm(jnp.zeros((1, 4)), jnp.full((1, 1), 0.5))
+
+    with pytest.raises(ValueError, match="precondition"):
+        guided_class(precondition="whitened")
+
+
+def test_lv_gaussian_observation_model_seam(compose):
+    """The LV Gaussian model must be exact: log-space residual, Jacobian of log f."""
+    from hydrabflow.simulators.registry import get_simulator
+
+    jnp = pytest.importorskip("jax.numpy")
+    jax = pytest.importorskip("jax")
+
+    cfg = compose(["simulator=lotka_volterra"], fill=False)
+    sim = get_simulator(cfg.simulator)
+    data = sim.sample(1, np.random.default_rng(0))
+    forward_log, observation_log, obs_variance = sim.jax_gaussian_observation_model(data["x"][0])
+
+    n_data = 2 * sim.lv_config.n_obs
+    assert observation_log.shape == (n_data,)
+    assert obs_variance == pytest.approx(sim.lv_config.obs_sigma**2)
+
+    theta = jnp.asarray(
+        np.concatenate([data[k] for k in sim.parameter_names], axis=1)[0], dtype=jnp.float32
+    )
+    assert forward_log(theta).shape == (n_data,)
+    jac = jax.jacfwd(forward_log)(theta)
+    assert jac.shape == (n_data, len(sim.parameter_names))
+    assert np.isfinite(np.asarray(jac)).all()
+
+    # Consistency with the scalar log-likelihood: grad log p == J^T r / obs_variance.
+    resid = np.asarray(observation_log - forward_log(theta))
+    expected = np.asarray(jac).T @ resid / obs_variance
+    got = np.asarray(jax.grad(lambda th: sim.jax_log_likelihood(data["x"][0])(th[None, :])[0])(theta))
+    assert np.allclose(got, expected, rtol=1e-3, atol=1e-3)
+
+    with pytest.raises(ValueError, match="shape"):
+        sim.jax_gaussian_observation_model(np.zeros((3, 2)))

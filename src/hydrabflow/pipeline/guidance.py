@@ -44,6 +44,7 @@ GUIDANCE_OVERRIDE_KEYS = (
     "particle_data_std",
     "particle_seed",
     "guidance_point",
+    "precondition",
 )
 
 
@@ -97,11 +98,22 @@ def attach_guidance(workflow, simulator, x_obs: np.ndarray, net=None) -> Any:
 
     net = net if net is not None else get_guided_network(workflow)
     clip = simulator.jax_theta_clip(net.clip_theta_std)
-    target = GuidanceTarget(
+    fields = dict(
         log_likelihood_batch=simulator.jax_log_likelihood(x_obs),
         untransform=build_theta_untransform(workflow.approximator),
         clip=clip,
     )
+    # The Gaussian observation model is only needed by precondition="pigdm"; attach it when the
+    # simulator offers one so the mode can be switched at eval time without re-attaching.
+    try:
+        forward_log, observation_log, obs_variance = simulator.jax_gaussian_observation_model(x_obs)
+        fields |= dict(
+            forward_log=forward_log, observation_log=observation_log, obs_variance=obs_variance
+        )
+    except NotImplementedError:
+        log.debug("%s has no Gaussian observation model; precondition='pigdm' unavailable.",
+                  type(simulator).__name__)
+    target = GuidanceTarget(**fields)
     net.set_guidance_target(target)
     return net
 

@@ -53,6 +53,19 @@ params:
   # integrator. The cost is a fixed bias, mitigated by using enough particles.
   particle_seed: 0
 
+  # --- preconditioning: none | pigdm ---
+  # `pigdm` replaces the raw gradient with an uncertainty-inflated Gaussian update,
+  #   g = (sigma_obs^2 I + r_t^2 J^T J)^-1 J^T r,   r_t = sigma_t/alpha_t,  J = d log f / d theta,
+  # which is the fix for the central problem measured in this study: a score correction moves the
+  # denoised parameters by sigma_t^2/alpha_t, and that factor spans 80 (t=1) to 1e-8 (t=0). Since the
+  # raw gradient's magnitude is ~constant in t, the induced shift spans 2.7e6 to 7e-3 -- overwhelming
+  # or invisible, with no constant strength in between. PiGDM makes |g| scale INVERSELY with the lever,
+  # so the induced shift is a bounded bump peaking at ~0.9 (prior sd = 0.5) around t=0.33.
+  # r_t = 0 recovers the plain gradient, so it strictly generalizes DPS-lite.
+  # Requires BaseSimulator.jax_gaussian_observation_model. Use with scaling=none, strength=1.0 --
+  # the magnitude is already principled, so rescaling it defeats the purpose.
+  precondition: none
+
   # --- numerical safety (pick these with scripts/diagnose_guidance.py, don't guess) ---
   max_grad_norm: 1.0e3    # per-row gradient-norm clip; non-finite rows are zeroed first
   clip_theta_std: 4.0     # smooth tanh squash of the denoised estimate into +-N prior std

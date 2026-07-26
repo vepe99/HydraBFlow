@@ -78,6 +78,13 @@ Scaling
   likelihood gradient any more (only its direction survives), but the most numerically robust
   option and useful for isolating "is the *direction* right?" from "is the *magnitude* right?".
 
+Preconditioning (the lever-arm fix)
+-----------------------------------
+``precondition="pigdm"`` replaces the raw gradient with an uncertainty-inflated Gaussian update,
+``g = (s_obs^2 I + r_t^2 J^T J)^-1 J^T r``. This addresses the central measured problem: the score-to-
+parameter coupling ``sigma_t^2/alpha_t`` spans **ten orders of magnitude** along the trajectory, so a
+constant-magnitude gradient is either overwhelming or invisible. See ``guidance_pigdm``.
+
 Safety
 ------
 ``x_hat_0`` can be far out of prior, so before touching the simulator the estimate is squashed into
@@ -122,6 +129,9 @@ REDUCE_MODES = ("point", "mean", "median")
 #: Where the likelihood gradient is evaluated. See ``GuidedDiffusionModel.guidance_eval_point``.
 EVAL_POINTS = ("tweedie", "state")
 
+#: How the raw gradient is preconditioned. See ``GuidedDiffusionModel.guidance_pigdm``.
+PRECONDITION_MODES = ("none", "pigdm")
+
 
 @dataclass
 class GuidanceTarget:
@@ -147,6 +157,18 @@ class GuidanceTarget:
     log_likelihood_batch: Callable[[Any], Any]
     untransform: Callable[[Any], Any] = lambda x: x
     clip: Optional[Callable[[Any], Any]] = None
+    # --- Gaussian observation model, required only by precondition="pigdm" -------------------- #
+    #: ``(theta (n_params,)) -> (n_data,)``: the noise-free transformed forward model, for ONE
+    #: parameter vector (it gets ``jacfwd``-ed and ``vmap``-ed).
+    forward_log: Optional[Callable[[Any], Any]] = None
+    #: ``(n_data,)``: the observation under the same transform.
+    observation_log: Optional[Any] = None
+    #: Variance of the additive Gaussian noise in that transformed space.
+    obs_variance: float = 1.0
+
+    @property
+    def supports_pigdm(self) -> bool:
+        return self.forward_log is not None and self.observation_log is not None
 
 
 def build_theta_untransform(approximator, key: str = "inference_variables") -> Callable:
@@ -212,6 +234,7 @@ def _make_guided_class():
             particle_data_std: float = 1.0,
             particle_seed: int = 0,
             guidance_point: str = "tweedie",
+            precondition: str = "none",
             **kwargs,
         ):
             super().__init__(*args, **kwargs)
@@ -227,6 +250,10 @@ def _make_guided_class():
                 raise ValueError(f"particle_width must be >= 0, got {particle_width}")
             if float(particle_data_std) <= 0.0:
                 raise ValueError(f"particle_data_std must be > 0, got {particle_data_std}")
+            if precondition not in PRECONDITION_MODES:
+                raise ValueError(
+                    f"precondition must be one of {PRECONDITION_MODES}, got {precondition!r}"
+                )
             if guidance_point not in EVAL_POINTS:
                 raise ValueError(
                     f"guidance_point must be one of {EVAL_POINTS}, got {guidance_point!r}"
@@ -249,6 +276,7 @@ def _make_guided_class():
             self.particle_data_std = float(particle_data_std)
             self.particle_seed = int(particle_seed)
             self.guidance_point = str(guidance_point)
+            self.precondition = str(precondition)
             self._guidance_target: GuidanceTarget | None = None
             self._unit_perturbation_cache: dict = {}
 
@@ -270,6 +298,7 @@ def _make_guided_class():
                 "particle_data_std": self.particle_data_std,
                 "particle_seed": self.particle_seed,
                 "guidance_point": self.guidance_point,
+                "precondition": self.precondition,
             }
 
         # -- runtime target ---------------------------------------------------------------------- #
@@ -454,6 +483,81 @@ def _make_guided_class():
             factor = jnp.minimum(1.0, self.max_grad_norm / (norm + 1e-12))
             return grad * factor
 
+        def guidance_pigdm(self, point, time):
+            """Uncertainty-inflated (PiGDM-style) guidance — the fix for the lever-arm problem.
+
+            A score correction moves the denoised parameters by ``lever = sigma_t**2/alpha_t``, and on
+            this problem that factor spans **80 at t=1 down to 1e-8 at t=0** — ten orders of magnitude,
+            crossing 1 at t~0.46. Since the raw gradient's magnitude is essentially constant in ``t``
+            (~3e4), the resulting parameter shift spans 2.7e6 down to 7e-3: guidance is either
+            overwhelming or invisible, and no constant ``guidance_strength`` fixes that.
+
+            The remedy is to stop treating ``x_hat_0`` as exact. Under a Gaussian observation model
+            ``y = f(theta) + N(0, s_obs^2)`` and a denoising posterior of scale ``r_t = sigma_t/alpha_t``,
+            propagating that uncertainty through a local linearization gives
+            ``p(y | z_t) ~ N(y; f(x_hat_0), s_obs^2 I + r_t^2 J J^T)``, hence::
+
+                g = J^T (s_obs^2 I + r_t^2 J J^T)^-1 r
+                  = (s_obs^2 I + r_t^2 J^T J)^-1 J^T r        # push-through identity
+
+            The second form is an ``n_params x n_params`` solve (4x4 here) instead of an
+            ``n_data x n_data`` one. ``r_t = 0`` recovers the plain gradient ``J^T r / s_obs^2``, so this
+            is a strict generalization of DPS-lite.
+
+            Measured, this turns the induced parameter shift from a 9-orders-of-magnitude sweep into a
+            bounded bump peaking at ~0.9 (versus a prior std of 0.5) around ``t=0.33`` — small early
+            where ``x_hat_0`` is meaningless, strongest mid-trajectory where the estimate is informative
+            and the sample is still movable, fading late as the model's own score takes over.
+
+            The Jacobian is taken of ``forward_log`` **composed with** ``untransform`` and ``clip``, so
+            it is automatically expressed in diffusion-state coordinates — the same chain-rule
+            treatment as :meth:`_raw_gradient`, and the reason no manual change-of-variables factor is
+            needed when BayesFlow's standardizer is active.
+            """
+            import jax
+            import jax.numpy as jnp
+
+            target = self._guidance_target
+            if not target.supports_pigdm:
+                raise ValueError(
+                    "precondition='pigdm' needs a Gaussian observation model on the guidance target. "
+                    "Implement BaseSimulator.jax_gaussian_observation_model for this simulator, or "
+                    "use precondition='none'."
+                )
+            if self.guidance_particles > 1 and self.guidance_reduce != "point":
+                raise ValueError(
+                    "precondition='pigdm' does not combine with particle guidance yet; set "
+                    "guidance_particles=1 (PiGDM already accounts for the denoising uncertainty "
+                    "analytically, which is what the particle cloud approximates by sampling)."
+                )
+
+            log_snr = self.noise_schedule.get_log_snr(t=time, training=False)
+            alpha_t, sigma_t = self.noise_schedule.get_alpha_sigma(log_snr_t=log_snr)
+            r_t2 = jnp.reshape(jnp.square(sigma_t / alpha_t), (-1,))  # (batch,)
+
+            obs = jnp.asarray(target.observation_log)
+            obs_var = jnp.asarray(target.obs_variance, dtype=point.dtype)
+            eye = jnp.eye(jnp.shape(point)[-1], dtype=point.dtype)
+
+            def forward_of_state(state_row):
+                theta = target.untransform(state_row)
+                if target.clip is not None:
+                    theta = target.clip(theta)
+                return target.forward_log(theta)
+
+            def per_row(state_row, rt2):
+                jac = jax.jacfwd(forward_of_state)(state_row)  # (n_data, n_params)
+                residual = obs - forward_of_state(state_row)  # (n_data,)
+                jtj = jac.T @ jac
+                jtr = jac.T @ residual
+                return jnp.linalg.solve(obs_var * eye + rt2 * jtj, jtr)
+
+            grad = jax.vmap(per_row)(point, r_t2)
+            grad = jnp.nan_to_num(grad, nan=0.0, posinf=0.0, neginf=0.0)
+            norm = jnp.linalg.norm(grad, axis=-1, keepdims=True)
+            factor = jnp.minimum(1.0, self.max_grad_norm / (norm + 1e-12))
+            return grad * factor
+
         def guidance_scale(self, time, score):
             """Multiplier turning the raw likelihood gradient into a score increment."""
             import jax.numpy as jnp
@@ -471,7 +575,11 @@ def _make_guided_class():
             """The additive score correction ``w(t) * s * scale(t) * grad`` (no gating shortcut)."""
             import jax.numpy as jnp
 
-            grad = self.guidance_gradient(self.guidance_eval_point(x_pred, time, score), time)
+            point = self.guidance_eval_point(x_pred, time, score)
+            if self.precondition == "pigdm":
+                grad = self.guidance_pigdm(point, time)
+            else:
+                grad = self.guidance_gradient(point, time)
             if self.scaling == "norm_matched":
                 # Direction only: normalize the gradient, then take the score's magnitude.
                 grad = grad / (jnp.linalg.norm(grad, axis=-1, keepdims=True) + 1e-12)
@@ -562,6 +670,7 @@ def _guided_diffusion(cfg) -> Any:
         particle_data_std=float(params.get("particle_data_std", 1.0)),
         particle_seed=int(params.get("particle_seed", 0)),
         guidance_point=str(params.get("guidance_point", "tweedie")),
+        precondition=str(params.get("precondition", "none")),
     )
 
 
