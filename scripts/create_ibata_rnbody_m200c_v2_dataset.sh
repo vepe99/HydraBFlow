@@ -95,6 +95,9 @@ rho_Bulge r_Disk z_Disk Sigma_Disk \
 rho_TwoPowerTriaxial_halo_derived a_TwoPowerTriaxial_halo_derived"}
 read -r -a CORNER_PARAMS <<< "${CORNER_PARAMS_LIST}"
 LABEL=${LABEL:-"v2 prior (no vcirc cut, rnbody m200_c"}
+# Training augmentation chain, used by the noise-convolved cold-stream check so it mimics the
+# observation model the network will actually be trained under.
+AUG_PRESET=${AUG_PRESET:-stream_global_ibata_grid_v2}
 
 echo ">>> rnbody Ibata m200_c dataset | sim=${SIM} data_dir=${DATA_DIR} seed=${SEED} workers=${N_WORKERS}"
 
@@ -148,9 +151,15 @@ if [[ "${RUN_PILOT}" == "1" ]]; then
     "${DATA_DIR}/pilot/training_data_${N_PILOT}.npz" "${PPC_DIR}/pilot" \
     --sim-multistream "${DATA_DIR}/pilot/test_multistream_${N_PILOT_GROUPS}.npz"
   # --noise convolves the sim with the TRAINING observation model before comparing to real Gaia; the
-  # robust (MAD) column is the one to read, and the comparison is only fair with both.
+  # robust (MAD) column is the one to read, and the comparison is only fair with both. NOTE this
+  # script takes NAMED arguments (--sim / --out), and --out is a FILE, not a directory — it was being
+  # called positionally, so argparse rejected it and the `|| true` swallowed the failure, silently
+  # leaving only the NOISELESS table from ppc_ancillary_observables above. --aug/--simulator must name
+  # the v2 chain too, or the noise model is the wrong one.
   uv run python scripts/ppc_summary_statistics.py \
-    "${DATA_DIR}/pilot/test_multistream_${N_PILOT_GROUPS}.npz" "${PPC_DIR}/pilot" --noise || true
+    --sim "${DATA_DIR}/pilot/test_multistream_${N_PILOT_GROUPS}.npz" \
+    --out "${PPC_DIR}/pilot/ppc_stream_summary_statistics_noise.png" \
+    --aug "${AUG_PRESET}" --simulator "${SIM}" --noise || true
   uv run python scripts/ppc_prior_predictive.py \
     "${DATA_DIR}/pilot/training_data_${N_PILOT}.npz" "${PPC_DIR}/pilot" || true
   uv run python scripts/corner_parameters.py \
@@ -191,7 +200,9 @@ uv run python scripts/ppc_ancillary_observables.py \
   "${DATA_DIR}/training_data_${N_FULL}.npz" "${PPC_DIR}/full" \
   --sim-multistream "${DATA_DIR}/test_multistream_${N_GROUPS}.npz"
 uv run python scripts/ppc_summary_statistics.py \
-  "${DATA_DIR}/test_multistream_${N_GROUPS}.npz" "${PPC_DIR}/full" --noise || true
+  --sim "${DATA_DIR}/test_multistream_${N_GROUPS}.npz" \
+  --out "${PPC_DIR}/full/ppc_stream_summary_statistics_noise.png" \
+  --aug "${AUG_PRESET}" --simulator "${SIM}" --noise || true
 uv run python scripts/ppc_prior_predictive.py \
   "${DATA_DIR}/training_data_${N_FULL}.npz" "${PPC_DIR}/full" || true
 uv run python scripts/corner_parameters.py \
