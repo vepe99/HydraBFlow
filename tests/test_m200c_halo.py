@@ -82,6 +82,67 @@ def test_enclosed_mass_equals_M200(gamma, log10M200):
     assert agama.Potential(**halo).enclosedMass(r200) == pytest.approx(M200, rel=1e-6)
 
 
+@pytest.mark.parametrize("q", [1.0, 0.8, 1.2])
+def test_nfw_halo_scale_radius_is_r200_over_c200(q):
+    """At gamma = 1 the m200_c mapping collapses to the textbook NFW relation r_s = r200 / c200.
+
+    This is the whole reason the NFW variant pins gamma: in general
+    ``r_h = r200 / [c200 (2 - gamma)]``, so gamma rescales the halo at fixed (M200, c) instead of
+    only reshaping it — the coupling behind gamma's posterior railing. At gamma = 1 the (2 - gamma)
+    factor is unity, and the 94 -> 200 concentration conversion (which assumes the NFW m(c)) is
+    exact rather than approximate. Independent of the flattening q.
+    """
+    p = {
+        "log10_M200_TwoPowerTriaxial_halo": np.log10(1.30e12),
+        "ln_cvprime_TwoPowerTriaxial_halo": np.log(15.4),
+        "gamma_TwoPowerTriaxial_halo": 1.0,
+        "alpha_TwoPowerTriaxial_halo": 1.0,
+        "beta_TwoPowerTriaxial_halo": 3.0,
+        "q_TwoPowerTriaxial_halo": q,
+    }
+    halo = _halo_params_m200c(agama, p, _CFG)
+    M200 = 10.0 ** p["log10_M200_TwoPowerTriaxial_halo"]
+    r200 = (3.0 * M200 / (4.0 * np.pi * _CFG["halo_Delta_mass"] * _rho_crit())) ** (1.0 / 3.0)
+    c200 = convert_concentration(np.exp(p["ln_cvprime_TwoPowerTriaxial_halo"]), 94.0, 200.0)
+
+    assert halo["scaleRadius"] == pytest.approx(r200 / c200, rel=1e-6)
+    # (alpha, beta, gamma) = (1, 3, 1) is AGAMA's Spheroid form of NFW; the flattening survives.
+    assert (halo["alpha"], halo["beta"], halo["gamma"]) == (1.0, 3.0, 1.0)
+    assert halo["axisRatioZ"] == pytest.approx(q)
+    assert agama.Potential(**halo).enclosedMass(r200) == pytest.approx(M200, rel=1e-6)
+
+
+def test_nfw_simulator_config_pins_the_halo_exponents(compose):
+    """The NFW config fixes gamma/alpha/beta (so they are not inferred) and keeps q/p/tilt free."""
+    from hydrabflow.simulators.registry import get_simulator
+
+    cfg = compose(overrides=["simulator=stream_agama_rnbody_ibata_m200c_nfw", "composition=global"])
+    sim = get_simulator(cfg.simulator)
+    globals_ = set(sim.global_parameter_names)
+
+    for pinned in (
+        "gamma_TwoPowerTriaxial_halo",
+        "alpha_TwoPowerTriaxial_halo",
+        "beta_TwoPowerTriaxial_halo",
+        "rho_TwoPowerTriaxial_halo",
+        "a_TwoPowerTriaxial_halo",
+    ):
+        assert pinned not in globals_, f"{pinned} should be an identity constant, not inferred"
+    for free in (
+        "log10_M200_TwoPowerTriaxial_halo",
+        "ln_cvprime_TwoPowerTriaxial_halo",
+        "q_TwoPowerTriaxial_halo",
+        "p_TwoPowerTriaxial_halo",
+        "tilt_TwoPowerTriaxial_halo",
+    ):
+        assert free in globals_, f"{free} should be inferred"
+
+    theta = sim.sample_prior(4, rng=np.random.default_rng(0))
+    assert np.allclose(theta["gamma_TwoPowerTriaxial_halo"], 1.0)
+    assert np.allclose(theta["alpha_TwoPowerTriaxial_halo"], 1.0)
+    assert np.allclose(theta["beta_TwoPowerTriaxial_halo"], 3.0)
+
+
 def test_host_potential_dispatch_matches_equivalent_rho_a():
     """m200_c dispatch builds a potential whose halo == the rho_a halo with the derived (r_h, rho0)."""
     p = {

@@ -85,15 +85,18 @@ fi
 PPC_DIR="${DATA_DIR}/ppc"
 
 # Inferred globals + the derived (rho, a) AGAMA received. v2 adds alpha / p / tilt / rho_Bulge.
-CORNER_PARAMS=(
-  log10_M200_TwoPowerTriaxial_halo ln_cvprime_TwoPowerTriaxial_halo
-  gamma_TwoPowerTriaxial_halo q_TwoPowerTriaxial_halo
-  alpha_TwoPowerTriaxial_halo p_TwoPowerTriaxial_halo tilt_TwoPowerTriaxial_halo
-  rho_Bulge r_Disk z_Disk Sigma_Disk
-  rho_TwoPowerTriaxial_halo_derived a_TwoPowerTriaxial_halo_derived
-)
+# Overridable (space-separated in CORNER_PARAMS_LIST) so a variant that pins some of these — e.g. the
+# NFW halo, which fixes gamma and alpha — does not ask the corner plot for constant columns.
+CORNER_PARAMS_LIST=${CORNER_PARAMS_LIST:-"\
+log10_M200_TwoPowerTriaxial_halo ln_cvprime_TwoPowerTriaxial_halo \
+gamma_TwoPowerTriaxial_halo q_TwoPowerTriaxial_halo \
+alpha_TwoPowerTriaxial_halo p_TwoPowerTriaxial_halo tilt_TwoPowerTriaxial_halo \
+rho_Bulge r_Disk z_Disk Sigma_Disk \
+rho_TwoPowerTriaxial_halo_derived a_TwoPowerTriaxial_halo_derived"}
+read -r -a CORNER_PARAMS <<< "${CORNER_PARAMS_LIST}"
+LABEL=${LABEL:-"v2 prior (no vcirc cut, rnbody m200_c"}
 
-echo ">>> rnbody Ibata m200_c v2 dataset | sim=${SIM} data_dir=${DATA_DIR} seed=${SEED} workers=${N_WORKERS}"
+echo ">>> rnbody Ibata m200_c dataset | sim=${SIM} data_dir=${DATA_DIR} seed=${SEED} workers=${N_WORKERS}"
 
 # Report the progenitor survival + NaN rates of a generated npz: the two numbers that decide whether
 # the run is worth continuing at full scale.
@@ -153,7 +156,7 @@ if [[ "${RUN_PILOT}" == "1" ]]; then
   uv run python scripts/corner_parameters.py \
     "${DATA_DIR}/pilot/training_data_${N_PILOT}.npz" "${PPC_DIR}/pilot" \
     --params "${CORNER_PARAMS[@]}" --name prior_corner.png \
-    --title "v2 prior (no vcirc cut, rnbody m200_c, pilot n=${N_PILOT})" || true
+    --title "${LABEL}, pilot n=${N_PILOT})" || true
   echo ">>> [pilot] figures in ${PPC_DIR}/pilot — INSPECT the survival report and the cold-stream"
   echo "    std table before the full run continues (set RUN_PILOT=0 to skip next time)."
 fi
@@ -194,7 +197,7 @@ uv run python scripts/ppc_prior_predictive.py \
 uv run python scripts/corner_parameters.py \
   "${DATA_DIR}/training_data_${N_FULL}.npz" "${PPC_DIR}/full" \
   --params "${CORNER_PARAMS[@]}" --name prior_corner.png \
-  --title "v2 prior (no vcirc cut, rnbody m200_c, n=${N_FULL})" || true
+  --title "${LABEL}, n=${N_FULL})" || true
 
 echo ">>> DONE (dataset generation only)."
 echo "    training set : ${DATA_DIR}/training_data_${N_FULL}.npz"
