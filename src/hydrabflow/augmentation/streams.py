@@ -812,3 +812,92 @@ def _log10_rho_z(params, rng):
         return batch
 
     return aug
+
+
+# ------------------------------------------------------------------------------------------- #
+# Member contamination (interlopers that survive the stream-finder selection)
+# ------------------------------------------------------------------------------------------- #
+
+
+@register_augmentation("contaminate_members")
+def _contaminate_members(params, rng):
+    """Replace a prior-drawn fraction of the selected members with interlopers.
+
+    Real stream member catalogues are contaminated, and it is quantified for our streams. Ibata et al.
+    (2020) reject 1 of 5 spectroscopic Gjoll (NGC 3201) targets on radial velocity and find a
+    metallicity spread ~30x the cluster's intrinsic sigma, stating plainly that not all of the
+    candidates were stripped from NGC 3201; modern Pal 5 samples still flag dozens of candidates as
+    deviating from the known kinematic/CMD trends. For M68 — where the simulated-vs-real dispersion
+    gap is worst — there is no published width or velocity-dispersion measurement at all, so the
+    target the forward model is being asked to match is itself unvalidated.
+
+    Modelling choice: interlopers are drawn as **broadened look-alikes of that row's own members**,
+    not as uniform field stars. Contaminants in a real catalogue are precisely the objects that
+    passed the stream-finder's kinematic + CMD cuts, so they resemble members with inflated scatter;
+    drawing them from the raw field would make them trivially separable and would understate their
+    effect. Sky positions are redrawn uniformly across the stream's observational window (an
+    interloper carries no memory of the track), while parallax / proper motions / v_los are redrawn
+    from the member mean with the dispersion inflated by ``contamination_inflate``.
+
+    Marginalising this fraction is the remedy the misspecification literature recommends when the
+    mismatch is traceable to a specific process (Kelly et al. 2025), and it guards against tuning the
+    physical priors to a width that is partly observational.
+
+    Params (a no-op when ``contamination_max_frac`` is 0, the default, so the step is safe to leave in
+    a chain): ``contamination_max_frac`` — upper end of the per-row Uniform[0, f] contaminated
+    fraction; ``contamination_inflate`` — dispersion inflation factor for the redrawn kinematics.
+
+    Runs after ``compact_to_attended`` and before ``sample_magnitudes`` so contaminants pick up
+    magnitudes and Gaia uncertainties through exactly the same path as members (they are, after all,
+    real Gaia stars).
+    """
+    res = _resources(params)
+    key = _sim_key(params)
+    max_frac = float(params.get("contamination_max_frac", 0.0))
+    inflate = float(params.get("contamination_inflate", 3.0))
+    cell = _key_cell(rng)
+    jax, jnp = _jax()
+    lookups = res.jax_lookups()
+    ra_min, ra_max = lookups["ra_min"], lookups["ra_max"]
+    dec_min, dec_max = lookups["dec_min"], lookups["dec_max"]
+
+    @jax.jit
+    def _run(sim, attn, j, subkey):
+        attended = attn[:, 0, :].astype(bool)  # (n, P)
+        n, P = attended.shape
+        k_frac, k_pick, k_pos, k_kin = jax.random.split(subkey, 4)
+
+        # per-row contaminated fraction ~ U[0, max_frac]
+        frac = jax.random.uniform(k_frac, (n, 1)) * max_frac
+        # pick which attended slots become interlopers (uniform draw per slot, thresholded)
+        picked = (jax.random.uniform(k_pick, (n, P)) < frac) & attended
+
+        # member statistics per row, over the attended stars only
+        w = attended.astype(sim.dtype)
+        cnt = jnp.maximum(w.sum(1, keepdims=True), 1.0)
+        mean = (sim * w[..., None]).sum(1) / cnt  # (n, 6)
+        var = (((sim - mean[:, None, :]) ** 2) * w[..., None]).sum(1) / cnt
+        std = jnp.sqrt(jnp.maximum(var, 0.0))  # (n, 6)
+
+        # interloper sky position: uniform across this stream's observational window
+        u = jax.random.uniform(k_pos, (n, P, 2))
+        ra = ra_min[j][:, None] + u[..., 0] * (ra_max[j] - ra_min[j])[:, None]
+        dec = dec_min[j][:, None] + u[..., 1] * (dec_max[j] - dec_min[j])[:, None]
+        # interloper kinematics: member mean + inflated scatter
+        kin = mean[:, None, :] + inflate * std[:, None, :] * jax.random.normal(k_kin, (n, P, 6))
+
+        replacement = jnp.concatenate([ra[..., None], dec[..., None], kin[..., 2:]], axis=-1)
+        return jnp.where(picked[..., None], replacement, sim)
+
+    def aug(batch):
+        if max_frac <= 0.0:
+            return batch
+        batch[key] = _run(
+            jnp.asarray(batch[key]),
+            jnp.asarray(batch["attention_mask"]),
+            _stream_ids_jax(batch),
+            _next_key(cell),
+        )
+        return batch
+
+    return aug

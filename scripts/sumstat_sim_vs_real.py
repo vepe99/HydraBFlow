@@ -37,8 +37,9 @@ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 import numpy as np
 
 # stream_summary_grid channel layout: 5 observables x [median, std] (or [median] only when the
-# augmentation ran with summary_include_std=false), then j, phi1_centre. The per-observable stat
-# count is detected from the array's channel count in main().
+# augmentation ran with summary_include_std=false), then the two occupancy channels (n_track,
+# n_vlos; absent when summary_include_occupancy=false), then j, phi1_centre. Both the per-observable
+# stat count and the presence of the occupancy channels are detected from the channel count in main().
 _OBS = ["phi2", "parallax", "mu_phi1", "mu_phi2", "vlos"]
 _UNITS = {"phi2": "deg", "parallax": "mas", "mu_phi1": "mas/yr", "mu_phi2": "mas/yr",
           "vlos": "km/s"}
@@ -101,17 +102,35 @@ def main():
     j_sim = np.asarray(flat_sim["j"]).reshape(-1).astype(int)
     j_real = np.asarray(flat_real["j"]).reshape(-1).astype(int)
     K = S_sim.shape[1]
-    # Detect the per-observable stat count from the channel axis: 5*len(kinds) + 2 (j, phi1).
+    # Detect the layout from the channel axis: 5*len(kinds) + n_occ + 2 (j, phi1), where n_occ is 2
+    # (n_track, n_vlos) once the augmentation exports per-bin occupancy and 0 for the older layout.
     global _STATS
-    n_stat_ch = S_sim.shape[-1] - 2
-    if n_stat_ch == 2 * len(_OBS):
-        kinds = ("med", "std")
-    elif n_stat_ch == len(_OBS):
-        kinds = ("med",)  # summary_include_std=false (medians-only grid)
-    else:
+    n_occ = None
+    for occ in (2, 0):
+        n_stat_ch = S_sim.shape[-1] - 2 - occ
+        if n_stat_ch in (2 * len(_OBS), len(_OBS)):
+            n_occ = occ
+            kinds = ("med", "std") if n_stat_ch == 2 * len(_OBS) else ("med",)
+            break
+    if n_occ is None:
         raise SystemExit(f"unrecognized sim_summary layout: {S_sim.shape[-1]} channels")
     _STATS = [f"{s}_{o}" for o in _OBS for s in kinds]
     chan = _stat_channels(kinds)
+
+    # Occupancy is the confound to check FIRST. The phi1 bin edges are equal-count quantiles of the
+    # REAL members, so real bins hold N/K stars by construction while simulated ones do not — a
+    # simulated stream that does not span the observational window ends up with sparse bins. Any
+    # per-bin dispersion estimator is noisier (and, for the network's zero-filled input, biased low)
+    # where occupancy is low, so a sim-vs-real dispersion offset must be read together with this.
+    if n_occ == 2:
+        occ_sim, occ_real = S_sim[..., -4:-2], S_real[..., -4:-2]
+        print("per-bin occupancy (median over bins/rows) — read the dispersion z-scores with this:")
+        for lbl, arr in (("sim", occ_sim), ("real", occ_real)):
+            print(
+                f"  {lbl:<4} n_track {np.median(arr[..., 0]):6.1f}  n_vlos {np.median(arr[..., 1]):5.1f}"
+                f"  empty-bin frac {float(np.mean(arr[..., 0] < 1)):.3f}"
+                f"  under-3 frac {float(np.mean(arr[..., 0] < 3)):.3f}"
+            )
 
     try:
         from hydrabflow.simulators.registry import get_simulator

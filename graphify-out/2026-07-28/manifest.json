@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1785247594.3125854,
-    "ast_hash": "a040557e1962c4c586fe3f5910fff221",
+    "mtime": 1785246571.11986,
+    "ast_hash": "41a232f74f148ce3ea9676e10d03b676",
     "semantic_hash": ""
   },
   "README.md": {
@@ -415,13 +415,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1785247281.7659237,
-    "ast_hash": "0c403863dedb9b5187e8c459f7278065",
+    "mtime": 1785245538.5277243,
+    "ast_hash": "914cc1186126c6a32b0cb76b60c4791d",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_common.py": {
-    "mtime": 1785247152.2572627,
-    "ast_hash": "04c5b155824c78abbf94d07b81a586d3",
+    "mtime": 1784013140.123902,
+    "ast_hash": "c6b4fcad7fbd17eaa5af20d36bbec136",
     "semantic_hash": ""
   },
   "tests/test_streams.py": {
@@ -585,8 +585,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama_rnbody.py": {
-    "mtime": 1785247616.1685407,
-    "ast_hash": "c44f50b61c0ef8ffc11e348446a8c475",
+    "mtime": 1785244977.428248,
+    "ast_hash": "390742c53aa5e759005d9408d78209d8",
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_rnbody.yaml": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "tests/test_m200c_halo.py": {
-    "mtime": 1785247430.9924464,
-    "ast_hash": "3b72c2a2980ba3eeba51ee1fa0da3bf2",
+    "mtime": 1785245108.927979,
+    "ast_hash": "53effef27471ed40cb2ca2934076e763",
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_ibata_onedisk_beta3_m200c.yaml": {
@@ -1185,8 +1185,8 @@
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_rnbody_ibata_m200c_v2.yaml": {
-    "mtime": 1785247314.4333515,
-    "ast_hash": "a76e5fe902148f9527f6cc45082e90b0",
+    "mtime": 1785245642.5112646,
+    "ast_hash": "018d364f4b720e8c271b07b057c3515f",
     "semantic_hash": ""
   }
 }

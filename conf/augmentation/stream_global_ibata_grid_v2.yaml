@@ -1,0 +1,71 @@
+# v2 of the Ibata gridded-summary augmentation: same chain and summary layout, plus member
+# contamination, an explicit dispersion-estimator choice, and the per-bin occupancy channels.
+#
+# Three changes from stream_global_ibata_grid, all aimed at the same problem — the simulated streams
+# reading as colder / thinner than the real Gaia members:
+#
+# 1. `contaminate_members` (NEW step, in the chain but DISABLED by default — see
+#    contamination_max_frac below). It replaces a prior-drawn fraction of the selected members with
+#    broadened look-alikes. Kept available because the effect is measured, not hypothetical: Ibata et
+#    al. (2020) reject 1 of 5 spectroscopic Gjoll (NGC 3201) targets on radial velocity and find a
+#    metallicity spread ~30x the cluster's intrinsic sigma; modern Pal 5 samples still flag dozens of
+#    candidates as off-trend; and for M68 — where the dispersion gap is worst — no published width or
+#    velocity dispersion exists at all, so the target is unvalidated. Note it is a per-batch
+#    augmentation, so it never affects the stored dataset either way.
+#
+# 2. `summary_scale: mad` — the per-bin dispersion becomes 1.4826 x MAD instead of the sample std.
+#    This matters MORE with contamination off: the real catalogue's own interlopers inflate its raw
+#    dispersion (M68's v_los drops from 18.6 to ~14 km/s under a robust estimator), so a robust scale
+#    is what keeps the sim-vs-real comparison from chasing outliers we are not modelling.
+#
+# 3. Occupancy is exported (default) and read by the network. Pair with
+#    model=stream_fusion_ibata_grid_masked, whose masked_time_series_transformer backbone excludes
+#    under-populated phi1 bins from attention AND pooling — the reason the substituted 0 in an empty
+#    bin can no longer read as an on-track, zero-dispersion measurement. `summary_min_count` must
+#    match that backbone's `min_count`.
+#
+# The channel layout is therefore 14 (not 12):
+#   [med/std x4 astrometric, med/std vlos, n_track, n_vlos, j, phi1_centre]
+defaults:
+  - stream_global
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members    # interlopers that survived the stream-finder selection (see above)
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_summary_grid
+  - add_noise_to_vterm     # + N(0, 6.2 km/s) per longitude bin (Ibata terminal-velocity error)
+  - add_noise_to_sigma_z   # + N(0, 6.0 Msun/pc^2) (Kuijken & Gilmore 1991 surface-density error)
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  # K_phi1 (the time-axis length); all 5 observables share this phi1 grid. Same great-circle frame +
+  # quantile edges as the flat sumstats variant, fitted once from the real Gaia members.
+  # With the masked backbone, padding is transparent (verified to float32 precision), so K no longer
+  # has to be tuned down to the sparsest stream — raise it if the occupancy report supports it.
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
+
+  summary_scale: mad             # robust per-bin dispersion (std | mad)
+  summary_min_count: 3           # keep in step with the backbone's params.min_count
+  summary_include_occupancy: true
+
+  # OFF by default, per decision: the training set is generated and trained WITHOUT contamination.
+  # The step stays in the chain because at 0.0 it is an exact no-op (verified by test), so switching
+  # it on later is a single override and needs no new config:
+  #     +augmentation.params.contamination_max_frac=0.25
+  # 0.25 is the value the Gjoll rejection rate would motivate if it is ever enabled.
+  contamination_max_frac: 0.0    # per-row fraction ~ U[0, this]; 0 disables the step entirely
+  contamination_inflate: 3.0     # interloper kinematic scatter, in units of the member dispersion

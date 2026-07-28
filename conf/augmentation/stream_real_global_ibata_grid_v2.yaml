@@ -1,0 +1,32 @@
+# Real-data (Gaia) counterpart of stream_global_ibata_grid_v2.
+#
+# The estimator settings MUST match the training preset or sim and real summaries stop being
+# comparable: same `summary_scale`, same `summary_min_count`, same occupancy channels, same phi1 grid
+# and great-circle frame (fitted from these very members).
+#
+# Deliberately NO `contaminate_members` step: the real catalogue already carries whatever
+# contamination it has. The training-side step exists precisely so the network has seen contaminated
+# realizations and marginalises the fraction; adding it here would contaminate the observation twice.
+# (Same asymmetry as the rest of this preset — the real chain has no observational_window /
+# observed_n_stars / apply_obs_error either, because the real data is already selected and noisy.)
+defaults:
+  - stream_real_global
+
+steps:
+  - sample_obs_error
+  - impute_vlos
+  - log10_vcirc
+  - stream_summary_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  summary_track_bins: 10
+  summary_vlos_bins: 3
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
+
+  summary_scale: mad             # must match stream_global_ibata_grid_v2
+  summary_min_count: 3
+  summary_include_occupancy: true

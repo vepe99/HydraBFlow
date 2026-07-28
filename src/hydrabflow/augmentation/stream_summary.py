@@ -17,9 +17,20 @@ median + std of the stream-frame tracks**:
    use ``summary_track_bins`` bins; v_los uses fewer (``summary_vlos_bins``) since it is measured
    for far fewer stars — and v_los stats use **measured stars only** (native missing-v_los
    handling, no imputation).
-3. Per bin: median + std of ``{φ2, parallax, μ_φ1, μ_φ2}`` (track bins) and of ``v_los`` (vlos
-   bins), plus a few scalars (measured-vlos fraction, attended fraction, φ1 extent, arm asymmetry)
-   and the stream index ``j`` (so the summary MLP is stream-aware).
+3. Per bin: median + dispersion of ``{φ2, parallax, μ_φ1, μ_φ2}`` (track bins) and of ``v_los``
+   (vlos bins), the per-bin **occupancy** counts, plus a few scalars (measured-vlos fraction,
+   attended fraction, φ1 extent, arm asymmetry, out-of-range fraction) and the stream index ``j``
+   (so the summary MLP is stream-aware).
+
+The dispersion estimator matters more than it looks. The φ1 bin edges are equal-count quantiles of
+the *real* members, so real bins hold exactly ``N/K`` stars by construction while simulated ones do
+not — a simulated stream that does not span the observational window ends up with sparse bins. With
+the population (``ddof=0``) standard deviation and empty bins filled with 0, that occupancy
+difference alone biases simulated dispersions low (0.72× at 3 stars, 0.57× at 2, exactly 0 at 1),
+which reads as "the simulated streams are too cold". :func:`_binned_stats` therefore uses ``ddof=1``
+(or a MAD scale), returns NaN below ``summary_min_count``, and exports occupancy explicitly; and
+:func:`_bin_assignment` drops out-of-range stars instead of clipping them into the end bins. See
+``summary_scale`` / ``summary_min_count`` / ``summary_include_occupancy``.
 
 The frame + edges are baked once (NumPy) and the per-batch projection + binning runs in ``jax.jit``
 (astropy/gala transforms are far too slow per batch). Runs **after** ``log10_vcirc`` and **before**
@@ -136,6 +147,62 @@ def _stream_frames(params: dict, k_track: int, k_vlos: int, channels: dict) -> S
 
 
 # ------------------------------------------------------------------------------------------- #
+# Shared per-bin estimator
+# ------------------------------------------------------------------------------------------- #
+
+
+def _bin_assignment(jax, jnp, edges, phi1, k):
+    """Per-star bin index plus an ``in_range`` flag.
+
+    ``searchsorted`` returns 0 for stars below the first edge and ``k+1`` for stars above the last,
+    so ``idx = ... - 1`` is outside ``[0, k)`` exactly for out-of-range stars. We return the flag
+    instead of clipping: clipping piles every star beyond the real φ1 range into the end bins,
+    which inflates their dispersion while starving the interior ones.
+    """
+    idx = jax.vmap(lambda ed, x: jnp.searchsorted(ed, x, side="right"))(edges, phi1) - 1
+    in_range = (idx >= 0) & (idx < k)
+    return jnp.clip(idx, 0, k - 1), in_range
+
+
+def _binned_stats(jnp, vals, in_mask, scale: str, min_count: int):
+    """Per-bin ``(median, dispersion, count)`` over the masked members.
+
+    ``vals`` is ``(n, P)``, ``in_mask`` is ``(n, K, P)`` bool; outputs are ``(n, K)``.
+
+    Two deliberate choices, both fixing biases that made simulated streams look colder than they
+    are (the estimator is the same for sim and real, but the *occupancy* is not — real bins are
+    equal-count by construction, simulated ones are not):
+
+    * the dispersion uses ``ddof=1`` (or a MAD scale). The population ``ddof=0`` form is biased low
+      by ``sqrt((N-1)/N)`` — 0.72 at N=3, 0.57 at N=2, and exactly 0 at N=1;
+    * bins with fewer than ``min_count`` members yield **NaN**, not 0. The caller records occupancy
+      in its own channel and substitutes a finite sentinel, so an empty bin can no longer pass for
+      an on-track, zero-dispersion one (for φ2 a fabricated 0 *is* the on-track value, which made
+      this invisible to inspection).
+    """
+    m = jnp.where(in_mask, vals[:, None, :], jnp.nan)
+    count = in_mask.sum(-1)
+    med = jnp.nanmedian(m, axis=2)
+    if scale == "mad":
+        disp = 1.4826 * jnp.nanmedian(jnp.abs(m - med[..., None]), axis=2)
+    else:
+        disp = jnp.nanstd(m, axis=2, ddof=1)
+    med = jnp.where(count >= 1, med, jnp.nan)
+    disp = jnp.where(count >= max(int(min_count), 2), disp, jnp.nan)
+    return med, disp, count.astype(jnp.float32)
+
+
+def _estimator_params(params) -> tuple[str, int, bool]:
+    """``(scale, min_count, include_occupancy)`` from the augmentation params."""
+    scale = str(params.get("summary_scale", "std")).lower()
+    if scale not in ("std", "mad"):
+        raise ValueError(f"summary_scale must be 'std' or 'mad', got {scale!r}")
+    return scale, int(params.get("summary_min_count", 3)), bool(
+        params.get("summary_include_occupancy", True)
+    )
+
+
+# ------------------------------------------------------------------------------------------- #
 # Per-batch JAX augmentation
 # ------------------------------------------------------------------------------------------- #
 
@@ -160,6 +227,7 @@ def _stream_summary_statistics(params, rng):
     )
 
     frames = _stream_frames(params, k_track, k_vlos, channels)
+    scale, min_count, include_occupancy = _estimator_params(params)
     R_all = jnp.asarray(frames.R)  # (S, 3, 3)
     track_edges_all = jnp.asarray(frames.track_edges)  # (S, Kt+1)
     vlos_edges_all = jnp.asarray(frames.vlos_edges)  # (S, Kv+1)
@@ -167,9 +235,7 @@ def _stream_summary_statistics(params, rng):
     bins_v = jnp.arange(k_vlos)
 
     def _binned(vals, in_mask):
-        """vals (n, P) ; in_mask (n, K, P) bool -> (median (n,K), std (n,K)) over masked members."""
-        m = jnp.where(in_mask, vals[:, None, :], jnp.nan)
-        return jnp.nanmedian(m, axis=2), jnp.nanstd(m, axis=2)
+        return _binned_stats(jnp, vals, in_mask, scale, min_count)
 
     @jax.jit
     def _run(sim, attn, vmask, j):
@@ -205,38 +271,48 @@ def _stream_summary_statistics(params, rng):
         attended = attn.astype(bool)
         measured = vmask.astype(bool) & attended
 
-        # per-row bin assignment via each stream's own quantile edges
+        # per-row bin assignment via each stream's own quantile edges; out-of-range stars are
+        # excluded rather than clipped into the end bins (see _bin_assignment)
         te, ve = track_edges_all[j], vlos_edges_all[j]  # (n, Kt+1), (n, Kv+1)
-        idx_t = jax.vmap(lambda ed, x: jnp.searchsorted(ed, x, side="right"))(te, phi1) - 1
-        idx_v = jax.vmap(lambda ed, x: jnp.searchsorted(ed, x, side="right"))(ve, phi1) - 1
-        idx_t = jnp.clip(idx_t, 0, k_track - 1)
-        idx_v = jnp.clip(idx_v, 0, k_vlos - 1)
-        in_t = (idx_t[:, None, :] == bins_t[None, :, None]) & attended[:, None, :]
-        in_v = (idx_v[:, None, :] == bins_v[None, :, None]) & measured[:, None, :]
+        idx_t, ok_t = _bin_assignment(jax, jnp, te, phi1, k_track)
+        idx_v, ok_v = _bin_assignment(jax, jnp, ve, phi1, k_vlos)
+        att_t = attended & ok_t
+        meas_v = measured & ok_v
+        in_t = (idx_t[:, None, :] == bins_t[None, :, None]) & att_t[:, None, :]
+        in_v = (idx_v[:, None, :] == bins_v[None, :, None]) & meas_v[:, None, :]
 
         feats = []
+        counts = []
         for q in (phi2, parallax, mu_phi1, mu_phi2):
-            med, std = _binned(q, in_t)
+            med, std, cnt = _binned(q, in_t)
             feats += [med, std]
-        vmed, vstd = _binned(vlos, in_v)
+        counts.append(cnt)  # identical for all four (same in_t mask)
+        vmed, vstd, vcnt = _binned(vlos, in_v)
         feats += [vmed, vstd]
+        counts.append(vcnt)
 
         n_att = jnp.clip(attended.sum(1), 1)
         frac_meas = measured.sum(1) / n_att
         frac_att = attended.sum(1) / attended.shape[1]
+        # fraction of attended stars falling outside the real φ1 range — real extent information
+        # that used to be silently folded into the end bins by clipping
+        frac_out = jnp.where(attended & ~ok_t, 1.0, 0.0).sum(1) / n_att
         phi1_att = jnp.where(attended, phi1, jnp.nan)
         extent = jnp.nanmax(phi1_att, 1) - jnp.nanmin(phi1_att, 1)
         asym = (
             jnp.where(attended, phi1 > 0, False).sum(1) - jnp.where(attended, phi1 < 0, False).sum(1)
         ) / n_att
-        scalars = jnp.stack([frac_meas, frac_att, extent, asym], -1)
+        scalars = jnp.stack([frac_meas, frac_att, extent, asym, frac_out], -1)
 
         # Stream index as an explicit feature so the summary MLP is stream-aware (like the
         # particle backbone's concatenate_stream_index channel). Standardized with the rest of
         # sim_summary at training time; for 3 streams the MLP resolves them cleanly.
         j_feat = j.reshape(-1, 1).astype(jnp.float32)
 
-        out = jnp.concatenate(feats + [scalars, j_feat], axis=-1)
+        blocks = feats + (counts if include_occupancy else []) + [scalars, j_feat]
+        out = jnp.concatenate(blocks, axis=-1)
+        # NaN -> 0 keeps the network's input finite; the occupancy channels above carry the
+        # "this bin was empty / under-populated" information that the 0 would otherwise hide.
         return jnp.nan_to_num(out, nan=0.0).astype(jnp.float32)
 
     def aug(batch):
@@ -274,18 +350,26 @@ def _stream_summary_grid(params, rng):
       the triplet ``[median, std, j]`` — the bin's median and std over the attended members and the
       stream index ``j`` (constant across bins of a given stream, so the Transformer is
       stream-aware). ``v_los`` uses **measured stars only** (native missing-v_los handling), on the
-      SAME φ1 grid as the astrometric tracks (some bins may be empty → filled with 0).
+      SAME φ1 grid as the astrometric tracks.
+    * Two **occupancy** channels (``n_track``, ``n_vlos``) give the number of members actually
+      contributing to each bin. Statistics for empty / under-populated bins are still substituted
+      with 0 so the network's input stays finite, but the occupancy channels mean that 0 is no
+      longer indistinguishable from a genuine on-track, zero-dispersion measurement. Pair with the
+      ``masked_time_series_transformer`` backbone, which reads them and masks those bins out.
 
-    Channel layout (12 = 5 observables × [median, std] + j + φ1): since everything is flattened
-    onto one feature axis, ``j`` (constant across a stream's bins) is carried **once** at position
-    ``-2`` rather than repeated per observable, and the φ1 bin-centre is last (``-1``):
+    Channel layout (14 = 5 observables × [median, std] + n_track + n_vlos + j + φ1): since
+    everything is flattened onto one feature axis, ``j`` (constant across a stream's bins) and the
+    occupancy channels are carried **once** rather than repeated per observable, and the φ1
+    bin-centre is last (``-1``):
     ``[med_φ2, std_φ2,  med_plx, std_plx,  med_μφ1, std_μφ1,  med_μφ2, std_μφ2,
-       med_vlos, std_vlos,  j,  φ1_centre]``.
+       med_vlos, std_vlos,  n_track, n_vlos,  j,  φ1_centre]``.
 
     ``params.summary_include_std: false`` drops every per-bin std channel (the misspecification
     localization of 2026-07-15 found the real-vs-sim MMD flag lives in the dispersions —
     ``std_phi2`` above all), leaving the medians-only layout
-    ``[med_φ2, med_plx, med_μφ1, med_μφ2, med_vlos, j, φ1_centre]`` (7 channels). Default true.
+    ``[med_φ2, med_plx, med_μφ1, med_μφ2, med_vlos, n_track, n_vlos, j, φ1_centre]`` (9 channels).
+    Default true. ``params.summary_include_occupancy: false`` drops the two occupancy channels,
+    restoring the pre-fix layouts (12 / 7 channels) for comparison runs.
 
     Pair with a ``time_series_transformer`` summary backbone carrying ``params.time_axis: -1``.
     """
@@ -310,14 +394,13 @@ def _stream_summary_grid(params, rng):
     )
 
     frames = _stream_frames(params, k_track, k_vlos, channels)
+    scale, min_count, include_occupancy = _estimator_params(params)
     R_all = jnp.asarray(frames.R)  # (S, 3, 3)
     track_edges_all = jnp.asarray(frames.track_edges)  # (S, Kt+1)
     bins_t = jnp.arange(k_track)
 
     def _binned(vals, in_mask):
-        """vals (n, P) ; in_mask (n, K, P) bool -> (median (n,K), std (n,K)) over masked members."""
-        m = jnp.where(in_mask, vals[:, None, :], jnp.nan)
-        return jnp.nanmedian(m, axis=2), jnp.nanstd(m, axis=2)
+        return _binned_stats(jnp, vals, in_mask, scale, min_count)
 
     @jax.jit
     def _run(sim, attn, vmask, j):
@@ -353,11 +436,12 @@ def _stream_summary_grid(params, rng):
         attended = attn.astype(bool)
         measured = vmask.astype(bool) & attended
 
-        # per-row φ1 bin assignment via each stream's own quantile track edges (shared by all obs)
+        # per-row φ1 bin assignment via each stream's own quantile track edges (shared by all obs);
+        # out-of-range stars are excluded rather than clipped into the end bins
         te = track_edges_all[j]  # (n, Kt+1)
-        idx_t = jax.vmap(lambda ed, x: jnp.searchsorted(ed, x, side="right"))(te, phi1) - 1
-        idx_t = jnp.clip(idx_t, 0, k_track - 1)
-        in_t = (idx_t[:, None, :] == bins_t[None, :, None]) & attended[:, None, :]  # (n, K, P)
+        idx_t, ok_t = _bin_assignment(jax, jnp, te, phi1, k_track)
+        att_t = attended & ok_t
+        in_t = (idx_t[:, None, :] == bins_t[None, :, None]) & att_t[:, None, :]  # (n, K, P)
         in_v = in_t & measured[:, None, :]  # v_los: same grid, measured stars only
 
         j_bc = jnp.broadcast_to(j.reshape(-1, 1).astype(jnp.float32), (j.shape[0], k_track))
@@ -369,19 +453,28 @@ def _stream_summary_grid(params, rng):
             "vlos": (vlos, in_v),
         }
         per_obs = []
+        n_track = n_vlos = None
         for name in _GRID_OBSERVABLES:
             vals, mask = obs_masks[name]
-            med, std = _binned(vals, mask)  # (n, K), (n, K)
+            med, std, cnt = _binned(vals, mask)  # (n, K) each
+            if name == "vlos":
+                n_vlos = cnt
+            else:
+                n_track = cnt  # identical for all astrometric observables (same in_t mask)
             if include_std:
                 per_obs.append(jnp.stack([med, std], axis=-1))  # (n, K, 2)
             else:
                 per_obs.append(med[..., None])  # (n, K, 1) — medians only
 
-        # j once at -2 (constant across a stream's bins) + φ1 bin-centre last (time_axis=-1)
+        # Per-bin occupancy: the channels the masked backbone reads to tell an empty bin from a
+        # genuinely cold one (and that make the NaN -> 0 substitution below non-deceptive).
+        occ = [n_track[..., None], n_vlos[..., None]] if include_occupancy else []
+
+        # j once (constant across a stream's bins) + φ1 bin-centre last (time_axis=-1)
         centre = 0.5 * (te[:, :-1] + te[:, 1:])  # (n, K)
         grid = jnp.concatenate(
-            per_obs + [j_bc[..., None], centre[..., None]], axis=-1
-        )  # (n, K, 5*(2|1) + 2)
+            per_obs + occ + [j_bc[..., None], centre[..., None]], axis=-1
+        )  # (n, K, 5*(2|1) + (2) + 2)
         return jnp.nan_to_num(grid, nan=0.0).astype(jnp.float32)
 
     def aug(batch):

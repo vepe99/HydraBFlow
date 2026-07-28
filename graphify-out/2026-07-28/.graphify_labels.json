@@ -155,9 +155,5 @@
   "153": "apply_bayesflow_patches",
   "154": "create_ibata_m200c_dataset.sh",
   "155": "AttachObservedVterm",
-  "156": "create_ibata_rnbody_m200c_10kstars_test.sh",
-  "157": "PerStreamParameterStandardize",
-  "158": "AttachObservedSigmaZ",
-  "159": "AttachObservedVterm",
-  "160": "RestrictedNbodyStreamSimulator"
+  "156": "create_ibata_rnbody_m200c_10kstars_test.sh"
 }

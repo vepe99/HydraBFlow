@@ -228,3 +228,180 @@ def test_rnbody_simulate_m200c_ancillary_and_derived_keys():
             h["densityNorm"], rel=1e-6)
         assert out["a_TwoPowerTriaxial_halo_derived"][i, 0] == pytest.approx(
             h["scaleRadius"], rel=1e-6)
+
+
+# ------------------------------------------------------------------------------------------- #
+# Present-day bound remnant mass (restricted N-body only)
+# ------------------------------------------------------------------------------------------- #
+
+
+def test_bound_mass_recovers_a_planted_remnant():
+    """``_bound_mass`` must find a bound Plummer remnant embedded in an unbound debris cloud, and
+    must locate it even though the supplied centre is offset (our centre trajectory is the massless
+    test-particle orbit, which drifts from the real remnant over a few Gyr)."""
+    import agama
+
+    from hydrabflow.simulators.stream_agama_rnbody import _bound_mass, _plummer_sample
+
+    agama.setUnits(mass=1, length=1, velocity=1)
+    rng = np.random.default_rng(0)
+    n_bound, n_debris = 300, 700
+    m_total = 1.0e5
+    scale = 0.005  # 5 pc
+    per = m_total / (n_bound + n_debris)
+
+    pos, vel = _plummer_sample(agama, n_bound, m_total * n_bound / (n_bound + n_debris), scale, rng)
+    centre = np.array([8.0, 1.0, 0.5, 10.0, 200.0, -5.0])
+    remnant = np.hstack([pos + centre[0:3], vel + centre[3:6]])
+    # debris: spread over kpc with a large velocity offset -> unambiguously unbound
+    debris = np.hstack(
+        [
+            centre[0:3] + rng.normal(0.0, 1.5, (n_debris, 3)),
+            centre[3:6] + rng.normal(0.0, 40.0, (n_debris, 3)),
+        ]
+    )
+    xv = np.vstack([remnant, debris])
+    masses = np.full(len(xv), per)
+
+    offset = centre + np.array([0.3, -0.2, 0.1, 3.0, -4.0, 2.0])
+    m_bound = _bound_mass(agama, xv, masses, offset, scale)
+
+    planted = per * n_bound
+    assert 0.3 * planted < m_bound < 1.4 * planted
+    assert m_bound < m_total
+
+
+def test_bound_mass_returns_zero_for_a_fully_dissolved_cluster():
+    """No overdensity anywhere -> nothing bound. (This is what a progenitor whose *present-day* mass
+    is used as its *initial* mass does over a few Gyr, which is why the diagnostic is worth saving.)"""
+    import agama
+
+    from hydrabflow.simulators.stream_agama_rnbody import _bound_mass
+
+    agama.setUnits(mass=1, length=1, velocity=1)
+    rng = np.random.default_rng(1)
+    n = 500
+    xv = np.hstack([rng.normal(0.0, 2.0, (n, 3)), rng.normal(0.0, 50.0, (n, 3))])
+    xv[:, 0] += 8.0
+    masses = np.full(n, 4.3e3 / n)  # Pal 5-like: a ~2 km/s well against a 50 km/s spread
+    assert _bound_mass(agama, xv, masses, np.array([8.0, 0, 0, 0, 0, 0.0]), 0.00843) == 0.0
+
+
+# ------------------------------------------------------------------------------------------- #
+# Solar phase-space frame (marginalized nuisance)
+# ------------------------------------------------------------------------------------------- #
+
+
+def _rho_a_pot_cfg():
+    return dict(
+        halo_r_t_kpc=1000.0, gas_disks=True, thick_disk=False, disk_vertical="exponential",
+        bulge_density_norm=9.93e10, halo_parameterization="rho_a",
+        halo_H0_kms_mpc=70.4, halo_Delta_mass=200.0, halo_Delta_c=94.0,
+    )
+
+
+def _rho_a_params(**extra):
+    p = dict(
+        rho_TwoPowerTriaxial_halo=8.5e6, a_TwoPowerTriaxial_halo=19.6,
+        gamma_TwoPowerTriaxial_halo=1.0, beta_TwoPowerTriaxial_halo=3.0,
+        q_TwoPowerTriaxial_halo=0.9, r_Disk=2.6, z_Disk=0.3, Sigma_Disk=8.0e8,
+    )
+    p.update(extra)
+    return p
+
+
+def test_solar_frame_defaults_and_peculiar_v():
+    """Without priors the frame is the fixed literature default; V_Sun is PECULIAR, so the frame's
+    azimuthal velocity is v_circ(R0) + V_Sun in this row's own potential."""
+    import agama
+
+    from hydrabflow.simulators.stream_agama import Z_SUN_KPC, _host_potential, _solar_frame
+    from hydrabflow.simulators.stream_common import R0_KPC, vcirc_from_potential
+
+    agama.setUnits(mass=1, length=1, velocity=1)
+    cfg, p = _rho_a_pot_cfg(), _rho_a_params()
+    pot = _host_potential(agama, p, cfg)
+
+    R0, vx, vy, vz, z_sun = _solar_frame(agama, pot, p)
+    assert R0 == pytest.approx(R0_KPC)
+    assert (vx, vz, z_sun) == pytest.approx((11.1, 7.25, Z_SUN_KPC))
+    v_circ = float(vcirc_from_potential(pot, R0_KPC)[0])
+    assert vy == pytest.approx(v_circ + 12.24)
+
+    # a drawn frame is used verbatim, and V stays peculiar w.r.t. the NEW R0
+    q = _rho_a_params(R0_Sun=8.05, U_Sun=13.0, V_Sun=10.0, W_Sun=6.5)
+    R0b, vxb, vyb, vzb, _ = _solar_frame(agama, pot, q)
+    assert (R0b, vxb, vzb) == pytest.approx((8.05, 13.0, 6.5))
+    assert vyb == pytest.approx(float(vcirc_from_potential(pot, 8.05)[0]) + 10.0)
+
+
+def test_solar_frame_projection_round_trip_is_exact():
+    """The projection and the progenitor's ICRS -> Galactocentric conversion must use ONE frame:
+    pushing observed coordinates through both directions has to return them unchanged. This is the
+    guard against the two desynchronising when R0/v_sun are varied."""
+    import agama
+
+    from hydrabflow.simulators.stream_agama import _host_potential, _solar_frame
+    from hydrabflow.simulators.stream_common import _sky_projection_agama
+
+    agama.setUnits(mass=1, length=1, velocity=1)
+    p = _rho_a_params(R0_Sun=8.05, U_Sun=13.0, V_Sun=10.0, W_Sun=6.5)
+    pot = _host_potential(agama, p, _rho_a_pot_cfg())
+    frame = _solar_frame(agama, pot, p)
+
+    obs = (229.022, -0.112, 20.6, -2.736, -2.646, -58.6)  # Pal 5
+    ra, dec, dist, pmra, pmdec, vlos = obs
+    lon, lat, pmlon, pmlat = agama.transformCelestialCoords(
+        agama.fromICRStoGalactic, np.radians(ra), np.radians(dec), pmra, pmdec
+    )
+    xv = np.array(
+        agama.getGalactocentricFromGalactic(
+            lon, lat, dist, pmlon * 4.74, pmlat * 4.74, vlos,
+            galcen_distance=frame[0], galcen_v_sun=frame[1:4], z_sun=frame[4],
+        )
+    )
+    back = _sky_projection_agama(xv[None, None, :], np.array([frame]))[0, 0]
+    np.testing.assert_allclose(back, np.asarray(obs), rtol=0, atol=1e-9)
+
+
+def test_sky_projection_agama_matches_astropy_on_the_default_frame():
+    """The AGAMA path reproduces the astropy default-frame projection to well within Gaia errors
+    (the two ICRS<->Galactic rotation matrices differ slightly, which is why astropy stays the
+    default when the Solar frame is not varied)."""
+    from hydrabflow.simulators.stream_common import _sky_projection_agama, sky_projection
+
+    rng = np.random.default_rng(0)
+    xv = np.concatenate(
+        [rng.uniform(-25.0, 25.0, (1, 400, 3)), rng.normal(0.0, 150.0, (1, 400, 3))], axis=-1
+    )
+    astro = sky_projection(xv)
+    # astropy's own default Galactocentric frame values
+    frame = np.array([[8.122, 12.9, 245.6, 7.78, 0.0208]])
+    ag = _sky_projection_agama(xv, frame)
+
+    assert np.abs(ag[..., 0] - astro[..., 0]).max() < 5e-3     # ra  [deg]
+    assert np.abs(ag[..., 1] - astro[..., 1]).max() < 5e-3     # dec [deg]
+    np.testing.assert_allclose(ag[..., 2], astro[..., 2], rtol=1e-10)   # distance
+    assert np.abs(ag[..., 3] - astro[..., 3]).max() < 5e-2     # pm  [mas/yr]
+    assert np.abs(ag[..., 4] - astro[..., 4]).max() < 5e-2
+    np.testing.assert_allclose(ag[..., 5], astro[..., 5], rtol=1e-9)    # v_los
+
+
+def test_solar_params_are_marginalized_not_inferred(compose):
+    """`params.marginalize` keeps the Solar parameters out of the inferred set (and therefore out of
+    the compositional prior score) while still drawing them per row for the forward model."""
+    from hydrabflow.simulators.registry import get_simulator
+
+    sim = get_simulator(compose(["simulator=stream_agama_rnbody_ibata_m200c_v2"]).simulator)
+    solar = ["R0_Sun", "U_Sun", "V_Sun", "W_Sun"]
+    assert sim._marginalized == set(solar)
+    for name in solar:
+        assert name not in sim.global_parameter_names
+        assert name not in sim.prior_spec_global
+        assert name in sim._priors_global  # still declared, so still drawn
+
+    drawn = sim.sample_prior(4000, np.random.default_rng(0))
+    for name, (mu, sd) in zip(solar, [(8.178, 0.026), (11.1, 1.25), (12.24, 2.05), (7.25, 0.62)]):
+        arr = np.asarray(drawn[name]).ravel()
+        assert arr.mean() == pytest.approx(mu, abs=4.0 * sd / np.sqrt(len(arr)))
+        assert arr.std() == pytest.approx(sd, rel=0.1)

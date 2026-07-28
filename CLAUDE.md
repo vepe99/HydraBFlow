@@ -791,6 +791,136 @@ Every run saves:
     M68 phi2 0.79/P=.72, M68 vlos 14.0/P=.70. Probe npz/pngs in the session scratchpad only;
     dataset-level figures under each dataset's `ppc/` dir.
 
+- Session 2026-07-28 (v2: progenitor-input correction, occupancy-aware summaries, freed halo/bulge/
+  t_end, rejection prior dropped): a literature + code audit of the "streams still look unrealistic"
+  and "gamma sits on its prior boundary" symptoms found that **three of the four leading causes were
+  input/estimator errors, not missing physics** — so the earlier `_wide` prior-freeing had been
+  compensating for them. Nothing here is trained; dataset generation is the deliverable (training
+  runs on the other cluster).
+  - **Progenitor masses were PRESENT-DAY masses used as INITIAL masses.** `mass_sat` is the mass at
+    t = -t_end (agama's example treats `initmass` the same way). All three values trace to Table 2 of
+    Palau & Miralda-Escude (2023), which holds cluster mass fixed: Pal5 4.3e3 = bound REMNANT only
+    (Ibata, Lewis & Martin 2017), NGC3201 6.47e4 = LUMINOUS mass (Sollima & Baumgardt 2017; their
+    dynamical mass is 1.20e5), M68 5.7e4 = a +-50% Plummer dynamical fit (Lane et al. 2010). Against
+    Baumgardt & Hilker 2018 present-day masses that is ~3x/2.2x/3.1x low, and ~9-16x low against
+    literature initial masses. **Pal5's `a_progenitor` = 8.43 pc was also the wrong KIND of radius** —
+    a King core radius fed in as a Plummer scale radius (r_h,m/1.305 gives ~21 pc), so its progenitor
+    was ~2.5x too compact as well as far too light. Confirmed by the new bound-mass diagnostic: at
+    4.3e3 the Pal5 progenitor DISSOLVES COMPLETELY in 4 Gyr (densest surviving clump ~11/400
+    particles) though the real cluster still exists. Config `stream_agama_rnbody_ibata_m200c_prog`
+    corrects and frees both (masses from B&H18 present-day up to M_Ini; radii bracketing both
+    conventions). Freeing the radius doubles as the grounded proxy for BH-retention cluster inflation
+    (Weatherford & Bonaca 2025: sigma 1.2->2.2 km/s, "similar in magnitude to heating by Galactic
+    substructure" and explicitly a selection effect for DM inference).
+  - **`m_bound_final` saved** (rnbody only): `_bound_mass` re-estimates the remnant centre from the
+    particles (shrinking sphere + bound-set iteration) because our centre trajectory is the massless
+    test-particle orbit and a GC well is only ~2 km/s deep for Pal5 — evaluated at the orbit centre
+    the criterion declares everything unbound. Per-stream `(n,m,1)` in compositional, a diagnostic the
+    adapter drops. **Measured survival is low: 41.7% of rows leave a remnant WITH the rotation-curve
+    cut, 19.8% without** (96-row probe) — a physical, stream-based screen the rotation-curve cut never
+    applied. Deliberately NOT turned into a rejection prior (that is what we set out to remove); the
+    dataset script reports it so the choice is made on real numbers.
+  - **Summary-statistic estimator fixed** (`augmentation/stream_summary.py`). The phi1 bin edges are
+    equal-count quantiles of the REAL members, so real bins hold N/K stars by construction and
+    simulated ones do not; combined with `jnp.nanstd`'s ddof=0 (0.72x at N=3, 0.57x at N=2, exactly 0
+    at N=1) and zero-filling of empty bins, simulated dispersions were biased LOW — and for phi2 a
+    fabricated 0 *is* the on-track value, so an empty bin passed for an on-track, zero-dispersion one.
+    Now: ddof=1 or a MAD scale (`summary_scale`), NaN below `summary_min_count`, per-bin **occupancy
+    channels** (`n_track`, `n_vlos`), out-of-range stars excluded instead of clipped into the end bins
+    (plus an out-of-range-fraction scalar). Layouts: grid 12 -> **14** channels, flat 91 -> **105**.
+    **NOTE the scope of this bug:** `ppc_summary_statistics.py` already used ddof=1 + min_count=3, so
+    the published cold-stream TABLE was never biased by it; what was biased is what the **network
+    trains on** and `sumstat_sim_vs_real.py` (the z-map that localized `std_phi2`, |z| up to 10.4).
+  - **`masked_time_series_transformer`** (`networks/`): reads the occupancy channels, zeroes
+    under-populated bins, masks them out of attention AND — the reason it must exist — pools only over
+    valid bins. **BayesFlow's own nets cannot do this**: `SetTransformer.call` ends with an unmasked
+    `pooling_by_attention` and `TimeSeriesTransformer.call` with an unmasked `self.pooling(inp)`, so
+    masked positions leak in (measured: padded-plus-masked differs from the true subset by ~0.39/0.48
+    against output scales 1.1/2.0, i.e. 20-35%). With the wrapper the same test gives 4.8e-7, so
+    **padding is transparent and per-stream adaptive phi1 bin counts become possible** — K no longer
+    has to be tuned down to the sparsest stream (M68's 29 vlos stars currently cap K_vlos=3 for all).
+    Implemented via `TimeSeriesTransformer(return_sequences=True)` + our own masked pooling, so no
+    BayesFlow internals are forked. Required mask shape is `(B,T,T)`/broadcastable; `(B,T)` raises.
+  - **q(r) considered and REJECTED on the literature** (the user required grounding). Published radial
+    variation in MW halo shape is in ORIENTATION and sets in at r >~ 30-150 kpc — outside these
+    streams' 5-30 kpc reach (Shao+2021 twist radius 30-150; Vasiliev+2021's r_q is Sgr-driven at
+    15-100 and called "tentative"); inside 30 kpc simulations find axis ratios almost independent of
+    radius for a 10^12 Msun halo (Chua+2019 verbatim; Shao+2021 b/a~0.95, c/a~0.85 stable). The only
+    in-range support is Vera-Ciro & Helmi 2013's ~10 kpc transition (a modelling device to reconcile
+    Sgr with a disc-aligned inner halo) and Bovy+2016's explicit "hint" at +-0.14. Meanwhile the
+    scatter BETWEEN constant-q inner-halo analyses (0.75 Ibata+24, 1.05 Bovy+16, 1.06 Palau+23, 1.20
+    Woudenberg & Helmi 24, our own 0.78 vs 1.3) dwarfs any predicted gradient — that is systematics.
+    Measured costs on the full potential (20k forces, the quantity scaling the 10-25 s/row rnbody
+    cost): two superposed Spheroids ~1.0x but **ineffective** (q_eff only 1.016->1.082; superposition
+    washes the contrast out), explicit q(r) via `Multipole` 1.29x and effective (q_eff 0.72->1.09,
+    reproduces the analytic Spheroid to ~1e-6 when q0==q_inf), **triaxial 1.92x**.
+  - **Freed instead: `alpha` (transition sharpness), `p` (axisRatioY) and a `tilt` angle** — all three
+    were literal constants — plus a ~10% `rho_Bulge`. Grounded in Nibauer & Bonaca 2025 (axis ratios
+    1:0.75:0.70, major axis tilted 18-20 deg at r~12 kpc, from GD-1), Woudenberg & Helmi 2024
+    (p=1.013+-0.006, q=1.204 inside 20 kpc), Emami+2021/Auriga (tilt generic, 19+-20 deg). Each
+    defaults to its old value, verified bit-identical (force diff 0.000e+00). **Why gamma rails:**
+    under m200_c `r_h = r200/[c200 (2-gamma)]` hard-couples gamma to the scale radius (gamma 1.0 ->
+    r_h 14.6 kpc, 1.5 -> 29.1, 1.75 -> 58.3, 1.9 -> 145.6), and at fixed (M200,c) raising gamma
+    1.0->1.9 adds ~30 km/s of halo v_c at R=4 kpc while LOWERING it beyond 15 kpc — exactly what the
+    under-predicted HI terminal velocity (R=4.2-7.5 kpc) and Huang's declining outer curve jointly
+    demand, so gamma was the only knob that could do both. gamma=1 with alpha=2 reaches 183 km/s at
+    4 kpc and still declines. Also: gamma~1.75 is unphysical (empirical MW values cluster at 0.4-1.0;
+    Palau & Miralda-Escude 2023 fit OUR three streams with both slopes free and get inner slope
+    0.06+-0.22 with a heavy (6-8)e10 disc — the opposite corner of the disc-halo degeneracy).
+    **NOT done, deliberately:** tightening Sigma_Disk to Bland-Hawthorn & Gerhard 2016 as they did —
+    it directly conflicts with this project's own finding that the 1.5e9 ceiling capped inner-disc
+    mass below the observed v_term and that 3.0e9 was needed. Revisit only if gamma still rails.
+  - **Rejection prior dropped** (`vcirc_rejection: null`, per user): the curve is already an observable
+    (`vcirc_kms` + `mask_vcirc_radii` + `attach_observed_vcirc`), so the cut double-counted it and
+    truncated the halo-shape prior; removing it also makes the analytic compositional prior score
+    exactly correct rather than correct-only-inside-the-accepted-region. Prior sampling becomes free
+    (was ~12.6 screens/accepted row); measured NaN rate 3.1% vs 6.2% (n=96, so consistent).
+  - **t_end freed to U[2,10] Gyr for ALL THREE streams.** Structural reason to do all three:
+    `local_parameter_names` reads the FIRST stream only (`stream_agama.py:667-669`), so in `_wide`
+    M68's freed t_end varied per row but was silently NOT an inference variable. Tension to keep in
+    view: Palau, Wang & Han 2025 put M68's stream age at 3.04 (+5.63/-0.29) Gyr, and a genuinely long
+    t_end pushes the integration through the Gaia-Enceladus merger where a static halo is hard to
+    defend — so if the corrected progenitors remove the need for long ages, prefer short.
+  - **`contaminate_members` augmentation added but DISABLED** (`contamination_max_frac: 0.0`, per
+    user: no contamination in the training set). Interlopers are modelled as broadened look-alikes of
+    that row's own members, not uniform field stars, because real contaminants are exactly the objects
+    that passed the stream-finder cuts (Ibata+2020 reject 1 of 5 spectroscopic Gjoll targets on RV and
+    find a metallicity spread ~30x the cluster's intrinsic sigma; M68 has no published width at all).
+    At 0.0 it is an exact no-op, so enabling it later is one override and needs no regeneration; it is
+    a per-batch augmentation so it never touched the stored npz either way.
+  - Configs: `simulator/stream_agama_rnbody_ibata_m200c_{prog,v2}.yaml`,
+    `augmentation/stream_{global,real_global}_ibata_grid_v2.yaml`,
+    `model[/summary_network]/stream_fusion_ibata_grid_masked.yaml`; script
+    `scripts/create_ibata_rnbody_m200c_v2_dataset.sh` (pilot + survival/NaN report + PPCs, prints the
+    train commands rather than running them). Suite 114 -> 132 tests, all green.
+  - **Solar phase-space frame varied as a MARGINALIZED nuisance** (added same session, per user):
+    `R0_Sun ~ N(8.178, 0.026)` kpc (GRAVITY 2019) and the Schonrich, Binney & Dehnen (2010) PECULIAR
+    velocities `U_Sun ~ N(11.1,1.25)`, `V_Sun ~ N(12.24,2.05)`, `W_Sun ~ N(7.25,0.62)` km/s. This also
+    **fixes the R0 inconsistency**: `sky_projection` used astropy's default Galactocentric frame
+    (R0=8.122, v_sun=(12.9,245.6,7.78)) while the potential observables used `R0_KPC = 8.178`.
+    `stream_agama._solar_frame` now builds ONE per-row frame used for the projection, the progenitor's
+    observed-ICRS -> Galactocentric conversion, AND the R0-anchored ancillary observables (v_term
+    tangent points, Sigma(1.1), rho(z)), so they cannot desynchronise. Because V is peculiar, the
+    frame's azimuthal velocity is `v_circ(R0) + V_Sun` **in that row's own potential** — the Sun's
+    motion is not independent of the mass model (sanity: ~245 km/s, matching astropy's default).
+    Implementation notes: the worker returns its frame as a 6th tuple element so `simulate` reuses it
+    rather than rebuilding it; `sky_projection(xv, frames)` takes the AGAMA path only when a solar
+    prior is declared, so **existing configs keep the astropy path byte-for-byte**. The two paths
+    differ by ~1e-4 deg / ~1e-4 mas/yr (different ICRS<->Galactic rotation matrices; distance and
+    v_los agree to machine precision) — far below Gaia errors but real, hence the conservative
+    default. Round-trip ICRS -> Galactocentric -> ICRS through a varied frame is exact to ~1e-14.
+    **New `params.marginalize` seam** (`stream_agama._marginalized`): names listed there are drawn per
+    row and fed to the forward model but excluded from `global_parameter_names` — and therefore from
+    `prior_spec_global`, so the compositional prior score gains no term, which is correct for a
+    dimension that is not inferred. The v2 config marginalizes all four; the global posterior stays
+    11-dimensional. This is the mechanism the README roadmap asked for ("varied in simulation,
+    excluded from inference_variables") without an explicit hand-maintained adapter list.
+  - **NOT done / follow-ups**: (a) no bin-count sensitivity sweep
+    was added to the PPC scripts (the occupancy report was added to `sumstat_sim_vs_real.py`), so the
+    "is the verdict stable in K?" check is still manual; (c) with padding now transparent, raising
+    K_phi1 / going per-stream adaptive is unexploited; (d) whether to add a remnant-survival screen is
+    an open decision resting on the pilot numbers.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

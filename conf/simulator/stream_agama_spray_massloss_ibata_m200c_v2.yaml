@@ -1,0 +1,52 @@
+# Particle-spray forward model WITH progenitor mass loss, on the v2 potential.
+#
+# Inherits stream_agama_rnbody_ibata_m200c_v2 wholesale — the SAME potential, priors and
+# observables (Ibata single stellar disk + gas disks + truncated m200_c halo, freed alpha / p /
+# tilt / rho_Bulge, marginalized Solar frame, no rotation-curve rejection prior, t_end U[2,10] for
+# all three streams, corrected initial progenitor masses and radii) — and swaps ONLY the forward
+# model: `name: stream_agama` selects the particle-spray class instead of the restricted-N-body
+# subclass. So a comparison against the rnbody v2 dataset isolates the forward model.
+#
+# ---------------------------------------------------------------------------------------------
+# Mass loss (the reason this config exists)
+# ---------------------------------------------------------------------------------------------
+# Plain particle spray holds the progenitor mass FIXED for the whole integration, which is
+# inconsistent with the corrected progenitor inputs: `m_progenitor` is now an INITIAL mass (at
+# t = -t_end), 3-16x the observed present-day mass, so a fixed-mass spray would keep the cluster at
+# its formation mass until today. That inflates the Jacobi radius (rj ~ M^1/3), the Chen+2024
+# escape speed (~ sqrt(M)) and the progenitor's own potential well for the entire run.
+#
+# `mass_loss: linear` makes the mass decline from `m_progenitor` to `m_progenitor_final` across the
+# stripping window. All three mass-dependent pieces follow the same track: the Jacobi radius, the
+# escape speed, and the moving Plummer potential (via agama's time-dependent `scale` modifier).
+# `linear` = constant mass-loss rate, the first-order behaviour of a cluster on the dissolution
+# track (Baumgardt & Makino 2003) and the honest interpolation between the two endpoints we have
+# numbers for; `exponential` (constant fractional rate) is the alternative.
+#
+# `m_progenitor_final` is the MEASURED present-day mass (Baumgardt & Hilker 2018) as an identity
+# prior — a fixed constant per stream, not inferred, exactly like the fixed potential constants.
+# It equals the LOWER bound of each stream's `m_progenitor` prior, so a draw at that bound sheds no
+# mass and the model degenerates continuously to the fixed-mass case. Note the asymmetry with the
+# restricted-N-body run: there the present-day bound mass is an OUTPUT (`m_bound_final`, measured,
+# and only ~23% of draws leave a remnant at all); here it is an imposed input, so this config
+# cannot produce a dissolved progenitor and reports no `m_bound_final`.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v2
+
+name: stream_agama            # particle spray (the base class), not the restricted-N-body subclass
+params:
+  spray_method: chen          # Chen, Gnedin & Li (2024) release model
+  mass_loss: linear           # linear | exponential ; absent/null = fixed mass (spray default)
+  priors_local:
+    Pal5:
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.34e4]   # B&H18 present-day bound mass
+    NGC3201:
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.93e5]   # B&H18
+    M68:
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.28e5]   # B&H18

@@ -1,0 +1,88 @@
+# Restricted-N-body Ibata / m200_c simulator with CORRECTED PROGENITOR INPUTS.
+#
+# Everything about the potential, the priors on the globals, the banded Zhou u Huang rejection prior,
+# the extended vcirc grid and the ancillary observables is inherited unchanged. The only change is
+# the per-stream progenitor mass and size — but it is a correction, not a tuning knob.
+#
+# ---------------------------------------------------------------------------------------------
+# WHY: the inherited values are PRESENT-DAY masses being fed as INITIAL masses.
+# ---------------------------------------------------------------------------------------------
+# `m_progenitor` is the mass of the Plummer progenitor at t = -t_end (stream_agama_rnbody.py:
+# _rnbody_stream sets up the particles from it and then strips them self-consistently, exactly as
+# agama's example_tidal_stream.py treats `initmass`). The inherited numbers all come from Table 2 of
+# Palau & Miralda-Escude (2023), which holds the cluster mass FIXED for the whole integration — a
+# consistent choice for their spray model, but wrong as an initial condition here. Traced to source:
+#
+#   stream     inherited   what it actually is                                   present-day (B&H18)  initial
+#   Pal5       4.3e3       bound REMNANT only, Ibata, Lewis & Martin 2017         1.34e4               4.7e4 (Ibata+17)
+#                                                                                                     ~7e4  (Dehnen+2004)
+#   NGC3201    6.47e4      present-day LUMINOUS mass, Sollima & Baumgardt 2017    1.93e5               5.61e5
+#                          (their dynamical mass is 1.20e5)
+#   M68        5.7e4       present-day DYNAMICAL mass, single-mass Plummer fit,   1.28e5               5.46e5
+#                          Lane et al. 2010 (+-50%)
+#
+# (B&H18 = Baumgardt & Hilker 2018 / the Baumgardt GC database; "initial" is that database's M_Ini,
+# from Baumgardt & Makino 2003 eqs. 10 & 12, except Pal 5 where two independent direct estimates
+# exist.) So the progenitors were being under-massed by ~3x against present-day values and ~9-16x
+# against initial ones. Confirmed directly by the new bound-mass diagnostic: at m=4.3e3 the Pal 5
+# progenitor DISSOLVES COMPLETELY over 4 Gyr (m_bound_final = 0, densest surviving clump ~11 of 400
+# particles) even though the real cluster is still there — an initial condition that cannot produce
+# the object we observe. It also under-produces tail width, which is the "the simulated streams are
+# too cold" symptom, and is what the earlier ad-hoc `_wide` Pal5 m_progenitor x2 was compensating for.
+#
+# The priors below run from the modern present-day mass (a hard lower bound: the cluster cannot have
+# started lighter than it is now) up to the literature initial mass.
+#
+# ---------------------------------------------------------------------------------------------
+# WHY the radii change too: Pal 5's was the wrong KIND of radius.
+# ---------------------------------------------------------------------------------------------
+# `a_progenitor` [pc] is used as a Plummer scale radius (radius_sat = a_progenitor/1e3 kpc).
+#   * Pal5 8.43 pc matches none of B&H18's radii (r_c 15.35, r_h,l 20.42, r_h,m 27.63 pc) and is most
+#     plausibly a King CORE radius from the Ibata+2017 fit. As a Plummer scale radius it makes the
+#     progenitor ~2.5x too compact in the half-mass sense. Corrected via r_h,m/1.305 -> ~21 pc.
+#     Combined with the 3-16x mass deficit, Pal 5's progenitor was far too dense — an independent
+#     route to the same under-produced tail width.
+#   * NGC3201 4.9 pc = Sollima & Baumgardt's r_h/1.305, a correct conversion; B&H18's r_h,m = 8.68 pc
+#     gives 6.65 pc, so the range below brackets both.
+#   * M68 6.4 pc is genuinely a fitted Plummer scale radius (Lane et al. 2010) and needs no fix.
+#
+# Both are FREED rather than just re-pinned, for two reasons: the initial values are genuinely
+# uncertain (Pal 5's two initial-mass estimates differ by 1.5x, M68's dynamical mass by +-50%), and
+# the progenitor's size stands in for physics we do not model — retained stellar-mass black holes
+# inflate a cluster and heat its tails (Weatherford & Bonaca 2025 find sigma 1.2 -> 2.2 km/s, an
+# effect "similar in magnitude to heating by Galactic substructure" and explicitly a selection effect
+# for dark-matter inference; Gieles et al. 2021 put ~20% of Pal 5's present mass in BHs, and
+# NGC 3201 has >=200 retained BHs by Kremer et al. 2018). To first order a BH-inflated cluster is a
+# larger, hotter Plummer, so marginalising the scale radius is the cheap grounded proxy.
+#
+# Both are per-stream LOCALS, so at composition=global they are nuisance-marginalised.
+# NOTE: `local_parameter_names` is derived from the FIRST stream only (stream_agama.py:667-669), so
+# freeing them for Pal5 promotes them to inferred locals for all three — which is what we want, and
+# is why they are freed consistently rather than per-stream.
+defaults:
+  - stream_agama_rnbody_ibata_onedisk_beta3_m200c
+
+name: stream_agama_rnbody
+params:
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.34e4, 7.0e4]   # B&H18 present-day -> Dehnen+2004 initial
+      a_progenitor:
+        type: uniform
+        prior_parameters: [10.0, 35.0]      # Plummer a; r_h,m/1.305 ~ 21 pc (was a King r_c, 8.43)
+    NGC3201:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.93e5, 5.61e5]  # B&H18 present-day -> M_Ini
+      a_progenitor:
+        type: uniform
+        prior_parameters: [3.0, 12.0]       # brackets 4.9 (S&B17) and 6.65 (B&H18 r_h,m/1.305)
+    M68:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.28e5, 5.46e5]  # B&H18 present-day -> M_Ini
+      a_progenitor:
+        type: uniform
+        prior_parameters: [3.0, 12.0]       # brackets 6.4 (Lane+2010 Plummer a) and 5.57 (B&H18)

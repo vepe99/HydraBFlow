@@ -1,0 +1,144 @@
+# Restricted-N-body Ibata / m200_c simulator, v2: corrected progenitors (inherited) + no
+# rotation-curve rejection prior + the previously-pinned halo/bulge freedoms + free stripping age.
+#
+# Inherits stream_agama_rnbody_ibata_m200c_prog (which carries the corrected INITIAL progenitor
+# masses and Plummer radii — see that file's header for the provenance of every number).
+#
+# ---------------------------------------------------------------------------------------------
+# 1. NO rotation-curve rejection prior.
+# ---------------------------------------------------------------------------------------------
+# The banded Zhou u Huang cut is switched off. It was double-counting the rotation curve: the curve
+# is ALREADY an observable (`vcirc_kms`, trimmed by the mask_vcirc_radii preprocessing step, with the
+# observed curve attached for real data by attach_observed_vcirc), so the network can learn from it
+# through the likelihood. Using it a second time to truncate the prior also truncated the
+# (M200, c_v', gamma, q) space in a shape-dependent way, which is a live suspect for gamma's
+# posterior piling up at its boundary. Removing the truncation additionally makes the analytic
+# compositional prior score exactly correct rather than correct-only-inside-the-accepted-region.
+#
+# Expect faster generation (the cut cost ~12.6 potential screens per accepted row) but a larger
+# fraction of pathological rows. Worth watching in the PPC: the new `m_bound_final` diagnostic shows
+# that even WITH the cut, a substantial fraction of prior draws disrupt all three clusters
+# completely, which is a physical (stream-based) screen the rotation-curve cut never applied.
+#
+# ---------------------------------------------------------------------------------------------
+# 2. Free what was hardcoded in the halo, and the bulge amplitude.
+# ---------------------------------------------------------------------------------------------
+# alpha (two-power transition sharpness) and p = axisRatioY were literal constants in
+# stream_agama._halo_params / _halo_params_m200c; the tilt did not exist. Each defaults to its old
+# fixed value, so every other config is unaffected.
+#
+#   * alpha: the legitimate route to an inner-steep / outer-declining halo. At fixed (M200, c) the
+#     ONLY knob that could produce that shape was gamma — raising it from 1.0 to 1.9 adds ~30 km/s of
+#     halo v_c at R = 4 kpc while lowering it beyond 15 kpc — which is exactly what the
+#     under-predicted HI terminal velocity (probing R = 4.2-7.5 kpc) and Huang's declining outer
+#     curve jointly demand, and why gamma rails. gamma = 1 with alpha = 2 reaches v_c ~ 183 km/s at
+#     4 kpc and still declines outwards. Range from the Zhao (1996) alpha-beta-gamma family.
+#   * p + tilt: triaxiality and inclination of the inner halo, following Nibauer & Bonaca (2025)
+#     (axis ratios 1 : 0.75 : 0.70, major axis tilted 18-20 deg out of the plane at r ~ 12 kpc, from
+#     GD-1) and Woudenberg & Helmi (2024) (p = 1.013 +- 0.006, q = 1.204, inner 20 kpc); simulations
+#     make tilt generic (Emami et al. 2021; Auriga median disc-halo misalignment 19 +- 20 deg).
+#     A radius-dependent q(r) was considered and REJECTED on the literature: the published radial
+#     variation sets in at r >~ 30-150 kpc, well outside these streams' 5-30 kpc reach, and for a
+#     10^12 Msun halo simulations find axis ratios almost independent of radius inside 30 kpc
+#     (Chua et al. 2019; Shao et al. 2021). Tilt also breaks a symmetry the model currently imposes,
+#     so unlike q(r) it can produce genuinely new stream-TRACK signatures — which is the residual we
+#     actually see, the rotation curve already being fit to <1%.
+#   * rho_Bulge: the bulge was fixed at all five parameters. The bulge-disc trade-off at R ~ 5-8 kpc
+#     feeds straight into Sigma_Disk and r_Disk, so pinning it forces the halo cusp to absorb any
+#     inner-mass mismatch. Tight ~10% prior on McMillan's fitted value (his 9.8351e10; this chain
+#     uses 9.93e10), so it is a nuisance, not a free mass component.
+#
+# DELIBERATELY NOT DONE: tightening Sigma_Disk to Bland-Hawthorn & Gerhard (2016), which is how
+# Palau & Miralda-Escude (2023) landed in the heavy-disc / cored-halo corner on these same three
+# streams. It directly conflicts with this project's own measurement that the 1.5e9 ceiling capped
+# inner-disc mass below the observed HI terminal velocity and that 3.0e9 was needed to bring
+# v_term into the prior bulk. The freed alpha + bulge give the model legitimate inner-mass freedom
+# instead; if gamma still rails after this, revisit the disc prior as the next lever.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_prog
+
+name: stream_agama_rnbody
+params:
+  vcirc_rejection: null   # switch the inherited banded Zhou u Huang cut off (see section 1 above)
+
+  # Varied in simulation but excluded from the inferred set (see the Solar block below).
+  marginalize: [R0_Sun, U_Sun, V_Sun, W_Sun]
+  priors_global:
+    alpha_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [0.5, 2.0]     # Zhao (1996) alpha-beta-gamma family; 1.0 = the old constant
+    p_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [0.75, 1.25]   # axisRatioY; brackets Woudenberg & Helmi's p ~ 1.01
+    tilt_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [0.0, 30.0]    # deg; Nibauer & Bonaca 18-20, Auriga 19 +- 20
+    rho_Bulge:
+      type: normal
+      prior_parameters: [9.93e10, 1.0e10]   # ~10% around McMillan's fitted bulge amplitude
+
+    # -----------------------------------------------------------------------------------------
+    # 2b. Solar phase-space frame, varied as a MARGINALIZED nuisance.
+    # -----------------------------------------------------------------------------------------
+    # Every observable in this model is heliocentric — the stream's (ra, dec, parallax, pm, v_los),
+    # the tangent-point terminal velocities, Sigma(1.1 kpc) and rho(z) at R0 — so the Solar frame is
+    # a systematic on all of them, and it was previously fixed AND internally inconsistent:
+    # `sky_projection` used astropy's default Galactocentric frame (R0 = 8.122 kpc,
+    # v_sun = (12.9, 245.6, 7.78)) while the potential-derived observables used R0_KPC = 8.178.
+    # Now one per-row frame is built by stream_agama._solar_frame and used for ALL of them — the
+    # projection, the progenitor's observed-ICRS -> Galactocentric conversion, and the R0-anchored
+    # ancillary observables — so they cannot desynchronise.
+    #
+    #   R0_Sun ~ N(8.178, 0.026) kpc        GRAVITY Collaboration (2019)
+    #   U_Sun  ~ N(11.1,  1.25)  km/s       Schonrich, Binney & Dehnen (2010)
+    #   V_Sun  ~ N(12.24, 2.05)  km/s       "     (PECULIAR, so the frame's azimuthal velocity is
+    #   W_Sun  ~ N(7.25,  0.62)  km/s       "      v_circ(R0) + V_Sun in this row's own potential)
+    #
+    # Listed in `marginalize` below: drawn per row and fed to the forward model, but NOT inferred.
+    # These are external measurements that three inner-halo streams cannot improve on, and inferring
+    # them would add four uninformative dimensions to the global posterior. Marginalizing is what
+    # makes the reported potential posterior honest about the frame systematic.
+    R0_Sun:
+      type: normal
+      prior_parameters: [8.178, 0.026]
+    U_Sun:
+      type: normal
+      prior_parameters: [11.1, 1.25]
+    V_Sun:
+      type: normal
+      prior_parameters: [12.24, 2.05]
+    W_Sun:
+      type: normal
+      prior_parameters: [7.25, 0.62]
+
+  # -------------------------------------------------------------------------------------------
+  # 3. Free the stripping age for ALL THREE streams.
+  # -------------------------------------------------------------------------------------------
+  # t_end was identity 4.0 Gyr everywhere (and only M68's was freed, in the ad-hoc `_wide` config).
+  # It sets the total rewind/integration span and, in the restricted-N-body worker, the mass-loss
+  # resolution (tupd = t_end / n_updates).
+  #
+  # NOTE the structural reason to free it for all three rather than per-stream: local_parameter_names
+  # is derived from the FIRST stream only (stream_agama.py:667-669). In `_wide`, M68's freed t_end
+  # varied per row but was silently NOT an inference variable, because Pal5's stayed identity.
+  # Freeing all three promotes it consistently.
+  #
+  # Range U[2, 10] Gyr. Palau, Wang & Han (2025) infer M68's stream age at 3.04 (+5.63/-0.29) Gyr —
+  # peaking well below the 8-10 Gyr that the (biased) width diagnostic seemed to require, with a long
+  # tail that reaches it. Note the tension worth keeping in view: a genuinely long t_end pushes the
+  # integration back through the Gaia-Enceladus merger, where a static halo of fixed mass and shape
+  # is much harder to defend. If the corrected progenitors and the fixed dispersion estimator remove
+  # the need for long stripping ages, the static assumption stays defensible.
+  priors_local:
+    Pal5:
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 10.0]
+    NGC3201:
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 10.0]
+    M68:
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 10.0]

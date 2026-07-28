@@ -37,6 +37,7 @@ from hydrabflow.simulators.stream_agama import (
     _halo_params_m200c,
     _host_potential,
     _resolve_pot_cfg,
+    _solar_frame,
     _vcirc,
 )
 from hydrabflow.utils.quiet import quiet_worker
@@ -99,6 +100,59 @@ def _plummer_sample(
     pos = _isotropic(n) * r[:, None]
     vel = _isotropic(n) * (q * v_esc)[:, None]
     return pos, vel
+
+
+def _bound_mass(agama, xv, masses, center0, radius_sat: float, n_iter: int = 6) -> float:
+    """Present-day bound mass of the progenitor remnant, by the agama example's binding-energy
+    criterion ``Phi_sat(r - r_c) + 0.5 |v - v_c|^2 < 0``.
+
+    The centre has to be re-estimated from the particles rather than taken from the progenitor's
+    orbit. Our centre trajectory is the *massless test-particle* orbit (see the module docstring),
+    and a globular cluster's potential well is only ~2 km/s deep for Pal 5 — so once the orbit and
+    the real remnant centroid drift apart by more than that, the criterion evaluated at the orbit
+    centre declares everything unbound. The agama example likewise refines the centre iteratively
+    from the bound set.
+
+    Refinement shrinks a sphere around the current centre (the remnant is by far the densest clump),
+    then alternates ``centroid -> bound set -> centroid`` to convergence. Returns NaN if the
+    estimate cannot be formed.
+    """
+    try:
+        c = np.array(center0, dtype=float).copy()
+        # Shrinking-sphere centroid. The ladder has to start at kpc scale, not at a multiple of the
+        # (parsec-scale) progenitor radius: the massless orbit centre can sit a good fraction of a
+        # kpc away from the real remnant after a few Gyr, and a sphere sized on radius_sat would
+        # then enclose no particles at all and never find the clump.
+        radii = [r for r in (5.0, 2.0, 1.0, 0.5, 0.2, 0.1) if r > 3.0 * radius_sat]
+        radii += [30.0 * radius_sat, 10.0 * radius_sat, 4.0 * radius_sat]
+        for R in radii:
+            sel = np.sum((xv[:, 0:3] - c[0:3]) ** 2, axis=1) < R * R
+            if sel.sum() < 10:
+                continue  # too tight at this step; keep the last good centre and carry on
+            c[0:3] = np.average(xv[sel, 0:3], axis=0, weights=masses[sel])
+            c[3:6] = np.average(xv[sel, 3:6], axis=0, weights=masses[sel])
+
+        bound = np.ones(len(xv), dtype=bool)
+        for _ in range(n_iter):
+            pot_sat = agama.Potential(
+                type="Multipole",
+                particles=(xv[bound, 0:3] - c[0:3], masses[bound]),
+                symmetry="s",
+            )
+            energy = pot_sat.potential(xv[:, 0:3] - c[0:3]) + 0.5 * np.sum(
+                (xv[:, 3:6] - c[3:6]) ** 2, axis=1
+            )
+            new_bound = energy < 0
+            if new_bound.sum() <= 1:
+                return 0.0
+            if np.array_equal(new_bound, bound):
+                break
+            bound = new_bound
+            c[0:3] = np.average(xv[bound, 0:3], axis=0, weights=masses[bound])
+            c[3:6] = np.average(xv[bound, 3:6], axis=0, weights=masses[bound])
+        return float(np.sum(masses[bound]))
+    except Exception:
+        return float("nan")
 
 
 def _rnbody_stream(
@@ -184,7 +238,8 @@ def _rnbody_stream(
             )
         except Exception:
             pass  # degenerate particle configuration: keep the previous satellite potential
-    return xv
+
+    return xv, _bound_mass(agama, xv, masses, center_now, radius_sat)
 
 
 @quiet_worker
@@ -210,8 +265,9 @@ def _simulate_one_rnbody(
     time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
 
     pot_host = _host_potential(agama, p, pot_cfg)
+    frame = _solar_frame(agama, pot_host, p)
     vcirc = _vcirc(pot_host, obs_r)
-    anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary)
+    anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary, r0=frame[0])
     halo_derived = None
     if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) == "m200_c":
         h = _halo_params_m200c(agama, p, pot_cfg)
@@ -226,9 +282,12 @@ def _simulate_one_rnbody(
             p["mu_dec"],
         )
         posvel_sat = np.array(
-            agama.getGalactocentricFromGalactic(l0, b0, p["r"], pml0 * 4.74, pmb0 * 4.74, p["vr"])
+            agama.getGalactocentricFromGalactic(
+                l0, b0, p["r"], pml0 * 4.74, pmb0 * 4.74, p["vr"],
+                galcen_distance=frame[0], galcen_v_sun=frame[1:4], z_sun=frame[4],
+            )
         )
-        xv = _rnbody_stream(
+        xv, m_bound = _rnbody_stream(
             agama,
             pot_host,
             posvel_sat,
@@ -245,7 +304,8 @@ def _simulate_one_rnbody(
         )
     except Exception:  # _OrbitCapExceeded (pathological orbit hit the step cap) or agama failure
         xv = np.full((n_particles, 6), np.nan)
-    return xv, vcirc, anc, halo_derived
+        m_bound = float("nan")
+    return xv, vcirc, anc, halo_derived, m_bound, frame
 
 
 @register_simulator("stream_agama_rnbody")

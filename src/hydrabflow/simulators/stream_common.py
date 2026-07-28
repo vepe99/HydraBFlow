@@ -267,16 +267,32 @@ def sample_stream_prior_shared_global(
     return out
 
 
-def sky_projection(sim_data_cartesian: np.ndarray) -> np.ndarray:
+def sky_projection(sim_data_cartesian: np.ndarray, frames: np.ndarray | None = None) -> np.ndarray:
     """Project Galactocentric phase-space coordinates to observed ICRS quantities.
 
     Input ``(n, n_particles, 6)`` = (x, y, z [kpc], vx, vy, vz [km/s]); output same shape with
     (ra, dec [deg], distance [kpc], pm_ra_cosdec, pm_dec [mas/yr], v_los [km/s]).
+
+    ``frames`` is an optional ``(n, 5)`` array of per-row solar reference frames,
+    ``[R0, v_sun_x, v_sun_y, v_sun_z, z_sun]``, as produced by
+    ``stream_agama._solar_frame``. It is used when the solar phase-space parameters are varied as
+    nuisances, and it routes the projection through AGAMA so that the SAME frame is used here and in
+    the progenitor's observed-ICRS -> Galactocentric conversion inside the worker. Without it the
+    projection keeps using astropy's default ``Galactocentric`` frame, so existing configs are
+    unaffected.
+
+    Note the two paths are not bit-identical: AGAMA's and astropy's ICRS<->Galactic rotation matrices
+    differ slightly, giving ~1e-4 deg in (ra, dec) and ~1e-4 mas/yr in proper motion (distance and
+    v_los agree to machine precision). Both are far below the Gaia uncertainties the augmentation
+    chain applies, but it is a real difference and the reason the astropy path stays the default.
     """
+    n, n_particles = sim_data_cartesian.shape[0], sim_data_cartesian.shape[1]
+    if frames is not None:
+        return _sky_projection_agama(sim_data_cartesian, np.asarray(frames, dtype=float))
+
     import astropy.units as u
     from astropy.coordinates import ICRS, Galactocentric
 
-    n, n_particles = sim_data_cartesian.shape[0], sim_data_cartesian.shape[1]
     flat = sim_data_cartesian.reshape(-1, 6)
     gc = Galactocentric(
         x=flat[:, 0] * u.kpc, y=flat[:, 1] * u.kpc, z=flat[:, 2] * u.kpc,
@@ -295,3 +311,35 @@ def sky_projection(sim_data_cartesian: np.ndarray) -> np.ndarray:
         axis=-1,
     )
     return projected.reshape(n, n_particles, 6)
+
+
+def _sky_projection_agama(sim_data_cartesian: np.ndarray, frames: np.ndarray) -> np.ndarray:
+    """Per-row-frame projection via AGAMA (Galactocentric -> Galactic -> ICRS)."""
+    import agama
+
+    n, n_particles = sim_data_cartesian.shape[0], sim_data_cartesian.shape[1]
+    out = np.empty((n, n_particles, 6), dtype=float)
+    for i in range(n):
+        R0, vx, vy, vz, z_sun = frames[i]
+        xv = sim_data_cartesian[i]
+        if not np.isfinite(xv).all():  # a failed row stays NaN, as in the worker
+            out[i] = np.nan
+            continue
+        lon, lat, dist, pmlon, pmlat, vlos = agama.getGalacticFromGalactocentric(
+            *xv.T, galcen_distance=float(R0), galcen_v_sun=(vx, vy, vz), z_sun=float(z_sun)
+        )
+        ra, dec, pmra, pmdec = agama.transformCelestialCoords(
+            agama.fromGalactictoICRS, lon, lat, pmlon, pmlat
+        )
+        out[i] = np.stack(
+            [
+                np.degrees(ra) % 360.0,
+                np.degrees(dec),
+                dist,
+                pmra / 4.74,   # km/s/kpc -> mas/yr
+                pmdec / 4.74,
+                vlos,
+            ],
+            axis=-1,
+        )
+    return out

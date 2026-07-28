@@ -1,0 +1,64 @@
+# Occupancy-aware variant of stream_fusion_ibata_grid: identical except that the sim_summary
+# backbone is a `masked_time_series_transformer` instead of the stock `time_series_transformer`.
+#
+# Why: stream_summary_grid now exports two per-bin occupancy channels (n_track, n_vlos) and still
+# substitutes 0 for the median/std of under-populated φ1 bins, because the network's input must stay
+# finite. A stock TimeSeriesTransformer cannot tell such a bin from a real measurement — and for φ2 a
+# fabricated 0 *is* the on-track value, so an empty bin reads as a perfectly on-track,
+# zero-dispersion one. Since simulated streams have unequal bin occupancy (the φ1 edges are
+# equal-count quantiles of the REAL members) while real ones are equal-count by construction, that
+# systematically biased simulated dispersions low — i.e. it manufactured part of the "the simulated
+# streams are too cold" signal.
+#
+# The masked backbone reads the occupancy channels, zeroes the statistic channels of
+# under-populated bins, masks them out of attention, and — the part BayesFlow cannot do — pools only
+# over the valid bins. (bf's TimeSeriesTransformer.call ends with an unmasked `self.pooling(inp)`,
+# so masked positions otherwise leak into the summary; measured at 20-35% of the output scale.)
+# Consequence: padding is transparent, so K_phi1 no longer has to be tuned down to the sparsest
+# stream.
+#
+# Channel indices below match the 14-channel stream_summary_grid layout
+#   [med_φ2, std_φ2, med_plx, std_plx, med_μφ1, std_μφ1, med_μφ2, std_μφ2,
+#    med_vlos, std_vlos, n_track, n_vlos, j, φ1_centre]
+# and must be updated together with `summary_include_std` / `summary_include_occupancy`.
+defaults:
+  - base_summary_network
+
+type: fusion
+params:
+  mask_backbone: null
+  backbones:
+    sim_summary:
+      type: masked_time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+        time_axis: -1            # φ1 bin-centre is the last channel (the time coordinate)
+        count_channel: 10        # n_track
+        vlos_count_channel: 11   # n_vlos (v_los uses measured stars only -> empties sooner)
+        stat_channels: [0, 1, 2, 3, 4, 5, 6, 7]   # astrometric median/std pairs
+        vlos_stat_channels: [8, 9]                # v_los median/std
+        min_count: 3             # keep in step with augmentation params.summary_min_count
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 11
+    vterm_kms:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      params:
+        embed_dim_multiplier: 8
+  head:
+    width: 64
+    depth: 4
+    output_dim: 72

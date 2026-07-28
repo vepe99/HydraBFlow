@@ -41,6 +41,7 @@ from hydrabflow.simulators.stream_common import (
     OBS_R_KPC,
     OBS_SIGMA_VC,
     OBS_VC_KMS,
+    R0_KPC,
     RHO_Z_KPC,
     VTERM_L_DEG,
     convert_concentration,
@@ -51,6 +52,7 @@ from hydrabflow.simulators.stream_common import (
     sky_projection,
     surface_density,
     terminal_velocity,
+    vcirc_from_potential,
     vertical_density_profile,
 )
 from hydrabflow.utils.progress import joblib_row_progress
@@ -139,18 +141,49 @@ def _thick_disk_params(p: Mapping[str, float], hsign: float) -> dict:
     )
 
 
+def _halo_shape_extras(p: Mapping[str, float]) -> dict:
+    """Optional halo shape/sharpness parameters, each defaulting to the historical fixed value so a
+    config that does not declare them reproduces the previous potential exactly.
+
+    * ``alpha_TwoPowerTriaxial_halo`` — the two-power transition sharpness, previously hardcoded to
+      1. It is the honest way to ask for an inner-steep / outer-declining halo: at fixed (M200, c)
+      the only knob that could do that was ``gamma``, which is why gamma's posterior piles up at its
+      prior boundary. With gamma = 1 and alpha = 2 the halo reaches v_c ~ 183 km/s at R = 4 kpc and
+      still declines outwards, which is the shape the terminal-velocity and outer-rotation-curve
+      data are jointly asking for.
+    * ``p_TwoPowerTriaxial_halo`` — the intermediate axis ratio (``axisRatioY``), previously
+      hardcoded to 1, i.e. the halo was forced axisymmetric.
+    * ``tilt_TwoPowerTriaxial_halo`` — inclination [deg] of the halo's symmetry axis relative to the
+      disc, passed as agama's Euler ``orientation=(0, tilt, 0)``.
+
+    The triaxiality/tilt pair is the literature-supported direction for the *inner* halo: Nibauer &
+    Bonaca (2025) infer axis ratios 1 : 0.75 : 0.70 with the major axis tilted 18-20 deg out of the
+    plane at r ~ 12 kpc from GD-1; Woudenberg & Helmi (2024) measure inner-halo triaxiality
+    (p = 1.013 +- 0.006, q = 1.204) inside 20 kpc; and tilt is the generic expectation in
+    simulations (Emami et al. 2021; Auriga's median disc-halo misalignment 19 +- 20 deg). A
+    radius-dependent q(r) was considered and rejected: the published radial variation sets in at
+    r >~ 30-150 kpc, outside these streams' 5-30 kpc range, and for a 10^12 Msun halo simulations
+    find axis ratios almost independent of radius inside 30 kpc (Chua et al. 2019; Shao et al. 2021).
+    """
+    extras: dict = {"alpha": float(p.get("alpha_TwoPowerTriaxial_halo", 1.0))}
+    extras["axisRatioY"] = float(p.get("p_TwoPowerTriaxial_halo", 1.0))
+    tilt = float(p.get("tilt_TwoPowerTriaxial_halo", 0.0))
+    if tilt != 0.0:
+        extras["orientation"] = (0.0, tilt, 0.0)
+    return extras
+
+
 def _halo_params(p: Mapping[str, float], r_t: float) -> dict:
     return dict(
         type="Spheroid",
         scaleRadius=p["a_TwoPowerTriaxial_halo"],
         densityNorm=p["rho_TwoPowerTriaxial_halo"],
         gamma=p["gamma_TwoPowerTriaxial_halo"],
-        alpha=1,
         beta=p["beta_TwoPowerTriaxial_halo"],
         cutoffStrength=2,
         outerCutoffRadius=r_t,
-        axisRatioY=1.0,
         axisRatioZ=p["q_TwoPowerTriaxial_halo"],
+        **_halo_shape_extras(p),
     )
 
 
@@ -193,15 +226,47 @@ def _halo_params_m200c(agama, p: Mapping[str, float], cfg: Mapping) -> dict:
         scaleRadius=r_h,
         densityNorm=1.0,
         gamma=gamma,
-        alpha=1,
         beta=float(p["beta_TwoPowerTriaxial_halo"]),
         cutoffStrength=2,
         outerCutoffRadius=r_t,
-        axisRatioY=1.0,
         axisRatioZ=float(p["q_TwoPowerTriaxial_halo"]),
+        **_halo_shape_extras(p),
     )
     shape["densityNorm"] = M200 / agama.Potential(**shape).enclosedMass(r200)
     return shape
+
+
+Z_SUN_KPC = 0.0208  # Solar height above the plane (astropy/agama default; not varied)
+
+
+def _solar_frame(agama, pot_host, p: Mapping[str, float]) -> tuple[float, float, float, float, float]:
+    """The row's solar reference frame ``(R0, v_sun_x, v_sun_y, v_sun_z, z_sun)``.
+
+    Optional priors (each defaulting to its fixed literature value, so configs that do not declare
+    them are unaffected):
+
+    * ``R0_Sun``            — Solar galactocentric radius [kpc]; N(8.178, 0.026), GRAVITY (2019).
+    * ``U_Sun``/``V_Sun``/``W_Sun`` — the Sun's PECULIAR velocity [km/s] w.r.t. the local circular
+      orbit; N(11.1, 1.25) / N(12.24, 2.05) / N(7.25, 0.62), Schonrich, Binney & Dehnen (2010).
+
+    ``V_Sun`` is peculiar, so the frame's azimuthal velocity is ``v_circ(R0) + V_Sun`` evaluated in
+    **this row's own potential** — the Sun's motion is not independent of the mass model, and tying
+    them makes the frame self-consistent rather than a free offset. (Sanity check: with V_circ ~ 233
+    km/s this gives ~245 km/s, matching astropy's default galcen_v_sun of (12.9, 245.6, 7.78).)
+
+    The same frame is used for the progenitor's observed-ICRS -> Galactocentric conversion, for the
+    Galactocentric -> ICRS projection of the particles, and for the R0-dependent ancillary
+    observables, so a varied Solar position cannot desynchronise them.
+    """
+    R0 = float(p.get("R0_Sun", R0_KPC))
+    v_circ = float(vcirc_from_potential(pot_host, R0)[0])
+    return (
+        R0,
+        float(p.get("U_Sun", 11.1)),
+        v_circ + float(p.get("V_Sun", 12.24)),
+        float(p.get("W_Sun", 7.25)),
+        Z_SUN_KPC,
+    )
 
 
 def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None):
@@ -215,7 +280,12 @@ def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = Non
     """
     cfg = _resolve_pot_cfg(pot_cfg)
     hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
-    bulge = {**BULGE_PARAMS, "densityNorm": float(cfg["bulge_density_norm"])}
+    # The bulge amplitude is normally a fixed config scalar. A config MAY instead declare a prior on
+    # `rho_Bulge`, in which case it is read per row: the bulge-disc trade-off at R ~ 5-8 kpc feeds
+    # straight into Sigma_Disk / r_Disk, and pinning all five bulge parameters forces the halo cusp
+    # to absorb any inner-mass mismatch (one of the reasons gamma rails).
+    bulge_norm = float(p.get("rho_Bulge", cfg["bulge_density_norm"]))
+    bulge = {**BULGE_PARAMS, "densityNorm": bulge_norm}
     components = [bulge]
     if cfg["gas_disks"]:
         components += [GAS_HI_PARAMS, GAS_H2_PARAMS]
@@ -266,7 +336,9 @@ def _rj_vj_R(agama, pot_host, orbit_sat: np.ndarray, mass_sat: float):
         + 2 * x * y * der[:, 3] + 2 * y * z * der[:, 4] + 2 * z * x * der[:, 5]
     ) / r**2
     Omega = L / r**2
-    rj = (agama.G * mass_sat / (Omega**2 - d2Phi_dr2)) ** (1.0 / 3)
+    # ``mass_sat`` may be a scalar (mass held fixed) or a per-seed array (mass loss): the Jacobi
+    # radius then shrinks along the orbit as the progenitor dissolves.
+    rj = (agama.G * np.asarray(mass_sat) / (Omega**2 - d2Phi_dr2)) ** (1.0 / 3)
     vj = Omega * rj
     return rj, vj, R
 
@@ -333,8 +405,11 @@ def _ic_chen_spray(
 
     rj2 = np.repeat(rj, 2)
     Dr = s[:, 0] * rj2
+    # scalar mass (fixed progenitor) or one mass per orbit seed (mass loss); the interleaved
+    # trailing/leading pair of a seed shares its mass, hence the repeat.
+    m2 = np.repeat(np.asarray(mass_sat), 2) if np.ndim(mass_sat) else mass_sat
     with np.errstate(invalid="ignore"):
-        Dv = s[:, 3] * np.sqrt(2.0 * G * mass_sat / Dr)  # local escape speed at Dr
+        Dv = s[:, 3] * np.sqrt(2.0 * G * m2 / Dr)  # local escape speed at Dr
     phi, theta = np.deg2rad(s[:, 1]), np.deg2rad(s[:, 2])
     alpha, beta = np.deg2rad(s[:, 4]), np.deg2rad(s[:, 5])
     offset_pos = Dr[:, None] * np.column_stack(
@@ -350,12 +425,46 @@ def _ic_chen_spray(
     return ic_stream
 
 
+def _mass_track(
+    mass_initial: float, mass_final: float, time_sat: np.ndarray, time_total: float, law: str
+) -> np.ndarray:
+    """Progenitor bound mass at each release time, from ``mass_initial`` at ``t = -time_total`` to
+    ``mass_final`` at the present day.
+
+    ``time_sat`` is ascending and negative (agama time units), so ``u = 1 + t/time_total`` is the
+    fraction of the stripping window elapsed: 0 at the first release, 1 today.
+
+    * ``linear``      constant mass-loss rate — the first-order behaviour of a cluster on the
+      dissolution track (Baumgardt & Makino 2003), and the honest interpolation between the two
+      endpoints we actually have numbers for (an initial-mass estimate and a measured present-day
+      mass).
+    * ``exponential`` constant *fractional* loss rate; steeper early, gentler late.
+
+    ``mass_final >= mass_initial`` degenerates to the fixed-mass case, which is correct: the prior
+    lower bound on the initial mass is the observed present-day mass.
+    """
+    u = np.clip(1.0 + np.asarray(time_sat, dtype=float) / float(time_total), 0.0, 1.0)
+    m_i, m_f = float(mass_initial), float(mass_final)
+    if m_f >= m_i:
+        return np.full(u.shape, m_i)
+    if law == "exponential":
+        return m_i * (m_f / m_i) ** u
+    if law != "linear":
+        raise ValueError(f"unknown mass-loss law {law!r} (expected 'linear' or 'exponential')")
+    return m_i + (m_f - m_i) * u
+
+
 def _spray_stream(
     agama, pot_host, posvel_sat: np.ndarray, mass_sat: float, radius_sat: float,
     time_total: float, num_particles: int, rng: np.random.Generator,
-    method: str = "fardal",
+    method: str = "fardal", mass_final: float | None = None, mass_loss: str = "linear",
 ) -> np.ndarray:
     """Particle-spray stream including the progenitor's own (moving Plummer) potential.
+
+    With ``mass_final`` given, the progenitor loses mass over the integration per ``mass_loss``
+    (see :func:`_mass_track`): the Jacobi radius, the Chen+2024 escape speed and the moving Plummer
+    potential all follow the same track, the last via agama's time-dependent ``scale`` modifier.
+    ``mass_final=None`` holds ``mass_sat`` fixed for the whole integration (the original behaviour).
 
     Invalid seeds (undefined Jacobi radius where ``Omega^2 - d2Phi/dr2 < 0``) stay NaN so the
     output always has shape ``(num_particles, 6)``; downstream NaN cleaning drops those rows.
@@ -367,18 +476,29 @@ def _spray_stream(
     time_sat = time_sat[1:][::-1]
     orbit_sat = orbit_sat[1:][::-1]
 
-    rj, vj, R = _rj_vj_R(agama, pot_host, orbit_sat, mass_sat)
+    mass_track = (
+        None if mass_final is None
+        else _mass_track(mass_sat, mass_final, time_sat, time_total, mass_loss)
+    )
+    mass_arg = mass_sat if mass_track is None else mass_track
+    rj, vj, R = _rj_vj_R(agama, pot_host, orbit_sat, mass_arg)
     if method == "chen":
-        ic_stream = _ic_chen_spray(orbit_sat, rj, R, rng, mass_sat, agama.G)
+        ic_stream = _ic_chen_spray(orbit_sat, rj, R, rng, mass_arg, agama.G)
     else:
         ic_stream = _ic_particle_spray(orbit_sat, rj, vj, R, rng)
     time_seed = np.repeat(time_sat, 2)
 
+    sat_kwargs = {}
+    if mass_track is not None:  # (t, mass factor, size factor); size held fixed
+        sat_kwargs["scale"] = np.column_stack(
+            [time_sat, mass_track / float(mass_sat), np.ones_like(mass_track)]
+        )
     pot_sat = agama.Potential(
         type="Plummer",
         mass=mass_sat,
         scaleRadius=radius_sat,
         center=np.column_stack([time_sat, orbit_sat]),
+        **sat_kwargs,
     )
     pot_total = agama.Potential(pot_host, pot_sat)
 
@@ -443,23 +563,29 @@ def _vcirc_accept_worker(
 
 
 def _ancillary_observables(
-    agama, pot_host, p: Dict[str, float], pot_cfg: Mapping | None, spec: Mapping | None
+    agama, pot_host, p: Dict[str, float], pot_cfg: Mapping | None, spec: Mapping | None,
+    r0: float | None = None,
 ) -> Dict[str, np.ndarray]:
     """Ibata (2023) potential-derived observables for one row, per ``spec`` (an empty/None spec
     computes nothing). ``spec`` carries the requested observable names + their fixed grids:
     ``{"names": [...], "l_deg": array, "z_kpc": array}``. Deterministic force/density evaluations
-    on the assembled potential — no stream simulation."""
+    on the assembled potential — no stream simulation.
+
+    All three observables are anchored at the Solar radius, so ``r0`` (this row's ``R0_Sun``) is
+    threaded through: the terminal-velocity tangent points are at ``R0 |sin l|``, and Sigma(1.1 kpc)
+    and rho(z) are evaluated at R0. Defaults to the fixed ``R0_KPC``."""
     if not spec or not spec.get("names"):
         return {}
+    R0 = R0_KPC if r0 is None else float(r0)
     names = set(spec["names"])
     out: Dict[str, np.ndarray] = {}
     if "vterm" in names:
-        out["vterm_kms"] = terminal_velocity(pot_host, spec["l_deg"]).astype(float)
+        out["vterm_kms"] = terminal_velocity(pot_host, spec["l_deg"], R0=R0).astype(float)
     if "sigma_z" in names:
-        out["sigma_z"] = np.array([surface_density(pot_host)], dtype=float)
+        out["sigma_z"] = np.array([surface_density(pot_host, R=R0)], dtype=float)
     if "rho_z" in names:
         disk_pot = _stellar_disk_potential(agama, p, pot_cfg)
-        out["rho_z"] = vertical_density_profile(disk_pot, spec["z_kpc"]).astype(float)
+        out["rho_z"] = vertical_density_profile(disk_pot, spec["z_kpc"], R=R0).astype(float)
     return out
 
 
@@ -467,10 +593,16 @@ def _ancillary_observables(
 def _simulate_one(
     p: Dict[str, float], n_particles: int, obs_r: np.ndarray, seed: int,
     spray_method: str = "fardal", pot_cfg: Mapping | None = None,
-    ancillary: Mapping | None = None,
+    ancillary: Mapping | None = None, mass_loss: str | None = None,
 ):
     """joblib worker: one stream realization + the rotation curve of its potential (+ the optional
-    Ibata ancillary observables of that potential)."""
+    Ibata ancillary observables of that potential).
+
+    ``mass_loss`` (``linear``/``exponential``) makes the progenitor shed mass from its initial
+    ``m_progenitor`` down to the row's ``m_progenitor_final`` over the integration; ``None`` holds
+    the mass fixed. The trailing ``None`` of the returned tuple is the present-day bound progenitor
+    mass, which only the restricted-N-body worker can report — spray *imposes* its final mass, so
+    reporting it back would dress an input up as a measurement."""
     agama = _agama()
     rng = np.random.default_rng(seed)
     # getUnits()['time'] is a float [Myr] normally, but an astropy Quantity once astropy has
@@ -479,6 +611,7 @@ def _simulate_one(
     time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
 
     pot_host = _host_potential(agama, p, pot_cfg)
+    frame = _solar_frame(agama, pot_host, p)
 
     l0, b0, pml0, pmb0 = agama.transformCelestialCoords(
         agama.fromICRStoGalactic,
@@ -488,7 +621,10 @@ def _simulate_one(
         p["mu_dec"],
     )
     posvel_sat = np.array(
-        agama.getGalactocentricFromGalactic(l0, b0, p["r"], pml0 * 4.74, pmb0 * 4.74, p["vr"])
+        agama.getGalactocentricFromGalactic(
+            l0, b0, p["r"], pml0 * 4.74, pmb0 * 4.74, p["vr"],
+            galcen_distance=frame[0], galcen_v_sun=frame[1:4], z_sun=frame[4],
+        )
     )
 
     xv = _spray_stream(
@@ -501,8 +637,10 @@ def _simulate_one(
         num_particles=n_particles,
         rng=rng,
         method=spray_method,
+        mass_final=None if mass_loss is None else float(p["m_progenitor_final"]),
+        mass_loss=mass_loss or "linear",
     )
-    anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary)
+    anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary, r0=frame[0])
     # When the halo is parameterized by (M200, c_v'), also return the (densityNorm, scaleRadius)
     # actually handed to AGAMA for this row, so they can be stored in the dataset for traceability
     # (they are NOT inferred — the identity-prior rho/a stay fixed constants). None otherwise.
@@ -510,7 +648,7 @@ def _simulate_one(
     if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) == "m200_c":
         h = _halo_params_m200c(agama, p, pot_cfg)
         halo_derived = (float(h["densityNorm"]), float(h["scaleRadius"]))
-    return xv, _vcirc(pot_host, obs_r), anc, halo_derived
+    return xv, _vcirc(pot_host, obs_r), anc, halo_derived, None, frame
 
 
 @register_simulator("stream_agama")
@@ -660,8 +798,24 @@ class AgamaStreamSimulator(BaseSimulator):
         return self.global_parameter_names + self.local_parameter_names
 
     @property
+    def _marginalized(self) -> set[str]:
+        """Names listed in ``params.marginalize``: parameters that are DRAWN from their prior and fed
+        to the forward model, but excluded from the inferred set.
+
+        This is the right treatment for genuine nuisances whose values we do not want the network to
+        report — the Solar phase-space parameters (``R0_Sun``, ``U_Sun``, ``V_Sun``, ``W_Sun``) are
+        the motivating case: varying them is what makes the posterior honest about the frame
+        systematic, but they are external measurements, not something these three streams constrain.
+        Because ``prior_spec_global`` slices by ``global_parameter_names``, a marginalized parameter
+        also drops out of the compositional prior score, which is correct — no score term exists for
+        a dimension that is not being inferred.
+        """
+        return {str(k) for k in (self.params.get("marginalize") or [])}
+
+    @property
     def global_parameter_names(self) -> list[str]:
-        return inferred_names(self._priors_global)
+        marginalized = self._marginalized
+        return [k for k in inferred_names(self._priors_global) if k not in marginalized]
 
     @property
     def local_parameter_names(self) -> list[str]:
@@ -806,17 +960,21 @@ class AgamaStreamSimulator(BaseSimulator):
     def _row_jobs(self, rows, seeds):
         """One joblib ``delayed`` call per row. The forward-model seam: subclasses swap the
         worker here (``stream_agama_rnbody``) while reusing ``simulate``'s dispatch + output
-        assembly. Every worker must return the same 4-tuple
-        ``(xv, vcirc, ancillary_dict, halo_derived_or_None)``."""
+        assembly. Every worker must return the same 5-tuple
+        ``(xv, vcirc, ancillary_dict, halo_derived_or_None, m_bound_or_None)``."""
         from joblib import delayed
 
         spray_method = str(self.params.get("spray_method", "fardal"))
         pot_cfg = self._pot_cfg
         ancillary = self._ancillary_spec
+        # Absent (or null) `mass_loss` keeps the progenitor mass fixed, as every existing config
+        # expects; a law name additionally requires an `m_progenitor_final` prior entry per stream.
+        mass_loss = self.params.get("mass_loss")
+        mass_loss = None if mass_loss is None else str(mass_loss)
         return [
             delayed(_simulate_one)(
                 row, self._n_particles, self.obs_r_kpc, int(seed), spray_method, pot_cfg,
-                ancillary,
+                ancillary, mass_loss,
             )
             for row, seed in zip(rows, seeds)
         ]
@@ -846,9 +1004,16 @@ class AgamaStreamSimulator(BaseSimulator):
         xv = np.stack([r[0] for r in results], axis=0)  # (n, n_particles, 6)
         vcirc = np.stack([r[1] for r in results], axis=0)[..., None]  # (n, n_radii, 1)
 
+        # Project through each row's OWN solar frame when the Solar phase-space parameters are being
+        # varied; otherwise keep astropy's default frame so existing configs are byte-for-byte
+        # unchanged. Reusing the worker's frame (rather than rebuilding it) guarantees the projection
+        # and the progenitor's ICRS -> Galactocentric conversion cannot desynchronise.
+        frames = np.asarray([r[5] for r in results], dtype=float)  # (n, 5)
+        varies_solar = any(k in params for k in ("R0_Sun", "U_Sun", "V_Sun", "W_Sun"))
+
         out = {
             "sim_data_carthesian": xv,
-            "sim_data_projected": sky_projection(xv),
+            "sim_data_projected": sky_projection(xv, frames if varies_solar else None),
             "vcirc_kms": vcirc,
         }
         # Ibata ancillary observables (only present when requested): vterm_kms (n, n_l, 1),
@@ -861,6 +1026,13 @@ class AgamaStreamSimulator(BaseSimulator):
             derived = np.asarray(halo_list, dtype=float)  # (n, 2): [densityNorm, scaleRadius]
             out["rho_TwoPowerTriaxial_halo_derived"] = derived[:, 0:1]
             out["a_TwoPowerTriaxial_halo_derived"] = derived[:, 1:2]
+        # Restricted N-body only: the present-day bound mass of the remnant. ``m_progenitor`` is the
+        # mass at t = -t_end, so this is the quantity that should match the observed cluster mass —
+        # a diagnostic (and a potential constraint), never an inferred parameter, so the adapter
+        # drops it like the derived m200_c rho/a.
+        bound_list = [r[4] for r in results]
+        if bound_list[0] is not None:
+            out["m_bound_final"] = np.asarray(bound_list, dtype=float).reshape(-1, 1)
         anc_list = [r[2] for r in results]
         if anc_list[0]:  # empty dict when no ancillary observables were requested
             for key in ("vterm_kms", "rho_z"):
@@ -917,4 +1089,9 @@ class AgamaStreamSimulator(BaseSimulator):
         for key in ("rho_TwoPowerTriaxial_halo_derived", "a_TwoPowerTriaxial_halo_derived"):
             if key in sims:  # (n*m, 1) -> (n, 1)
                 out[key] = sims[key].reshape(n, m, 1)[:, 0]
+        # The bound remnant mass belongs to each stream's own progenitor, so it stays per-member
+        # (n, m, 1) like the locals — unlike everything above, which is a property of the shared
+        # potential.
+        if "m_bound_final" in sims:
+            out["m_bound_final"] = sims["m_bound_final"].reshape(n, m, 1)
         return out
