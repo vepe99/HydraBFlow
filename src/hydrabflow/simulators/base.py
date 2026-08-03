@@ -24,19 +24,14 @@ import numpy as np
 class BaseSimulator(ABC):
     """Abstract forward model. Subclass + register via ``@register_simulator``."""
 
+    #: Ordered names of the inferred parameters (become ``inference_variables``).
+    parameter_names: list[str] = []
+    #: Keys of the observable arrays. One key = single observable; >1 enables fusion.
+    observable_keys: list[str] = []
+
     def __init__(self, params: Mapping[str, Any] | None = None) -> None:
         # `params` is the free-form `simulator.params` mapping from config.
         self.params: Dict[str, Any] = dict(params or {})
-
-    @property
-    @abstractmethod
-    def parameter_names(self) -> list[str]:
-        """Ordered names of the inferred parameters (become ``inference_variables``)."""
-
-    @property
-    @abstractmethod
-    def observable_keys(self) -> list[str]:
-        """Keys of the observable arrays. One key = single observable; >1 enables fusion."""
 
     @abstractmethod
     def sample_prior(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:

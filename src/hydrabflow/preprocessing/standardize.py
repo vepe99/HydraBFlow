@@ -1,8 +1,7 @@
 """Per-feature z-score standardization step.
 
-Generalizes the reference project's ``compute_standardization`` / ``apply_standardization`` /
-``save_stats`` / ``load_stats`` (utils_train_jax_new_rotationcurve.py:752-809): mean/std are fit
-on the train split over all axes except the last (feature) axis, then reused everywhere.
+Mean/std are fit on the train split over all axes except the last (feature) axis, saved to the run
+dir, and reloaded by evaluate so test / real data is scaled exactly like training data.
 """
 
 from __future__ import annotations
@@ -39,12 +38,6 @@ class Standardizer(PreprocessStep):
             if key not in self._mean:
                 raise RuntimeError(f"Standardizer not fitted for key '{key}'")
             out[key] = (np.asarray(data[key]) - self._mean[key]) / self._std[key]
-        return out
-
-    def inverse_transform(self, data: Dataset) -> Dataset:
-        out = dict(data)
-        for key in self.keys:
-            out[key] = np.asarray(data[key]) * self._std[key] + self._mean[key]
         return out
 
     def state(self) -> Dict[str, np.ndarray]:

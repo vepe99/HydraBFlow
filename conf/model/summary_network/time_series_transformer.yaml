@@ -1,12 +1,9 @@
 # Transformer encoder for ordered sequences (time series / curves).
-defaults:
-  - base_summary_network
-
 type: time_series_transformer
 summary_dim: 32
 num_blocks: 2
 num_heads: 4
-embed_dim: 64
+embed_dim_per_head: 16
 mlp_depth: 2
 mlp_width: 128
 dropout: 0.05

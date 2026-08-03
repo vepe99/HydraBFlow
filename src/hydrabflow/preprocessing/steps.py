@@ -1,8 +1,7 @@
 """Built-in stateless preprocessing steps (besides standardization).
 
-These mirror the deterministic dataset cleanup the reference project did inline before training
-(NaN removal + train/val split, main_train_new_rotationcurve_agama.py:54-96), generalized and
-made reusable / config-driven. Add your own by subclassing PreprocessStep and registering it.
+Add your own by subclassing PreprocessStep, decorating it with ``@register_step("name")``, and
+listing that name under ``preprocessing.steps`` in ``conf/config.yaml``.
 """
 
 from __future__ import annotations
@@ -11,7 +10,7 @@ from typing import Iterable, Tuple
 
 import numpy as np
 
-from hydrabflow.preprocessing.base import Dataset, PreprocessStep, SplitStep
+from hydrabflow.preprocessing.base import Dataset, PreprocessStep
 from hydrabflow.preprocessing.registry import register_step
 
 
@@ -28,52 +27,24 @@ class DropNaNSimulations(PreprocessStep):
         n = _num_rows(data)
         valid = np.ones(n, dtype=bool)
         for key in self.keys:
-            x = np.asarray(data[key]).reshape(n, -1)
-            valid &= np.isfinite(x).all(axis=1)
+            valid &= np.isfinite(np.asarray(data[key]).reshape(n, -1)).all(axis=1)
         if valid.all():
             return data
         return {k: np.asarray(v)[valid] for k, v in data.items()}
 
 
-@register_step("cast_dtype")
-class CastDtype(PreprocessStep):
-    """Cast the listed keys (or all keys) to a target dtype, e.g. float32 for training."""
-
-    name = "cast_dtype"
-
-    def __init__(self, dtype: str = "float32", keys: Iterable[str] | None = None) -> None:
-        self.dtype = dtype
-        self.keys = list(keys) if keys is not None else None
-
-    def transform(self, data: Dataset) -> Dataset:
-        keys = self.keys if self.keys is not None else list(data.keys())
-        out = dict(data)
-        for key in keys:
-            out[key] = np.asarray(data[key]).astype(self.dtype)
-        return out
-
-
-@register_step("select_keys")
-class SelectKeys(PreprocessStep):
-    """Keep only the listed keys (drop everything else)."""
-
-    name = "select_keys"
-
-    def __init__(self, keys: Iterable[str]) -> None:
-        self.keys = list(keys)
-
-    def transform(self, data: Dataset) -> Dataset:
-        return {k: data[k] for k in self.keys if k in data}
-
-
 @register_step("train_val_split")
-class TrainValSplit(SplitStep):
+class TrainValSplit(PreprocessStep):
     """Random hold-out split. Steps listed after this one are fit on the train split only."""
 
     name = "train_val_split"
+    splits = True
 
     def __init__(self, validation_fraction: float = 0.1) -> None:
         self.validation_fraction = float(validation_fraction)
+
+    def transform(self, data: Dataset) -> Dataset:  # pragma: no cover - the pipeline calls split()
+        return data
 
     def split(self, data: Dataset, rng: np.random.Generator) -> Tuple[Dataset, Dataset]:
         n = _num_rows(data)

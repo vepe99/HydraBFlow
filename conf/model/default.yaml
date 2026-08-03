@@ -1,9 +1,0 @@
-# A model = one summary network + one inference network. Swap either by overriding the nested
-# group, e.g. `model/inference_network=diffusion`.
-defaults:
-  - base_model
-  - summary_network: set_transformer
-  - inference_network: flow_matching
-  - _self_
-
-name: default

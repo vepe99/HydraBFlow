@@ -1,7 +1,4 @@
 # Flow matching posterior network. Fast sampling, strong default for continuous parameters.
-defaults:
-  - base_inference_network
-
 type: flow_matching
 mlp_depth: 4
 mlp_width: 128

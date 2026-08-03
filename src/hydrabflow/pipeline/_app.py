@@ -1,38 +1,27 @@
-"""Shared Hydra-app boilerplate for the five run stages."""
+"""Turn a ``run(cfg)`` function into the stage's Hydra console entry point."""
 
 from __future__ import annotations
 
 import os
 from typing import Callable
 
+import hydra
 
-def conf_path() -> str:
-    """Absolute path to the repo-root ``conf/`` directory."""
-    here = os.path.dirname(os.path.abspath(__file__))
-    return os.path.abspath(os.path.join(here, "..", "..", "..", "conf"))
+from hydrabflow.config import register_configs
+from hydrabflow.pipeline.adapter import fill_adapter_from_simulator
+
+CONF_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "conf"))
 
 
 def make_cli(run_fn: Callable) -> Callable[[], None]:
-    """Wrap a ``run_fn(cfg)`` into a Hydra console entry point.
+    register_configs()
 
-    Registers the structured configs, then dispatches the root ``config`` to ``run_fn``.
-    """
+    def stage(cfg) -> None:
+        # The simulator stays the single source of truth for its variable names.
+        fill_adapter_from_simulator(cfg)
+        run_fn(cfg)
 
-    def cli() -> None:
-        import hydra
-
-        from hydrabflow.config import register_configs
-        from hydrabflow.pipeline.adapter import fill_adapter_from_simulator
-
-        register_configs()
-
-        @hydra.main(version_base=None, config_path=conf_path(), config_name="config")
-        def _main(cfg):
-            # Empty adapter variable lists are derived from the simulator's declaration, so the
-            # simulator class stays the single source of truth for its names/keys.
-            fill_adapter_from_simulator(cfg)
-            run_fn(cfg)
-
-        _main()
-
-    return cli
+    # Hydra names the job (and its log file) after the task function's module, so borrow the
+    # stage's: `train.log`, not `_app.log`.
+    stage.__module__ = run_fn.__module__
+    return hydra.main(version_base=None, config_path=CONF_DIR, config_name="config")(stage)

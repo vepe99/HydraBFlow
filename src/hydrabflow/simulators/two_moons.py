@@ -38,37 +38,13 @@ from hydrabflow.simulators.registry import register_simulator
 
 @register_simulator("two_moons")
 class TwoMoonsSimulator(BaseSimulator):
-    @property
-    def parameter_names(self) -> list[str]:
-        return ["theta1", "theta2"]
-
-    @property
-    def observable_keys(self) -> list[str]:
-        return ["x"]
-
-    # --- config-derived knobs (with benchmark defaults) ---------------------------------------- #
-    @property
-    def _prior_low(self) -> float:
-        return float(self.params.get("prior_low", -1.0))
-
-    @property
-    def _prior_high(self) -> float:
-        return float(self.params.get("prior_high", 1.0))
-
-    @property
-    def _n_obs(self) -> int:
-        return int(self.params.get("n_obs", 1))
-
-    @property
-    def _mean_radius(self) -> float:
-        return float(self.params.get("mean_radius", 0.1))
-
-    @property
-    def _std_radius(self) -> float:
-        return float(self.params.get("std_radius", 0.01))
+    parameter_names = ["theta1", "theta2"]
+    observable_keys = ["x"]
 
     def sample_prior(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
-        theta = rng.uniform(self._prior_low, self._prior_high, size=(n, 2))
+        low = float(self.params.get("prior_low", -1.0))
+        high = float(self.params.get("prior_high", 1.0))
+        theta = rng.uniform(low, high, size=(n, 2))
         return {"theta1": theta[:, 0:1], "theta2": theta[:, 1:2]}
 
     def simulate(
@@ -76,12 +52,15 @@ class TwoMoonsSimulator(BaseSimulator):
     ) -> Dict[str, np.ndarray]:
         theta1 = np.asarray(params["theta1"]).reshape(-1, 1)  # (n, 1)
         theta2 = np.asarray(params["theta2"]).reshape(-1, 1)  # (n, 1)
-        n = theta1.shape[0]
-        shape = (n, self._n_obs)
+        shape = (theta1.shape[0], int(self.params.get("n_obs", 1)))
 
         # Intrinsic noise (the only stochasticity) — drawn from the provided rng.
         a = rng.uniform(-np.pi / 2.0, np.pi / 2.0, size=shape)
-        r = rng.normal(self._mean_radius, self._std_radius, size=shape)
+        r = rng.normal(
+            float(self.params.get("mean_radius", 0.1)),
+            float(self.params.get("std_radius", 0.01)),
+            size=shape,
+        )
 
         p1 = r * np.cos(a) + 0.25
         p2 = r * np.sin(a)

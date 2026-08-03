@@ -19,7 +19,7 @@ def test_build_adapter_unconfigured_raises(compose):
 
     # No registered simulator to derive from and no explicit config: actionable error.
     cfg = compose(["simulator.name=does_not_exist"])
-    with pytest.raises(ValueError, match="bring_your_own_data"):
+    with pytest.raises(ValueError, match="adapter.inference_variables"):
         build_adapter(cfg.adapter)
 
 

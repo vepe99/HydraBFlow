@@ -1,72 +1,39 @@
-"""Build BayesFlow networks from structured dataclass configs (no ``_target_``).
+"""Build BayesFlow networks from the typed config, resolved by ``cfg.type``.
 
-Builders are resolved by ``cfg.type`` through name -> builder registries, so a custom
-architecture plugs in without touching this file: drop a module into ``src/hydrabflow/networks/``
-with an ``@register_summary_network("my_net")`` (or ``@register_inference_network``) decorated
-builder — the package auto-imports it — and select it with ``model/summary_network.type=my_net``.
-Custom builders can read free-form extras from ``cfg.params``.
+A custom architecture plugs in without touching this file: drop a module into
+``src/hydrabflow/networks/`` with an ``@register_summary_network("my_net")`` (or
+``@register_inference_network``) decorated builder — the package auto-imports it — and select it with
+``model.summary_network.type=my_net``. Custom builders read extras from ``cfg.params``.
 
-The shipped builders are thin, opinionated wrappers around ``bayesflow.networks``. They translate
-the scalar hyperparameters in ``SummaryNetworkConfig`` / ``InferenceNetworkConfig`` into the
-constructor kwargs each network expects (e.g. expanding ``num_blocks`` into per-block tuples).
-``bayesflow`` is imported lazily so config-only contexts (and the test suite) don't require the
-backend.
-
-Multi-observable **fusion** is the documented extension seam: when an adapter groups several
-observable keys into ``summary_variables``, build one summary net per key and combine them with
-``bayesflow.networks.FusionNetwork``. The default single-observable path returns one net.
+Multi-observable **fusion** is the extension seam: when the adapter groups several observable keys
+into ``summary_variables``, build one net per key and combine them with
+``bayesflow.networks.FusionNetwork``. ``bayesflow`` is imported lazily so config-only contexts (and
+most of the test suite) don't need the backend.
 """
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
-Builder = Callable[[Any], Any]  # network config dataclass -> BayesFlow/keras network
+from hydrabflow.utils.registry import Registry
 
-_SUMMARY_BUILDERS: Dict[str, Builder] = {}
-_INFERENCE_BUILDERS: Dict[str, Builder] = {}
+Builder = Callable[[Any], Any]  # network config -> BayesFlow/keras network
 
+SUMMARY_NETWORKS: Registry[Builder] = Registry("summary_network.type")
+INFERENCE_NETWORKS: Registry[Builder] = Registry("inference_network.type")
 
-def register_summary_network(name: str):
-    """Decorator registering a summary-network builder under ``name`` (the config ``type``)."""
-
-    def _wrap(fn: Builder) -> Builder:
-        _SUMMARY_BUILDERS[name] = fn
-        return fn
-
-    return _wrap
-
-
-def register_inference_network(name: str):
-    """Decorator registering an inference-network builder under ``name`` (the config ``type``)."""
-
-    def _wrap(fn: Builder) -> Builder:
-        _INFERENCE_BUILDERS[name] = fn
-        return fn
-
-    return _wrap
+register_summary_network = SUMMARY_NETWORKS.add
+register_inference_network = INFERENCE_NETWORKS.add
 
 
 def build_summary_network(cfg) -> Any:
-    """Return the summary network selected by ``cfg.type`` (a ``SummaryNetworkConfig``)."""
-    if cfg.type not in _SUMMARY_BUILDERS:
-        raise ValueError(
-            f"Unknown summary_network.type '{cfg.type}'. Available: {sorted(_SUMMARY_BUILDERS)}. "
-            "Register custom architectures with @register_summary_network in "
-            "src/hydrabflow/networks/."
-        )
-    return _SUMMARY_BUILDERS[cfg.type](cfg)
+    """Return the summary network selected by ``cfg.type``."""
+    return SUMMARY_NETWORKS.get(cfg.type)(cfg)
 
 
 def build_inference_network(cfg) -> Any:
-    """Return the inference (posterior) network selected by ``cfg.type`` (an ``InferenceNetworkConfig``)."""
-    if cfg.type not in _INFERENCE_BUILDERS:
-        raise ValueError(
-            f"Unknown inference_network.type '{cfg.type}'. Available: {sorted(_INFERENCE_BUILDERS)}. "
-            "Register custom architectures with @register_inference_network in "
-            "src/hydrabflow/networks/."
-        )
-    return _INFERENCE_BUILDERS[cfg.type](cfg)
+    """Return the inference (posterior) network selected by ``cfg.type``."""
+    return INFERENCE_NETWORKS.get(cfg.type)(cfg)
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -75,18 +42,9 @@ def build_inference_network(cfg) -> Any:
 
 
 def _embed_dim(cfg) -> int:
-    """Attention embedding width for the block-wise transformer backbones.
-
-    Multi-head attention requires ``embed_dim % num_heads == 0``, so a tuner that samples
-    ``embed_dim`` and ``num_heads`` independently will keep drawing invalid combinations (e.g.
-    embed_dim=128 with num_heads=5). ``params.embed_dim_multiplier`` expresses the width *per
-    head* instead — the product is divisible by construction — and takes precedence over the raw
-    ``embed_dim`` when set. Search the multiplier, not the width (see conf/tuning/default.yaml).
-    """
-    multiplier = cfg.params.get("embed_dim_multiplier") if cfg.params else None
-    if multiplier:
-        return int(cfg.num_heads) * int(multiplier)
-    return int(cfg.embed_dim)
+    """Attention width. Expressed per head, so ``embed_dim % num_heads == 0`` always holds — a
+    tuner sampling the width and the head count independently can never draw an invalid pair."""
+    return int(cfg.num_heads) * int(cfg.embed_dim_per_head)
 
 
 @register_summary_network("set_transformer")
@@ -120,19 +78,18 @@ def _time_series_transformer(cfg) -> Any:
 def _deep_set(cfg) -> Any:
     import bayesflow as bf
 
-    return bf.networks.DeepSet(
-        summary_dim=int(cfg.summary_dim),
-        dropout=float(cfg.dropout),
-    )
+    return bf.networks.DeepSet(summary_dim=int(cfg.summary_dim), dropout=float(cfg.dropout))
 
 
 @register_inference_network("flow_matching")
 def _flow_matching(cfg) -> Any:
     import bayesflow as bf
 
-    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
     return bf.networks.FlowMatching(
-        subnet_kwargs={"widths": widths, "dropout": float(cfg.dropout)},
+        subnet_kwargs={
+            "widths": [int(cfg.mlp_width)] * int(cfg.mlp_depth),
+            "dropout": float(cfg.dropout),
+        },
     )
 
 
@@ -140,10 +97,9 @@ def _flow_matching(cfg) -> Any:
 def _diffusion(cfg) -> Any:
     import bayesflow as bf
 
-    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
     return bf.networks.DiffusionModel(
         subnet_kwargs={
-            "widths": widths,
+            "widths": [int(cfg.mlp_width)] * int(cfg.mlp_depth),
             "time_embedding_dim": int(cfg.time_embedding_dim),
         },
     )

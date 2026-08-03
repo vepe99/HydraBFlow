@@ -24,12 +24,11 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 
-# Console entry points mirror the scripts/ Hydra apps.
+# The four run stages. Each is also runnable as `python -m hydrabflow.pipeline.<stage>`.
 [project.scripts]
 hydrabflow-simulate = "hydrabflow.pipeline.simulate:cli"
 hydrabflow-train = "hydrabflow.pipeline.train:cli"
 hydrabflow-evaluate = "hydrabflow.pipeline.evaluate:cli"
-hydrabflow-evaluate-real = "hydrabflow.pipeline.evaluate_real:cli"
 hydrabflow-tune = "hydrabflow.pipeline.tune:cli"
 
 [build-system]

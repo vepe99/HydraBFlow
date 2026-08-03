@@ -59,60 +59,62 @@ Everything else — config management, output tracing, reproducibility — is fi
 
 HydraBFlow/
 ├── pyproject.toml               # uv-managed; deps + console scripts (hydrabflow-*)
-├── conf/                        # Hydra config groups (YAML values; schemas live in code)
-│   ├── config.yaml              # Root: defaults list, seed, model_dir, hydra.run.dir
-│   ├── simulator/               # skeleton.yaml (+ your simulators)
-│   ├── model/                   # default.yaml -> summary_network/ + inference_network/
-│   ├── training/  data/  preprocessing/  augmentation/
-│   ├── adapter/   inference/    eval/   tuning/
+├── conf/                        # ONE config file + the 3 groups with real alternatives
+│   ├── config.yaml              # EVERYTHING: seed, run_name, model_dir, data, training,
+│   │                            #   preprocessing, augmentation, adapter, eval, tuning, hydra
+│   ├── simulator/               # two_moons.yaml (+ your simulators)
+│   ├── model/summary_network/   # set_transformer | deep_set | time_series_transformer
+│   └── model/inference_network/ # flow_matching | diffusion
 ├── src/hydrabflow/
-│   ├── config/schema.py         # ALL dataclass schemas + register_configs()
-│   ├── simulators/              # USER MODIFIES: base.py, registry.py, skeleton.py
+│   ├── config.py                # ALL dataclass schemas + register_configs() (one node)
+│   ├── simulators/              # USER MODIFIES: base.py, registry.py, two_moons.py
 │   ├── networks/factory.py      # build_summary_network / build_inference_network
 │   ├── preprocessing/           # base, standardize, steps, registry (deterministic, once)
-│   ├── augmentation/            # base/registry + examples (stochastic, per-batch)
-│   ├── pipeline/                # INFRASTRUCTURE: adapter, workflow, io, checkpoint,
-│   │                            #   simulate, train, evaluate, evaluate_real, tune, _app
-│   └── utils/                   # backend (JAX pin), seed, logging, paths
-├── scripts/                     # thin Hydra entry points -> pipeline.<stage>.cli
-│   ├── simulate.py  train.py  evaluate.py  evaluate_real.py  tune.py
+│   ├── augmentation/            # registry + noise.py (stochastic, per-batch)
+│   ├── pipeline/                # INFRASTRUCTURE: adapter, workflow, io, checkpoint, artifacts,
+│   │                            #   simulate, train, evaluate, tune, _app
+│   └── utils/                   # backend (JAX pin), registry (shared by all 5 extension
+│                                #   points), seed, paths, oom
 ├── tests/                       # config-compose, registries, preprocessing, workflow smoke tests
 ├── notebooks/explore.py         # Marimo
 ├── outputs/                     # Hydra run dirs (gitignored)
 └── CLAUDE.md
 
-### Run stages (5 entry points)
+### Run stages (4 entry points: `hydrabflow-<stage>`, or `python -m hydrabflow.pipeline.<stage>`)
 - `simulate`  — sample prior + run forward model in chunks -> aggregated `.npz`.
 - `train`     — load `.npz` -> preprocessing (fit on train, save state) -> `fit_offline` with
                 augmentations -> save approximator + loss curve.
-- `evaluate`  — load model + preprocessing state from `model_dir`, sample posterior on a
-                simulated test set, write truth-aware diagnostics (RMSE/calibration, recovery,
-                calibration ECDF, z-score contraction).
-- `evaluate_real` — same, but on a user-provided real-data `.npz` (no truth, no resimulation).
+- `evaluate`  — load model + preprocessing state from `model_dir` and sample the posterior. Two
+                modes, one code path: the simulated test set (writes truth-aware diagnostics —
+                RMSE/calibration, recovery, calibration ECDF, z-score contraction), or, when
+                `data.real_data_path` is set, a user-provided real-data `.npz` (no truth, no
+                resimulation: posterior pair plots only).
 - `tune`      — Optuna multi-objective study over a config-driven search space.
 
 ## What the User Modifies
 
 - `conf/simulator/<name>.yaml` + `src/hydrabflow/simulators/<name>.py`: the forward model
   (a `@register_simulator`-decorated `BaseSimulator` subclass; auto-imported, self-registers).
-- `conf/adapter/*`: normally untouched — variables derive from the simulator. Explicit config
+- `conf/config.yaml`: every knob (training, data, preprocessing, augmentation, eval, tuning). The
+  `adapter:` block is normally untouched — variables derive from the simulator; set it explicitly
   only for bring-your-own-data or to override the derivation (subset inference, fusion).
-- `conf/model/...`: choose/configure summary + inference networks.
+- `conf/model/summary_network/*`, `conf/model/inference_network/*`: choose/configure the networks.
 - Optionally: custom preprocessing steps, augmentations, or network architectures (drop a module
   in the package; each self-registers; no infra edits).
 - Nothing else should need to change for a new problem.
 
 ## What Is Fixed Infrastructure (do not modify)
 
-- Entry point scripts (`scripts/`) and the `pipeline.*.cli` wrappers (`pipeline/_app.py`).
-- The five run stages, adapter/workflow builders, IO, checkpointing (`src/hydrabflow/pipeline/`).
-- Config schema + registration (`src/hydrabflow/config/schema.py`).
+- The `cli = make_cli(run_fn)` entry points (`pipeline/_app.py`); there is no `scripts/` folder.
+- The four run stages, adapter/workflow builders, IO, checkpointing (`src/hydrabflow/pipeline/`).
+- Config schema + registration (`src/hydrabflow/config.py`); the shared `utils/registry.py`.
 - Hydra output directory setup and config saving; JAX backend pin (`utils/backend.py`).
 
 ## Output Directory Convention
 
 Hydra's `hydra.run.dir` is set to:
-`outputs/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}`
+`outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}`
+(`run_name` defaults to `<summary_type>+<inference_type>`; override it to label an experiment.)
 
 Every run saves:
 - `.hydra/` folder with full config (Hydra does this automatically)
@@ -120,20 +122,21 @@ Every run saves:
   next to it (copied from Hydra's `.hydra/` via `utils.paths.save_config_snapshot`) so each
   dataset is traceable to the config that generated it. Keyed by the dataset filename so
   training and test sets in the same `data_dir` don't overwrite each other's snapshot.
-- `train`: `approximator.keras`, `preprocessing_state.npz`, `loss.png`
-- `evaluate`: `posterior.npz`, `metrics.json`, diagnostic plots
-- `evaluate_real`: `posterior.npz`, posterior pair plots
+- `train`: `approximator.keras`, `approximator_best.weights.h5`, `preprocessing_state.npz`,
+  `loss.png`, `history.json`
+- `evaluate`: `posterior.npz` + `metrics.json` and diagnostic plots (simulated test set), or
+  `posterior.npz` + posterior pair plots (`data.real_data_path` set)
 - `tune`: `best_trials.json` (Optuna study in `tuning.storage_dir`)
 
-`evaluate` / `evaluate_real` load the trained model + fitted preprocessing from `model_dir`
-(set it to a completed `train` run dir).
+`evaluate` loads the trained model + fitted preprocessing from `model_dir` (set it to a completed
+`train` run dir).
 
 ## Decisions Log
 
 *(Update this section after each Claude Code session)*
 
 - [x] Folder structure finalized
-- [x] Config group schema defined (structured dataclasses in `config/schema.py`, no `_target_`)
+- [x] Config group schema defined (structured dataclasses in `config.py`, no `_target_`)
 - [x] Base simulator interface defined (`simulators/base.py` + registry; skeleton stub shipped)
 - [x] Training loop scaffold written (`pipeline/train.py` via `bf.BasicWorkflow.fit_offline`)
 - [x] Five run stages implemented + verified end-to-end on a temporary Gaussian simulator
@@ -151,6 +154,43 @@ Every run saves:
   (`@register_summary_network` / `@register_inference_network`) with free-form `params` in both
   network schemas for custom builders; dev deps moved to `[dependency-groups]` so `uv sync`
   installs pytest/ruff by default.
+- Session 2026-08-03 (lightweight pass, ~1000 lines cut from src+conf): **conf/ is now one
+  `config.yaml` plus three groups** (`simulator`, `model/summary_network`,
+  `model/inference_network`) — no `default.yaml` files anywhere and no group YAML inheriting from
+  another via a `defaults:` list. Only `RootConfig` is stored in the ConfigStore (as `base_config`);
+  every group is a typed field of it, so group YAMLs are still validated with no per-group `base_*`
+  node. `model.name` -> root `run_name` (defaults to `<summary_type>+<inference_type>`); the
+  `inference` group merged into `eval` (both stages share `eval.num_samples`/`batch_size`).
+  Removed: `utils/reporting.py` (report.md + heuristic metric ratings), `utils/quiet.py` and
+  `utils/progress.py` (both callerless; the latter monkeypatched joblib globally), the skeleton
+  simulator + its YAML (two_moons is the copyable example), `io.run_chunked`'s resume machinery,
+  `PreprocessStep.inverse_transform` / `get_step`, the `cast_dtype` / `select_keys` steps, the
+  `available_*()` registry wrappers, and two of three example augmentations. Added
+  `pipeline/artifacts.py` (public `run_diagnostics` / `save_history` / `restore_best_weights` /
+  `save_posterior*`) so stages no longer import each other's underscore functions. Networks take
+  `embed_dim_per_head` instead of `embed_dim` + `params.embed_dim_multiplier` (one way to set
+  attention width). Default `training.standardize` is now `[inference_variables]` only — the summary
+  side is standardized by the preprocessing step whose fitted state is saved and replayed.
+  All 5 stages re-verified end to end on two_moons (CPU); 36 tests pass.
+- Session 2026-08-03b (src+scripts structural pass, ~470 more lines cut): **`scripts/` is gone** —
+  each file was a 7-line re-export of a `cli` that pyproject already exposes as `hydrabflow-<stage>`;
+  every stage is also `python -m hydrabflow.pipeline.<stage>`. **One shared `utils/registry.py`
+  (`Registry` + `discover`)** replaces the five hand-rolled name->object dicts (simulators,
+  preprocessing steps, augmentations, and the two network registries); each package's `registry.py`
+  is now ~12 lines and its `__init__.py` is one `discover(__name__, __path__)` call, so `discovery.py`
+  is gone too. Registries expose `.items` and raise `KeyError` (not `ValueError`) on unknown names.
+  **`evaluate_real` merged into `evaluate`**: one stage, switching on `data.real_data_path` — 4 run
+  stages, not 5. `config/schema.py` -> flat `config.py` (the package held one module).
+  `utils/logging.py` deleted (Hydra installs the handlers; stages use `logging.getLogger(__name__)`).
+  Also removed: `paths.ensure_dir` (= `os.makedirs(exist_ok=True)`) and 3 of 4 filename constants,
+  the `SplitStep` marker ABC (now a `splits: bool` attribute) and the `name#occurrence.` state-key
+  scheme, `BaseSimulator`'s abstract `parameter_names`/`observable_keys` properties (plain class
+  attributes now — user simulators get shorter), tune's single-objective code path, and ~70 lines of
+  docstring that restated this file. src+conf: 2312 -> 1969 lines.
+  **docs/ rewritten** (2161 -> 840 lines, 5 files -> 3): `running.md` (install, the 4 stages, the
+  two_moons walkthrough + smoke run, real-data mode, tuning, bring-your-own-dataset, artifacts, GPU
+  env vars), `configuration.md` (every block of `config.yaml` + the 3 groups), `extending.md` (the
+  one drop-a-module-and-decorate pattern for all 5 extension points). No longer stale.
 
 ## graphify
 

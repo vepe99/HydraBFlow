@@ -40,7 +40,7 @@ def build_workflow(cfg, run_dir: str | None = None) -> Any:
         inference_network=inference_network,
         standardize=standardize,
     )
-    if run_dir is not None and bool(getattr(cfg.training, "save_best_weights", True)):
+    if run_dir is not None and bool(cfg.training.save_best_weights):
         kwargs.update(
             checkpoint_filepath=run_dir,
             checkpoint_name=BEST_WEIGHTS_NAME,
