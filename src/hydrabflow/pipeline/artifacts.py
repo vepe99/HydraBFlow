@@ -1,7 +1,13 @@
-"""Artifacts a stage writes into a run directory: loss curve, posterior, diagnostics.
+"""Artifacts a stage writes into a run directory: model checkpoint, loss curve, posterior,
+diagnostics.
 
 Shared by train, evaluate, and tune so no stage has to import another stage's internals. Every
 helper is best-effort: a failed plot or metric must never abort a training or evaluation run.
+
+``save_approximator``/``load_approximator`` also carry the BayesFlow ``.keras`` deserialization
+workaround: when BayesFlow serializes a JAX-backed approximator, array constants are tagged
+``__bayesflow_type__ArrayImpl`` inside the archive's ``config.json``, and reloading them can fail.
+We patch the tag to ``__bayesflow_type__ndarray`` in a copy of the archive before loading.
 """
 
 from __future__ import annotations
@@ -9,6 +15,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import zipfile
+from typing import Any
 
 import matplotlib
 import numpy as np
@@ -16,6 +24,42 @@ import numpy as np
 matplotlib.use("Agg")  # headless: runs land in a run dir, never on a screen
 
 log = logging.getLogger(__name__)
+
+MODEL_FILENAME = "approximator.keras"
+
+
+def save_approximator(workflow: Any, run_dir: str) -> str:
+    path = os.path.join(run_dir, MODEL_FILENAME)
+    workflow.approximator.save(path)
+    log.info("Saved approximator -> %s", path)
+    return path
+
+
+def fix_keras_model(model_path: str) -> str:
+    """Return a path to a load-safe copy of ``model_path`` (patching the ArrayImpl tag)."""
+    fixed = model_path.replace(".keras", "_fixed.keras")
+    if os.path.exists(fixed):
+        return fixed
+    with zipfile.ZipFile(model_path, "r") as zin, zipfile.ZipFile(fixed, "w") as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == "config.json":
+                data = data.decode("utf-8").replace(
+                    "__bayesflow_type__ArrayImpl", "__bayesflow_type__ndarray"
+                ).encode("utf-8")
+            zout.writestr(item, data)
+    log.info("Wrote ArrayImpl-fixed model -> %s", fixed)
+    return fixed
+
+
+def load_approximator(run_dir: str) -> Any:
+    """Load a saved approximator, applying the ArrayImpl fix first."""
+    import keras
+
+    path = os.path.join(run_dir, MODEL_FILENAME)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"No saved model at {path}. Train first (e.g. `hydrabflow-train`).")
+    return keras.models.load_model(fix_keras_model(path))
 
 
 def save_posterior(posterior, run_dir: str) -> None:
@@ -105,20 +149,20 @@ def run_diagnostics(cfg, posterior, targets, param_names, run_dir: str) -> None:
 
 def save_posterior_plot(posterior, param_names, run_dir: str) -> None:
     """Truth-free diagnostic: one posterior pair plot per observation (used for real data)."""
-    try:
-        import bayesflow as bf
+    import bayesflow as bf
 
-        fn = getattr(bf.diagnostics, "pairs_posterior", None) or getattr(
-            bf.diagnostics, "pairs_samples", None
-        )
-        if fn is None:
-            log.warning("No posterior pair-plot helper found in bayesflow.diagnostics.")
-            return
-        n_obs = int(np.asarray(next(iter(posterior.values()))).shape[0])
-        for i in range(n_obs):
+    fn = getattr(bf.diagnostics, "pairs_posterior", None) or getattr(
+        bf.diagnostics, "pairs_samples", None
+    )
+    if fn is None:
+        log.warning("No posterior pair-plot helper found in bayesflow.diagnostics.")
+        return
+    n_obs = int(np.asarray(next(iter(posterior.values()))).shape[0])
+    for i in range(n_obs):
+        try:
             single = {k: np.asarray(v)[i] for k, v in posterior.items()}
             fig = fn(estimates=single, variable_names=param_names)
             suffix = "" if n_obs == 1 else f"_obs{i}"
             fig.savefig(os.path.join(run_dir, f"posterior_pairs{suffix}.png"), bbox_inches="tight")
-    except Exception as exc:
-        log.warning("posterior plot failed: %s", exc)
+        except Exception as exc:
+            log.warning("posterior plot for observation %d failed: %s", i, exc)

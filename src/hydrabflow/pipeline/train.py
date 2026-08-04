@@ -15,7 +15,6 @@ from hydrabflow.augmentation.registry import build_augmentations
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.adapter import select_adapter_keys
-from hydrabflow.pipeline.checkpoint import save_approximator
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.preprocessing.registry import build_pipeline
 from hydrabflow.utils.oom import run_with_oom_backoff
@@ -82,7 +81,7 @@ def run_training(cfg):
 
     # 6. Persist the best weights seen, the model, and the loss history/curve.
     artifacts.restore_best_weights(workflow, run_dir)
-    save_approximator(workflow, run_dir)
+    artifacts.save_approximator(workflow, run_dir)
     artifacts.save_history(history, run_dir)
 
     log.info("Training complete. Artifacts in %s", run_dir)

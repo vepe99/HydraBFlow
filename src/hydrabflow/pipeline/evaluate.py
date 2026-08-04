@@ -17,7 +17,6 @@ import os
 
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
-from hydrabflow.pipeline.checkpoint import load_approximator
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.preprocessing.registry import build_pipeline
 from hydrabflow.utils.paths import PREPROCESSING_STATE, get_run_dir
@@ -37,7 +36,7 @@ def run_evaluation(cfg):
 
     # 1. Rebuild the workflow and load the trained approximator into it.
     workflow = build_workflow(cfg)
-    workflow.approximator = load_approximator(cfg.model_dir)
+    workflow.approximator = artifacts.load_approximator(cfg.model_dir)
 
     # 2. Load the data and replay the *fitted* preprocessing (no re-fit, no split).
     real = bool(cfg.data.real_data_path)

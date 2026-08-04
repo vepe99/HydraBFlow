@@ -27,7 +27,6 @@ from hydrabflow.augmentation.registry import build_augmentations
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.adapter import select_adapter_keys
-from hydrabflow.pipeline.checkpoint import save_approximator
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.preprocessing.registry import build_pipeline
 from hydrabflow.utils.oom import is_oom_error, run_with_oom_backoff
@@ -139,7 +138,7 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
 
     # The val split carries ground truth, so the evaluate stage's diagnostics apply here too.
     if bool(cfg.tuning.save_artifacts):
-        save_approximator(workflow, trial_dir)
+        artifacts.save_approximator(workflow, trial_dir)
         artifacts.save_history(history, trial_dir)
         artifacts.save_posterior(posterior, trial_dir)
         artifacts.run_diagnostics(cfg, posterior, val_data, param_names, trial_dir)
