@@ -207,6 +207,13 @@ Every run saves:
   BayesFlow 2.0.12 — same constructor kwargs; requires `diffusion`, since only `DiffusionModel`
   implements `_inverse_compositional`; conditions gain an `(n_datasets, n_compositional, ...)` axis;
   the prior score must be in the post-preprocessing/standardize space or it biases silently).
+- Session 2026-08-04c (docs only): `docs/hydra.md` gained "New module, or new function in an existing
+  one?" — since `discover()` imports every module in a package, both work, so the guidance is about
+  substance/ownership: own file for simulators, stateful or >~40-line components, new kinds of thing,
+  and experiment-specific code you want deletable in one `rm`; decorated function appended to an
+  existing module for thin library wrappers (`networks/factory.py`) and small stateless steps
+  (`preprocessing/steps.py`, `augmentation/noise.py`); split out when a shared module passes ~150
+  lines.
 
 ## graphify
 

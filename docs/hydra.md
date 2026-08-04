@@ -6,6 +6,7 @@ open** for any change.
 
 - [The two halves](#the-two-halves)
 - [What `@register_*` does](#what-register_-does)
+- [New module, or new function in an existing one?](#new-module-or-new-function-in-an-existing-one)
 - [The five registries](#the-five-registries)
 - [Who owns the Hydra infrastructure](#who-owns-the-hydra-infrastructure)
 - [Life of one run, step by step](#life-of-one-run-step-by-step)
@@ -62,6 +63,48 @@ discover(__name__, __path__)           # imports every non-underscore module in 
 Importing a module runs its decorators. So **dropping a file into the package is the registration** —
 you never edit an `__init__.py`, a factory, an `if/elif`, or the schema. A new component costs exactly
 one Python file plus (for simulators/networks) one YAML.
+
+## New module, or new function in an existing one?
+
+`discover()` imports every non-underscore module in the package, so *both* work: a registration is
+found whether it sits in a brand-new file or is appended to one that already exists. The choice is
+purely about where a reader will look for it. The current package shows both patterns on purpose:
+
+| pattern | example in the repo |
+|---|---|
+| one module = one component | `simulators/two_moons.py`, `preprocessing/standardize.py` |
+| one module = several small components of a kind | `preprocessing/steps.py` (`drop_nan`, `train_val_split`), `networks/factory.py` (all five network builders) |
+
+**Add a new module when** any of these is true:
+
+- It is a **simulator**. Always its own file — a forward model carries prior, physics, and often
+  helper functions, and `conf/simulator/<name>.yaml` pairs 1:1 with it. `two_moons.py` is the stub to
+  copy.
+- The component brings **its own state, dependencies, or helpers** — a fitted transform with
+  `save`/`load`, a step that imports something heavy, more than ~40 lines of code.
+- It is a **new kind of thing** rather than a variation of one already in a file (e.g. a masked
+  summary network with its own Keras layers, not another wrapper around a BayesFlow class).
+- You want it **deletable in one `rm`** — experiment-specific components should not be tangled into a
+  shared module.
+
+**Just add a decorated function/class to an existing module when:**
+
+- It is **a few lines that wrap an existing library class**, like the network builders in
+  `networks/factory.py` — five registrations, each ~8 lines, and keeping them together is what makes
+  them comparable at a glance.
+- It is a **small stateless preprocessing step or augmentation** that belongs with its neighbours:
+  another array-hygiene step goes in `preprocessing/steps.py`, another perturbation next to
+  `gaussian_noise` in `augmentation/noise.py`.
+- It is a **variant of something already there** and would otherwise be a two-function file.
+
+Rule of thumb: **a new file when the component has substance or an owner; a new decorated function
+when it is a thin variation of its file's neighbours.** If a shared module passes ~150 lines or its
+contents stop being the same kind of thing, split the newcomer out — no infrastructure changes either
+way, since `discover()` picks up whatever files exist.
+
+Either way, what you never touch: `__init__.py`, the registry module, the factory dispatch, or
+`config.py` (unless the component needs a genuinely new *typed* field — free-form `params` covers
+most cases).
 
 ## The five registries
 
