@@ -234,3 +234,4 @@ cannot destroy a converged model.
 
 - [configuration.md](configuration.md) — every knob in `conf/config.yaml` and how to override it
 - [extending.md](extending.md) — add a simulator, network, preprocessing step, or augmentation
+- [hydra.md](hydra.md) — how config, registries, and `@register_*` fit together; which file owns what

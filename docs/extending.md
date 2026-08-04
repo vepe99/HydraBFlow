@@ -22,6 +22,7 @@ registered.
 - [An inference network](#an-inference-network)
 - [A preprocessing step](#a-preprocessing-step)
 - [An augmentation](#an-augmentation)
+- [Another workflow type (CompositionalWorkflow)](#another-workflow-type-compositionalworkflow)
 - [Reading a format other than .npz](#reading-a-format-other-than-npz)
 
 ## A simulator
@@ -272,6 +273,91 @@ augmentation:
 ```
 
 Make the default a **no-op** (as `noise_scale: 0.0` is) so the shipped config stays unaugmented.
+
+## Another workflow type (`CompositionalWorkflow`)
+
+This is the one extension point with **no registry**: `pipeline/workflow.py` hardcodes
+`bf.BasicWorkflow`, because single-level inference was a deliberate design decision. BayesFlow 2.x
+also ships `bf.CompositionalWorkflow` (and `bf.EnsembleWorkflow`), and adding one is a small,
+self-contained edit. Worked example below.
+
+**What compositional inference is.** Given `K` independent datasets that share the same parameters,
+sample from the *joint* posterior `p(θ | x₁ … x_K)` instead of running one posterior per dataset and
+hoping they agree. It is a **sampling-time** capability: training is unchanged — the same
+`fit_offline` on single-dataset examples — so you get both modes from one trained model.
+
+Two hard requirements before you start:
+
+- **A score-based inference network.** Only `bf.networks.DiffusionModel` implements
+  `_inverse_compositional`; `FlowMatching` raises `NotImplementedError`. Use
+  `model/inference_network=diffusion`.
+- **A prior score function.** Naively multiplying `K` posteriors counts the prior `K` times, so
+  compositional sampling subtracts it: you must supply `compute_prior_score(params) -> ∇_θ log p(θ)`.
+
+**1. A config knob.** Add one typed field to `TrainingConfig` in `src/hydrabflow/config.py` (this is
+the "genuinely new field" case from [hydra.md](hydra.md), so the schema does change):
+
+```python
+    workflow: str = "basic"          # "basic" | "compositional"
+```
+
+**2. One branch in `build_workflow`.** `CompositionalWorkflow.__init__` takes the same keyword
+arguments this repo already passes (`adapter`, `summary_network`, `inference_network`, `standardize`,
+`checkpoint_*`), so the change is the class, nothing else:
+
+```python
+# src/hydrabflow/pipeline/workflow.py
+    WORKFLOWS = {"basic": bf.BasicWorkflow, "compositional": bf.CompositionalWorkflow}
+    return WORKFLOWS[str(cfg.training.workflow)](**kwargs)
+```
+
+Train exactly as before:
+
+```bash
+uv run hydrabflow-train training.workflow=compositional model/inference_network=diffusion
+```
+
+**3. Sample compositionally.** The saved `approximator.keras` deserializes back into a
+`CompositionalApproximator`, so `evaluate`'s existing `workflow.sample(...)` still works
+(one dataset at a time) and the compositional method is simply also available:
+
+```python
+# in a notebook, or behind a flag in pipeline/evaluate.py next to the workflow.sample call
+posterior = workflow.approximator.compositional_sample(
+    num_samples=int(cfg.eval.num_samples),
+    conditions=conditions,               # each array (n_datasets, n_compositional, ...)
+    compute_prior_score=prior_score,
+    batch_size=int(cfg.eval.batch_size),
+)
+```
+
+**Shapes.** `compositional_sample` adds one axis in front of what `sample` expects: conditions are
+`(n_datasets, n_compositional, *event_shape)` with `n_compositional >= 2`. `n_datasets` is the usual
+batch axis (independent compositional problems, each returning one posterior); `n_compositional` is the
+number of datasets fused within a problem. For two_moons, `x` goes from `(n, n_obs, 2)` to
+`(n_datasets, K, n_obs, 2)`.
+
+**The prior score.** A callable returning one array per inference variable, shaped like the parameters:
+
+```python
+def prior_score(params: dict, *_args) -> dict:
+    # ∇_θ log p(θ) for the uniform two_moons prior is 0 inside the support
+    return {k: np.zeros_like(v) for k, v in params.items()}
+```
+
+For a non-uniform prior, differentiate its log-density (analytically, or with `jax.grad`).
+
+> **Gotcha — the score must live in the network's space.** The network sees parameters *after*
+> `preprocessing` and after BayesFlow's `standardize`. A prior score computed in physical units is
+> simply wrong there (a missing Jacobian factor), and it fails silently: sampling runs and returns
+> plausible-looking, biased posteriors. Either express the prior in the transformed space, or drop the
+> parameter transforms for compositional runs and compare against the single-dataset posterior first —
+> if the `K = 1` compositional result does not match `workflow.sample`, the score is wrong.
+
+**Should this be a registry?** With one alternative, the two-entry dict above is the right size. If you
+end up with several (`EnsembleWorkflow`, a hierarchical variant, your own), promote it: a
+`Registry("workflow")` in `pipeline/workflow.py` plus `@register_workflow("compositional")` builders
+makes it the sixth extension point and matches every other section of this file.
 
 ## Reading a format other than `.npz`
 

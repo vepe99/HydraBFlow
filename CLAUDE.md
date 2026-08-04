@@ -197,6 +197,16 @@ Every run saves:
   2026-08-03b pass: the folder tree still listed a standalone `checkpoint` module, and the design
   principles still named the removed `utils.discovery` (auto-import now lives in
   `utils.registry.discover`).
+- Session 2026-08-04b (docs only, no code change): added `docs/hydra.md` — the value/code split bridged
+  by a name string (and why `_target_` is not used), what `@register_*` mechanically does (a dict
+  insert; `discover()` is what makes dropping a file suffice), a table of the five registries, and the
+  per-file list of Hydra-infrastructure owners (`config.py` schema, `conf/config.yaml` composition
+  root + `hydra:` block, `_app.py` entry points, `adapter.py` name derivation). Linked from
+  `running.md`. Added an `extending.md` section on adding a second workflow type: `training.workflow`
+  field + a 2-entry dict in `pipeline/workflow.py` for `bf.CompositionalWorkflow` (verified against
+  BayesFlow 2.0.12 — same constructor kwargs; requires `diffusion`, since only `DiffusionModel`
+  implements `_inverse_compositional`; conditions gain an `(n_datasets, n_compositional, ...)` axis;
+  the prior score must be in the post-preprocessing/standardize space or it biases silently).
 
 ## graphify
 
