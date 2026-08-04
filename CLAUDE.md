@@ -24,8 +24,8 @@ Everything else — config management, output tracing, reproducibility — is fi
   `simulators.registry`, `preprocessing.registry`, `augmentation.registry`, `pipeline.adapter`).
   Components self-register by name (`@register_simulator`, `@register_step`,
   `@register_augmentation`, `@register_summary_network`, `@register_inference_network`), and each
-  package auto-imports its modules (`utils.discovery`), so adding a component = dropping a file +
-  a config entry, no infrastructure edits (not even `__init__.py`).
+  package auto-imports its modules (`utils.registry.discover`), so adding a component = dropping a
+  file + a config entry, no infrastructure edits (not even `__init__.py`).
 - **The simulator is the single source of truth for variable names**: empty
   `adapter.inference_variables` / `summary_variables` are derived from the simulator's
   `parameter_names` / `observable_keys` at CLI entry (`pipeline.adapter.fill_adapter_from_simulator`).
@@ -71,8 +71,8 @@ HydraBFlow/
 │   ├── networks/factory.py      # build_summary_network / build_inference_network
 │   ├── preprocessing/           # base, standardize, steps, registry (deterministic, once)
 │   ├── augmentation/            # registry + noise.py (stochastic, per-batch)
-│   ├── pipeline/                # INFRASTRUCTURE: adapter, workflow, io, checkpoint, artifacts,
-│   │                            #   simulate, train, evaluate, tune, _app
+│   ├── pipeline/                # INFRASTRUCTURE: adapter, workflow, io, artifacts (incl.
+│   │                            #   checkpointing), simulate, train, evaluate, tune, _app
 │   └── utils/                   # backend (JAX pin), registry (shared by all 5 extension
 │                                #   points), seed, paths, oom
 ├── tests/                       # config-compose, registries, preprocessing, workflow smoke tests
@@ -191,6 +191,12 @@ Every run saves:
   two_moons walkthrough + smoke run, real-data mode, tuning, bring-your-own-dataset, artifacts, GPU
   env vars), `configuration.md` (every block of `config.yaml` + the 3 groups), `extending.md` (the
   one drop-a-module-and-decorate pattern for all 5 extension points). No longer stale.
+- Session 2026-08-04 (checkpoint fold + doc cleanup): `pipeline/checkpoint.py` folded into
+  `pipeline/artifacts.py` (one less infra module; artifacts.py now also owns
+  `restore_best_weights`'s checkpoint-file handling). Fixed two stale references left over from the
+  2026-08-03b pass: the folder tree still listed a standalone `checkpoint` module, and the design
+  principles still named the removed `utils.discovery` (auto-import now lives in
+  `utils.registry.discover`).
 
 ## graphify
 
