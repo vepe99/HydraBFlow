@@ -1,11 +1,8 @@
-"""Pin compute settings *before* keras/bayesflow/JAX are imported anywhere.
+"""Pin GPU selection and the Keras backend *before* keras/bayesflow/JAX import anywhere.
 
-Both libraries read their configuration at import time, so GPU selection and the Keras backend must
-be set first — which is why ``hydrabflow/__init__.py`` imports this module before anything else.
-
-Environment overrides (this runs before Hydra config exists):
-``CUDA_VISIBLE_DEVICES`` (set it yourself and autocvd is skipped), ``HYDRABFLOW_NUM_GPUS`` (how many
-GPUs autocvd should expose, default 1; ``0`` forces CPU-only), ``KERAS_BACKEND`` (default ``jax``).
+Both read their config at import time, so ``hydrabflow/__init__.py`` imports this module first.
+Env overrides (this runs before Hydra config exists): ``CUDA_VISIBLE_DEVICES`` (set it and autocvd
+is skipped), ``HYDRABFLOW_NUM_GPUS`` (default 1; ``0`` forces CPU), ``KERAS_BACKEND`` (default jax).
 """
 
 from __future__ import annotations

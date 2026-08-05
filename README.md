@@ -33,13 +33,13 @@ Everything else is fixed infrastructure you should not need to touch.
   **factory functions** reading those dataclasses (no `_target_`).
 - **Everything extensible is a self-registering registry.** Simulators, preprocessing steps,
   augmentations, and summary / inference network builders all share one `Registry`
-  (`utils/registry.py`): drop a module into the component's package, decorate it with
+  (`registry.py`): drop a module into the component's package, decorate it with
   `@register_<component>("name")` (the package auto-imports it), and select it by name in YAML.
   No infrastructure edits, ever.
 - **The adapter wires itself.** The simulator class declares its `parameter_names` and
   `observable_keys`; the BayesFlow adapter derives its variables from them, so you never repeat
   the names in config (explicit adapter config remains available as an override, e.g. for
-  [bring your own dataset](docs/running.md#bring-your-own-dataset-no-simulator)).
+  [bring your own dataset](docs/running.md#a-dataset-with-no-simulator)).
 - **JAX backend + GPU pin.** Before keras/bayesflow/JAX are imported, `hydrabflow.utils.backend`
   pins `KERAS_BACKEND=jax` and uses [`autocvd`](https://pypi.org/project/autocvd) to limit the
   visible GPUs (picking available/free ones). Defaults to one GPU; override with `HYDRABFLOW_NUM_GPUS`
@@ -84,7 +84,7 @@ pair plots only — no truth to score against).
 
 Each stage is also runnable as a module, e.g.
 `uv run python -m hydrabflow.pipeline.train training.n_epochs=5 data.n_simulations=2000`. The
-[Two Moons walkthrough](docs/running.md#full-walkthrough-two-moons) explains each step (including a
+[Two Moons walkthrough](docs/running.md#two-moons-end-to-end) explains each step (including a
 ~1-minute smoke-run variant).
 
 ## Adding your own simulator
@@ -96,7 +96,7 @@ The simulator is the only Python you must write. Copy the shipped worked example
 
    ```python
    from hydrabflow.simulators.base import BaseSimulator
-   from hydrabflow.simulators.registry import register_simulator
+   from hydrabflow.registry import register_simulator
 
    @register_simulator("my_sim")
    class MySimulator(BaseSimulator):
@@ -113,5 +113,5 @@ The simulator is the only Python you must write. Copy the shipped worked example
 
 That's all: the module is auto-imported (no `__init__.py` edit), and the adapter derives its
 variables from `parameter_names` / `observable_keys` (no adapter config). No infrastructure code
-changes are required. [extending.md](docs/extending.md#a-simulator) walks through a complete example
+changes are required. [extending.md](docs/extending.md#your-simulator) walks through a complete example
 including the shape contract for each summary network.

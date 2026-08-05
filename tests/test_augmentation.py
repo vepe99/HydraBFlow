@@ -18,7 +18,7 @@ def _batch(n=8, n_obs=4, d=2):
 
 def _build_one(seed, params=STRONG_PARAMS):
     """Build the shipped augmentation through the registry with a seeded generator."""
-    from hydrabflow.augmentation.registry import AUGMENTATIONS
+    from hydrabflow.registry import AUGMENTATIONS
 
     rng = np.random.default_rng(seed)
     # rng.spawn(1) mirrors how build_augmentations isolates each step's stream.
@@ -63,7 +63,7 @@ def test_does_not_touch_global_numpy_state():
 
 def test_build_augmentations_end_to_end_reproducible(compose):
     """Same seed + same step list -> identical result through the public builder."""
-    from hydrabflow.augmentation.registry import build_augmentations
+    from hydrabflow.registry import build_augmentations
 
     def run(seed):
         cfg = compose(
@@ -84,7 +84,7 @@ def test_build_augmentations_end_to_end_reproducible(compose):
 
 
 def test_two_moons_shapes_and_reproducibility():
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     class _Cfg:
         name = "two_moons"

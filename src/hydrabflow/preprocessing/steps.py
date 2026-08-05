@@ -11,7 +11,7 @@ from typing import Iterable, Tuple
 import numpy as np
 
 from hydrabflow.preprocessing.base import Dataset, PreprocessStep
-from hydrabflow.preprocessing.registry import register_step
+from hydrabflow.registry import register_step
 
 
 @register_step("drop_nan")

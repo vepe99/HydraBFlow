@@ -9,10 +9,10 @@ import numpy as np
 
 
 def seed_everything(seed: int) -> np.random.Generator:
-    """Seed Python, NumPy, and (best effort) the active Keras backend.
+    """Seed Python, NumPy, and (best effort) Keras.
 
-    Returns a NumPy :class:`~numpy.random.Generator` to be threaded through simulators and
-    preprocessing so randomness is explicit rather than global.
+    Returns a ``Generator`` to thread through simulators and preprocessing, so randomness is
+    explicit rather than global.
     """
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)

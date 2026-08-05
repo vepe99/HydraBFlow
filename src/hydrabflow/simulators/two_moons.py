@@ -1,29 +1,14 @@
-"""Two Moons: the classic bimodal SBI benchmark, as a worked example simulator.
+"""Two Moons: the classic bimodal SBI benchmark. Copy this file for your own forward model.
 
-The forward model has two parameters ``theta1``, ``theta2`` (uniform prior) and produces a 2-D
-observation whose posterior is famously crescent/bimodal — a good smoke test for an inference
-network's ability to capture non-Gaussian, multimodal posteriors.
+Generative process for one observation (the standard `sbibm` definition)::
 
-Generative process (one observation), following the standard `sbibm` definition::
+    a ~ Uniform(-pi/2, pi/2);  r ~ Normal(mean_radius, std_radius)
+    x1 = r*cos(a) + 0.25 - |theta1 + theta2| / sqrt(2)
+    x2 = r*sin(a)        + (-theta1 + theta2) / sqrt(2)
 
-    a ~ Uniform(-pi/2, pi/2)
-    r ~ Normal(mean_radius, std_radius)
-    p = (r*cos(a) + 0.25,  r*sin(a))
-    x1 = p1 - |theta1 + theta2| / sqrt(2)
-    x2 = p2 + (-theta1 + theta2) / sqrt(2)
-
-The intrinsic noise ``(a, r)`` is drawn from the ``rng`` passed in by the pipeline, so the whole
-simulator is stochastic yet fully reproducible from ``cfg.seed`` (see ``utils.seed``).
-
-Observable shape: ``(n, n_obs, 2)``. ``n_obs`` is the number of i.i.d. observations generated for
-each parameter draw (the "set size"). The default ``n_obs=1`` is the canonical single-observation
-benchmark; raising it yields a set the SetTransformer/DeepSet summary network can pool over (and
-gives the per-batch augmentations a set to act on).
-
-Config (``conf/simulator/two_moons.yaml`` -> ``simulator.params``):
-  * ``prior_low`` / ``prior_high`` — uniform prior bounds for both parameters (default -1 / 1).
-  * ``n_obs`` — i.i.d. observations per parameter / summary-set size (default 1).
-  * ``mean_radius`` / ``std_radius`` — intrinsic-noise radius distribution (default 0.1 / 0.01).
+Observable shape ``(n, n_obs, 2)``: ``n_obs`` i.i.d. observations per parameter draw, i.e. the set
+size the summary network pools over. ``simulator.params`` knobs: ``prior_low``/``prior_high``,
+``n_obs``, ``mean_radius``/``std_radius``.
 """
 
 from __future__ import annotations
@@ -33,7 +18,7 @@ from typing import Dict, Mapping
 import numpy as np
 
 from hydrabflow.simulators.base import BaseSimulator
-from hydrabflow.simulators.registry import register_simulator
+from hydrabflow.registry import register_simulator
 
 
 @register_simulator("two_moons")

@@ -18,7 +18,7 @@ def test_transformer_backbones_build_for_any_head_count(compose, num_heads):
     """A head count that does not divide a raw embed_dim used to fail; per-head width makes every
     draw valid — this is what makes the tuning search space usable."""
     pytest.importorskip("bayesflow")
-    from hydrabflow.networks.factory import build_summary_network
+    from hydrabflow.registry import build_summary_network
 
     for net_type in ("set_transformer", "time_series_transformer"):
         cfg = compose(

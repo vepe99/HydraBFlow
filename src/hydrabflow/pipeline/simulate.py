@@ -1,8 +1,7 @@
 """Stage 1: dataset generation.
 
-Samples the prior and runs the forward model in chunks, writing one aggregated ``.npz`` to
-``data.data_dir/data.dataset_name``. Each row is one (parameters, observation) pair: the union of
-the simulator's ``sample_prior`` and ``simulate`` outputs.
+Samples the prior and runs the forward model in chunks into one ``.npz`` at
+``data.data_dir/data.dataset_name``. Each row is one (parameters, observation) pair.
 """
 
 from __future__ import annotations
@@ -12,7 +11,7 @@ import os
 
 from hydrabflow.pipeline import io
 from hydrabflow.pipeline._app import make_cli
-from hydrabflow.simulators.registry import get_simulator
+from hydrabflow.registry import get_simulator
 from hydrabflow.utils.paths import save_config_snapshot
 from hydrabflow.utils.seed import seed_everything
 
