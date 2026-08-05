@@ -1,49 +1,24 @@
-"""Build BayesFlow networks from the typed config, resolved by ``cfg.type``.
+"""The shipped network builders. A builder maps a network config to a BayesFlow network.
 
-A custom architecture plugs in without touching this file: drop a module into
-``src/hydrabflow/networks/`` with an ``@register_summary_network("my_net")`` (or
-``@register_inference_network``) decorated builder — the package auto-imports it — and select it with
-``model.summary_network.type=my_net``. Custom builders read extras from ``cfg.params``.
+To add your own, drop a module in this package and decorate a function:
 
-Multi-observable **fusion** is the extension seam: when the adapter groups several observable keys
-into ``summary_variables``, build one net per key and combine them with
-``bayesflow.networks.FusionNetwork``. ``bayesflow`` is imported lazily so config-only contexts (and
-most of the test suite) don't need the backend.
+    @register_summary_network("my_net")
+    def _my_net(cfg):
+        return MyNetwork(summary_dim=cfg.summary_dim, **cfg.params)
+
+Then select it with ``model.summary_network.type=my_net``. Extra knobs go in ``cfg.params``.
+``bayesflow`` is imported inside each builder so config-only contexts don't need the backend.
 """
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
 
-from hydrabflow.utils.registry import Registry
-
-Builder = Callable[[Any], Any]  # network config -> BayesFlow/keras network
-
-SUMMARY_NETWORKS: Registry[Builder] = Registry("summary_network.type")
-INFERENCE_NETWORKS: Registry[Builder] = Registry("inference_network.type")
-
-register_summary_network = SUMMARY_NETWORKS.add
-register_inference_network = INFERENCE_NETWORKS.add
-
-
-def build_summary_network(cfg) -> Any:
-    """Return the summary network selected by ``cfg.type``."""
-    return SUMMARY_NETWORKS.get(cfg.type)(cfg)
-
-
-def build_inference_network(cfg) -> Any:
-    """Return the inference (posterior) network selected by ``cfg.type``."""
-    return INFERENCE_NETWORKS.get(cfg.type)(cfg)
-
-
-# --------------------------------------------------------------------------------------------- #
-# Shipped builders
-# --------------------------------------------------------------------------------------------- #
+from hydrabflow.registry import register_inference_network, register_summary_network
 
 
 def _embed_dim(cfg) -> int:
-    """Attention width. Expressed per head, so ``embed_dim % num_heads == 0`` always holds — a
-    tuner sampling the width and the head count independently can never draw an invalid pair."""
+    """Attention width, expressed per head so ``embed_dim % num_heads == 0`` always holds."""
     return int(cfg.num_heads) * int(cfg.embed_dim_per_head)
 
 
@@ -71,6 +46,10 @@ def _time_series_transformer(cfg) -> Any:
         summary_dim=int(cfg.summary_dim),
         embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
+        dropout=float(cfg.dropout),
+        # params.time_axis: index of a time channel carried inside the observation (e.g. -1 when a
+        # time column was concatenated onto the values); None = evenly spaced steps.
+        time_axis=cfg.params.get("time_axis"),
     )
 
 

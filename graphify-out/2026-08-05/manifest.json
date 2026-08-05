@@ -1,0 +1,297 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1783069136.9102786,
+    "ast_hash": "bfee062c3962c14264fd704e975a6b38",
+    "semantic_hash": "bfee062c3962c14264fd704e975a6b38"
+  },
+  "notebooks/explore.py": {
+    "mtime": 1785784759.0191722,
+    "ast_hash": "5c4069542daea9d65a259f29b15e2766",
+    "semantic_hash": ""
+  },
+  "tests/conftest.py": {
+    "mtime": 1785925494.3460095,
+    "ast_hash": "772fde82486c7cb93a0d1bd89895a745",
+    "semantic_hash": ""
+  },
+  "tests/test_augmentation.py": {
+    "mtime": 1785925494.3500097,
+    "ast_hash": "92b6e94734e8d2a146fd0d1a40acb883",
+    "semantic_hash": ""
+  },
+  "tests/test_config.py": {
+    "mtime": 1785925494.3580096,
+    "ast_hash": "55a7a9d5023e7cd3c58b624dbe95d93d",
+    "semantic_hash": ""
+  },
+  "tests/test_preprocessing.py": {
+    "mtime": 1785925494.3740096,
+    "ast_hash": "6a7790ce3d344a8818af953aa33ef1ab",
+    "semantic_hash": ""
+  },
+  "tests/test_registries.py": {
+    "mtime": 1785925781.8505652,
+    "ast_hash": "d02ade56bc89f478560d94958ad6dd90",
+    "semantic_hash": ""
+  },
+  "tests/test_workflow.py": {
+    "mtime": 1785925819.6266677,
+    "ast_hash": "5afb7208c432faf5d6da341f878e7f14",
+    "semantic_hash": ""
+  },
+  ".claude/CLAUDE.md": {
+    "mtime": 1783069136.9342787,
+    "ast_hash": "db73b0edd7ffbc61ceac177130730865",
+    "semantic_hash": "db73b0edd7ffbc61ceac177130730865"
+  },
+  ".claude/skills/graphify/SKILL.md": {
+    "mtime": 1783069136.9302785,
+    "ast_hash": "1acfc5e3ff91c92373909c5c11f55769",
+    "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
+  },
+  "CLAUDE.md": {
+    "mtime": 1785927755.5910609,
+    "ast_hash": "93752a73077a0afeb362445af33458e6",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1785926575.9934711,
+    "ast_hash": "955fdd0665de613ab926f555c4ba7d99",
+    "semantic_hash": ""
+  },
+  "conf/config.yaml": {
+    "mtime": 1785925600.3581612,
+    "ast_hash": "d99b594eb47daebff4a2490739971f56",
+    "semantic_hash": ""
+  },
+  "conf/model/inference_network/diffusion.yaml": {
+    "mtime": 1785780575.0407603,
+    "ast_hash": "2b22128da7d4cd59b509db7d31638246",
+    "semantic_hash": ""
+  },
+  "conf/model/inference_network/flow_matching.yaml": {
+    "mtime": 1785780574.200754,
+    "ast_hash": "bcf3c42f4c16e6085c93994e3d16c626",
+    "semantic_hash": ""
+  },
+  "conf/model/summary_network/deep_set.yaml": {
+    "mtime": 1785780572.740743,
+    "ast_hash": "f68fdf32418dea415bc9bb8e3775e32c",
+    "semantic_hash": ""
+  },
+  "conf/model/summary_network/set_transformer.yaml": {
+    "mtime": 1785780570.0167222,
+    "ast_hash": "4c0e134e2cb8c1ab6cc6e6c0c06313f9",
+    "semantic_hash": ""
+  },
+  "conf/model/summary_network/time_series_transformer.yaml": {
+    "mtime": 1785780571.3647325,
+    "ast_hash": "638b05615e509cf688c299b6e23d4538",
+    "semantic_hash": ""
+  },
+  "conf/simulator/two_moons.yaml": {
+    "mtime": 1785780568.2047086,
+    "ast_hash": "0dcf3f3a5ad28def622faf8fa5689f39",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/__init__.py": {
+    "mtime": 1783069136.7742774,
+    "ast_hash": "19efef7ea1cff8cad3aa5bcb2099caef",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/augmentation/__init__.py": {
+    "mtime": 1785925774.3345456,
+    "ast_hash": "1c4f2f4fdb5125d54f461384f1478d47",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/networks/__init__.py": {
+    "mtime": 1785925774.3385456,
+    "ast_hash": "7e21b5c652056d91248092ade49785b8",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/networks/factory.py": {
+    "mtime": 1785925482.7539976,
+    "ast_hash": "13f75717ee2787957008e1708615d639",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/__init__.py": {
+    "mtime": 1785925482.7579975,
+    "ast_hash": "2716ef7fd11c7bada7785381b22f332b",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/_app.py": {
+    "mtime": 1785925482.7619975,
+    "ast_hash": "e1e4ae37505d3712eaceaad937070ce5",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/adapter.py": {
+    "mtime": 1785925554.2300866,
+    "ast_hash": "0b9756151a3525fe7b02e3a62564c7b2",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/evaluate.py": {
+    "mtime": 1785925704.2263732,
+    "ast_hash": "a09cf928a1ed5e2301cfbaf77a8b7b27",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/io.py": {
+    "mtime": 1785925482.7739975,
+    "ast_hash": "8cdc375fa64722bc1f336504dc68fa28",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/simulate.py": {
+    "mtime": 1785925704.234373,
+    "ast_hash": "301597c3c4c0cbfb3a229c5a8c860c54",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/train.py": {
+    "mtime": 1785925704.234373,
+    "ast_hash": "09a0786245b5c92eca97ff394aa31a06",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/tune.py": {
+    "mtime": 1785925704.2303731,
+    "ast_hash": "4d1955923b6bb716d1265baece87c7c6",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/workflow.py": {
+    "mtime": 1785925505.358022,
+    "ast_hash": "5657be707e34ab200382791cab580c97",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/preprocessing/__init__.py": {
+    "mtime": 1785925774.3345456,
+    "ast_hash": "a0bbaf9f29be7b059a63223db97a5940",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/preprocessing/base.py": {
+    "mtime": 1785925704.222373,
+    "ast_hash": "b70cebab83cacc73f1f9cb667816f49b",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/preprocessing/standardize.py": {
+    "mtime": 1785925482.7979977,
+    "ast_hash": "0992a0238143b880a58d15796794d5ba",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/preprocessing/steps.py": {
+    "mtime": 1785925482.8019977,
+    "ast_hash": "d8ebbb597104337862741cfd1212741b",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/__init__.py": {
+    "mtime": 1785925774.3305454,
+    "ast_hash": "3e7fe1294a4d6a7acb885af2f1131a3d",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/base.py": {
+    "mtime": 1785925616.3661902,
+    "ast_hash": "ef42ed3d844d249ffea4087a2fe0ce10",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/two_moons.py": {
+    "mtime": 1785925628.538213,
+    "ast_hash": "9485ca2eb146958623c572caaf172d34",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/utils/__init__.py": {
+    "mtime": 1785925482.8139975,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/utils/backend.py": {
+    "mtime": 1785925704.2303731,
+    "ast_hash": "e8218c443f53c8d964595c96bcec659d",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/utils/paths.py": {
+    "mtime": 1785925482.8219976,
+    "ast_hash": "e86f1e2eccbd36bb8dac5c45bf1d18f0",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/utils/seed.py": {
+    "mtime": 1785925704.234373,
+    "ast_hash": "a4c510c560de1771bb7c2e33b428822c",
+    "semantic_hash": ""
+  },
+  ".claude/settings.local.json": {
+    "mtime": 1785927692.3147445,
+    "ast_hash": "522683876052f7a7d9173980bde43c30",
+    "semantic_hash": ""
+  },
+  "docs/configuration.md": {
+    "mtime": 1785927724.0709035,
+    "ast_hash": "fdb8da23cda9a2ad425b283b47ce3dd3",
+    "semantic_hash": ""
+  },
+  "pyproject.toml": {
+    "mtime": 1785922984.5587647,
+    "ast_hash": "5726921f9c597e6d4561ee4a4d910eae",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/augmentation/noise.py": {
+    "mtime": 1785927786.0872128,
+    "ast_hash": "bd975bd32e3c7deafd42dc5e613326db",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/pipeline/artifacts.py": {
+    "mtime": 1785926699.2300038,
+    "ast_hash": "64fc71891768e4f9af3b4da1d846b303",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/utils/oom.py": {
+    "mtime": 1785925704.2263732,
+    "ast_hash": "59094843a8f1a845d1b041515252d4dc",
+    "semantic_hash": ""
+  },
+  "tests/test_networks_embed_dim.py": {
+    "mtime": 1785925494.3620095,
+    "ast_hash": "ecb3a255e5536962ce3340ac4be6beed",
+    "semantic_hash": ""
+  },
+  "tests/test_oom_backoff.py": {
+    "mtime": 1785925494.3660097,
+    "ast_hash": "fb024fc81f9fed9b7343bf9db4a2fa91",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/config.py": {
+    "mtime": 1785925600.3541613,
+    "ast_hash": "4755b5a8702cefc04d3016398fc4c418",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/registry.py": {
+    "mtime": 1785925762.3185143,
+    "ast_hash": "d1d1ca8b902deaf7404cdde75a1b8f08",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/multimodal.py": {
+    "mtime": 1785925569.2101095,
+    "ast_hash": "75f8c26dd8c2e94361c6eeb5e1f78a80",
+    "semantic_hash": ""
+  },
+  "conf/model/summary_network/fusion.yaml": {
+    "mtime": 1785925584.2061336,
+    "ast_hash": "b8e5dc4258f8b16b6b0c95137f244503",
+    "semantic_hash": ""
+  },
+  "conf/simulator/multimodal.yaml": {
+    "mtime": 1785925581.0621285,
+    "ast_hash": "4182b57f4f4678b696abe4b16c10d652",
+    "semantic_hash": ""
+  },
+  "docs/extending.md": {
+    "mtime": 1785927705.8228123,
+    "ast_hash": "b505a879db5d6f6d94f1e99375f6d8c7",
+    "semantic_hash": ""
+  },
+  "docs/hydra.md": {
+    "mtime": 1785926609.4776146,
+    "ast_hash": "a20d743fc925b75f8e4254ad11b59cf9",
+    "semantic_hash": ""
+  },
+  "docs/running.md": {
+    "mtime": 1785926576.0254714,
+    "ast_hash": "c08fffa54af29708039ad8961d192676",
+    "semantic_hash": ""
+  }
+}

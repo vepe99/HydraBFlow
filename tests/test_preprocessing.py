@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from hydrabflow.preprocessing.registry import build_pipeline
+from hydrabflow.registry import build_pipeline
 
 
 def _toy_data(n=100, with_nan=True):

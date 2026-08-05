@@ -1,16 +1,13 @@
 """Base interface every forward model implements.
 
-A simulator is the ONLY piece a new user must write (plus a matching ``conf/simulator`` YAML).
-It samples parameters from the prior and maps them to observables. Everything downstream
-(dataset generation, adapter, training, evaluation) is driven by ``parameter_names`` and
-``observable_keys`` and never needs to change.
+A simulator is the only piece a new user must write (plus a ``conf/simulator/<name>.yaml``). Shapes
+are batched, leading axis = number of simulations ``n``:
 
-Convention for shapes (batched, leading axis = number of simulations ``n``):
-  * ``sample_prior(n, rng)`` -> ``{param_name: array of shape (n, 1)}``
-  * ``simulate(params, rng)`` -> ``{observable_key: array of shape (n, *event_shape)}``
+  * ``sample_prior(n, rng)`` -> ``{param_name: (n, 1)}``
+  * ``simulate(params, rng)`` -> ``{observable_key: (n, *event_shape)}``
 
-The dataset written to disk is the union of both dicts, so each ``.npz`` row is one
-(parameters, observation) pair.
+The dataset on disk is the union of both dicts, so each row is one (parameters, observation) pair.
+All randomness must come from the passed ``rng``, so runs reproduce from ``cfg.seed``.
 """
 
 from __future__ import annotations
@@ -30,7 +27,7 @@ class BaseSimulator(ABC):
     observable_keys: list[str] = []
 
     def __init__(self, params: Mapping[str, Any] | None = None) -> None:
-        # `params` is the free-form `simulator.params` mapping from config.
+        # The free-form `simulator.params` mapping from config.
         self.params: Dict[str, Any] = dict(params or {})
 
     @abstractmethod
@@ -43,11 +40,7 @@ class BaseSimulator(ABC):
     ) -> Dict[str, np.ndarray]:
         """Run the forward model on a batch of parameters. Returns ``{observable_key: (n, ...)}``."""
 
-    # --------------------------------------------------------------------------------------- #
-    # Convenience: one call producing a full dataset chunk (parameters + observables merged).
-    # Infrastructure (pipeline.simulate) uses this; subclasses normally need not override it.
-    # --------------------------------------------------------------------------------------- #
     def sample(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
+        """One dataset chunk: prior draws merged with their observables. Rarely overridden."""
         params = self.sample_prior(n, rng)
-        observables = self.simulate(params, rng)
-        return {**params, **observables}
+        return {**params, **self.simulate(params, rng)}

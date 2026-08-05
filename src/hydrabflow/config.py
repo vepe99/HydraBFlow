@@ -73,8 +73,7 @@ class DataConfig:
 class TrainingConfig:
     n_epochs: int = 50
     batch_size: int = 512
-    learning_rate: float = 1e-3
-    optimizer: str = "adam"
+    learning_rate: float = 5e-4  # peak LR of BayesFlow's cosine schedule
     validation_fraction: float = 0.1
     standardize: List[str] = field(default_factory=lambda: ["inference_variables"])
     verbose: int = 2
@@ -115,7 +114,7 @@ class EvalConfig:
     batch_size: int = 256
     diagnostics: List[str] = field(
         default_factory=lambda: [
-            "metrics", "recovery", "calibration_ecdf", "coverage", "z_score_contraction"
+            "metrics", "recovery", "calibration_ecdf", "z_score_contraction"
         ]
     )
 

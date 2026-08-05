@@ -1,0 +1,9 @@
+# Two observables of different kinds (a set + a time series), to demonstrate fusion.
+# Forward model: src/hydrabflow/simulators/multimodal.py
+# Run it with the matching fusion summary network:
+#   hydrabflow-simulate simulator=multimodal model/summary_network=fusion
+#   hydrabflow-train    simulator=multimodal model/summary_network=fusion
+name: multimodal
+params:
+  n_set: 5        # exchangeable draws in x_set
+  n_steps: 20     # length of the x_series random walk

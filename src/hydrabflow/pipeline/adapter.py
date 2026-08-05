@@ -1,12 +1,9 @@
-"""Build the BayesFlow ``Adapter`` from ``AdapterConfig``.
+"""Build the BayesFlow ``Adapter``: dataset keys -> the roles BayesFlow expects.
 
-The adapter is the structural (non-stochastic) transform mapping raw dataset keys to the roles
-BayesFlow expects: ``inference_variables`` (the target), ``summary_variables`` (fed to the summary
-network), ``inference_conditions`` (direct conditions).
-
-Single observable (default): the one ``summary_variables`` key is renamed to the BayesFlow role.
-Fusion seam: with multiple keys they are ``group``ed instead, and ``networks.factory`` should build
-one summary backbone per key (``bayesflow.networks.FusionNetwork``).
+``inference_variables`` is the target, ``summary_variables`` feeds the summary network, and
+``inference_conditions`` are passed to the inference network directly. One summary key is renamed to
+the role; several are ``group``ed, which is what ``FusionNetwork`` consumes (see
+``registry.build_summary_network``).
 """
 
 from __future__ import annotations
@@ -14,9 +11,11 @@ from __future__ import annotations
 import logging
 from typing import Any, List
 
+log = logging.getLogger(__name__)
+
 
 def _lists(cfg) -> tuple[List[str], List[str], List[str], List[str]]:
-    """The four adapter key lists as plain Python lists (resolving interpolations)."""
+    """The four adapter key lists as plain lists (resolving interpolations)."""
     from omegaconf import OmegaConf
 
     c = OmegaConf.to_container(cfg, resolve=True) if OmegaConf.is_config(cfg) else dict(cfg)
@@ -31,10 +30,9 @@ def _lists(cfg) -> tuple[List[str], List[str], List[str], List[str]]:
 def fill_adapter_from_simulator(cfg) -> None:
     """Fill empty adapter variable lists from the simulator's own declaration (in place).
 
-    Explicit (non-empty) config values win — that is the escape hatch for datasets no registered
-    simulator produced, where :func:`build_adapter` raises with instructions if nothing is set.
+    Explicit config values win — the escape hatch for data no registered simulator produced.
     """
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     needs_inference = not list(cfg.adapter.inference_variables)
     needs_summary = not list(cfg.adapter.summary_variables)
@@ -51,11 +49,10 @@ def fill_adapter_from_simulator(cfg) -> None:
 
 
 def adapter_keys(cfg) -> List[str]:
-    """Every dataset key the adapter consumes, in a stable order.
+    """Every dataset key the adapter consumes.
 
-    ``drop`` is included so keys the adapter drops still survive :func:`select_adapter_keys`: a
-    dropped key may be a per-batch augmentation *input* the network must not see — it has to reach
-    the augmentation chain, then the adapter's ``.drop()`` removes it before the approximator.
+    ``drop`` is included so dropped keys still survive :func:`select_adapter_keys`: a dropped key may
+    be an augmentation *input* that must reach the augmentation chain before ``.drop()`` removes it.
     """
     inference, summary, conditions, drop = _lists(cfg.adapter)
     return inference + summary + conditions + drop
@@ -66,12 +63,12 @@ def select_adapter_keys(data: dict, cfg) -> dict:
     wanted = set(adapter_keys(cfg))
     dropped = [k for k in data if k not in wanted]
     if dropped:
-        logging.getLogger(__name__).info("Dropping keys the adapter does not use: %s", dropped)
+        log.info("Dropping keys the adapter does not use: %s", dropped)
     return {k: v for k, v in data.items() if k in wanted}
 
 
 def build_adapter(cfg) -> Any:
-    """Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``)."""
+    """Construct ``bf.adapters.Adapter`` from an ``AdapterConfig``."""
     import bayesflow as bf
 
     inference_variables, summary_variables, inference_conditions, drop = _lists(cfg)
@@ -84,18 +81,14 @@ def build_adapter(cfg) -> Any:
             "(see docs/running.md for the no-simulator workflow)."
         )
 
-    adapter = (
-        bf.adapters.Adapter()
-        .to_array()
-        .convert_dtype("float64", "float32")
-        .concatenate(inference_variables, into="inference_variables")
-    )
+    # create_default = to_array + convert_dtype(float64->float32) + concatenate(into inference_variables)
+    adapter = bf.adapters.Adapter.create_default(inference_variables)
     if drop:
         adapter = adapter.drop(drop)
     if len(summary_variables) == 1:
         adapter = adapter.rename(summary_variables[0], "summary_variables")
     elif len(summary_variables) > 1:
-        adapter = adapter.group(summary_variables, into="summary_variables")  # fusion seam
+        adapter = adapter.group(summary_variables, into="summary_variables")  # fusion
     if inference_conditions:
         adapter = adapter.concatenate(inference_conditions, into="inference_conditions")
     return adapter

@@ -1,13 +1,11 @@
-"""Artifacts a stage writes into a run directory: model checkpoint, loss curve, posterior,
-diagnostics.
+"""What a stage writes into its run directory: model, loss curve, posterior, diagnostics.
 
-Shared by train, evaluate, and tune so no stage has to import another stage's internals. Every
-helper is best-effort: a failed plot or metric must never abort a training or evaluation run.
+Shared by train/evaluate/tune, so no stage imports another's internals. Plot and metric helpers are
+best-effort — a failed figure must never abort a run.
 
-``save_approximator``/``load_approximator`` also carry the BayesFlow ``.keras`` deserialization
-workaround: when BayesFlow serializes a JAX-backed approximator, array constants are tagged
-``__bayesflow_type__ArrayImpl`` inside the archive's ``config.json``, and reloading them can fail.
-We patch the tag to ``__bayesflow_type__ndarray`` in a copy of the archive before loading.
+``load_approximator`` carries a BayesFlow workaround: a JAX-backed approximator serializes array
+constants tagged ``__bayesflow_type__ArrayImpl``, which can fail to reload, so we patch the tag to
+``__bayesflow_type__ndarray`` in a copy of the archive first.
 """
 
 from __future__ import annotations
@@ -59,7 +57,10 @@ def load_approximator(run_dir: str) -> Any:
     path = os.path.join(run_dir, MODEL_FILENAME)
     if not os.path.exists(path):
         raise FileNotFoundError(f"No saved model at {path}. Train first (e.g. `hydrabflow-train`).")
-    return keras.models.load_model(fix_keras_model(path))
+    # compile=False: we only sample here, never resume training. Restoring the saved optimizer state
+    # is useless and can hard-fail (its slot variables need not match the rebuilt network's, e.g.
+    # TimeSeriesTransformer's time2vec weights).
+    return keras.models.load_model(fix_keras_model(path), compile=False)
 
 
 def save_posterior(posterior, run_dir: str) -> None:
@@ -136,7 +137,7 @@ def run_diagnostics(cfg, posterior, targets, param_names, run_dir: str) -> None:
         except Exception as exc:
             log.warning("metrics failed: %s", exc)
 
-    for name in ("recovery", "calibration_ecdf", "coverage", "z_score_contraction"):
+    for name in ("recovery", "calibration_ecdf", "z_score_contraction"):
         fn = getattr(bf.diagnostics, name, None)
         if name not in requested or fn is None:
             continue

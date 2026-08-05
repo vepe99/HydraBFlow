@@ -1,6 +1,6 @@
 """Stage 2: training.
 
-Load dataset -> preprocessing (fit on train, save fitted state for inference) -> build workflow ->
+Load dataset -> preprocessing (fit on train, save the state for inference) -> build workflow ->
 ``fit_offline`` with per-batch augmentations -> save approximator + loss curve.
 """
 
@@ -11,12 +11,12 @@ import os
 
 import numpy as np
 
-from hydrabflow.augmentation.registry import build_augmentations
+from hydrabflow.registry import build_augmentations
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.adapter import select_adapter_keys
 from hydrabflow.pipeline.workflow import build_workflow
-from hydrabflow.preprocessing.registry import build_pipeline
+from hydrabflow.registry import build_pipeline
 from hydrabflow.utils.oom import run_with_oom_backoff
 from hydrabflow.utils.paths import PREPROCESSING_STATE, get_run_dir
 from hydrabflow.utils.seed import seed_everything
