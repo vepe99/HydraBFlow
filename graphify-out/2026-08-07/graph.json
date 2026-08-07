@@ -1013,7 +1013,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train",
-      "community": 4,
+      "community": 7,
       "norm_label": "train.py"
     },
     {
@@ -1023,7 +1023,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_run_training",
-      "community": 4,
+      "community": 7,
       "norm_label": "run_training()"
     },
     {
@@ -1033,7 +1033,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_rationale_1",
-      "community": 4,
+      "community": 7,
       "norm_label": "stage 2: training.  load dataset -> preprocessing (fit on train, save the state"
     },
     {
@@ -1043,7 +1043,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_train_rationale_28",
-      "community": 4,
+      "community": 7,
       "norm_label": "train the approximator and return (workflow, history)."
     },
     {
@@ -1053,7 +1053,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune",
-      "community": 4,
+      "community": 7,
       "norm_label": "tune.py"
     },
     {
@@ -1063,7 +1063,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_suggest",
-      "community": 4,
+      "community": 7,
       "norm_label": "_suggest()"
     },
     {
@@ -1073,7 +1073,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_save_shared_preprocessing",
-      "community": 4,
+      "community": 7,
       "norm_label": "_save_shared_preprocessing()"
     },
     {
@@ -1083,7 +1083,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_objective",
-      "community": 4,
+      "community": 7,
       "norm_label": "_objective()"
     },
     {
@@ -1093,7 +1093,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_run_tuning",
-      "community": 4,
+      "community": 7,
       "norm_label": "run_tuning()"
     },
     {
@@ -1103,7 +1103,7 @@
       "source_location": "L204",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_report",
-      "community": 4,
+      "community": 7,
       "norm_label": "_report()"
     },
     {
@@ -1113,7 +1113,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_1",
-      "community": 4,
+      "community": 7,
       "norm_label": "stage 4: hyperparameter tuning with optuna.  a multi-objective study (rmse + cal"
     },
     {
@@ -1123,7 +1123,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_62",
-      "community": 4,
+      "community": 7,
       "norm_label": "save the fit-once preprocessing state, shared by every trial.      written atomi"
     },
     {
@@ -1743,7 +1743,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_get_simulator",
-      "community": 7,
+      "community": 10,
       "norm_label": "get_simulator()"
     },
     {
@@ -1773,7 +1773,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_build_augmentations",
-      "community": 4,
+      "community": 7,
       "norm_label": "build_augmentations()"
     },
     {
@@ -1783,7 +1783,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_py_augmentation",
-      "community": 4,
+      "community": 7,
       "norm_label": "augmentation"
     },
     {
@@ -1853,7 +1853,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_107",
-      "community": 7,
+      "community": 10,
       "norm_label": "instantiate the simulator selected by ``cfg.simulator``."
     },
     {
@@ -1873,7 +1873,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_130",
-      "community": 4,
+      "community": 7,
       "norm_label": "build the ordered augmentation list from ``cfg.augmentation``.      each step ge"
     },
     {
@@ -2030,7 +2030,7 @@
       "label": "BaseSimulator",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L31",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_base_basesimulator",
       "community": 9,
@@ -2040,7 +2040,7 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L41",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_base_basesimulator_init",
       "community": 9,
@@ -2060,7 +2060,7 @@
       "label": ".sample_prior()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L46",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_base_basesimulator_sample_prior",
       "community": 9,
@@ -2080,7 +2080,7 @@
       "label": ".simulate()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L50",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_base_basesimulator_simulate",
       "community": 9,
@@ -2090,21 +2090,11 @@
       "label": ".sample()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L60",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_base_basesimulator_sample",
       "community": 9,
       "norm_label": ".sample()"
-    },
-    {
-      "label": "._validate()",
-      "file_type": "code",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L72",
-      "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_basesimulator_validate",
-      "community": 9,
-      "norm_label": "._validate()"
     },
     {
       "label": "Base interface every forward model implements.  A simulator is the only piece a",
@@ -2120,9 +2110,9 @@
       "label": "Abstract forward model. Subclass + register via ``@register_simulator``.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L32",
+      "source_location": "L29",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_rationale_32",
+      "id": "src_hydrabflow_simulators_base_rationale_29",
       "community": 9,
       "norm_label": "abstract forward model. subclass + register via ``@register_simulator``."
     },
@@ -2130,41 +2120,31 @@
       "label": "Draw ``n`` prior samples. Returns ``{param_name: (n, 1)}``.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L47",
+      "source_location": "L44",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_rationale_47",
+      "id": "src_hydrabflow_simulators_base_rationale_44",
       "community": 9,
       "norm_label": "draw ``n`` prior samples. returns ``{param_name: (n, 1)}``."
     },
     {
-      "label": "Run the forward model.          Batched (``is_batched = True``): ``theta`` is ``",
+      "label": "Batched: ``{param_name: (n, 1)}`` -> ``{observable_key: (n, *event_shape)}``.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L53",
+      "source_location": "L50",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_rationale_53",
+      "id": "src_hydrabflow_simulators_base_rationale_50",
       "community": 9,
-      "norm_label": "run the forward model.          batched (``is_batched = true``): ``theta`` is ``"
+      "norm_label": "batched: ``{param_name: (n, 1)}`` -> ``{observable_key: (n, *event_shape)}``."
     },
     {
       "label": "One dataset chunk: prior draws merged with their observables. Rarely overridden.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L61",
+      "source_location": "L55",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_rationale_61",
+      "id": "src_hydrabflow_simulators_base_rationale_55",
       "community": 9,
       "norm_label": "one dataset chunk: prior draws merged with their observables. rarely overridden."
-    },
-    {
-      "label": "Guard the boundary between simulator code and the pipeline.          ``run_chunk",
-      "file_type": "rationale",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L73",
-      "_origin": "ast",
-      "id": "src_hydrabflow_simulators_base_rationale_73",
-      "community": 9,
-      "norm_label": "guard the boundary between simulator code and the pipeline.          ``run_chunk"
     },
     {
       "label": "multimodal.py",
@@ -2503,7 +2483,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed",
-      "community": 4,
+      "community": 7,
       "norm_label": "seed.py"
     },
     {
@@ -2513,7 +2493,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_seed_everything",
-      "community": 4,
+      "community": 7,
       "norm_label": "seed_everything()"
     },
     {
@@ -2523,7 +2503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_rationale_1",
-      "community": 4,
+      "community": 7,
       "norm_label": "seeding helpers for reproducible runs."
     },
     {
@@ -2533,7 +2513,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_seed_rationale_12",
-      "community": 4,
+      "community": 7,
       "norm_label": "seed python, numpy, and (best effort) keras.      returns a ``generator`` to thr"
     },
     {
@@ -2713,7 +2693,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "tests_test_augmentation_test_two_moons_shapes_and_reproducibility",
-      "community": 7,
+      "community": 10,
       "norm_label": "test_two_moons_shapes_and_reproducibility()"
     },
     {
@@ -3073,7 +3053,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_test_registries_test_augmentation_registry_builds",
-      "community": 4,
+      "community": 7,
       "norm_label": "test_augmentation_registry_builds()"
     },
     {
@@ -3153,97 +3133,97 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched",
-      "community": 7,
+      "community": 26,
       "norm_label": "test_simulate_unbatched.py"
     },
     {
       "label": "_Batched",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L15",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_batched",
-      "community": 7,
+      "community": 26,
       "norm_label": "_batched"
     },
     {
       "label": ".sample_prior()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L19",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_batched_sample_prior",
-      "community": 7,
+      "community": 26,
       "norm_label": ".sample_prior()"
     },
     {
       "label": ".simulate()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L22",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_batched_simulate",
-      "community": 7,
+      "community": 26,
       "norm_label": ".simulate()"
     },
     {
       "label": "_PerDraw",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L26",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_perdraw",
-      "community": 7,
+      "community": 26,
       "norm_label": "_perdraw"
     },
     {
       "label": ".simulate()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L29",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_perdraw_simulate",
-      "community": 7,
+      "community": 26,
       "norm_label": ".simulate()"
     },
     {
       "label": "test_per_draw_matches_batched()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L34",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_per_draw_matches_batched",
-      "community": 7,
+      "community": 26,
       "norm_label": "test_per_draw_matches_batched()"
     },
     {
       "label": "test_declared_name_mismatch_raises()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L48",
+      "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_declared_name_mismatch_raises",
-      "community": 7,
+      "community": 26,
       "norm_label": "test_declared_name_mismatch_raises()"
     },
     {
       "label": "test_wrong_leading_axis_raises()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L56",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_wrong_leading_axis_raises",
-      "community": 7,
+      "community": 26,
       "norm_label": "test_wrong_leading_axis_raises()"
     },
     {
       "label": "test_sir_shapes()",
       "file_type": "code",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L70",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_sir_shapes",
-      "community": 7,
+      "community": 10,
       "norm_label": "test_sir_shapes()"
     },
     {
@@ -3253,8 +3233,28 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_rationale_1",
-      "community": 7,
+      "community": 26,
       "norm_label": "per-draw simulators (``is_batched = false``) and the shape/name guard in ``bases"
+    },
+    {
+      "label": "A toy forward model. Deterministic, so the batched and per-draw paths must agree",
+      "file_type": "rationale",
+      "source_file": "tests/test_simulate_unbatched.py",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "tests_test_simulate_unbatched_rationale_12",
+      "community": 26,
+      "norm_label": "a toy forward model. deterministic, so the batched and per-draw paths must agree"
+    },
+    {
+      "label": "The real per-draw simulator, through the real config.",
+      "file_type": "rationale",
+      "source_file": "tests/test_simulate_unbatched.py",
+      "source_location": "L59",
+      "_origin": "ast",
+      "id": "tests_test_simulate_unbatched_rationale_59",
+      "community": 10,
+      "norm_label": "the real per-draw simulator, through the real config."
     },
     {
       "label": "test_workflow.py",
@@ -4153,7 +4153,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/train.py",
       "source_location": "L68",
-      "community": 4,
+      "community": 7,
       "norm_label": "_save_loss_plot()",
       "id": "src_hydrabflow_pipeline_train_save_loss_plot"
     },
@@ -4162,7 +4162,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/train.py",
       "source_location": "L83",
-      "community": 4,
+      "community": 7,
       "norm_label": "_n()",
       "id": "src_hydrabflow_pipeline_train_n"
     },
@@ -4171,7 +4171,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
       "source_location": "L61",
-      "community": 4,
+      "community": 7,
       "norm_label": "_trial_dir()",
       "id": "src_hydrabflow_pipeline_tune_trial_dir"
     },
@@ -4180,7 +4180,7 @@
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/tune.py",
       "source_location": "L67",
-      "community": 4,
+      "community": 7,
       "norm_label": "save the fit-once preprocessing state, shared by every trial/model.      written",
       "id": "src_hydrabflow_pipeline_tune_rationale_67"
     },
@@ -4474,7 +4474,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -7872,7 +7872,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L74",
+      "source_location": "L63",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_test_sir_shapes",
       "target": "src_hydrabflow_registry_get_simulator"
@@ -8117,7 +8117,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/SIR.py",
-      "source_location": "L84",
+      "source_location": "L66",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_sir_stationarysir_simulate",
       "target": "src_hydrabflow_simulators_sir_convert_params",
@@ -8277,22 +8277,12 @@
       "target": "src_hydrabflow_simulators_base_basesimulator_simulate"
     },
     {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L72",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_basesimulator",
-      "target": "src_hydrabflow_simulators_base_basesimulator_validate",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L32",
+      "source_location": "L29",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_rationale_32",
+      "source": "src_hydrabflow_simulators_base_rationale_29",
       "target": "src_hydrabflow_simulators_base_basesimulator",
       "confidence_score": 1.0
     },
@@ -8320,7 +8310,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L15",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_batched",
       "target": "src_hydrabflow_simulators_base_basesimulator",
@@ -8331,7 +8321,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L41",
+      "source_location": "L38",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_base_basesimulator_init",
       "target": "src_hydrabflow_simulators_base_py_any",
@@ -8353,7 +8343,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L46",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_base_basesimulator_sample_prior",
       "target": "src_hydrabflow_simulators_base_py_ndarray",
@@ -8363,9 +8353,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L47",
+      "source_location": "L44",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_rationale_47",
+      "source": "src_hydrabflow_simulators_base_rationale_44",
       "target": "src_hydrabflow_simulators_base_basesimulator_sample_prior",
       "confidence_score": 1.0
     },
@@ -8374,7 +8364,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L60",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_base_basesimulator_sample",
       "target": "src_hydrabflow_simulators_base_py_ndarray",
@@ -8385,20 +8375,9 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L50",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_base_basesimulator_simulate",
-      "target": "src_hydrabflow_simulators_base_py_ndarray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L72",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_basesimulator_validate",
       "target": "src_hydrabflow_simulators_base_py_ndarray",
       "confidence_score": 1.0
     },
@@ -8417,41 +8396,20 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L53",
+      "source_location": "L50",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_rationale_53",
+      "source": "src_hydrabflow_simulators_base_rationale_50",
       "target": "src_hydrabflow_simulators_base_basesimulator_simulate",
       "confidence_score": 1.0
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L69",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_basesimulator_sample",
-      "target": "src_hydrabflow_simulators_base_basesimulator_validate",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L61",
+      "source_location": "L55",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_rationale_61",
+      "source": "src_hydrabflow_simulators_base_rationale_55",
       "target": "src_hydrabflow_simulators_base_basesimulator_sample",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/simulators/base.py",
-      "source_location": "L73",
-      "weight": 1.0,
-      "source": "src_hydrabflow_simulators_base_rationale_73",
-      "target": "src_hydrabflow_simulators_base_basesimulator_validate",
       "confidence_score": 1.0
     },
     {
@@ -9030,7 +8988,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L73",
+      "source_location": "L62",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_test_sir_shapes",
       "target": "tests_conftest_compose"
@@ -9728,7 +9686,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L15",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched",
       "target": "tests_test_simulate_unbatched_batched",
@@ -9738,7 +9696,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L26",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched",
       "target": "tests_test_simulate_unbatched_perdraw",
@@ -9748,7 +9706,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L48",
+      "source_location": "L41",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched",
       "target": "tests_test_simulate_unbatched_test_declared_name_mismatch_raises",
@@ -9758,7 +9716,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L34",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched",
       "target": "tests_test_simulate_unbatched_test_per_draw_matches_batched",
@@ -9768,7 +9726,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L70",
+      "source_location": "L58",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched",
       "target": "tests_test_simulate_unbatched_test_sir_shapes",
@@ -9778,7 +9736,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L56",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched",
       "target": "tests_test_simulate_unbatched_test_wrong_leading_axis_raises",
@@ -9798,7 +9756,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L19",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_batched",
       "target": "tests_test_simulate_unbatched_batched_sample_prior",
@@ -9808,7 +9766,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L22",
+      "source_location": "L20",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_batched",
       "target": "tests_test_simulate_unbatched_batched_simulate",
@@ -9818,9 +9776,19 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L26",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_perdraw",
+      "target": "tests_test_simulate_unbatched_batched",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_simulate_unbatched.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tests_test_simulate_unbatched_rationale_12",
       "target": "tests_test_simulate_unbatched_batched",
       "confidence_score": 1.0
     },
@@ -9829,7 +9797,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L35",
+      "source_location": "L33",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_test_per_draw_matches_batched",
       "target": "tests_test_simulate_unbatched_batched",
@@ -9839,7 +9807,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L29",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_perdraw",
       "target": "tests_test_simulate_unbatched_perdraw_simulate",
@@ -9850,10 +9818,20 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_simulate_unbatched.py",
-      "source_location": "L36",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "tests_test_simulate_unbatched_test_per_draw_matches_batched",
       "target": "tests_test_simulate_unbatched_perdraw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_simulate_unbatched.py",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "tests_test_simulate_unbatched_rationale_59",
+      "target": "tests_test_simulate_unbatched_test_sir_shapes",
       "confidence_score": 1.0
     },
     {

@@ -1,16 +1,16 @@
 # Graph Report - HydraBFlow  (2026-08-07)
 
 ## Corpus Check
-- 51 files · ~20,654 words
+- 51 files · ~20,963 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 478 nodes · 567 edges · 81 communities (39 shown, 42 thin omitted)
+- 481 nodes · 570 edges · 81 communities (39 shown, 42 thin omitted)
 - Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 78 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f8e8f676`
+- Built from commit: `f245ae80`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -93,8 +93,6 @@
 10. `/graphify` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `test_build_workflow()` --calls--> `build_workflow()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/pipeline/workflow.py
 - `test_unknown_simulator_errors()` --calls--> `get_simulator()`  [INFERRED]
   tests/test_registries.py → src/hydrabflow/registry.py
 - `compose_cfg()` --calls--> `register_configs()`  [INFERRED]
@@ -103,6 +101,8 @@
   tests/test_networks_embed_dim.py → src/hydrabflow/networks/factory.py
 - `test_build_adapter()` --calls--> `build_adapter()`  [INFERRED]
   tests/test_workflow.py → src/hydrabflow/pipeline/adapter.py
+- `test_build_workflow()` --calls--> `build_workflow()`  [INFERRED]
+  tests/test_workflow.py → src/hydrabflow/pipeline/workflow.py
 
 ## Import Cycles
 - None detected.
@@ -127,7 +127,7 @@ Nodes (27): AdapterConfig, AugmentationConfig, DataConfig, EvalConfig, Inference
 
 ### Community 4 - "Simulate Stage & Registries"
 Cohesion: 0.08
-Nodes (30): Stage 3: posterior inference on held-out data, simulated or real.  Loads the app, _require_model_dir(), _run_diagnostics(), run_evaluation(), build_workflow(), Any, Assemble the ``bf.BasicWorkflow`` (adapter + summary network + inference network, Build a ``bf.BasicWorkflow`` from the root ``cfg``.      ``run_dir`` (passed by (+22 more)
+Nodes (31): Stage 3: posterior inference on held-out data, simulated or real.  Loads the app, _require_model_dir(), _run_diagnostics(), run_evaluation(), build_workflow(), Any, Assemble the ``bf.BasicWorkflow`` (adapter + summary network + inference network, Build a ``bf.BasicWorkflow`` from the root ``cfg``.      ``run_dir`` (passed by (+23 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
 Cohesion: 0.17
@@ -147,7 +147,7 @@ Nodes (16): ABC, BaseSimulator, BaseSimulator, Any, ndarray, Base interface ever
 
 ### Community 10 - "Config Composition Tests"
 Cohesion: 0.06
-Nodes (39): adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), _lists(), Any, Build the BayesFlow ``Adapter``: dataset keys -> the roles BayesFlow expects.  `, The four adapter key lists as plain lists (resolving interpolations). (+31 more)
+Nodes (38): adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), _lists(), Any, Build the BayesFlow ``Adapter``: dataset keys -> the roles BayesFlow expects.  `, The four adapter key lists as plain lists (resolving interpolations). (+30 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.25
@@ -186,8 +186,8 @@ Cohesion: 0.20
 Nodes (9): Design principles, docs/, graphify, HydraBFlow: SBI pipeline template (BayesFlow + Hydra), Layout, Notes worth keeping, Stack, Stages (+1 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.08
-Nodes (22): Blocks, Configuration, Network groups, Notes that actually bite, `run_name` vs `model_dir`, Augmentation (stochastic, per batch), Extending, Preprocessing step (deterministic, once, fit on train) (+14 more)
+Cohesion: 0.07
+Nodes (25): Blocks, Configuration, Network groups, No per-block `output_dir`, Notes that actually bite, `run_name` vs `model_dir`, Augmentation (stochastic, per batch), Extending (+17 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.13
@@ -198,7 +198,7 @@ Cohesion: 0.19
 Nodes (13): _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, The shipped network builders. A builder maps a network config to a BayesFlow net, Attention width, expressed per head so ``embed_dim % num_heads == 0`` always hol, _set_transformer() (+5 more)
 
 ## Knowledge Gaps
-- **77 isolated node(s):** `hydrabflow`, `ModelConfig`, `DataConfig`, `TrainingConfig`, `TuningConfig` (+72 more)
+- **79 isolated node(s):** `hydrabflow`, `ModelConfig`, `DataConfig`, `TrainingConfig`, `TuningConfig` (+74 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **42 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -206,9 +206,9 @@ Nodes (13): _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, The 
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `get_simulator()` connect `Config Composition Tests` to `Simulate Stage & Registries`, `Network Factory & Adapter`?**
-  _High betweenness centrality (0.119) - this node is a cross-community bridge._
+  _High betweenness centrality (0.118) - this node is a cross-community bridge._
 - **Why does `compose_cfg()` connect `Config Composition Tests` to `Augmentation Registry & Tests`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
 - **Why does `register_configs()` connect `Augmentation Registry & Tests` to `Config Composition Tests`?**
   _High betweenness centrality (0.069) - this node is a cross-community bridge._
 - **Are the 5 inferred relationships involving `PreprocessStep` (e.g. with `Standardizer` and `CastDtype`) actually correct?**

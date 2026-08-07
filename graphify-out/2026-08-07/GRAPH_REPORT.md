@@ -1,11 +1,11 @@
 # Graph Report - HydraBFlow  (2026-08-07)
 
 ## Corpus Check
-- 51 files · ~20,794 words
+- 51 files · ~20,654 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 478 nodes · 569 edges · 80 communities (38 shown, 42 thin omitted)
+- 478 nodes · 567 edges · 81 communities (39 shown, 42 thin omitted)
 - Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 78 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
@@ -41,6 +41,7 @@
 - [[_COMMUNITY_StationarySIR|StationarySIR]]
 - [[_COMMUNITY_PackageInit cluster 24|Package/Init cluster 24]]
 - [[_COMMUNITY_Evaluate Entry Script|Evaluate Entry Script]]
+- [[_COMMUNITY_test_simulate_unbatched.py|test_simulate_unbatched.py]]
 - [[_COMMUNITY_Community 31|Community 31]]
 - [[_COMMUNITY_Community 34|Community 34]]
 - [[_COMMUNITY_Community 35|Community 35]]
@@ -82,9 +83,9 @@
 ## God Nodes (most connected - your core abstractions)
 1. `PreprocessStep` - 13 edges
 2. `build_workflow()` - 12 edges
-3. `BaseSimulator` - 12 edges
-4. `compose()` - 12 edges
-5. `run_training()` - 11 edges
+3. `compose()` - 12 edges
+4. `run_training()` - 11 edges
+5. `BaseSimulator` - 11 edges
 6. `What You Must Do When Invoked` - 11 edges
 7. `build_pipeline()` - 10 edges
 8. `build_summary_network()` - 10 edges
@@ -106,7 +107,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (80 total, 42 thin omitted)
+## Communities (81 total, 42 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
 Cohesion: 0.16
@@ -125,8 +126,8 @@ Cohesion: 0.07
 Nodes (27): AdapterConfig, AugmentationConfig, DataConfig, EvalConfig, InferenceNetworkConfig, ModelConfig, PreprocessingConfig, Typed config schema. ``conf/config.yaml`` fills these in; the factories read the (+19 more)
 
 ### Community 4 - "Simulate Stage & Registries"
-Cohesion: 0.05
-Nodes (51): Stage 3: posterior inference on held-out data, simulated or real.  Loads the app, _require_model_dir(), _run_diagnostics(), run_evaluation(), _n(), Stage 2: training.  Load dataset -> preprocessing (fit on train, save the state, Train the approximator and return (workflow, history)., run_training() (+43 more)
+Cohesion: 0.08
+Nodes (30): Stage 3: posterior inference on held-out data, simulated or real.  Loads the app, _require_model_dir(), _run_diagnostics(), run_evaluation(), build_workflow(), Any, Assemble the ``bf.BasicWorkflow`` (adapter + summary network + inference network, Build a ``bf.BasicWorkflow`` from the root ``cfg``.      ``run_dir`` (passed by (+22 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
 Cohesion: 0.17
@@ -137,16 +138,16 @@ Cohesion: 0.13
 Nodes (15): fix_keras_model(), load_approximator(), Any, What a stage writes into its run directory: model, loss curve, posterior, diagno, Write the truth-aware diagnostics listed in ``cfg.eval.diagnostics`` into ``run_, Truth-free diagnostic: one posterior pair plot per observation (used for real da, Return a path to a load-safe copy of ``model_path`` (patching the ArrayImpl tag), Load a saved approximator, applying the ArrayImpl fix first. (+7 more)
 
 ### Community 7 - "Network Factory & Adapter"
-Cohesion: 0.09
-Nodes (18): Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), get_simulator(), Instantiate the simulator selected by ``cfg.simulator``., get_run_dir(), Run-directory helpers., The current Hydra run output dir (works regardless of the ``job.chdir`` setting) (+10 more)
+Cohesion: 0.08
+Nodes (31): Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), _n(), Stage 2: training.  Load dataset -> preprocessing (fit on train, save the state, Train the approximator and return (workflow, history)., run_training(), _save_loss_plot() (+23 more)
 
 ### Community 9 - "Base Simulator Interface"
 Cohesion: 0.09
-Nodes (17): ABC, BaseSimulator, BaseSimulator, Any, ndarray, Base interface every forward model implements.  A simulator is the only piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Draw ``n`` prior samples. Returns ``{param_name: (n, 1)}``. (+9 more)
+Nodes (16): ABC, BaseSimulator, BaseSimulator, Any, ndarray, Base interface every forward model implements.  A simulator is the only piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Draw ``n`` prior samples. Returns ``{param_name: (n, 1)}``. (+8 more)
 
 ### Community 10 - "Config Composition Tests"
-Cohesion: 0.07
-Nodes (34): adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), _lists(), Any, Build the BayesFlow ``Adapter``: dataset keys -> the roles BayesFlow expects.  `, The four adapter key lists as plain lists (resolving interpolations). (+26 more)
+Cohesion: 0.06
+Nodes (39): adapter_keys(), _as_list(), build_adapter(), fill_adapter_from_simulator(), _lists(), Any, Build the BayesFlow ``Adapter``: dataset keys -> the roles BayesFlow expects.  `, The four adapter key lists as plain lists (resolving interpolations). (+31 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.25
@@ -171,6 +172,10 @@ Nodes (6): convert_params(), Any, ndarray, Helper function to convert mean/dispe
 ### Community 25 - "Evaluate Entry Script"
 Cohesion: 0.22
 Nodes (4): Dataset, ndarray, Per-feature z-score standardization step.  Mean/std are fit on the train split o, Standardizer
+
+### Community 26 - "test_simulate_unbatched.py"
+Cohesion: 0.24
+Nodes (5): _Batched, _PerDraw, Per-draw simulators (``is_batched = False``) and the shape/name guard in ``BaseS, A toy forward model. Deterministic, so the batched and per-draw paths must agree, test_per_draw_matches_batched()
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
@@ -200,8 +205,8 @@ Nodes (13): _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, The 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_simulator()` connect `Network Factory & Adapter` to `Config Composition Tests`, `Simulate Stage & Registries`?**
-  _High betweenness centrality (0.117) - this node is a cross-community bridge._
+- **Why does `get_simulator()` connect `Config Composition Tests` to `Simulate Stage & Registries`, `Network Factory & Adapter`?**
+  _High betweenness centrality (0.119) - this node is a cross-community bridge._
 - **Why does `compose_cfg()` connect `Config Composition Tests` to `Augmentation Registry & Tests`?**
   _High betweenness centrality (0.077) - this node is a cross-community bridge._
 - **Why does `register_configs()` connect `Augmentation Registry & Tests` to `Config Composition Tests`?**
