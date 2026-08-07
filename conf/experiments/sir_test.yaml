@@ -1,0 +1,112 @@
+# @package _global_
+#
+# The one config file for the whole pipeline. Every value you would normally tune lives here.
+#
+# The three groups below are the only axes with real alternatives, so they are the only ones kept
+# as swappable files (`simulator=<name>`, `model/summary_network=deep_set`, ...). Everything else is
+# a plain block in this file: no `default.yaml`, no group YAML inheriting from another YAML.
+# Types come from the dataclasses in `hydrabflow/config.py`, so a typo here fails loudly.
+#
+# This file lives in a subdirectory of conf/, so it needs two things a root config does not:
+# the `@package _global_` header above (keys land at the config root, not under `experiments.`)
+# and `/`-prefixed group paths below (resolved against conf/, not conf/experiments/).
+defaults:
+  - /base_config
+  # `override` because conf/config.yaml already selects each of these groups and this file is
+  # composed on top of it (`+experiments=sir_test`).
+  - override /simulator: sir
+  - override /model/summary_network: time_series_transformer
+  - override /model/inference_network: flow_matching
+  - _self_
+
+seed: 42
+
+# Directory of a completed `train` run (holds approximator.keras + preprocessing_state.npz).
+# Required by evaluate: `model_dir=outputs/<sim>/<run>/<timestamp>`.
+model_dir: null
+
+# Names the output directory. Override it to label an experiment: `run_name=wider_summary`.
+run_name: ${model.summary_network.type}+${model.inference_network.type}
+
+# Dataset generation + on-disk layout.
+data:
+  data_dir: data_experiments/sir_test
+  n_simulations: 60_000
+  chunk_size: 1000
+  dataset_name: training_data_${data.n_simulations}.npz
+  real_data_path: null            # set it and `evaluate` runs on your observed data instead
+
+training:
+  n_epochs: 50
+  batch_size: 512
+  # Peak learning rate. BayesFlow wraps it in a cosine-decay schedule with 5% warmup and uses
+  # AdamW (weight_decay=5e-3, clipnorm=1.5) for offline training -- see BasicWorkflow.build_optimizer.
+  learning_rate: 5e-4
+  validation_fraction: 0.1
+  # BayesFlow's internal z-scoring. The summary side is standardized by the preprocessing step
+  # below (whose fitted state is saved and replayed at inference), so it is not repeated here.
+  standardize: [inference_variables]
+  verbose: 2
+  save_best_weights: true         # keep the best-val-loss weights, not the last epoch's
+
+# Deterministic, whole-dataset transforms: applied once, fit on the train split, state saved to the
+# run dir and replayed by evaluate. Each entry is {name: <registry key>, ...params}.
+preprocessing:
+  steps:
+    - name: drop_nan              # drop simulations with any NaN (failed forward runs)
+      keys: ${adapter.summary_variables}
+    - name: train_val_split       # steps after this one are fit on the train split only
+      validation_fraction: ${training.validation_fraction}
+    - name: standardize
+      keys: ${adapter.summary_variables}
+
+# Stochastic, per-batch transforms applied inside fit_offline. Names resolve through the
+# augmentation registry; drop a module in src/hydrabflow/augmentation/ to add your own.
+augmentation:
+  steps: []
+  params: {}
+
+# Dataset keys -> BayesFlow roles. Empty lists are filled from the selected simulator's
+# parameter_names / observable_keys, so a registered simulator needs nothing here. Set them
+# explicitly only for data no simulator produced (docs/running.md), or to infer a
+# subset. Several summary_variables enables multi-observable fusion (see pipeline/adapter.py).
+adapter:
+  inference_variables: []
+  summary_variables: []
+  inference_conditions: []
+  drop: []
+
+# Posterior sampling + diagnostics. The truth-aware diagnostics are skipped on real data.
+eval:
+  test_dataset_name: test_data_${data.n_simulations}.npz
+  num_samples: 1000
+  batch_size: 256
+  diagnostics: [metrics, recovery, calibration_ecdf, z_score_contraction]
+
+# Optuna search (minimize RMSE and calibration error). search_space maps a dotted config path to a
+# sampling spec: {type: int|float|categorical, low, high, step, log, choices}. Add/remove freely.
+# The study lives in a concurrency-safe .log, so launching this command N times extends one study.
+tuning:
+  study_name: hydrabflow_study
+  storage_dir: ${data.data_dir}/tuning
+  artifacts_dir: ${tuning.storage_dir}/${tuning.study_name}
+  save_artifacts: true            # persist every trial's model + posterior + plots
+  n_trials: 50
+  n_epochs: 10                    # short budget per trial
+  directions: [minimize, minimize]
+  search_space:
+    model.summary_network.summary_dim: {type: int, low: 16, high: 64}
+    model.summary_network.num_heads: {type: int, low: 2, high: 8}
+    model.summary_network.embed_dim_per_head: {type: int, low: 8, high: 32, step: 8}
+    model.inference_network.mlp_depth: {type: int, low: 2, high: 8}
+    model.inference_network.mlp_width: {type: int, low: 32, high: 256, step: 16}
+    training.learning_rate: {type: float, low: 1e-4, high: 1e-3, log: true}
+
+# Full traceability: every run lands in a timestamped dir and Hydra writes the resolved config
+# into its `.hydra/` subfolder automatically.
+hydra:
+  run:
+    dir: outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: multirun/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}

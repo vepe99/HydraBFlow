@@ -33,10 +33,10 @@ class TwoMoonsSimulator(BaseSimulator):
         return {"theta1": theta[:, 0:1], "theta2": theta[:, 1:2]}
 
     def simulate(
-        self, params: Mapping[str, np.ndarray], rng: np.random.Generator
+        self, theta: Mapping[str, np.ndarray], rng: np.random.Generator
     ) -> Dict[str, np.ndarray]:
-        theta1 = np.asarray(params["theta1"]).reshape(-1, 1)  # (n, 1)
-        theta2 = np.asarray(params["theta2"]).reshape(-1, 1)  # (n, 1)
+        theta1 = np.asarray(theta["theta1"]).reshape(-1, 1)  # (n, 1)
+        theta2 = np.asarray(theta["theta2"]).reshape(-1, 1)  # (n, 1)
         shape = (theta1.shape[0], int(self.params.get("n_obs", 1)))
 
         # Intrinsic noise (the only stochasticity) — drawn from the provided rng.

@@ -4,7 +4,14 @@ A simulator is the only piece a new user must write (plus a ``conf/simulator/<na
 are batched, leading axis = number of simulations ``n``:
 
   * ``sample_prior(n, rng)`` -> ``{param_name: (n, 1)}``
-  * ``simulate(params, rng)`` -> ``{observable_key: (n, *event_shape)}``
+  * ``simulate(theta, rng)`` -> ``{observable_key: (n, *event_shape)}``
+
+Set ``is_batched = False`` when the forward model cannot vectorize (a parameter that sets a loop
+length, an ODE solver, an external binary): ``simulate`` then gets one draw ``{param_name: (1,)}``
+and returns ``{observable_key: event_shape}``, and ``sample`` loops and stacks. See ``SIR.py``.
+
+``theta`` is the prior draw(s); ``self.params`` is the free-form ``simulator.params`` config
+mapping (prior bounds, set sizes). Two different things, deliberately two different names.
 
 The dataset on disk is the union of both dicts, so each row is one (parameters, observation) pair.
 All randomness must come from the passed ``rng``, so runs reproduce from ``cfg.seed``.
@@ -25,6 +32,8 @@ class BaseSimulator(ABC):
     parameter_names: list[str] = []
     #: Keys of the observable arrays. One key = single observable; >1 enables fusion.
     observable_keys: list[str] = []
+    #: False -> ``simulate`` handles one draw at a time and ``sample`` loops and stacks.
+    is_batched: bool = True
 
     def __init__(self, params: Mapping[str, Any] | None = None) -> None:
         # The free-form `simulator.params` mapping from config.
@@ -36,11 +45,28 @@ class BaseSimulator(ABC):
 
     @abstractmethod
     def simulate(
-        self, params: Mapping[str, np.ndarray], rng: np.random.Generator
+        self, theta: Mapping[str, np.ndarray], rng: np.random.Generator
     ) -> Dict[str, np.ndarray]:
-        """Run the forward model on a batch of parameters. Returns ``{observable_key: (n, ...)}``."""
+        """Batched: ``{param_name: (n, 1)}`` -> ``{observable_key: (n, *event_shape)}``.
+        With ``is_batched = False``: one draw ``{param_name: (1,)}`` -> ``{observable_key: shape}``.
+        """
 
     def sample(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
         """One dataset chunk: prior draws merged with their observables. Rarely overridden."""
-        params = self.sample_prior(n, rng)
-        return {**params, **self.simulate(params, rng)}
+        theta = self.sample_prior(n, rng)
+        if self.is_batched:
+            obs = self.simulate(theta, rng)
+        else:
+            rows = [self.simulate({k: v[i] for k, v in theta.items()}, rng) for i in range(n)]
+            obs = {k: np.stack([row[k] for row in rows]) for k in rows[0]}
+        data = {**theta, **obs}
+
+        # run_chunked concatenates chunks on axis 0 and the adapter looks up the declared names, so
+        # a mis-named or non-row-major return would land on disk as a plausible-looking corrupt file.
+        want = sorted(set(self.parameter_names) | set(self.observable_keys))
+        got = {k: np.shape(v) for k, v in data.items()}
+        if sorted(got) != want or any(s[:1] != (n,) for s in got.values()):
+            raise ValueError(
+                f"{type(self).__name__} must return {want} with leading axis n={n}, got {got}"
+            )
+        return data

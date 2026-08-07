@@ -36,13 +36,13 @@ class MultimodalSimulator(BaseSimulator):
         return {"mu1": mu[:, 0:1], "mu2": mu[:, 1:2], "sigma": sigma}
 
     def simulate(
-        self, params: Mapping[str, np.ndarray], rng: np.random.Generator
+        self, theta: Mapping[str, np.ndarray], rng: np.random.Generator
     ) -> Dict[str, np.ndarray]:
         mu = np.concatenate(
-            [np.asarray(params["mu1"]).reshape(-1, 1), np.asarray(params["mu2"]).reshape(-1, 1)],
+            [np.asarray(theta["mu1"]).reshape(-1, 1), np.asarray(theta["mu2"]).reshape(-1, 1)],
             axis=-1,
         )[:, None, :]  # (n, 1, 2), broadcasts over the set / time axis
-        sigma = np.asarray(params["sigma"]).reshape(-1, 1, 1)
+        sigma = np.asarray(theta["sigma"]).reshape(-1, 1, 1)
         n = mu.shape[0]
 
         n_set = int(self.params.get("n_set", 5))

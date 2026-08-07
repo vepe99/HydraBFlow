@@ -43,8 +43,8 @@ class MyModel(BaseSimulator):
             "beta": rng.normal(0.0, 1.0, size=(n, 1)),
         }
 
-    def simulate(self, params, rng):
-        alpha = np.asarray(params["alpha"])                     # (n, 1)
+    def simulate(self, theta, rng):
+        alpha = np.asarray(theta["alpha"])                      # (n, 1)
         y = alpha * np.arange(50) + rng.normal(0, 0.1, (len(alpha), 50))
         return {"y": y}                                         # (n, 50)
 ```
@@ -59,9 +59,16 @@ params:                 # free-form; reaches the instance as self.params
 Rules:
 
 - Leading axis is always `n` (one row = one parameter/observation pair). Parameters are `(n, 1)`;
-  observables are `(n, *event_shape)`.
+  observables are `(n, *event_shape)`. `BaseSimulator.sample` checks both, plus that the returned
+  keys match the two class attributes, so a mis-shaped forward model fails at the source instead of
+  writing a corrupt `.npz`.
 - **All randomness must come from the passed `rng`** — never global `np.random` — so a run
   reproduces from `cfg.seed`.
+- If the forward model cannot vectorize over `n` — a parameter that sets a loop length, an ODE
+  solver, an external binary — set `is_batched = False` and write `simulate` for a single draw:
+  it then receives `{param_name: (1,)}` and returns `{observable_key: event_shape}`, and `sample`
+  loops and stacks. `SIR.py` is the shipped example. Everything else is unchanged, so this is a
+  one-line switch.
 - The class attributes are the single source of truth for variable names: the adapter is derived
   from them, so `conf/config.yaml` needs no edit.
 - Several `observable_keys` automatically switches the summary side to a `FusionNetwork` (see

@@ -1,0 +1,22 @@
+#sir
+name: sir
+params:
+  tot_pop: 8.3e7   # keep the decimal point: `83e6` is a string under YAML 1.1, not a float
+  T: 14
+  eps: 1.0e-5
+  lambd_prior:
+    mean: 0.4
+    sigma: 0.5
+  mu_prior:
+    inverse_mean: 8 #the mean is 1/inverse_mean
+    sigma: 0.2  
+  D_prior:
+    mean: 8
+    sigma: 0.2
+  I0_prior:
+    shape: 2
+    scale: 20
+  psi_prior:
+    scale: 5
+  
+
