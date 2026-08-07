@@ -59,6 +59,19 @@ uv run hydrabflow-evaluate model_dir=outputs/two_moons/wider_summary/2026-08-05_
 `evaluate` never writes into `model_dir`, so one trained model can be evaluated any number of times
 without overwriting anything.
 
+### No per-block `output_dir`
+
+None of the blocks above has an output-path knob, by design. Output location is set once, in the
+`hydra:` block, and applies to `train`, `evaluate` and `tune` alike:
+`outputs/${simulator.name}/${run_name}/<timestamp>/`. Hydra writes the resolved config into that
+dir's `.hydra/`, which is what makes a run reproducible from its own folder — a per-stage
+`output_dir` would put artifacts somewhere the snapshot isn't.
+
+The path keys that *do* exist — `data.data_dir`, `tuning.storage_dir`, `tuning.artifacts_dir` — are
+not run outputs: they hold state that is shared *across* launches (one dataset feeding many runs; one
+Optuna study extended by N parallel `tune` processes), so they must not be timestamped. See
+[running.md](running.md#where-output-goes).
+
 ## Notes that actually bite
 
 - **`training.learning_rate`** is the *peak* LR: BayesFlow wraps it in cosine decay with 5% warmup

@@ -3,6 +3,9 @@
 Loads the approximator + fitted preprocessing from ``cfg.model_dir``, then samples. Two modes, one
 code path: the simulated test set (has ground truth -> truth-aware diagnostics), or
 ``data.real_data_path=<your.npz>`` (no truth, no resimulation -> posterior pair plots only).
+
+``model_dir`` is read-only: results go to this launch's own Hydra run dir (``get_run_dir()``), not
+back into ``model_dir``, so one model can be evaluated any number of times without clobbering.
 """
 
 from __future__ import annotations

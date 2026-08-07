@@ -12,17 +12,39 @@ uv run pytest -q   # optional sanity check, CPU only
 Each stage is a Hydra app: `uv run hydrabflow-<stage>` (or `python -m hydrabflow.pipeline.<stage>`).
 Any config value can be overridden on the command line.
 
-| Stage      | Reads                              | Writes                                                        |
-| ---------- | ---------------------------------- | ------------------------------------------------------------- |
-| `simulate` | prior + forward model              | dataset `.npz` in `data.data_dir` (+ config snapshot)         |
-| `train`    | that `.npz`                        | `approximator.keras`, `preprocessing_state.npz`, `loss.png`, `history.json` |
-| `evaluate` | `model_dir` + test (or real) data  | `posterior.npz`, `metrics.json`, diagnostic plots             |
-| `tune`     | that `.npz`                        | Optuna study + `best_trials.json`                             |
+| Stage      | Reads                              | Writes                                                        | Where |
+| ---------- | ---------------------------------- | ------------------------------------------------------------- | ----- |
+| `simulate` | prior + forward model              | dataset `.npz` (+ `<stem>.hydra/` config snapshot)            | `data.data_dir` |
+| `train`    | that `.npz`                        | `approximator.keras`, `preprocessing_state.npz`, `loss.png`, `history.json` | run dir |
+| `evaluate` | `model_dir` + test (or real) data  | `posterior.npz`, `metrics.json`, diagnostic plots             | run dir |
+| `tune`     | that `.npz`                        | `best_trials.json` → run dir; study + per-trial models → `tuning.storage_dir` / `artifacts_dir` | both |
 
-Everything lands in `outputs/${simulator.name}/${run_name}/<timestamp>/`, together with Hydra's
-`.hydra/` copy of the resolved config — a run is reproducible from its own output folder. `run_name`
-only labels that output dir; `model_dir` is the opposite, an *input* pointing at a finished `train`
-dir for `evaluate` to load ([details](configuration.md#run_name-vs-model_dir)).
+### Where output goes
+
+There is **no per-stage `output_dir` config key**. One path setting, `hydra.run.dir`, decides it for
+every stage:
+
+```yaml
+hydra:
+  run:
+    dir: outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
+```
+
+Each launch gets its own timestamped dir, Hydra drops the resolved config into its `.hydra/`
+subfolder, and the stage writes its artifacts beside it — so a run is reproducible from its own
+folder, and reruns never overwrite each other. Adding explicit output dirs per config block would
+mean copying that config snapshot by hand in every stage and losing the append-only timestamping.
+
+Two things are deliberately *not* in the run dir, because they must outlive a single launch:
+
+- **datasets** (`data.data_dir`) — one `.npz` is reused by many training runs; `simulate` pays for
+  this by copying the config snapshot next to the file itself.
+- **the Optuna study and trial artifacts** (`tuning.storage_dir`, `tuning.artifacts_dir`) — N
+  parallel `hydrabflow-tune` launches have N different run dirs but must append to *one* study log.
+
+`run_name` only labels the run dir; `model_dir` is the opposite, an *input* pointing at a finished
+`train` dir for `evaluate` to load, and `evaluate` never writes into it
+([details](configuration.md#run_name-vs-model_dir)).
 
 ## Two Moons, end to end
 
@@ -47,6 +69,56 @@ The multimodal example shows two observables fused into one summary:
 ```bash
 uv run hydrabflow-simulate simulator=multimodal model/summary_network=fusion
 uv run hydrabflow-train    simulator=multimodal model/summary_network=fusion
+```
+
+## One config file per experiment
+
+Instead of a long override string on every command, put the whole experiment in one file and pass
+its name. Drop it in `conf/experiments/<name>.yaml`:
+
+```yaml
+# @package _global_
+defaults:
+  - /base_config
+  - override /simulator: <your_simulator>
+  - override /model/summary_network: <your_summary_net>
+  - override /model/inference_network: <your_inference_net>
+  - _self_
+
+seed: 42
+data:
+  data_dir: data_experiments/<name>
+  n_simulations: 60_000
+# ... every other block from conf/config.yaml you want to change
+```
+
+Then every stage takes the same flag:
+
+```bash
+uv run hydrabflow-simulate +experiments=<name>
+uv run hydrabflow-train    +experiments=<name>
+uv run hydrabflow-evaluate +experiments=<name> model_dir=<train run>
+```
+
+Two things the file needs because it is not the root config:
+
+- `# @package _global_` — without it the keys land under `experiments.` instead of the config root.
+- `/`-prefixed group paths in `defaults` (`/simulator`, not `simulator`), resolved against `conf/`
+  rather than `conf/experiments/`; and `override` because `conf/config.yaml` already selects those
+  groups, and this file is composed on top of it.
+
+`+experiments=<name>` searches `conf/`. For a file kept outside the repo, prepend its parent to the
+search path — the layout below it is the same:
+
+```bash
+uv run hydrabflow-train --config-dir /path/to/myconf +experiments=<name>   # /path/to/myconf/experiments/<name>.yaml
+```
+
+CLI overrides still win over the file, so `+experiments=<name> training.n_epochs=2` is a valid smoke
+run. Check what you composed without launching anything:
+
+```bash
+uv run hydrabflow-train +experiments=<name> --cfg job
 ```
 
 ## Your own observed data

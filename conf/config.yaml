@@ -94,8 +94,11 @@ tuning:
     model.inference_network.mlp_width: {type: int, low: 32, high: 256, step: 16}
     training.learning_rate: {type: float, low: 1e-4, high: 1e-3, log: true}
 
-# Full traceability: every run lands in a timestamped dir and Hydra writes the resolved config
-# into its `.hydra/` subfolder automatically.
+# The only output-path setting in this file: train, evaluate and tune all write here, so there is no
+# per-block `output_dir`. Every launch gets its own timestamped dir and Hydra writes the resolved
+# config into its `.hydra/` subfolder automatically -- artifacts and their config never desync.
+# `data.data_dir` and `tuning.storage_dir` stay outside it on purpose: they are shared across launches
+# (one dataset, many runs; one Optuna study, N parallel tune processes). See docs/running.md.
 hydra:
   run:
     dir: outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}

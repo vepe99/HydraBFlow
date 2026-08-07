@@ -2,6 +2,10 @@
 
 Samples the prior and runs the forward model in chunks into one ``.npz`` at
 ``data.data_dir/data.dataset_name``. Each row is one (parameters, observation) pair.
+
+The one stage that does *not* write to the Hydra run dir: a dataset is a shared input reused by many
+runs, so its path is configured explicitly and ``save_config_snapshot`` copies the resolved config
+next to it by hand.
 """
 
 from __future__ import annotations

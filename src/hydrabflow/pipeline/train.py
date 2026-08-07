@@ -2,6 +2,9 @@
 
 Load dataset -> preprocessing (fit on train, save the state for inference) -> build workflow ->
 ``fit_offline`` with per-batch augmentations -> save approximator + loss curve.
+
+Every artifact goes to this launch's Hydra run dir (``get_run_dir()``); there is no configurable
+train-specific output path. Point ``evaluate`` at that dir with ``model_dir=<it>``.
 """
 
 from __future__ import annotations
