@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/base.py": {
-    "mtime": 1786056823.106211,
-    "ast_hash": "1e4b6fec7a7b480510f42af8a1f88f88",
+    "mtime": 1786056434.1801445,
+    "ast_hash": "60125f43d08cbe8ddda5785d9cc8a455",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/two_moons.py": {
@@ -290,13 +290,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/SIR.py": {
-    "mtime": 1786056835.666278,
-    "ast_hash": "9e143ae09579fbf1f73b14a60789bd41",
+    "mtime": 1786056521.664609,
+    "ast_hash": "cccc439874739c52445084c9276cbc71",
     "semantic_hash": ""
   },
   "tests/test_simulate_unbatched.py": {
-    "mtime": 1786056847.538341,
-    "ast_hash": "c399992b5f0386a98414f6b52b408afc",
+    "mtime": 1786056525.4646292,
+    "ast_hash": "69b8c6fdd76b54ce9100db74d2a1b6b4",
     "semantic_hash": ""
   },
   "conf/experiments/sir_test.yaml": {
