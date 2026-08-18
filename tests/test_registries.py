@@ -7,24 +7,25 @@ import pytest
 
 
 def test_shipped_components_are_registered():
-    """Every extension point is a Registry filled by import side effects (utils/registry.py)."""
-    from hydrabflow.augmentation.registry import AUGMENTATIONS
-    from hydrabflow.preprocessing.registry import STEPS
-    from hydrabflow.simulators.registry import SIMULATORS
+    """Every extension point is a Registry filled on discovery (registry.py)."""
+    from hydrabflow.registry import AUGMENTATIONS, SIMULATORS, STEPS
 
-    assert "two_moons" in SIMULATORS.items
+    for registry in (SIMULATORS, STEPS, AUGMENTATIONS):
+        registry.discover()  # normally triggered lazily by the first .get()
+
+    assert {"two_moons", "multimodal"} <= set(SIMULATORS.items)
     assert {"drop_nan", "train_val_split", "standardize"} <= set(STEPS.items)
     assert "gaussian_noise" in AUGMENTATIONS.items
 
 
 def test_augmentation_registry_builds(cfg):
-    from hydrabflow.augmentation.registry import build_augmentations
+    from hydrabflow.registry import build_augmentations
 
     assert build_augmentations(cfg.augmentation, np.random.default_rng(0)) == []  # empty default
 
 
 def test_unknown_simulator_errors(cfg):
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     cfg.simulator.name = "does_not_exist"
     with pytest.raises(KeyError):
@@ -32,7 +33,7 @@ def test_unknown_simulator_errors(cfg):
 
 
 def test_unknown_preprocess_step_errors(cfg):
-    from hydrabflow.preprocessing.registry import build_pipeline
+    from hydrabflow.registry import build_pipeline
 
     cfg.preprocessing.steps = [{"name": "does_not_exist"}]
     with pytest.raises(KeyError, match="drop_nan"):  # the message lists what *is* registered
@@ -40,7 +41,7 @@ def test_unknown_preprocess_step_errors(cfg):
 
 
 def test_network_registries_list_available_on_unknown_type(cfg):
-    from hydrabflow.networks.factory import build_inference_network, build_summary_network
+    from hydrabflow.registry import build_inference_network, build_summary_network
 
     cfg.model.summary_network.type = "does_not_exist"
     with pytest.raises(KeyError, match="set_transformer"):
@@ -53,7 +54,7 @@ def test_network_registries_list_available_on_unknown_type(cfg):
 
 def test_custom_network_builder_registers(cfg):
     """Adding an experimental architecture = one decorated function, no infrastructure edits."""
-    from hydrabflow.networks.factory import build_summary_network, register_summary_network
+    from hydrabflow.registry import build_summary_network, register_summary_network
 
     sentinel = object()
 
@@ -65,6 +66,6 @@ def test_custom_network_builder_registers(cfg):
         cfg.model.summary_network.type = "_test_custom"
         assert build_summary_network(cfg.model.summary_network) is sentinel
     finally:
-        from hydrabflow.networks.factory import SUMMARY_NETWORKS
+        from hydrabflow.registry import SUMMARY_NETWORKS
 
         SUMMARY_NETWORKS.items.pop("_test_custom", None)

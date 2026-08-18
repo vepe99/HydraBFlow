@@ -1,237 +1,167 @@
-# Running HydraBFlow
-
-Install, then run the four stages. Everything here works out of the box on the shipped
-**Two Moons** benchmark — no code changes, no simulator to write yet.
-
-- [Install](#install)
-- [The four stages](#the-four-stages)
-- [Full walkthrough (Two Moons)](#full-walkthrough-two-moons)
-- [Smoke run (~1 minute)](#smoke-run-1-minute)
-- [Inference on your own observed data](#inference-on-your-own-observed-data)
-- [Hyperparameter tuning](#hyperparameter-tuning)
-- [Bring your own dataset (no simulator)](#bring-your-own-dataset-no-simulator)
-- [What lands where](#what-lands-where)
-- [GPUs, CPU-only, and OOM](#gpus-cpu-only-and-oom)
+# Running
 
 ## Install
 
 ```bash
-uv sync          # creates .venv and installs everything, including pytest + ruff
-uv run pytest -q # optional: 36 tests, no GPU needed
+uv sync            # .venv + all deps (incl. pytest, ruff)
+uv run pytest -q   # optional sanity check, CPU only
 ```
 
 ## The four stages
 
-Each stage is a Hydra app. There are two equivalent ways to call one:
+Each stage is a Hydra app: `uv run hydrabflow-<stage>` (or `python -m hydrabflow.pipeline.<stage>`).
+Any config value can be overridden on the command line.
 
-```bash
-uv run hydrabflow-train                        # console script
-uv run python -m hydrabflow.pipeline.train     # module form (identical)
+| Stage      | Reads                              | Writes                                                        | Where |
+| ---------- | ---------------------------------- | ------------------------------------------------------------- | ----- |
+| `simulate` | prior + forward model              | dataset `.npz` (+ `<stem>.hydra/` config snapshot)            | `data.data_dir` |
+| `train`    | that `.npz`                        | `approximator.keras`, `preprocessing_state.npz`, `loss.png`, `history.json` | run dir |
+| `evaluate` | `model_dir` + test (or real) data  | `posterior.npz`, `metrics.json`, diagnostic plots             | run dir |
+| `tune`     | that `.npz`                        | `best_trials.json` → run dir; study + per-trial models → `tuning.storage_dir` / `artifacts_dir` | both |
+
+### Where output goes
+
+There is **no per-stage `output_dir` config key**. One path setting, `hydra.run.dir`, decides it for
+every stage:
+
+```yaml
+hydra:
+  run:
+    dir: outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
 ```
 
-| Stage      | Command               | Reads                                   | Writes                                          |
-| ---------- | --------------------- | --------------------------------------- | ----------------------------------------------- |
-| `simulate` | `hydrabflow-simulate` | prior + forward model                   | a dataset `.npz` in `data.data_dir`             |
-| `train`    | `hydrabflow-train`    | that `.npz`                             | `approximator.keras`, preprocessing state, loss |
-| `evaluate` | `hydrabflow-evaluate` | a trained `model_dir` + test/real data  | `posterior.npz` + diagnostics                   |
-| `tune`     | `hydrabflow-tune`     | that `.npz`                             | an Optuna study + per-trial artifacts           |
+Each launch gets its own timestamped dir, Hydra drops the resolved config into its `.hydra/`
+subfolder, and the stage writes its artifacts beside it — so a run is reproducible from its own
+folder, and reruns never overwrite each other. Adding explicit output dirs per config block would
+mean copying that config snapshot by hand in every stage and losing the append-only timestamping.
 
-Any config value can be overridden on the command line (`training.n_epochs=5`,
-`model/summary_network=deep_set`, `simulator=my_sim`). See
-[configuration.md](configuration.md).
+Two things are deliberately *not* in the run dir, because they must outlive a single launch:
 
-## Full walkthrough (Two Moons)
+- **datasets** (`data.data_dir`) — one `.npz` is reused by many training runs; `simulate` pays for
+  this by copying the config snapshot next to the file itself.
+- **the Optuna study and trial artifacts** (`tuning.storage_dir`, `tuning.artifacts_dir`) — N
+  parallel `hydrabflow-tune` launches have N different run dirs but must append to *one* study log.
 
-The defaults are 10 000 simulations and 50 epochs — a few minutes on a laptop.
+`run_name` only labels the run dir; `model_dir` is the opposite, an *input* pointing at a finished
+`train` dir for `evaluate` to load, and `evaluate` never writes into it
+([details](configuration.md#run_name-vs-model_dir)).
 
-**1. Training set.** Writes `data/training_data_10000.npz` (from `data.dataset_name`, which
-interpolates `data.n_simulations`):
+## Two Moons, end to end
 
 ```bash
+# 1. training + test datasets (the test set only differs in name and seed)
 uv run hydrabflow-simulate
-```
+uv run hydrabflow-simulate data.dataset_name=test_data_10000.npz seed=7
 
-**2. Held-out test set.** Same command with a different name *and* a different seed, so it is not
-the data you trained on. The name must match `eval.test_dataset_name`, which defaults to
-`test_data_${data.n_simulations}.npz`:
-
-```bash
-uv run hydrabflow-simulate data.dataset_name=test_data_10000.npz seed=123
-```
-
-Each dataset gets a `<name>.hydra/` config snapshot next to it, so you can always tell which config
-produced which file.
-
-**3. Train.**
-
-```bash
+# 2. train
 uv run hydrabflow-train
-```
 
-This creates `outputs/two_moons/set_transformer+flow_matching/<timestamp>/` — the path is
-`outputs/<simulator>/<run_name>/<timestamp>`, and `run_name` defaults to the two network types.
-Override it to label an experiment: `run_name=wider_summary`. The final log line prints the run
-directory; that is the `model_dir` the next step needs.
-
-**4. Evaluate.**
-
-```bash
+# 3. evaluate the run you just trained
 uv run hydrabflow-evaluate model_dir=outputs/two_moons/set_transformer+flow_matching/<timestamp>
 ```
 
-Or grab the newest run automatically:
+Smoke version (~1 min, CPU): append
+`data.n_simulations=200 data.chunk_size=100 training.n_epochs=2 training.batch_size=32
+eval.num_samples=50 data.data_dir=/tmp/hbf` to each command.
+
+The multimodal example shows two observables fused into one summary:
 
 ```bash
-uv run hydrabflow-evaluate model_dir=$(ls -dt outputs/two_moons/*/*/ | head -1)
+uv run hydrabflow-simulate simulator=multimodal model/summary_network=fusion
+uv run hydrabflow-train    simulator=multimodal model/summary_network=fusion
 ```
 
-You get `metrics.json` (RMSE + calibration error, per parameter and averaged) plus
-`recovery.png`, `calibration_ecdf.png`, `coverage.png`, `z_score_contraction.png`. For Two Moons
-after a full run, expect an RMSE around 0.3–0.5 per parameter; the posterior is deliberately
-bimodal, so `recovery.png` will *not* be a tight diagonal — check `calibration_ecdf.png` instead,
-which should stay inside its confidence band.
+## One config file per experiment
 
-## Smoke run (~1 minute)
+Instead of a long override string on every command, put the whole experiment in one file and pass
+its name. Drop it in `conf/experiments/<name>.yaml`:
 
-Same four commands, tiny numbers — use this to check an installation or a new simulator end to end.
-`data.data_dir` keeps the throwaway data out of your real one:
+```yaml
+# @package _global_
+defaults:
+  - /base_config
+  - override /simulator: <your_simulator>
+  - override /model/summary_network: <your_summary_net>
+  - override /model/inference_network: <your_inference_net>
+  - _self_
+
+seed: 42
+data:
+  data_dir: data_experiments/<name>
+  n_simulations: 60_000
+# ... every other block from conf/config.yaml you want to change
+```
+
+Then every stage takes the same flag:
 
 ```bash
-D=/tmp/hbf_smoke
-uv run hydrabflow-simulate data.n_simulations=600 data.data_dir=$D
-uv run hydrabflow-simulate data.n_simulations=600 data.data_dir=$D data.dataset_name=test_data_600.npz seed=7
-uv run hydrabflow-train    data.n_simulations=600 data.data_dir=$D training.n_epochs=2 training.batch_size=64
-uv run hydrabflow-evaluate data.n_simulations=600 data.data_dir=$D eval.num_samples=200 \
-    model_dir=$(ls -dt outputs/two_moons/*/*/ | head -1)
+uv run hydrabflow-simulate +experiments=<name>
+uv run hydrabflow-train    +experiments=<name>
+uv run hydrabflow-evaluate +experiments=<name> model_dir=<train run>
 ```
 
-The metrics from a 2-epoch run are meaningless; that all four stages complete and write their
-artifacts is the point.
+Two things the file needs because it is not the root config:
 
-## Inference on your own observed data
+- `# @package _global_` — without it the keys land under `experiments.` instead of the config root.
+- `/`-prefixed group paths in `defaults` (`/simulator`, not `simulator`), resolved against `conf/`
+  rather than `conf/experiments/`; and `override` because `conf/config.yaml` already selects those
+  groups, and this file is composed on top of it.
 
-`evaluate` is one stage with two modes. Set `data.real_data_path` and it reads your `.npz` instead
-of the simulated test set:
+`+experiments=<name>` searches `conf/`. For a file kept outside the repo, prepend its parent to the
+search path — the layout below it is the same:
 
 ```bash
-uv run hydrabflow-evaluate model_dir=outputs/two_moons/.../<timestamp> \
-    data.real_data_path=/path/to/observations.npz
+uv run hydrabflow-train --config-dir /path/to/myconf +experiments=<name>   # /path/to/myconf/experiments/<name>.yaml
 ```
 
-Differences in real mode: there is no ground truth, so the truth-aware diagnostics are skipped and
-you get `posterior_pairs.png` per observation instead (`posterior_pairs_obs0.png`,
-`posterior_pairs_obs1.png`, … when the file holds several observations). No resimulation happens.
-
-Your file must contain the observable keys the model was trained on (for Two Moons: `x`, shaped
-`(n_observations, n_obs, 2)`) — the same keys the simulator declares in `observable_keys`. The
-fitted preprocessing from `model_dir` is replayed on it, so your data is scaled exactly like the
-training data was.
-
-## Hyperparameter tuning
-
-An Optuna study minimizing **RMSE and calibration error** together (a Pareto front, not one
-"best"). It needs a training dataset, nothing else:
+CLI overrides still win over the file, so `+experiments=<name> training.n_epochs=2` is a valid smoke
+run. Check what you composed without launching anything:
 
 ```bash
-uv run hydrabflow-tune                       # 50 trials × 10 epochs by default
-uv run hydrabflow-tune tuning.n_trials=10 tuning.n_epochs=5
+uv run hydrabflow-train +experiments=<name> --cfg job
 ```
 
-The dataset is loaded and preprocessed once and shared by every trial; each trial applies its
-sampled hyperparameters, trains a fresh workflow, and is scored on the validation split.
+## Your own observed data
 
-**Results.** `best_trials.json` (in the run dir *and* next to the trial folders) lists each Pareto
-trial's `values`, `params`, and `artifact_dir`. With `tuning.save_artifacts=true` (the default),
-every trial keeps its own model, posterior, and diagnostics under
-`data/tuning/hydrabflow_study/trials/trial_0007/`. Retrain a winner properly by copying its params
-onto a normal `train` run:
+Set `data.real_data_path` and `evaluate` skips everything truth-aware (no metrics, no
+resimulation) and writes posterior pair plots only:
 
 ```bash
-uv run hydrabflow-train model.summary_network.summary_dim=48 model.inference_network.mlp_depth=6
+uv run hydrabflow-evaluate model_dir=<train run> data.real_data_path=data/observed.npz
 ```
 
-**Parallel workers.** The study lives in a Journal-backed `.log` file that is safe for many
-processes to append to, so running the *same* command in N terminals cooperatively fills one study:
+The `.npz` needs the same observable keys, shapes and units as the training data — the fitted
+preprocessing from `model_dir` is replayed on it.
+
+## A dataset with no simulator
+
+`adapter.inference_variables` / `summary_variables` are normally derived from the simulator. For
+data no simulator produced, name the keys yourself in `conf/config.yaml` (or on the CLI):
+
+```yaml
+adapter:
+  inference_variables: [theta1, theta2]
+  summary_variables: [x]
+```
+
+Then run `train` / `evaluate` directly on your `.npz` (skip `simulate`).
+
+## Tuning
 
 ```bash
-uv run hydrabflow-tune &   # terminal 1
-uv run hydrabflow-tune &   # terminal 2 — joins the SAME study
+uv run hydrabflow-tune          # multi-objective: RMSE + calibration error
 ```
 
-Keep `tuning.study_name` and `tuning.storage_dir` identical across workers; change `study_name` to
-start a fresh study rather than extend the old one. Trial numbers are study-global, so concurrent
-workers never collide on an artifact directory.
+The study lives in `tuning.storage_dir` as a concurrency-safe log, so running the command N times
+in parallel extends one study. Search space: `tuning.search_space` in `conf/config.yaml`.
 
-Which knobs are searched is `tuning.search_space` in `conf/config.yaml` — see
-[configuration.md](configuration.md#tuning).
+## GPU / CPU
 
-## Bring your own dataset (no simulator)
+The backend is JAX with `KERAS_BACKEND=jax`, pinned before any keras import. Before Hydra exists,
+so these are env vars:
 
-If your simulations already exist, you can skip `simulate` entirely. Write one `.npz` whose keys are
-arrays with the number of simulations as the leading axis — parameters shaped `(n, 1)` and
-observables shaped `(n, ...)`:
+- `CUDA_VISIBLE_DEVICES=2` — explicit choice, disables auto-selection.
+- `HYDRABFLOW_NUM_GPUS=0` — CPU only. Default `1`, picked by `autocvd` (least-used GPU).
+- `KERAS_BACKEND=tensorflow` — other backend.
 
-```python
-import numpy as np
-np.savez("data/my_train.npz", theta1=t1, theta2=t2, x=x)  # t1: (n,1)  x: (n, n_obs, 2)
-```
-
-Because no simulator class exists to declare the names, the adapter cannot derive them — set them
-explicitly (this is the one case where the `adapter:` block in `conf/config.yaml` matters):
-
-```bash
-uv run hydrabflow-train \
-    data.dataset_name=my_train.npz \
-    adapter.inference_variables=[theta1,theta2] \
-    adapter.summary_variables=[x] \
-    simulator.name=my_data                     # any label; names the output folder
-```
-
-Then evaluate as usual — with a test `.npz` that includes the ground-truth parameters for
-truth-aware diagnostics, or via `data.real_data_path` for observations without truth. To read a
-format other than `.npz`, `pipeline/io.py:load_dataset` is the single seam: it returns
-`{key: array}` and nothing else in the pipeline touches files.
-
-## What lands where
-
-Every run writes a `.hydra/` folder with its fully resolved config, so a run directory alone is
-enough to reconstruct the run:
-
-```
-outputs/<simulator>/<run_name>/<timestamp>/
-├── .hydra/                       # resolved config (Hydra writes this)
-├── <stage>.log                   # train.log, evaluate.log, …
-├── approximator.keras            # train
-├── approximator_best.weights.h5  # train: best val loss, restored before saving
-├── preprocessing_state.npz       # train: fitted transforms, replayed by evaluate
-├── history.json  loss.png        # train
-├── posterior.npz                 # evaluate
-├── metrics.json + 4 plots        # evaluate, simulated test set
-├── posterior_pairs*.png          # evaluate, real data
-└── best_trials.json              # tune
-```
-
-Datasets go to `data.data_dir` (not the run dir), each with a `<name>.hydra/` snapshot.
-
-## GPUs, CPU-only, and OOM
-
-The Keras backend is JAX, pinned before any import. GPU selection happens at import too, via
-`autocvd`, which picks the least-used device:
-
-```bash
-HYDRABFLOW_NUM_GPUS=2 uv run hydrabflow-train   # expose two GPUs
-HYDRABFLOW_NUM_GPUS=0 uv run hydrabflow-train   # force CPU-only
-CUDA_VISIBLE_DEVICES=3 uv run hydrabflow-train  # pick it yourself; autocvd is skipped
-KERAS_BACKEND=torch uv run hydrabflow-train     # override the backend
-```
-
-If a batch does not fit on the card, the batch size is halved and retried automatically (down to 16;
-in tuning, a trial that still OOMs at 512 is pruned instead of crawling). A diverged run is stopped
-by `TerminateOnNaN`, and the best-val-loss weights are restored before saving — a late NaN spike
-cannot destroy a converged model.
-
-## See also
-
-- [configuration.md](configuration.md) — every knob in `conf/config.yaml` and how to override it
-- [extending.md](extending.md) — add a simulator, network, preprocessing step, or augmentation
-- [hydra.md](hydra.md) — how config, registries, and `@register_*` fit together; which file owns what
+On GPU OOM, training halves `training.batch_size` and retries, down to 16.

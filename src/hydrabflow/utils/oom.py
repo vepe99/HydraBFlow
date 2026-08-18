@@ -1,8 +1,8 @@
-"""Retry a GPU computation with a smaller batch size when it runs out of memory.
+"""Retry a GPU computation at a smaller batch size when it runs out of memory.
 
-BayesFlow/JAX raise ``RESOURCE_EXHAUSTED`` when a batch is too large for the card, during training
-or posterior sampling. Rather than fail the run, halve the batch size and retry down to
-``min_batch``, clearing the compilation cache each time. Non-OOM errors propagate unchanged.
+JAX raises ``RESOURCE_EXHAUSTED`` when a batch is too large for the card. Rather than fail the run,
+halve the batch and retry down to ``min_batch``, clearing the compilation cache each time. Non-OOM
+errors propagate unchanged.
 """
 
 from __future__ import annotations

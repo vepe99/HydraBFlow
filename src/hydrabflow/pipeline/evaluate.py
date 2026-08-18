@@ -1,13 +1,11 @@
 """Stage 3: posterior inference on held-out data, simulated or real.
 
-Loads the trained approximator + fitted preprocessing from ``cfg.model_dir`` and samples the
-posterior. Two modes, one code path:
+Loads the approximator + fitted preprocessing from ``cfg.model_dir``, then samples. Two modes, one
+code path: the simulated test set (has ground truth -> truth-aware diagnostics), or
+``data.real_data_path=<your.npz>`` (no truth, no resimulation -> posterior pair plots only).
 
-* default — the simulated test set ``cfg.eval.test_dataset_name``, which carries ground truth, so
-  the truth-aware diagnostics in ``cfg.eval.diagnostics`` are written (RMSE, calibration, recovery);
-* ``data.real_data_path=<your.npz>`` — your observed data, with no truth: posterior pair plots only,
-  no resimulation. Dataset-specific touch-ups (e.g. real instead of synthetic measurement errors)
-  go in as preprocessing steps or augmentations overridden on the CLI for this run.
+``model_dir`` is read-only: results go to this launch's own Hydra run dir (``get_run_dir()``), not
+back into ``model_dir``, so one model can be evaluated any number of times without clobbering.
 """
 
 from __future__ import annotations
@@ -18,7 +16,7 @@ import os
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.workflow import build_workflow
-from hydrabflow.preprocessing.registry import build_pipeline
+from hydrabflow.registry import build_pipeline
 from hydrabflow.utils.paths import PREPROCESSING_STATE, get_run_dir
 from hydrabflow.utils.seed import seed_everything
 

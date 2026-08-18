@@ -5,6 +5,8 @@ multirun/
 # Generated datasets (root-anchored: must not swallow conf/data/)
 /data/
 
+/data_experiments/
+
 # Python
 __pycache__/
 *.py[cod]

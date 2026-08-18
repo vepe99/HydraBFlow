@@ -45,7 +45,9 @@ def run_chunked(
     """Generate ``n_total`` rows in chunks of ``chunk`` and save them to ``out_path``.
 
     Each chunk gets its own RNG seeded from ``(base_seed, row_offset)``, so it is reproducible
-    independently of the others and the chunk size never changes the dataset.
+    independently of the others. Note the offsets themselves depend on ``chunk``, so changing the
+    chunk size changes the draws (same distribution, different sample) — it is a memory knob, not a
+    free parameter of a fixed dataset.
     """
     chunks = []
     for start in tqdm(range(0, n_total, chunk), desc="simulating", unit="chunk"):

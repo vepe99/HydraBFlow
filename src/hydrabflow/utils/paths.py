@@ -13,7 +13,19 @@ PREPROCESSING_STATE = "preprocessing_state.npz"
 
 
 def get_run_dir() -> str:
-    """The current Hydra run output dir (works regardless of the ``job.chdir`` setting)."""
+    """The current Hydra run output dir (works regardless of the ``job.chdir`` setting).
+
+    This is ``hydra.run.dir`` = ``outputs/${simulator.name}/${run_name}/<timestamp>``, and it is the
+    *only* output location the config exposes: there is deliberately no per-stage ``output_dir`` key.
+    Hydra writes the resolved config into its ``.hydra/`` subfolder, so artifacts written here are
+    automatically co-located with the config that produced them.
+
+    The two exceptions are paths that must outlive a single launch and therefore *are* configured
+    explicitly: datasets (``data.data_dir``, see ``save_config_snapshot``) and the Optuna study plus
+    trial artifacts (``tuning.storage_dir`` / ``tuning.artifacts_dir``, which N parallel launches
+    share). Everything else -- the trained approximator, preprocessing state, posteriors,
+    diagnostics, ``best_trials.json`` -- lands in this dir.
+    """
     from hydra.core.hydra_config import HydraConfig
 
     return HydraConfig.get().runtime.output_dir

@@ -1,16 +1,20 @@
 """Base interface every forward model implements.
 
-A simulator is the ONLY piece a new user must write (plus a matching ``conf/simulator`` YAML).
-It samples parameters from the prior and maps them to observables. Everything downstream
-(dataset generation, adapter, training, evaluation) is driven by ``parameter_names`` and
-``observable_keys`` and never needs to change.
+A simulator is the only piece a new user must write (plus a ``conf/simulator/<name>.yaml``). Shapes
+are batched, leading axis = number of simulations ``n``:
 
-Convention for shapes (batched, leading axis = number of simulations ``n``):
-  * ``sample_prior(n, rng)`` -> ``{param_name: array of shape (n, 1)}``
-  * ``simulate(params, rng)`` -> ``{observable_key: array of shape (n, *event_shape)}``
+  * ``sample_prior(n, rng)`` -> ``{param_name: (n, 1)}``
+  * ``simulate(theta, rng)`` -> ``{observable_key: (n, *event_shape)}``
 
-The dataset written to disk is the union of both dicts, so each ``.npz`` row is one
-(parameters, observation) pair.
+Set ``is_batched = False`` when the forward model cannot vectorize (a parameter that sets a loop
+length, an ODE solver, an external binary): ``simulate`` then gets one draw ``{param_name: (1,)}``
+and returns ``{observable_key: event_shape}``, and ``sample`` loops and stacks.
+
+``theta`` is the prior draw(s); ``self.params`` is the free-form ``simulator.params`` config
+mapping (prior bounds, set sizes). Two different things, deliberately two different names.
+
+The dataset on disk is the union of both dicts, so each row is one (parameters, observation) pair.
+All randomness must come from the passed ``rng``, so runs reproduce from ``cfg.seed``.
 """
 
 from __future__ import annotations
@@ -28,9 +32,11 @@ class BaseSimulator(ABC):
     parameter_names: list[str] = []
     #: Keys of the observable arrays. One key = single observable; >1 enables fusion.
     observable_keys: list[str] = []
+    #: False -> ``simulate`` handles one draw at a time and ``sample`` loops and stacks.
+    is_batched: bool = True
 
     def __init__(self, params: Mapping[str, Any] | None = None) -> None:
-        # `params` is the free-form `simulator.params` mapping from config.
+        # The free-form `simulator.params` mapping from config.
         self.params: Dict[str, Any] = dict(params or {})
 
     @abstractmethod
@@ -39,15 +45,28 @@ class BaseSimulator(ABC):
 
     @abstractmethod
     def simulate(
-        self, params: Mapping[str, np.ndarray], rng: np.random.Generator
+        self, theta: Mapping[str, np.ndarray], rng: np.random.Generator
     ) -> Dict[str, np.ndarray]:
-        """Run the forward model on a batch of parameters. Returns ``{observable_key: (n, ...)}``."""
+        """Batched: ``{param_name: (n, 1)}`` -> ``{observable_key: (n, *event_shape)}``.
+        With ``is_batched = False``: one draw ``{param_name: (1,)}`` -> ``{observable_key: shape}``.
+        """
 
-    # --------------------------------------------------------------------------------------- #
-    # Convenience: one call producing a full dataset chunk (parameters + observables merged).
-    # Infrastructure (pipeline.simulate) uses this; subclasses normally need not override it.
-    # --------------------------------------------------------------------------------------- #
     def sample(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
-        params = self.sample_prior(n, rng)
-        observables = self.simulate(params, rng)
-        return {**params, **observables}
+        """One dataset chunk: prior draws merged with their observables. Rarely overridden."""
+        theta = self.sample_prior(n, rng)
+        if self.is_batched:
+            obs = self.simulate(theta, rng)
+        else:
+            rows = [self.simulate({k: v[i] for k, v in theta.items()}, rng) for i in range(n)]
+            obs = {k: np.stack([row[k] for row in rows]) for k in rows[0]}
+        data = {**theta, **obs}
+
+        # run_chunked concatenates chunks on axis 0 and the adapter looks up the declared names, so
+        # a mis-named or non-row-major return would land on disk as a plausible-looking corrupt file.
+        want = sorted(set(self.parameter_names) | set(self.observable_keys))
+        got = {k: np.shape(v) for k, v in data.items()}
+        if sorted(got) != want or any(s[:1] != (n,) for s in got.values()):
+            raise ValueError(
+                f"{type(self).__name__} must return {want} with leading axis n={n}, got {got}"
+            )
+        return data

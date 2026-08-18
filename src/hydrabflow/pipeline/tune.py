@@ -1,17 +1,15 @@
 """Stage 4: hyperparameter tuning with Optuna.
 
-A (by default multi-objective) study minimizing RMSE and calibration error. The dataset is loaded
-and preprocessed once; each trial applies its sampled hyperparameters onto a copy of the config,
-builds a fresh workflow, trains for ``tuning.n_epochs``, and scores the validation split.
+A multi-objective study (RMSE + calibration error by default). The dataset is loaded and
+preprocessed once; each trial overlays its sampled hyperparameters on a copy of the config, trains a
+fresh workflow for ``tuning.n_epochs``, and scores the validation split.
 
-**Concurrency.** The study lives in a :class:`JournalStorage` over a single ``.log`` file, which is
-safe for many processes to append to, so launching the same command N times (same ``study_name`` +
-``storage_dir``) cooperatively runs trials of one shared study.
+Concurrency: the study is a ``JournalStorage`` over one append-safe ``.log``, so launching the same
+command N times (same ``study_name`` + ``storage_dir``) runs trials of one shared study.
 
-**Artifacts.** With ``tuning.save_artifacts`` every trial persists its model, posterior, and
-diagnostics under ``${tuning.artifacts_dir}/trials/trial_<number>/``, keyed by the study-global
-trial number so concurrent processes never collide. The preprocessing is fit once and shared, so it
-is saved a single time at ``${tuning.artifacts_dir}/preprocessing_state.npz``.
+Artifacts: with ``tuning.save_artifacts``, each trial writes its model/posterior/diagnostics to
+``${tuning.artifacts_dir}/trials/trial_<number>/`` (study-global number, so no collisions); the
+shared preprocessing state is saved once alongside.
 """
 
 from __future__ import annotations
@@ -23,12 +21,12 @@ import os
 
 import numpy as np
 
-from hydrabflow.augmentation.registry import build_augmentations
+from hydrabflow.registry import build_augmentations
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.adapter import select_adapter_keys
 from hydrabflow.pipeline.workflow import build_workflow
-from hydrabflow.preprocessing.registry import build_pipeline
+from hydrabflow.registry import build_pipeline
 from hydrabflow.utils.oom import is_oom_error, run_with_oom_backoff
 from hydrabflow.utils.paths import PREPROCESSING_STATE, get_run_dir
 from hydrabflow.utils.seed import seed_everything

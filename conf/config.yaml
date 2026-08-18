@@ -31,8 +31,9 @@ data:
 training:
   n_epochs: 50
   batch_size: 512
-  learning_rate: 1e-3
-  optimizer: adam
+  # Peak learning rate. BayesFlow wraps it in a cosine-decay schedule with 5% warmup and uses
+  # AdamW (weight_decay=5e-3, clipnorm=1.5) for offline training -- see BasicWorkflow.build_optimizer.
+  learning_rate: 5e-4
   validation_fraction: 0.1
   # BayesFlow's internal z-scoring. The summary side is standardized by the preprocessing step
   # below (whose fitted state is saved and replayed at inference), so it is not repeated here.
@@ -72,7 +73,7 @@ eval:
   test_dataset_name: test_data_${data.n_simulations}.npz
   num_samples: 1000
   batch_size: 256
-  diagnostics: [metrics, recovery, calibration_ecdf, coverage, z_score_contraction]
+  diagnostics: [metrics, recovery, calibration_ecdf, z_score_contraction]
 
 # Optuna search (minimize RMSE and calibration error). search_space maps a dotted config path to a
 # sampling spec: {type: int|float|categorical, low, high, step, log, choices}. Add/remove freely.
@@ -91,10 +92,13 @@ tuning:
     model.summary_network.embed_dim_per_head: {type: int, low: 8, high: 32, step: 8}
     model.inference_network.mlp_depth: {type: int, low: 2, high: 8}
     model.inference_network.mlp_width: {type: int, low: 32, high: 256, step: 16}
-    training.learning_rate: {type: float, low: 1e-4, high: 1e-2, log: true}
+    training.learning_rate: {type: float, low: 1e-4, high: 1e-3, log: true}
 
-# Full traceability: every run lands in a timestamped dir and Hydra writes the resolved config
-# into its `.hydra/` subfolder automatically.
+# The only output-path setting in this file: train, evaluate and tune all write here, so there is no
+# per-block `output_dir`. Every launch gets its own timestamped dir and Hydra writes the resolved
+# config into its `.hydra/` subfolder automatically -- artifacts and their config never desync.
+# `data.data_dir` and `tuning.storage_dir` stay outside it on purpose: they are shared across launches
+# (one dataset, many runs; one Optuna study, N parallel tune processes). See docs/running.md.
 hydra:
   run:
     dir: outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}

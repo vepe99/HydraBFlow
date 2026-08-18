@@ -1,0 +1,18 @@
+# One backbone per observable, combined by bf.networks.FusionNetwork.
+# Used automatically whenever the adapter has more than one summary_variables key (i.e. the
+# simulator declares several observable_keys) — see registry.build_summary_network.
+#
+# `type` is the default backbone; `params.backbones` overrides it per key. The head is an MLP of
+# mlp_width x mlp_depth followed by a Dense(summary_dim).
+type: set_transformer
+summary_dim: 32
+num_blocks: 2
+num_heads: 4
+embed_dim_per_head: 16
+mlp_depth: 2
+mlp_width: 128
+dropout: 0.05
+params:
+  backbones:
+    x_series: time_series_transformer   # the set key keeps `type` above
+  time_axis: -1                         # x_series carries its time column as the last channel

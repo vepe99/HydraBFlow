@@ -1,15 +1,10 @@
-"""Preprocessing step protocol and the pipeline that orchestrates them.
+"""Preprocessing step protocol and the pipeline that runs them.
 
-A :class:`PreprocessStep` transforms a dataset dict (``{key: array}``) and may carry fitted state
-(e.g. standardization mean/std). The :class:`PreprocessPipeline` runs an ordered list of steps:
-
-* steps **before** the splitting step see the full dataset (e.g. NaN cleaning);
-* the splitting step divides data into train / validation;
-* steps **after** it are fit on the train split and applied to both splits.
-
-At inference time ``transform`` replays the *fitted* steps (skipping the split), so real / test data
-is processed identically to training. Fitted state round-trips through ``save`` / ``load``
-(a single ``.npz`` in the run dir).
+A step transforms a dataset dict (``{key: array}``) and may carry fitted state (e.g. mean/std).
+In the pipeline: steps before the splitting step see the whole dataset (NaN cleaning); the splitting
+step makes train/val; steps after it are fit on train and applied to both. At inference,
+``transform`` replays the fitted steps (no split), so test/real data is processed exactly like
+training data. State round-trips through ``save``/``load`` as one ``.npz``.
 """
 
 from __future__ import annotations
