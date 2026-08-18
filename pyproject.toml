@@ -3,10 +3,10 @@ name = "hydrabflow"
 version = "0.1.0"
 description = "Reusable cookiecutter template for BayesFlow + Hydra simulation-based inference (SBI) pipelines."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.14"
 authors = [{ name = "Giuseppe Viterbo", email = "viterbogiuseppe99@gmail.com" }]
 dependencies = [
-    "bayesflow>=2.0",
+    "bayesflow",
     "keras>=3.5",
     "jax[cuda12]>=0.4.30",
     "hydra-core>=1.3",
@@ -31,6 +31,9 @@ hydrabflow-train = "hydrabflow.pipeline.train:cli"
 hydrabflow-evaluate = "hydrabflow.pipeline.evaluate:cli"
 hydrabflow-tune = "hydrabflow.pipeline.tune:cli"
 
+[tool.uv.sources]
+bayesflow = { git = "https://github.com/bayesflow-org/bayesflow" }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -40,7 +43,7 @@ packages = ["src/hydrabflow"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
