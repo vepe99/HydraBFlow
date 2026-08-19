@@ -58,3 +58,41 @@ class TrainValSplit(PreprocessStep):
 
 def _num_rows(data: Dataset) -> int:
     return len(next(iter(data.values())))
+
+
+@register_step("tail_split")
+class TailSplit(PreprocessStep):
+    """Hold out the **last** ``n_test`` rows, by slicing.
+
+    Two differences from ``train_val_split``, both deliberate:
+
+    * It slices instead of fancy-indexing a permutation, so train and val are *views*. A
+      permutation copy doubles peak RAM, which matters when the observation is an image cache of
+      tens of GB.
+    * It is deterministic and unshuffled, so a held-out evaluation is reproducible with no
+      bookkeeping: the same rows come back months later by construction. Only use it on a dataset
+      whose row order carries no information (a shuffled or unordered simulation grid).
+
+    ``n_train_cap`` (0 = keep everything) truncates the *training* half only, so a smoke run still
+    evaluates against the real held-out set.
+    """
+
+    name = "tail_split"
+    splits = True
+
+    def __init__(self, n_test: int = 2000, n_train_cap: int = 0) -> None:
+        self.n_test = int(n_test)
+        self.n_train_cap = int(n_train_cap)
+
+    def transform(self, data: Dataset) -> Dataset:  # pragma: no cover - the pipeline calls split()
+        return data
+
+    def split(self, data: Dataset, rng: np.random.Generator) -> Tuple[Dataset, Dataset]:
+        n = _num_rows(data)
+        if not 0 < self.n_test < n:
+            raise ValueError(f"tail_split needs 0 < n_test < {n}, got {self.n_test}")
+        val = {k: v[-self.n_test:] for k, v in data.items()}
+        train = {k: v[:-self.n_test] for k, v in data.items()}
+        if self.n_train_cap:
+            train = {k: v[:self.n_train_cap] for k, v in train.items()}
+        return train, val

@@ -150,9 +150,13 @@ def build_summary_network(cfg, summary_variables: Iterable[str] | None = None) -
     is built per key and combined by ``bf.networks.FusionNetwork``. Give a key its own architecture
     with ``model.summary_network.params.backbones={<key>: <type>}``; the rest use ``cfg.type``.
     """
+    builder = SUMMARY_NETWORKS.get(cfg.type)
     keys = list(summary_variables or [])
-    if len(keys) < 2:
-        return SUMMARY_NETWORKS.get(cfg.type)(cfg)
+    # `handles_fusion` marks a builder that assembles its own multi-backbone network, so the
+    # generic one-backbone-per-key wrapper below would be wrong: its keys need not be one
+    # modality each (see `networks/protoplan.py`, where three of them are condition groups).
+    if len(keys) < 2 or getattr(builder, "handles_fusion", False):
+        return builder(cfg)
 
     import bayesflow as bf
     import keras
@@ -166,6 +170,19 @@ def build_summary_network(cfg, summary_variables: Iterable[str] | None = None) -
         ]
     )
     return bf.networks.FusionNetwork(backbones, head=head)
+
+
+def simulator_hook(simulator_cfg, name: str):
+    """A simulator's optional ``BaseSimulator`` hook, bound, or ``None``.
+
+    ``None`` when the simulator is not registered or does not implement the hook. The two hooks
+    are ``load_dataset`` and ``build_adapter``; see ``simulators/base.py``.
+    """
+    try:
+        cls = SIMULATORS.get(simulator_cfg.name)
+    except KeyError:
+        return None
+    return getattr(get_simulator(simulator_cfg), name) if hasattr(cls, name) else None
 
 
 def build_inference_network(cfg) -> Any:

@@ -51,6 +51,20 @@ class BaseSimulator(ABC):
         With ``is_batched = False``: one draw ``{param_name: (1,)}`` -> ``{observable_key: shape}``.
         """
 
+    # Two optional hooks, for a forward model that is not runnable in-process (an external
+    # radiative-transfer code, an instrument pipeline). Implement them and the `simulate` stage
+    # is skipped entirely; `pipeline.io.load_config_dataset` / `pipeline.adapter.build_adapter` pick
+    # up. Neither is declared here as a method, so `hasattr` is the test and no existing
+    # simulator changes:
+    #
+    #   load_dataset(self) -> Dataset
+    #       The rows this simulator's forward model already produced, keyed as
+    #       `parameter_names` + `observable_keys`. `sample_prior`/`simulate` may raise.
+    #   build_adapter(self, cfg) -> bf.adapters.Adapter
+    #       A bespoke adapter, for a layout `AdapterConfig`'s four key lists cannot express
+    #       (grouped inputs, per-key transforms, conditions routed into the summary network).
+    #       Still declare `parameter_names`/`observable_keys`: they drive `select_adapter_keys`.
+
     def sample(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
         """One dataset chunk: prior draws merged with their observables. Rarely overridden."""
         theta = self.sample_prior(n, rng)

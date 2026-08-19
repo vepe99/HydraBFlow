@@ -1,0 +1,23 @@
+# FlowMatching over the 17 continuous targets, conditioned on [sil_id, has_cavity] plus the
+# summary vector. Builder: src/hydrabflow/networks/protoplan.py::_protoplan_flow_matching
+#
+# `params.hp` is read for the subnet widths only; keep it interpolated from the summary network's
+# so one dict describes the whole architecture and a tuning trial cannot move half of it.
+type: protoplan_flow_matching
+mlp_depth: 2             # unused: hp.inference_mlp_depth is what the builder reads
+mlp_width: 32
+dropout: 0.05
+params:
+  hp: ${model.summary_network.params.hp}
+  # > 0 trains resilience to a genuinely missing modality: each of {B6, B7, B9, JWST, SED} is
+  # dropped from the condition vector independently per sample (the two discrete indicators never
+  # are -- they are conditions on the density, not a measurement). Requires
+  # `model.summary_network.params.fuse_head: false`, because an MLP head mixes the branch
+  # embeddings and there is then no modality boundary left to drop.
+  missing_modality_prob: 0.0
+  # `time_mlp` (upstream default) or `diffusion_transformer`. Only the transformer consumes
+  # `observed_condition_mask`: it makes each condition scalar a token and drops the masked tokens
+  # out of attention. `FlowMatching.__init__` keeps only the mask kwargs its subnet's `call`
+  # accepts, so under `time_mlp` the mask would be silently discarded -- `GroupedFlowMatching`
+  # then zeroes the group's columns instead, which works but is the weaker encoding.
+  subnet: time_mlp

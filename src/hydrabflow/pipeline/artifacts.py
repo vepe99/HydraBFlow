@@ -19,6 +19,8 @@ from typing import Any
 import matplotlib
 import numpy as np
 
+from hydrabflow.pipeline.workflow import BEST_WEIGHTS_NAME
+
 matplotlib.use("Agg")  # headless: runs land in a run dir, never on a screen
 
 log = logging.getLogger(__name__)
@@ -50,23 +52,77 @@ def fix_keras_model(model_path: str) -> str:
     return fixed
 
 
-def load_approximator(run_dir: str) -> Any:
-    """Load a saved approximator, applying the ArrayImpl fix first."""
+def load_approximator(run_dir: str, workflow=None, probe_batch=None) -> Any:
+    """Load a saved approximator, applying the ArrayImpl fix first.
+
+    ``workflow`` + ``probe_batch`` enable the fallback that a multi-branch summary network needs:
+    rebuild the architecture from the config and load only the weights. A full-model load cannot
+    restore one, and the cause is upstream, not in this repo -- keras walks the layer tree by
+    attribute name, and for a fusion network holding its branches in a ``dict`` the save-time walk
+    reaches them through the model's ``layers`` property while the load-time walk reaches them
+    through the ``summary_network`` attribute. The weights are written under
+    ``layers/<fusion>/backbones/...`` and looked for under ``summary_network/backbones/...``, so
+    every branch reports "expected 2 variables, but received 0". Reproducible with stock
+    ``bf.networks.FusionNetwork`` (``simulator=multimodal``); single-backbone models such as
+    ``two_moons`` are unaffected, which is why the ``.keras`` path stays first -- it needs no probe
+    batch and no config agreement.
+
+    Rebuilding is immune because the weight file is keyed by the same construction order that wrote
+    it, and the run dir carries its resolved config, so the architecture is reproducible from it.
+    """
     import keras
 
     path = os.path.join(run_dir, MODEL_FILENAME)
-    if not os.path.exists(path):
+    weights = os.path.join(run_dir, BEST_WEIGHTS_NAME + ".weights.h5")
+    if not os.path.exists(path) and not os.path.exists(weights):
         raise FileNotFoundError(f"No saved model at {path}. Train first (e.g. `hydrabflow-train`).")
-    # compile=False: we only sample here, never resume training. Restoring the saved optimizer state
-    # is useless and can hard-fail (its slot variables need not match the rebuilt network's, e.g.
-    # TimeSeriesTransformer's time2vec weights).
-    return keras.models.load_model(fix_keras_model(path), compile=False)
+
+    if os.path.exists(path):
+        try:
+            # compile=False: we only sample here, never resume training. Restoring the saved
+            # optimizer state is useless and can hard-fail (its slot variables need not match the
+            # rebuilt network's, e.g. TimeSeriesTransformer's time2vec weights).
+            return keras.models.load_model(fix_keras_model(path), compile=False)
+        except Exception as exc:
+            if workflow is None or probe_batch is None:
+                raise
+            log.warning("Full-model load failed (%s); rebuilding from config + weights.", exc)
+
+    if not os.path.exists(weights):
+        raise FileNotFoundError(
+            f"{path} could not be loaded and there is no {weights} to rebuild from."
+        )
+    # The networks build lazily, so the weights have nowhere to land until one batch has been
+    # through the approximator.
+    approximator = workflow.approximator
+    approximator.build_from_data(approximator.adapter(probe_batch))
+    approximator.load_weights(weights)
+    log.info("Rebuilt approximator from config and loaded weights from %s", weights)
+    return approximator
 
 
 def save_posterior(posterior, run_dir: str) -> None:
     np.savez(
         os.path.join(run_dir, "posterior.npz"),
         **{k: np.asarray(v) for k, v in posterior.items()},
+    )
+
+
+def epoch_log_callback(logger=log, prefix: str = ""):
+    """A Keras callback mirroring per-epoch metrics through ``logging``.
+
+    Keras' progress bar writes to stdout, which Hydra's log file does not capture, so without this
+    the run's ``.log`` has no train/val loss at all.
+    """
+    import keras
+
+    return keras.callbacks.LambdaCallback(
+        on_epoch_end=lambda epoch, logs: logger.info(
+            "%sEpoch %d: %s",
+            prefix,
+            epoch + 1,
+            " ".join(f"{k}={v:.4g}" for k, v in sorted((logs or {}).items())),
+        )
     )
 
 
@@ -95,8 +151,6 @@ def restore_best_weights(workflow, run_dir: str) -> None:
     Makes the persisted model the best one seen rather than the last epoch's (which may be worse,
     or NaN after a late divergence). A missing checkpoint leaves the in-memory weights untouched.
     """
-    from hydrabflow.pipeline.workflow import BEST_WEIGHTS_NAME
-
     ckpt = os.path.join(run_dir, BEST_WEIGHTS_NAME + ".weights.h5")
     if not os.path.exists(ckpt):
         log.info("No best-weights checkpoint at %s; keeping final-epoch weights.", ckpt)
@@ -114,7 +168,6 @@ def run_diagnostics(cfg, posterior, targets, param_names, run_dir: str) -> None:
     ``targets`` must carry ground-truth parameters, so this applies to a simulated test set or a
     validation split — not to real data.
     """
-    import bayesflow as bf
     from bayesflow.diagnostics import metrics as bf_metrics
 
     requested = list(cfg.eval.diagnostics)
@@ -137,15 +190,76 @@ def run_diagnostics(cfg, posterior, targets, param_names, run_dir: str) -> None:
         except Exception as exc:
             log.warning("metrics failed: %s", exc)
 
+    _truth_figures(requested, posterior, targets, param_names, run_dir)
+
+    if "per_discrete_branch" in requested:
+        keys = list(cfg.adapter.inference_conditions)
+        _per_branch_figures(requested, posterior, targets, param_names, run_dir, keys)
+
+
+#: Below this many rows a per-branch figure is noise, not a diagnostic.
+MIN_ROWS_PER_BRANCH = 50
+
+
+def _truth_figures(requested, posterior, targets, param_names, run_dir, suffix: str = "") -> None:
+    """The three truth-aware bf.diagnostics figures, suffixed."""
+    import bayesflow as bf
+
     for name in ("recovery", "calibration_ecdf", "z_score_contraction"):
         fn = getattr(bf.diagnostics, name, None)
         if name not in requested or fn is None:
             continue
         try:
             fig = fn(estimates=posterior, targets=targets, variable_names=param_names)
-            fig.savefig(os.path.join(run_dir, f"{name}.png"), bbox_inches="tight")
+            fig.savefig(os.path.join(run_dir, f"{name}{suffix}.png"), bbox_inches="tight")
         except Exception as exc:
-            log.warning("%s failed: %s", name, exc)
+            log.warning("%s%s failed: %s", name, suffix, exc)
+
+
+def _mask_rows(data: dict, mask) -> dict:
+    """Select rows of every array in ``data`` whose leading axis matches ``mask``.
+
+    Keys that are not per-observation pass through untouched rather than raising, so this works on
+    the target dict and the posterior-sample dict without knowing either key set.
+    """
+    n = len(mask)
+    out = {}
+    for key, value in data.items():
+        arr = np.asarray(value)
+        out[key] = arr[mask] if arr.ndim >= 1 and arr.shape[0] == n else value
+    return out
+
+
+def _per_branch_figures(requested, posterior, targets, param_names, run_dir, keys) -> None:
+    """Write the truth-aware figures once per combination of the 0/1 ``keys``.
+
+    Needed whenever the estimator is conditioned on discrete indicators: it is then a *separate*
+    conditional posterior per combination, so a pooled recovery panel superimposes all of them.
+    A parameter that is unidentified on one branch by construction (a cavity radius on a disk with
+    no cavity) then looks broken in the pooled figure and correct in none. The pooled figures are
+    still written -- they are the run-level summary the tuning objectives come from.
+    """
+    import itertools
+
+    missing = [k for k in keys if k not in targets]
+    if not keys or missing:
+        log.info("No per-branch split: targets lack %s", missing or "any discrete condition")
+        return
+
+    columns = [np.asarray(targets[k]).reshape(-1) for k in keys]
+    for combo in itertools.product((0, 1), repeat=len(keys)):
+        mask = np.ones(len(columns[0]), dtype=bool)
+        for col, want in zip(columns, combo):
+            mask &= np.round(col).astype(int) == want
+        n_rows = int(mask.sum())
+        label = ", ".join(f"{k}={v}" for k, v in zip(keys, combo))
+        if n_rows < MIN_ROWS_PER_BRANCH:
+            log.info("Skipping branch %s: %d rows (< %d)", label, n_rows, MIN_ROWS_PER_BRANCH)
+            continue
+        suffix = "".join(f"_{k}{v}" for k, v in zip(keys, combo))
+        _truth_figures(requested, _mask_rows(posterior, mask), _mask_rows(targets, mask),
+                       param_names, run_dir, suffix=suffix)
+        log.info("Wrote branch diagnostics for %s (n=%d) -> *%s.png", label, n_rows, suffix)
 
 
 def save_posterior_plot(posterior, param_names, run_dir: str) -> None:

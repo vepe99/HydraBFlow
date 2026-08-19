@@ -17,7 +17,14 @@ Everything else is fixed infrastructure you should not need to touch.
 > 1-minute smoke run, real-data inference, tuning studies, bring-your-own-dataset;
 > [**configuration.md**](docs/configuration.md) — every knob in `conf/config.yaml`, the three groups,
 > overrides and sweeps; [**extending.md**](docs/extending.md) — add a simulator, network,
-> preprocessing step, or augmentation.
+> preprocessing step, or augmentation;
+> [**protoplanetary_disk.md**](docs/protoplanetary_disk.md) — the protoplanetary-disk project that
+> ships on this branch: what it infers, how to run it, and every beam/noise knob.
+
+> **On this branch (`protoplan_sbi`)** the template also carries a real project: multimodal NPE for
+> **protoplanetary disks** (`experiment=protoplan`). Its forward model is an external
+> radiative-transfer code, so it exercises the "bring your own dataset" path end to end. Start at
+> [**docs/protoplanetary_disk.md**](docs/protoplanetary_disk.md).
 
 ## Design at a glance
 

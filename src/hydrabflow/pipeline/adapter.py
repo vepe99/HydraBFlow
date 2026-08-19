@@ -67,9 +67,21 @@ def select_adapter_keys(data: dict, cfg) -> dict:
     return {k: v for k, v in data.items() if k in wanted}
 
 
-def build_adapter(cfg) -> Any:
-    """Construct ``bf.adapters.Adapter`` from an ``AdapterConfig``."""
+def build_adapter(cfg, simulator_cfg=None) -> Any:
+    """Construct ``bf.adapters.Adapter`` from an ``AdapterConfig``.
+
+    A simulator may instead own its adapter (see ``simulators/base.py``), for a layout these four
+    key lists cannot express. ``simulator_cfg`` is passed by ``pipeline/workflow.py``; without it
+    the generic path below is used, which is what config-only callers and the tests want.
+    """
     import bayesflow as bf
+
+    if simulator_cfg is not None:
+        from hydrabflow.registry import simulator_hook
+
+        hook = simulator_hook(simulator_cfg, "build_adapter")
+        if hook:
+            return hook(cfg)
 
     inference_variables, summary_variables, inference_conditions, drop = _lists(cfg)
 

@@ -1,0 +1,139 @@
+# @package _global_
+# The protoplanetary-disk NPE run, end to end:  uv run hydrabflow-train experiment=protoplan
+#
+# This file exists because `preprocessing`, `augmentation`, `adapter` and `training` are plain
+# blocks of conf/config.yaml rather than swappable groups, so selecting the three groups below is
+# not enough on its own.
+defaults:
+  - override /simulator: protoplan
+  - override /model/summary_network: protoplan_fusion
+  - override /model/inference_network: protoplan_flow_matching
+
+run_name: protoplan_npe
+
+training:
+  n_epochs: 1000
+  batch_size: 128
+  learning_rate: 5e-4
+  # "all": images, SEDs and the routed condition groups all get per-key, per-column moments.
+  # Collapsed to the bare string in pipeline/workflow.py -- BayesFlow only honours that spelling.
+  standardize: [all]
+
+# The row filter (non-positive SED fluxes) already happens in the reader, and the inputs are
+# standardized inside the approximator, so the only step needed is the split.
+preprocessing:
+  steps:
+    - name: tail_split
+      n_test: 2000
+      n_train_cap: 0        # > 0 truncates the training half only, for a smoke run
+
+# The instrument model: clean RT output -> mock JWST + ALMA observation, per batch.
+augmentation:
+  steps: [protoplan_instrument]
+  params:
+    # ── source ────────────────────────────────────────────────────────────────────────
+    dist_pc: 140.0          # the RT models' own distance; set the real source's to rescale
+    av: 4.0                 # foreground extinction, mag; [min, max] samples one A_V per disk
+    px_arcsec_mod: 0.023622047244094488   # 3.0" FOV / (128 - 1); recompute for a resized cache
+    fov_arcsec_mod: 3.0
+
+    # ── ALMA beam and noise ───────────────────────────────────────────────────────────
+    # true = draw per image from the ranges below, and the estimator marginalises over them.
+    # Every drawn beam/noise value is also handed to that band's CNN as a summary condition
+    # (`_protoplan_spec.summary_condition_routing`), so the network knows the noise level it is
+    # looking at -- which is what makes marginalising over the setup learnable rather than lossy.
+    #
+    # The ranges are `suggested_priors` from assets/protoplan/obs_setup_measurements.json -- the
+    # spans measured off the four real disks, verbatim (the class defaults in
+    # augmentation/protoplan_instrument.py are a *padded* version of the same numbers).
+    randomize_alma_setup: true
+
+    # Per band (450 / 880 / 1300 um), arcsec, uniform. There is no separate minor-axis range:
+    # minor = axis_ratio * major, so the beam cannot come out inverted. The measured ratios span
+    # 0.589-0.957 across all disks and bands, which is what [0.50, 1.00] pads.
+    alma_beam_fwhm_maj_range: [[0.130332648754107, 0.22602170705796],
+                               [0.157699003815648, 0.62144227325925],
+                               [0.132801923900835, 0.66949941217905]]
+    alma_beam_axis_ratio_range: [0.50, 1.00]
+    alma_beam_pa_deg_range: [0.0, 180.0]
+    # Jy/beam, log-uniform (it spans decades).
+    alma_noise_jy_beam_range: [[3.7371807812758853e-4, 1.1205788058703627e-3],
+                               [5.3614932113705555e-5, 6.783012966521152e-4],
+                               [2.0269416330662276e-5, 1.346336610199733e-4]]
+
+    # Independent beam/noise draws per batch: one per *image* would need one convolution kernel
+    # per image, one per *batch* would leave the CNNs no within-batch contrast on the conditions.
+    n_beam_groups: 8
+
+    # Fixed setup, per band: (FWHM_major, FWHM_minor, PA) in arcsec/deg. Unused above, kept for a
+    # posterior-predictive re-simulation of one specific source.
+    # alma_beams: [[0.20, 0.10, 0.0], [0.20, 0.10, 0.0], [0.20, 0.10, 0.0]]
+    # alma_noises_jy_beam: [8.0e-5, 8.0e-5, 8.0e-5]
+
+    # Output pixel scale of the ALMA maps. null -> min(beam major)/7 = 0.1303/7 = 0.0186", a
+    # 163x163 grid -- comfortably below the JSON's alma_obs_px_arcsec_max of 0.0353". Being
+    # derived from the prior, it moves if the beam ranges above move.
+    alma_obs_px_arcsec: null
+
+    # ── JWST noise ────────────────────────────────────────────────────────────────────
+    # suggested_priors.jwst, MJy/sr, drawn uniform per image; [x, x] pins it. Routed to the JWST
+    # CNN as `sigma_jwst`.
+    jwst_noise_mjy_sr: [0.1561915818171614, 3.733399903861558]
+    jwst_obs_px_arcsec: 0.1
+
+    # ── geometry ──────────────────────────────────────────────────────────────────────
+    rot_range_deg: [0.0, 360.0]
+    random_flip: true               # rotation alone cannot generate a parity flip
+    obs_half_extent: 1.5            # observed field half-width, arcsec
+
+# `sil_id` and `has_cavity` are conditions, not targets: a flow cannot represent a delta atom, and
+# smearing them into continuous clusters is what this encoding replaces. Inference enumerates the
+# four combinations, so what comes out is four *conditional* posteriors -- nothing here estimates
+# p(sil_id, has_cavity | data), so they cannot be mixed into one marginal without separate weights.
+adapter:
+  # A subset of the 17 targets; `simulators/protoplan.py::build_adapter` forwards this straight to
+  # `_protoplan_spec.build_adapter(params=...)`, and `select_adapter_keys` then drops the other 10
+  # columns from the dataset. `log_r_cav` stays a target, so the "posterior = prior on the
+  # no-cavity branch" statement is unchanged.
+  inference_variables: [rc, h_c, log_Mgas, T_star, inc, log_amax_sm, log_r_cav]
+  # `sil_id` dropped: the posterior is now p(theta | data, has_cavity), marginal over the silicate
+  # type rather than conditioned on it. `eval.diagnostics: per_discrete_branch` follows this list,
+  # so it writes two branches instead of four.
+  inference_conditions: [has_cavity]
+
+# The asinh knees must track the noise level (see `_protoplan_spec._asinh_images`). These are the
+# geometric mean of `rms_jy_beam / beam_area_sr / 1e6` over the prior above -- the 1300 um knee is
+# the real move (was 5.56, one disk's unusually large B6 beam).
+simulator:
+  params:
+    asinh_sigma_jwst: 0.7636
+    asinh_sigma_alma: [1325.9, 105.6, 29.2]
+
+# 0.3 swaps FlowMatching for GroupedFlowMatching, which drops each of {B6, B7, B9, JWST, SED} from
+# the condition vector as a whole group. It requires `fuse_head: false`: an MLP head mixes the
+# branch embeddings, leaving no modality boundary to drop.
+model:
+  inference_network:
+    params:
+      missing_modality_prob: 0.3
+      # Required for the dropout to mean anything -- see the note in the group's YAML.
+      subnet: diffusion_transformer
+      # Must equal len(adapter.inference_conditions) above.
+      discrete_condition_dim: 1
+  summary_network:
+    params:
+      fuse_head: false
+      hp:
+        # Sizes the diffusion-transformer subnet; omit any key to take upstream's default
+        # (5 x 128, 4 heads, expansion 3). Lives in `hp` with the rest of the architecture so a
+        # tuning trial can address it by dotted path.
+        dt_num_layers: 4
+        dt_width: 128
+        dt_num_heads: 4
+        dt_time_embedding_dim: 32
+
+eval:
+  num_samples: 1000
+  batch_size: 256
+  # per_discrete_branch additionally writes each figure once per (sil_id, has_cavity) branch.
+  diagnostics: [metrics, recovery, calibration_ecdf, z_score_contraction, per_discrete_branch]

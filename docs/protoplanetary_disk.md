@@ -1,0 +1,377 @@
+# The protoplanetary-disk project
+
+Multimodal simulation-based inference for **protoplanetary disks**. A radiative-transfer (RT) code
+produced ~49 000 model disks; each row is 18 physical parameters plus a clean 4-channel image and a
+clean 19-bin SED. We train a neural posterior estimator to recover the parameters from *mock
+observations* of those rows — JWST NIRSpec at 3.9 µm plus ALMA in three bands — and the thing that
+turns a clean RT row into a mock observation is applied **on the fly, per batch**, so one dataset
+serves any observing setup.
+
+```bash
+uv run hydrabflow-train    experiment=protoplan
+uv run hydrabflow-evaluate experiment=protoplan model_dir=outputs/protoplan/protoplan_npe/<timestamp>
+```
+
+That is the whole interface. Everything below is what those two commands do and which knobs are
+worth turning.
+
+---
+
+## 1. What the pipeline is
+
+```
+  params_combined.npy            ProtoplanetaryDiskSimulator.load_dataset()
+  im_jy_*.npy          ────────► 17 targets + 2 discrete conditions + im_jy, seds, ...
+  sed_flx_jy_*.npy                        │
+  sed_lams_*.npy                          │  tail_split: hold out the last n_test rows
+  im_lams_*.npy                           ▼
+                          protoplan_instrument  (per batch, on device)
+                            extinction · distance · Jy/px → MJy/sr
+                            JWST PSF · per-band ALMA beams
+                            rotation · parity flip
+                            resample to each instrument's own pixel grid
+                            instrument noise · SED noise
+                                          │
+                                          ▼
+                          the adapter  (_protoplan_spec.build_adapter)
+                            asinh(x/σ) per band
+                            → jwst_input, b9_input, b7_input, b6_input, sed_input
+                            → geom_cond, jwst_cond, b9_cond, b7_cond, b6_cond
+                            → inference_conditions = [sil_id, has_cavity]
+                                          │
+                                          ▼
+                          protoplan_fusion   5 CNN/transformer branches, late-fused
+                          protoplan_flow_matching   the posterior over 17 parameters
+```
+
+There is **no `simulate` stage**. The forward model is an external code, so the simulator class
+implements two optional `BaseSimulator` hooks — `load_dataset()` and `build_adapter()` — and
+`simulator.params.data_path` points at the directory of `.npy` caches the RT runs produced. See
+[extending.md](extending.md) for that pattern in general.
+
+### Files
+
+| what | where |
+|---|---|
+| dataset reader, parameter spec, the adapter | `src/hydrabflow/simulators/protoplan.py`, `_protoplan_spec.py` |
+| the instrument model | `src/hydrabflow/augmentation/protoplan_instrument.py` |
+| conditioned CNNs, modality dropout, builders | `src/hydrabflow/networks/protoplan.py` |
+| config | `conf/experiment/protoplan.yaml`, `conf/simulator/protoplan.yaml`, `conf/model/*/protoplan_*.yaml` |
+| extinction law + real disks' SED error bars | `assets/protoplan/` |
+| checks | `tests/test_protoplan.py` (CPU, synthetic data, no GPU) |
+
+---
+
+## 2. Prerequisites
+
+Beyond `uv sync`:
+
+* **`$STPSF_PATH`** — `stpsf` needs its reference-data tree for the JWST NIRSpec IFU PSF. Without
+  it, building the instrument model fails immediately.
+* **the caches** — under `simulator.params.data_path`: `params_combined.npy`, one `im_jy_*` variant,
+  `im_lams_combined.npy`, `sed_flx_jy_combined.npy`, `sed_lams_combined.npy`.
+
+The image cache comes in several samplings of the same fixed 3″ field:
+
+| file | grid | size | `px_arcsec_mod` |
+|---|---|---|---|
+| `im_jy_combined_NHWC.npy` | 300×300×4 | 72 GB | `3.0 / 299` |
+| `im_jy_combined_resized_128x128.npy` | 128×128×4 | 13 GB | `3.0 / 127` ← the default |
+| `im_jy_combined_resized_55x55.npy` | 55×55×4 | 2.4 GB | `3.0 / 54` |
+
+The row filter (`np.load(..., mmap_mode="r")[keep]`) materialises the kept rows in RAM, so the
+300×300 cache needs ~70 GB of it. Use the 55×55 one for smoke runs.
+
+> **`px_arcsec_mod` must match the grid you pick.** The PSF and beam kernels are sized from it in
+> the instrument model's `__init__`, before any batch exists, while the Jy/px → MJy/sr conversion
+> derives its solid angle from the array's own height. So a mismatch is not a shape error and not a
+> unit error — it is the *right* image convolved with the *wrong* beam. `preprocess` therefore
+> checks the two against each other on the first batch and raises.
+
+---
+
+## 3. The knobs: beam and noise
+
+Every constructor argument of `AugmentationsClass` is available under `augmentation.params`, so
+there is no per-knob plumbing to keep in step. These are the ones that matter:
+
+```yaml
+augmentation:
+  steps: [protoplan_instrument]
+  params:
+    randomize_alma_setup: false
+    alma_beams: [[0.20, 0.10, 0.0], [0.20, 0.10, 0.0], [0.20, 0.10, 0.0]]  # (maj, min, PA)
+    alma_noises_jy_beam: [8.0e-5, 8.0e-5, 8.0e-5]
+    jwst_noise_mjy_sr: [0.5, 1.0]
+```
+
+| knob | meaning |
+|---|---|
+| `randomize_alma_setup` | `false` = one fixed measured setup, so the estimator is `p(θ \| data)` for *that* instrument. `true` = draw per image from the ranges below, and the estimator marginalises over them |
+| `alma_beams` | `[[FWHM_maj, FWHM_min, PA], …]`, one entry per band (450 / 880 / 1300 µm), arcsec and degrees |
+| `alma_noises_jy_beam` | per-band RMS, Jy/beam |
+| `jwst_noise_mjy_sr` | `[lo, hi]` MJy/sr, drawn uniform per image; `[x, x]` pins it |
+| `alma_beam_fwhm_maj_range` | per-band `[lo, hi]` major FWHM for the randomized prior, arcsec |
+| `alma_beam_axis_ratio_range` | minor = `ratio × major`, so the beam cannot come out inverted — **there is no separate minor-axis range** |
+| `alma_noise_jy_beam_range` | per-band `[lo, hi]`, log-uniform |
+| `alma_obs_px_arcsec` | ALMA output pixel scale; `null` → `min(beam major)/7`, which under the randomized prior is a function of *that prior* and so moves between runs |
+| `dist_pc` | the source's distance; the RT models are at 140 pc |
+| `av` | foreground extinction, mag |
+| `sed_sigma_jy` | fixed per-bin SED σ. Default `null` = a wavelength-binned log-normal calibrated from five real disks' error bars (`assets/protoplan/seddata_*.txt`); supply this and those files are not read at all |
+
+To point a run at a real disk's measured setup: put its beam in `alma_beams`, its per-band RMS in
+`alma_noises_jy_beam`, its JWST σ in `jwst_noise_mjy_sr`, its distance in `dist_pc`, and set
+`randomize_alma_setup: false`.
+
+**Changing the noise means changing the asinh knees too.** `simulator.params.asinh_sigma_jwst` and
+`asinh_sigma_alma` are where the adapter's image compression turns over from linear to logarithmic
+(§4). They should stay in the same ballpark as the noise you configured — the same order of
+magnitude is enough, but far off and the transform degenerates into either a near-identity (knee ≫
+noise) or a pure log (knee ≪ noise), which defeats the point of having it.
+
+---
+
+## 4. Three coupled choices in the encoding
+
+These are not flags to explore; they are what this arm settled on, and each has a reason worth
+knowing before changing it.
+
+### Discrete parameters are conditions, not targets
+
+`sil_id` (silicate composition) and a derived `has_cavity` are `inference_conditions`, so the
+estimator is `p(θ₁₇ | data, sil_id, has_cavity)`. A flow cannot represent a delta atom, and the
+alternative — smearing both indicators into narrow continuous clusters — is what this replaces.
+
+`log_r_cav` stays a target, and on the no-cavity rows it is redrawn from the *real* cavity branch
+(`CAVITY_LOG_R_CAV_RANGE`) rather than held at the sentinel. Conditional on `has_cavity = 0` the
+cavity radius is unidentified, so a posterior that returns the prior there is the honest answer;
+drawing from the real branch is what makes that a true statement instead of an artefact of an
+off-support range.
+
+Consequence for reading results: what comes out is **four conditional posteriors**, one per
+`(sil_id, has_cavity)`. Nothing in NPE estimates `p(sil_id, has_cavity | data)`, so they cannot be
+mixed into one marginal without separately estimated weights.
+
+The redraw is seeded (`simulator.params.param_jitter_seed`). Leave it fixed: unseeded, two runs of
+the same config differ in their *training targets*, and any A/B between them is confounded.
+
+### The measurement conditions go into the summary networks
+
+Geometry (`rot_sin`, `rot_cos`, `sky_flip`) and each band's beam/noise are spliced into the CNN
+trunks — after the conv stages and the pooling head, before the projection to `summary_dim` — rather
+than concatenated onto the summary vector and handed to the flow. Whether a faint ring is real or a
+noise fluctuation, and how much a beam smeared it, is a question about the *image*, and the CNN is
+the only network that sees the image. By the time the noise level reaches the flow the image has
+already been summarised without it.
+
+Routing is per instrument and defined once, in `_protoplan_spec.summary_condition_routing()`, from
+the same source as the adapter's groups, so the two cannot disagree. Geometry gets its own key
+because `Concatenate` *pops* what it consumes, so one key cannot feed two groups — the reuse happens
+inside the network. The SED transformer is deliberately unrouted: its per-bin noise already arrives
+as an input channel of `sed_input`.
+
+### Images are compressed with asinh
+
+`asinh(x / σ_c)` per band, before the standardizer. Without it the only preprocessing is one global
+mean/sd per channel, which cannot serve a channel whose pixels span five decades: the sd is set by
+the inner rim, so the p10–p90 span of *background* pixels collapses to 0.004 sd on JWST and 0.16 on
+ALMA 1300 µm, against a rim reaching 533 sd. Under asinh the same spans are 2.04 and 1.67.
+
+asinh rather than log or log1p because ~40–48% of post-noise pixels are negative: asinh is odd and
+finite below zero, so a −2σ excursion is treated exactly as +2σ. Clipping at zero first scores
+measurably worse on every channel, precisely because it throws away half the noise floor.
+
+---
+
+## 5. Four image branches, one per band
+
+JWST plus ALMA **B9** (450 µm), **B7** (880 µm) and **B6** (1300 µm) each get their own CNN, rather
+than being stacked as four channels of one. They are observed with *different beams*: a shared
+convolutional trunk would have to serve three different point-spread functions at once, and each
+band's beam/noise conditions could only be handed to it pooled. Per band, each CNN is told the setup
+that produced its own map and nothing else.
+
+Architecture lives in `model.summary_network.params.hp`. One `*_alma` key configures all three
+bands; add a `*_b9` / `*_b7` / `*_b6` key to let one band differ:
+
+```yaml
+model:
+  summary_network:
+    params:
+      hp:
+        cnn_num_stages_alma: 2      # all three bands
+        cnn_num_stages_b6: 3        # …except B6
+```
+
+Any of those keys can be searched by its dotted path in `tuning.search_space`, e.g.
+`model.summary_network.params.hp.cnn_base_width_alma: {type: int, low: 8, high: 32, step: 8}`.
+
+### Missing-modality robustness
+
+```yaml
+model:
+  summary_network:   { params: { fuse_head: false } }
+  inference_network: { params: { missing_modality_prob: 0.3 } }
+```
+
+This swaps `FlowMatching` for `GroupedFlowMatching`, which drops each of {B6, B7, B9, JWST, SED}
+from the condition vector as a **whole group** — so the network learns to work when a band is
+genuinely absent, not merely noisy. Upstream's `missing_conditions_prob` drops each *element*
+independently, so a modality's slice of the summary vector essentially never goes together
+(probability `p ** summary_dim`); that trains resilience to feature dropout, which is a different
+thing.
+
+Two constraints, both enforced rather than documented-and-hoped:
+
+* `fuse_head: false` is required. An MLP head mixes the branch embeddings, so there is no modality
+  boundary left in the fused vector to drop. Get this wrong and the run raises, because the widths
+  no longer line up (`group_sizes sums to …`).
+* The two discrete indicators are never dropped (`always_observed_groups=1`). They are conditions on
+  the *density*, not descriptions of a measurement; dropping them would ask the network to
+  marginalise over a parameter it is meant to be conditioned on.
+
+---
+
+## 6. Reading the output
+
+Each launch writes to `outputs/protoplan/${run_name}/<timestamp>/`: `approximator.keras`,
+`preprocessing_state.npz`, `history.json`, `loss.png`, `.hydra/` (the resolved config), and after
+`evaluate`, `posterior.npz`, `metrics.json` and the diagnostic figures.
+
+`eval.diagnostics` includes `per_discrete_branch`, so `recovery`, `calibration_ecdf` and
+`z_score_contraction` are written once pooled **and** once per branch
+(`recovery_sil_id0_has_cavity1.png`, …). Branches with fewer than 50 held-out rows are skipped, with
+a log line saying so.
+
+**Read the per-branch figures.** The estimator is a separate conditional posterior per branch, so
+the pooled `recovery` panel superimposes four of them: `log_r_cav` looks broken there because on the
+`has_cavity = 0` rows it is unidentified by construction, and looks correct in none of them.
+
+**Read contraction, not just calibration.** A posterior equal to the prior is perfectly calibrated,
+so a mean contraction near 0 means the run learned nothing however good `calibration_ecdf` looks.
+Some parameters are genuinely uninformed by the data (`X_sil` is the known case) and their wide
+marginals are not a bug.
+
+---
+
+## 7. Checks
+
+```bash
+CUDA_VISIBLE_DEVICES="" HYDRABFLOW_NUM_GPUS=0 uv run pytest tests/test_protoplan.py -q
+```
+
+CPU only, synthetic caches in `tmp_path`, ~1 minute. What it pins is the wiring, not the physics:
+the label round-trip and the `(N,1)` vs `(N,)` shape-by-role split, that the reader's shapes are what
+the adapter expects, that the instrument model's output keys are what the adapter renames, that each
+band's routed conditions are its own, that `standardize: [all]` survives as the string `"all"`, that
+the modality mask drops whole groups and never the discrete pair, and that a gradient reaches the
+weights in one real `fit_offline` step.
+
+A smoke run on real data, still on CPU:
+
+```bash
+CUDA_VISIBLE_DEVICES="" HYDRABFLOW_NUM_GPUS=0 uv run hydrabflow-train experiment=protoplan \
+  simulator.params.image_file=im_jy_combined_resized_55x55.npy \
+  augmentation.params.px_arcsec_mod=0.05555555555555555 \
+  training.n_epochs=2 preprocessing.steps.0.n_test=200 preprocessing.steps.0.n_train_cap=600 \
+  run_name=smoke
+```
+
+Note the paired `image_file` / `px_arcsec_mod`: 3.0 / (55 − 1).
+
+## 8. Prior-predictive checks on a real disk
+
+Before trusting a posterior for a real observation, ask whether that disk is inside the population
+the networks were trained on. Three marimo notebooks under `notebooks/prior_predictive_checks/`,
+one per space, each writing to `plots/<disk>/`:
+
+| notebook | question | needs |
+|---|---|---|
+| `check_sed_range.py` | is the SED reachable? | nothing but `assets/protoplan/` — CPU, no pickle |
+| `check_obs_range.py` | is the *amplitude* in range? | GPU, `$STPSF_PATH`, the real-disk pickle |
+| `check_shape_range.py` | is the *morphology* reachable? | GPU, `$STPSF_PATH`, the real-disk pickle |
+
+```bash
+uv run marimo edit notebooks/prior_predictive_checks/check_sed_range.py
+# or headless, on a short pass:
+OBS_N_ROWS=4096 uv run python notebooks/prior_predictive_checks/check_obs_range.py
+```
+
+`_realdisk.py` beside them holds everything shared: the per-disk `DISKS` registry, `build_real_batch`
+(the only place that reads a real observation), and the scoring toolkit (rank-normal scores,
+Mahalanobis against the training rows' *own* distance distribution, and the eight flux-normalised
+morphology features). `tests/test_prior_predictive_checks.py` pins the numerics analytically — no
+GPU, no caches, no pickles.
+
+Three things about these checks that are easy to get wrong:
+
+* **The real images are not in this repo.** They live in the upstream project's
+  `data/obs_data/imdata_<disk>.pkl` (~150–300 MB each), written with `dill` and carrying their class
+  definition inline, so they unpickle without importing that package. `$PROTOPLAN_OBS_DIR` overrides
+  where to look.
+* **The regrid target must match the forward model's grid.** `build_real_batch(disk, lams)` uses the
+  disk's own measured beams, which is what `fixed_setup_augmentation` produces (122 px for
+  oph163131). The *randomized* training prior samples ALMA finer (162 px), so `check_obs_range` must
+  pass `alma_px=randomized_alma_obs_px(cfg)`. Comparing pixel statistics across two samplings of the
+  same field is not a like-for-like comparison; both notebooks assert the shapes agree rather than
+  trusting it.
+* **Some per-disk constants are assumptions, not measurements** — the distance, `A_V`, and the JWST
+  noise floor. They are declared in one place (`DISKS`) and echoed at the top of every notebook, and
+  `check_shape_range`'s A_V scan exists precisely to test the `A_V = 4.0` one. Upstream deliberately
+  overrode the measured JWST sigma for the saucer (0.03 rather than 0.98, the JSON value being
+  estimated over a radius where the surface brightness is still falling, so it tracked the outer halo
+  rather than the noise floor); that argument has not been redone for the other disks.
+
+A disk missing a band is a **missing modality**, not an error: oph163131 has no B7 (880 µm)
+measurement, so it gets no b7 figure, row, or score. The trained model already handles this
+(`missing_modality_prob` + `GroupedFlowMatching` drop whole modalities). The forward model still
+needs *some* beam for all three ALMA channels, so the absent one is given the widest measured beam
+and every output of it is discarded — and `alma_obs_px_arcsec` is passed explicitly from the measured
+beams alone, since it is derived from `min(maj)` across channels and a placeholder could otherwise
+silently re-grid every band.
+
+### Sampling A_V instead of assuming it
+
+`A_V` is the assumption most worth testing, and testing it needs **no change to the augmentation**:
+`AugmentationsClass` already reads an `(lo, hi)` `av` as "draw one A_V per disk and marginalise over
+it", exactly as it does for the ALMA beam when `randomize_alma_setup` is on. All three notebooks take
+an `A_V` override (blank = the disk's assumption, a scalar, or `lo,hi`; `$CHECK_AV` seeds it
+headlessly) and write to `plots/<disk>_av<lo>-<hi>/` so a non-default run cannot overwrite the
+as-trained figures.
+
+What it can and cannot reach follows from extinction being one multiplicative scalar per channel.
+Over `A_V` in [1, 5] the swing is:
+
+| band | 0.5 µm | 0.76 µm | 1.65 µm | 3.9 µm | 24 µm | 70 µm | 450/880/1300 µm |
+|---|---|---|---|---|---|---|---|
+| dex | 1.72 | 1.14 | 0.33 | 0.12 | 0.08 | 0.014 | < 0.001 |
+
+So it moves the optical/near-IR SED decisively, the JWST channel slightly, and the ALMA channels not
+at all. An ALMA finding — a pixel-scale flag or a shape feature — is therefore **not** an extinction
+problem, whatever the posterior says. `tests/test_prior_predictive_checks.py` pins both ends of that
+table so the argument cannot rot.
+
+Measured on oph163131 (`A_V = 4` → `A_V ~ U(1,5)`): the 0.5 µm SED rank falls from p96.8 to p89.2
+and the best free-rescale χ²/N from 548 to 169, so the optical excess *is* recovered; the 70 µm
+deficit (p5.4) and the ALMA shape features do not move.
+
+Sampling `A_V` in *training* is a one-line config change (`augmentation.params.av: [1.0, 5.0]`), but
+it is a different model: `A_V` becomes a marginalised nuisance the networks cannot infer, so the
+posteriors widen, and the JWST asinh knee was tuned against the fixed-`A_V` amplitude distribution
+(see §4) and is worth rechecking.
+
+`check_summary_range` — the same question in the network's own learned summary space — is not ported
+yet; it needs a finished trained run (`approximator.keras`).
+
+## 9. Troubleshooting
+
+| symptom | cause |
+|---|---|
+| `silent beam error` on the first batch | `px_arcsec_mod` does not match the image cache's grid (§2) |
+| `group_sizes sums to N but the resolved condition vector is M wide` | `missing_modality_prob > 0` with `fuse_head: true` (§5) |
+| MemoryError while loading | the 300×300 cache needs ~70 GB after the row filter (§2) |
+| `stpsf` fails in `__init__` | `$STPSF_PATH` is unset or its reference data is missing |
+| loss is `nan` from step 0 | historically a single non-finite pixel: 48 811 rows and one is enough, and `clipnorm` cannot help since the norm of a NaN vector is NaN |
+| a parameter's posterior tracks its prior | may be correct — see §6 on contraction |
+| a prior-predictive notebook cannot find `imdata_<disk>.pkl` | the real observations are not vendored here; set `$PROTOPLAN_OBS_DIR` (§8) |
+| `real (H,W) vs augmented (H,W)` assertion in a check notebook | the regrid target and the forward model's ALMA grid disagree (§8) |

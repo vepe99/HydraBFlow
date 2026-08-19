@@ -97,7 +97,10 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
             batch_size=int(batch_size),
             augmentations=augmentations or None,
             verbose=0,
-            callbacks=[keras.callbacks.TerminateOnNaN()],
+            callbacks=[
+                keras.callbacks.TerminateOnNaN(),
+                artifacts.epoch_log_callback(log, prefix=f"trial {trial.number}: "),
+            ],
         )
 
     try:
@@ -156,7 +159,7 @@ def run_tuning(cfg):
     run_dir = get_run_dir()
 
     # Load + preprocess once; reuse across trials.
-    data = io.load_dataset(os.path.join(cfg.data.data_dir, cfg.data.dataset_name))
+    data = io.load_config_dataset(cfg)
     pipeline = build_pipeline(cfg.preprocessing)
     train_data, val_data = pipeline.fit_transform(data, rng)
     train_data = select_adapter_keys(train_data, cfg)

@@ -165,3 +165,23 @@ so these are env vars:
 - `KERAS_BACKEND=tensorflow` — other backend.
 
 On GPU OOM, training halves `training.batch_size` and retries, down to 16.
+
+
+## The protoplanetary-disk arm
+
+```bash
+uv run hydrabflow-train    experiment=protoplan
+uv run hydrabflow-evaluate experiment=protoplan model_dir=outputs/protoplan/protoplan_npe/<timestamp>
+```
+
+`experiment=protoplan` selects the simulator and both networks *and* fills in the plain blocks a
+group file cannot reach (`preprocessing`, `augmentation`, `adapter`, `training`, `eval`). There is no
+`simulate` stage: the forward model is an external radiative-transfer code, and
+`simulator.params.data_path` points at the `.npy` caches it produced.
+
+Needs `$STPSF_PATH` (the JWST PSF reference data) and the caches. The beam, the per-band noise, the
+distance and the extinction are `augmentation.params` knobs; the image cache you pick must be paired
+with a matching `augmentation.params.px_arcsec_mod`.
+
+Full write-up — the encoding, the five per-band branches, every knob, how to read the per-branch
+diagnostics, troubleshooting: [**protoplanetary_disk.md**](protoplanetary_disk.md).

@@ -1,0 +1,29 @@
+# Protoplanetary-disk radiative-transfer dataset.
+# Reader: src/hydrabflow/simulators/protoplan.py   Instrument model: src/hydrabflow/augmentation/protoplan_instrument.py
+#
+# The forward model is an external RT code, so `hydrabflow-simulate` is not used here: the
+# simulator reads the cached rows and the instrument model is applied per batch as an
+# augmentation. Run it with `experiment=protoplan`, which also selects the networks and the
+# augmentation/preprocessing/adapter blocks.
+name: protoplan
+params:
+  # Directory holding params_combined.npy, im_jy_combined_NHWC.npy, im_lams_combined.npy,
+  # sed_flx_jy_combined.npy, sed_lams_combined.npy.
+  data_path: /export/data/vgiusepp/ProtoplanetaryDisk_SBI/data/EOD_images_seds/split_combined
+  # The 128x128 resized cache, not the 300x300 native one (72 GB, and the boolean row filter
+  # materialises it in RAM). Whichever you pick, `augmentation.params.px_arcsec_mod` must match its
+  # grid -- the instrument model checks this on the first batch, because a mismatch is a silent
+  # beam error rather than a shape error.
+  image_file: im_jy_combined_resized_128x128.npy
+
+  # Seeds the delta-spike redraw of `log_r_cav` on the ~25k no-cavity rows. Fixed on purpose:
+  # unseeded, two runs of the same config differ in their *training targets*, not just in the
+  # flag under test, and any A/B between them is confounded.
+  param_jitter_seed: 0
+
+  # Knee of the adapter's asinh image compression, MJy/sr: `asinh(x / sigma)` is linear below it
+  # and logarithmic above. These defaults are one disk's measured per-band noise; **change them
+  # with the noise levels below** (same order of magnitude is enough -- far off and the transform
+  # degenerates into a near-identity or a pure log).
+  asinh_sigma_jwst: 0.9801783804396227
+  asinh_sigma_alma: [1744.6539538736572, 154.95994745585898, 5.556490901687079]

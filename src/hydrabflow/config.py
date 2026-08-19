@@ -117,6 +117,12 @@ class EvalConfig:
             "metrics", "recovery", "calibration_ecdf", "z_score_contraction"
         ]
     )
+    #: Condition groups to mark *unobserved* when sampling, by name (see the inference network's
+    #: ``group_names``). This is the modality-ablation knob: the group's columns of the resolved
+    #: condition vector are zeroed via BayesFlow's ``observed_condition_mask``, which is the same
+    #: mechanism ``missing_modality_prob`` uses during training. Requires an inference network that
+    #: exposes ``group_names``/``group_sizes`` (i.e. ``GroupedFlowMatching``).
+    mask_condition_groups: List[str] = field(default_factory=list)
 
 
 @dataclass

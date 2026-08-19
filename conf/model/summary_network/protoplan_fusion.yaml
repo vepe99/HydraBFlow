@@ -1,0 +1,51 @@
+# One conditioned CNN per image band -- JWST plus ALMA B9 (450um), B7 (880um), B6 (1300um) --
+# and a SED time-series transformer, late-fused.
+# Builder: src/hydrabflow/networks/protoplan.py::_protoplan_fusion
+#
+# The three ALMA bands get their own networks rather than being stacked as channels of one CNN
+# because they are observed with *different beams*: a shared trunk would have to serve three
+# point-spread functions at once, and each band's beam/noise conditions could only be handed to it
+# pooled. One `*_alma` key below configures all three; add `*_b9`/`*_b7`/`*_b6` to differ per band.
+#
+# The beam/noise/geometry scalars are spliced into the CNN trunks (not handed to the flow), which
+# is what `ConditionedConvolutionalNetwork` is for. The top-level fields below are the shared
+# SummaryNetworkConfig schema; only `dropout` is read here -- the architecture lives in `params.hp`
+# so `tuning.search_space` can address any single key by its dotted path, e.g.
+#   model.summary_network.params.hp.cnn_base_width_alma: {type: int, low: 8, high: 32, step: 8}
+type: protoplan_fusion
+summary_dim: 16          # unused: per-branch widths are hp.summary_dim_{jwst,alma,sed}
+                         #         (or hp.summary_dim_b6 etc. to override one band)
+dropout: 0.05
+params:
+  fuse_head: true        # false -> raw concatenation of branch embeddings; required by
+                         # missing_modality_prob > 0 (see the inference-network config)
+  hp:
+    summary_dim_jwst: 16
+    cnn_num_stages_jwst: 1
+    cnn_base_width_jwst: 8
+    cnn_blocks_per_stage_jwst: 1
+    cnn_down_mode_jwst: avg_pool
+    cnn_cond_mlp_width_jwst: 32
+    cnn_cond_mlp_depth_jwst: 1
+    # Shared by B9 / B7 / B6; a `*_b6`-style key wins over the `*_alma` one for that band.
+    summary_dim_alma: 16
+    cnn_num_stages_alma: 2
+    cnn_base_width_alma: 8
+    cnn_blocks_per_stage_alma: 1
+    cnn_down_mode_alma: avg_pool
+    cnn_cond_mlp_width_alma: 32
+    cnn_cond_mlp_depth_alma: 1
+    summary_dim_sed: 16
+    tst_num_layers: 1
+    tst_num_heads: 1
+    tst_head_dim: 16
+    tst_expansion_factor: 2.0
+    tst_time_embed_dim: 8
+    FusionNetwork_width_head: 32
+    FusionNetwork_length_head: 1
+    FusionNetwork_final_summary_dimension: 16
+    # Read by the inference network, which interpolates this whole dict -- one dict describes the
+    # whole architecture, so a tuning trial cannot move half of it.
+    inference_mlp_depth: 2
+    inference_mlp_width: 32
+    inference_time_embedding_dim: 16

@@ -31,5 +31,11 @@ dist/
 *.keras
 *.weights.h5
 
+# Prior-predictive check figures (regenerable from the notebooks)
+notebooks/prior_predictive_checks/plots/
+
 # Reference projects (embedded git repo, not part of this project)
 references/
+
+# Observational assets (not shared)
+assets/

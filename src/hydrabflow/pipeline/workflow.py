@@ -21,13 +21,21 @@ def build_workflow(cfg, run_dir: str | None = None) -> Any:
     import bayesflow as bf
     from omegaconf import OmegaConf
 
+    # `standardize: [all]` means the string "all" to BayesFlow: `Standardization.__init__` only
+    # honours that spelling, and a one-element list `["all"]` is tested with `key in ...` against
+    # "inference_variables"/"summary_variables"/"inference_conditions" -- so it standardizes
+    # *nothing*, silently.
+    standardize = list(OmegaConf.to_container(cfg.training.standardize, resolve=True))
+    if standardize == ["all"]:
+        standardize = "all"
+
     kwargs = dict(
-        adapter=build_adapter(cfg.adapter),
+        adapter=build_adapter(cfg.adapter, simulator_cfg=cfg.get("simulator")),
         summary_network=build_summary_network(
             cfg.model.summary_network, cfg.adapter.summary_variables
         ),
         inference_network=build_inference_network(cfg.model.inference_network),
-        standardize=list(OmegaConf.to_container(cfg.training.standardize, resolve=True)),
+        standardize=standardize,
         initial_learning_rate=float(cfg.training.learning_rate),
     )
     if run_dir is not None and bool(cfg.training.save_best_weights):

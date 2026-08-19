@@ -10,6 +10,10 @@ defaults:
   - model/summary_network: set_transformer
   - model/inference_network: flow_matching
   - _self_
+  # An `experiment` file is the one way to set several of the plain blocks below at once, which a
+  # group file cannot do (it is validated against a single dataclass). `experiment=protoplan`.
+  # Last, so it wins over everything above.
+  - experiment: null
 
 seed: 42
 

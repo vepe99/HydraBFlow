@@ -35,6 +35,21 @@ def load_dataset(path: str) -> Dataset:
     return {k: raw[k] for k in raw.files}
 
 
+def load_config_dataset(cfg) -> Dataset:
+    """The dataset a run trains/evaluates on: the simulator's own reader if it has one, else the
+    ``.npz`` the ``simulate`` stage wrote.
+
+    A simulator whose forward model is an external code (a radiative-transfer run, an instrument
+    pipeline) owns rows on disk that ``simulate`` never produced; it implements ``load_dataset()``
+    and the ``simulate`` stage is skipped entirely.
+    """
+    from hydrabflow.registry import simulator_hook
+
+    hook = simulator_hook(cfg.simulator, "load_dataset")
+    return hook() if hook else load_dataset(
+        os.path.join(cfg.data.data_dir, cfg.data.dataset_name))
+
+
 def run_chunked(
     out_path: str,
     n_total: int,

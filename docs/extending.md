@@ -159,3 +159,35 @@ augmentation:
 
 Draw only from the injected `rng`. Augmentations may change the observation layout — validation data
 goes through the same chain once with a fixed draw.
+
+
+## A forward model you cannot run in-process
+
+Some forward models are an external code (a radiative-transfer run, an instrument pipeline, a
+cluster job) whose output already exists as files. Such a simulator implements two optional hooks
+instead of `simulate`, and the `simulate` stage is skipped entirely:
+
+```python
+@register_simulator("mine")
+class MySimulator(BaseSimulator):
+    parameter_names = [...]      # still declared: they fill the adapter's key lists
+    observable_keys = [...]      # and drive select_adapter_keys
+
+    def load_dataset(self):                 # -> {key: array}, leading axis = rows
+        ...
+    def build_adapter(self, cfg):           # optional, only if AdapterConfig cannot express it
+        ...
+    def sample_prior(self, n, rng): raise NotImplementedError
+    simulate = sample_prior
+```
+
+`pipeline.io.load_config_dataset(cfg)` prefers `load_dataset()` over the `.npz` on disk, and
+`pipeline.adapter.build_adapter` prefers `build_adapter()` over the generic four-key-list path.
+Neither is declared on `BaseSimulator`, so `hasattr` is the test and no existing simulator changes.
+Reach for `build_adapter` only when the layout genuinely needs it -- grouped inputs, per-key
+transforms, conditions routed into the summary network. `simulators/protoplan.py` is the worked
+example.
+
+If your summary network assembles its own multi-backbone graph (rather than one backbone per
+summary key), set `handles_fusion = True` on the builder so `registry.build_summary_network` does not
+wrap it in the generic `FusionNetwork`.

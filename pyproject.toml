@@ -18,6 +18,13 @@ dependencies = [
     "marimo>=0.9",
     "tqdm>=4.66",
     "gpustat",
+    # Reached by the protoplanetary-disk instrument model
+    # (src/hydrabflow/augmentation/protoplan_instrument.py) only.
+    "scipy>=1.12",  # interpn, on jax arrays via SCIPY_ARRAY_API
+    "stpsf",        # the JWST NIRSpec IFU PSF; needs its reference data via $STPSF_PATH
+    # Reached by notebooks/prior_predictive_checks/ only: the real-disk observations are dill
+    # pickles carrying their class definition inline.
+    "dill",
 ]
 
 # `uv sync` installs the dev group by default, so a fresh clone can run pytest immediately.
