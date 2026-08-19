@@ -183,5 +183,10 @@ Needs `$STPSF_PATH` (the JWST PSF reference data) and the caches. The beam, the 
 distance and the extinction are `augmentation.params` knobs; the image cache you pick must be paired
 with a matching `augmentation.params.px_arcsec_mod`.
 
+For a **real** disk, the generic `data.real_data_path` recipe above is not enough on its own -- the
+posterior is conditional on a discrete indicator the observation does not carry, and a disk may be
+missing a band. `docs/protoplanetary_disk.md` §9 has the three-command version
+(`make_real_npz.py`, then `evaluate` with `eval.mask_condition_groups`).
+
 Full write-up — the encoding, the five per-band branches, every knob, how to read the per-branch
 diagnostics, troubleshooting: [**protoplanetary_disk.md**](protoplanetary_disk.md).

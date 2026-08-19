@@ -40,8 +40,9 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 PLOTS_ROOT = REPO_ROOT / "notebooks" / "prior_predictive_checks" / "plots"
 OBS_SETUP_JSON = ASSETS_DIR / "obs_setup_measurements.json"
 
-#: Where the real-disk image pickles live.  They are ~150-300 MB each and are *not* vendored into
-#: this repo; `PROTOPLAN_OBS_DIR` overrides the location.
+#: Where the upstream real-disk image pickles live -- only a fallback now: `load_real_images` reads
+#: `assets/protoplan/realimg_<disk>.npz` (a few hundred kB, in the repo) when it is there.
+#: `PROTOPLAN_OBS_DIR` overrides the location.
 OBS_DATA_DIR = pathlib.Path(os.environ.get(
     "PROTOPLAN_OBS_DIR",
     "/export/data/vgiusepp/ProtoplanetaryDisk_SBI/data/obs_data"))
@@ -276,7 +277,7 @@ def load_obs_setup(disk: str, path=OBS_SETUP_JSON) -> tuple[dict, float]:
 
     key_to_j = {f"im_jy_alma_{j}": j for j in range(spec.N_ALMA)}
     setup: dict[int, dict] = {}
-    rot_deg = None
+    theta_deg: dict[str, float] = {}
     for row in meas["alma_per_disk"]:
         if row["disk"] != disk:
             continue
@@ -288,8 +289,7 @@ def load_obs_setup(disk: str, path=OBS_SETUP_JSON) -> tuple[dict, float]:
             bpa_deg=float(row["bpa_deg"]),
             sigma_mjy_sr=float(row["rms_mjy_sr"]),
         )
-        if row["band"] == cfg["rot_band"]:
-            rot_deg = float(row["theta_deg"])
+        theta_deg[row["band"]] = float(row["theta_deg"])
 
     expected = set(cfg["alma_channels"])
     if set(setup) != expected:
@@ -297,9 +297,12 @@ def load_obs_setup(disk: str, path=OBS_SETUP_JSON) -> tuple[dict, float]:
             f"{disk}: the registry declares ALMA channels {sorted(expected)} but "
             f"{path} has {sorted(setup)} -- one of the two is stale"
         )
-    if rot_deg is None:
-        raise RuntimeError(f"{disk}: no {cfg['rot_band']} row in {path} to take rot_deg from")
-    return setup, rot_deg
+    if not theta_deg:
+        raise RuntimeError(f"{disk}: no ALMA rows in {path} to take rot_deg from")
+    # The registry's `rot_band` when the disk has it, else the longest wavelength measured -- a disk
+    # missing B6 still has a position angle, just measured through a different beam.
+    band = cfg["rot_band"] if cfg["rot_band"] in theta_deg else setup[max(setup)]["band"]
+    return setup, theta_deg[band]
 
 
 def jwst_footprint_gap(disk: str, path=OBS_SETUP_JSON) -> float:
@@ -426,20 +429,33 @@ def regrid_to_model(img, ra_1d, dec_1d, tgt):
 
 def load_real_images(disk: str) -> dict:
     """
-    Raw (uncut, ungridded) real images per band, straight out of the `dill` pickle.
+    Ungridded real images per band: `assets/protoplan/realimg_<disk>.npz` if vendored, else the
+    upstream `dill` pickle.
 
     Returns `{"jwst": {...}, "alma_0": {...}, ...}` with `img` [MJy/sr], `rRA`, `rDEC` [arcsec] and
     a `label`, for the bands this disk has.  JWST comes from `im_cent` and ALMA from
-    `im_cent_MJyster`.
+    `im_cent_MJyster`.  The vendored `.npz` holds exactly those arrays, cropped to +/-3" -- twice the
+    model field, so `regrid_to_model` never reaches the edge (`_vendor_real_images.py`).
     """
+    cfg = disk_config(disk)
+    vendored = ASSETS_DIR / f"realimg_{disk}.npz"
+    if vendored.exists():
+        z = np.load(vendored)
+        bands = {"jwst": dict(img=z["jwst_img"], rRA=z["jwst_rRA"], rDEC=z["jwst_rDEC"],
+                              label=BAND_LABEL["im_jy_jwst"])}
+        for j in cfg["alma_channels"]:
+            bands[f"alma_{j}"] = dict(img=z[f"alma_{j}_img"], rRA=z[f"alma_{j}_rRA"],
+                                      rDEC=z[f"alma_{j}_rDEC"],
+                                      label=BAND_LABEL[f"im_jy_alma_{j}"])
+        return bands
+
     import dill
 
-    cfg = disk_config(disk)
     path = OBS_DATA_DIR / cfg["pickle"]
     if not path.exists():
         raise FileNotFoundError(
-            f"{path} not found.  The real-disk image pickles are not vendored into this repo; "
-            f"point PROTOPLAN_OBS_DIR at the directory holding them.")
+            f"neither {vendored} nor {path} exists.  Vendor the images with "
+            f"`_vendor_real_images.py`, or point PROTOPLAN_OBS_DIR at the upstream pickles.")
     with open(path, "rb") as fh:
         obs = dill.load(fh)
 

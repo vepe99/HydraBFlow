@@ -305,10 +305,14 @@ GPU, no caches, no pickles.
 
 Three things about these checks that are easy to get wrong:
 
-* **The real images are not in this repo.** They live in the upstream project's
-  `data/obs_data/imdata_<disk>.pkl` (~150–300 MB each), written with `dill` and carrying their class
-  definition inline, so they unpickle without importing that package. `$PROTOPLAN_OBS_DIR` overrides
-  where to look.
+* **The real images come from `assets/protoplan/`, not the repo's git history.** `load_real_images`
+  reads `realimg_<disk>.npz` -- the four arrays it actually uses (`im_cent` / `im_cent_MJyster`,
+  `rRA`, `rDEC`), cropped to +/-3", twice the model field, a few hundred kB per disk. Regenerate them
+  from the upstream `data/obs_data/imdata_<disk>.pkl` (~150-300 MB each, `dill`, class definition
+  inline, so they unpickle without importing that package) with
+  `uv run python notebooks/prior_predictive_checks/_vendor_real_images.py`; `$PROTOPLAN_OBS_DIR` says
+  where those live. With neither present the notebooks say so and stop. `assets/` is gitignored, so a
+  fresh clone starts from the pickles.
 * **The regrid target must match the forward model's grid.** `build_real_batch(disk, lams)` uses the
   disk's own measured beams, which is what `fixed_setup_augmentation` produces (122 px for
   oph163131). The *randomized* training prior samples ALMA finer (162 px), so `check_obs_range` must
@@ -363,7 +367,71 @@ posteriors widen, and the JWST asinh knee was tuned against the fixed-`A_V` ampl
 `check_summary_range` — the same question in the network's own learned summary space — is not ported
 yet; it needs a finished trained run (`approximator.keras`).
 
-## 9. Troubleshooting
+## 9. Posterior inference on a real disk
+
+`hydrabflow-evaluate` has one real-data mode for the whole repo (`data.real_data_path`, see
+`docs/running.md`): no truth, no resimulation, posterior pair plots only. Three things are specific
+to this arm, and all three are handled by
+`notebooks/prior_predictive_checks/make_real_npz.py` -- run it first, then evaluate.
+
+```bash
+DISK=oph163131
+SRC=outputs/protoplan/protoplan_npe/<timestamp>        # a finished (or in-progress) training run
+DST=$SRC/real_$DISK                                    # this evaluation's own directory
+
+# 1. Stage the model. Copying rather than reading `$SRC` in place matters only while that run is
+#    still training: it rewrites `approximator_best.weights.h5` on every improvement.
+mkdir -p $DST
+cp $SRC/approximator_best.weights.h5 $SRC/preprocessing_state.npz $DST/
+cp -r $SRC/.hydra $DST/source_run_hydra
+
+# 2. The real observation as an evaluate-ready `.npz`. Prints the mask groups step 3 needs.
+uv run python notebooks/prior_predictive_checks/make_real_npz.py $DISK $DST/real_$DISK.npz
+
+# 3. Sample. `hydra.run.dir` is what puts the results beside the weights instead of in a fresh
+#    timestamped directory.
+uv run hydrabflow-evaluate experiment=protoplan \
+  model_dir=$DST \
+  data.real_data_path=$DST/real_$DISK.npz \
+  'eval.mask_condition_groups=[b7_input]' \
+  eval.num_samples=1000 eval.batch_size=2 \
+  hydra.run.dir=$DST
+```
+
+Out come `posterior.npz` (one `(2, num_samples, 1)` array per target), `posterior_pairs_obs0.png`
+(the `has_cavity = 0` branch), `posterior_pairs_obs1.png` (`has_cavity = 1`), `evaluate.log` and this
+launch's `.hydra/`. Prepend `HYDRABFLOW_NUM_GPUS=0` to both python steps for a CPU run -- one disk at
+1000 samples takes about two minutes and needs no GPU.
+
+### What the three steps are for
+
+* **Two rows, not one.** The estimator is `p(theta | data, sil_id, has_cavity)` (§4), and nothing in
+  the pipeline estimates the indicators from the data. A real disk therefore gets *both* branches
+  sampled, and they are read as two conditional posteriors -- mixing them into one marginal needs
+  weights this model does not provide. On oph163131 they agree on every target except `log_r_cav`,
+  which is exactly the intended behaviour: unidentified (≈ prior) with no cavity, pinned with one.
+  Add `sil_id` to `adapter.inference_conditions` and the same argument makes it four rows.
+* **The image grids are the training prior's, not the disk's.** `make_real_npz.py` regrids onto
+  `randomized_alma_obs_px(cfg)` (162 px for the shipped config), *not* the disk's own measured beams
+  -- the network was trained on that sampling. This is the same trap as `check_obs_range` (§8), from
+  the other side.
+* **A band the disk lacks is masked, not zero-filled.** oph163131 has no B7 map, so its branch gets a
+  zero image plus in-prior placeholder conditions, and `eval.mask_condition_groups=[b7_input]` zeroes
+  that branch's whole 16-column slice of the condition vector (`observed_condition_mask` in
+  `pipeline/evaluate.py`). Feeding the placeholder unmasked would be inventing an observation. This
+  needs a model trained with `missing_modality_prob > 0`; without it `evaluate` raises rather than
+  masking a layout it cannot know, because such a model has never seen a masked condition vector.
+
+`make_real_npz.py` also writes zeros for the target parameters. They are not data: the real path
+never scores them, but `load_approximator`'s rebuild-from-config fallback probes the adapter, which
+concatenates them into `inference_variables`. They must be `(N, 1)`, like the training cache.
+
+Before reading any of this as a measurement, run §8's prior-predictive checks on the disk -- a
+posterior conditioned on an out-of-population observation is extrapolation, and it will not say so.
+The run above used a mid-training checkpoint deliberately (`inc = 83 (+/-2) deg` for oph163131, a known
+near-edge-on disk, was the sanity check); a `metrics.json`-backed statement needs a finished run.
+
+## 10. Troubleshooting
 
 | symptom | cause |
 |---|---|
@@ -373,5 +441,7 @@ yet; it needs a finished trained run (`approximator.keras`).
 | `stpsf` fails in `__init__` | `$STPSF_PATH` is unset or its reference data is missing |
 | loss is `nan` from step 0 | historically a single non-finite pixel: 48 811 rows and one is enough, and `clipnorm` cannot help since the norm of a NaN vector is NaN |
 | a parameter's posterior tracks its prior | may be correct — see §6 on contraction |
-| a prior-predictive notebook cannot find `imdata_<disk>.pkl` | the real observations are not vendored here; set `$PROTOPLAN_OBS_DIR` (§8) |
+| a notebook cannot find `realimg_<disk>.npz` *or* `imdata_<disk>.pkl` | no real images locally: set `$PROTOPLAN_OBS_DIR` and re-run `_vendor_real_images.py` (§8) |
+| `expected 2 variables, but received 0` loading the weights for a real run | a target in the `.npz` is `(N,)` rather than `(N, 1)`, so the adapter built a 2N-wide `inference_variables` (§9) |
+| `eval.mask_condition_groups needs an inference network exposing group_names` | the run was trained with `missing_modality_prob: 0`; nothing to mask (§9) |
 | `real (H,W) vs augmented (H,W)` assertion in a check notebook | the regrid target and the forward model's ALMA grid disagree (§8) |
