@@ -20,6 +20,7 @@ from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.registry import build_pipeline
+from hydrabflow.utils.oom import run_with_oom_backoff
 from hydrabflow.utils.paths import PREPROCESSING_STATE, get_run_dir
 from hydrabflow.utils.seed import seed_everything
 
@@ -121,11 +122,20 @@ def run_evaluation(cfg):
         sample_kwargs[MaskName.OBSERVED_CONDITION] = observed_condition_mask(
             workflow.approximator.inference_network, drop, n_rows)
 
-    posterior = workflow.sample(
-        num_samples=int(cfg.eval.num_samples),
-        conditions=data,
-        batch_size=int(cfg.eval.batch_size),
-        **sample_kwargs,
+    # `eval.batch_size` rows are sampled at once, each expanded to `num_samples` draws, so the
+    # tensor reaching the inference network is `batch_size * num_samples` deep -- and a diffusion
+    # transformer attends over every target and condition as its own token, which is an order of
+    # magnitude more activation than the MLP subnet the default batch size was picked for. Back off
+    # rather than lose the run, exactly as `train` and `tune` already do.
+    posterior = run_with_oom_backoff(
+        lambda batch_size: workflow.sample(
+            num_samples=int(cfg.eval.num_samples),
+            conditions=data,
+            batch_size=int(batch_size),
+            **sample_kwargs,
+        ),
+        int(cfg.eval.batch_size),
+        logger=log,
     )
     param_names = list(cfg.adapter.inference_variables)
     artifacts.save_posterior(posterior, run_dir)
