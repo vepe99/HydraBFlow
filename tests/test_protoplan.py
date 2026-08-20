@@ -174,7 +174,7 @@ def test_adapter_and_summary_network_use_the_same_keys(compose):
 
 
 def test_grouped_flow_matching_group_sizes(compose):
-    """Six groups -- the discrete pair, then one per band/modality -- with the pair protected."""
+    """Six groups -- the discrete indicators, then one per band/modality -- indicators protected."""
     from hydrabflow.registry import build_inference_network
 
     cfg = compose(overrides=[
@@ -185,7 +185,7 @@ def test_grouped_flow_matching_group_sizes(compose):
     net = build_inference_network(cfg.model.inference_network)
     hp = cfg.model.summary_network.params.hp
     assert net.group_sizes == [
-        2,                              # sil_id, has_cavity
+        1,                              # has_cavity (sil_id is not a condition in this experiment)
         hp.summary_dim_alma,            # b6_input   (sorted(backbones) order)
         hp.summary_dim_alma,            # b7_input
         hp.summary_dim_alma,            # b9_input
@@ -417,3 +417,72 @@ def test_av_accepts_a_scalar_or_a_per_disk_range(raw_batch):
     ratio = (sampled / scalar)[:, 0, 0]
     assert ratio.std() > 0                                # not one constant for the whole batch
     assert np.all(ratio > 0) and np.all(ratio < 1)        # extinction only ever dims
+
+
+def test_posterior_corner_plot_writes_a_figure(tmp_path):
+    """The corner plot survives a prior box, a median and a truth row."""
+    from hydrabflow.pipeline import artifacts
+
+    names = ["a", "b"]
+    rng = np.random.default_rng(0)
+    posterior = {n: rng.normal(size=(2, 200, 1)) for n in names}
+    bounds = {n: (-3.0, 3.0) for n in names}
+    np.savez(tmp_path / artifacts.PRIOR_BOUNDS_NAME, **{n: np.array(bounds[n]) for n in names})
+    assert artifacts.load_prior_bounds(str(tmp_path), names) == bounds
+
+    artifacts.save_posterior_plot(posterior, names, str(tmp_path), truth=np.zeros((2, 2)),
+                                 bounds=bounds, max_obs=1)
+    assert (tmp_path / "posterior_corner_obs0.png").exists()
+    assert not (tmp_path / "posterior_corner_obs1.png").exists()
+
+
+def test_per_indicator_condition_groups_are_droppable_and_the_old_layout_is_unchanged(compose):
+    """`discrete_condition_groups` splits the indicators into width-1 *droppable* groups.
+
+    The same `observed_condition_mask` sampler has to serve both layouts, so this pins the two
+    side by side:
+
+    * ``experiment=protoplan`` -- one width-2 group named `discrete`, always observed
+      (`always_observed_groups=1`), `keep_one` guaranteeing a surviving *modality*.
+    * ``experiment=protoplan_mask_discrete`` -- two width-1 groups named after the indicators,
+      dropped independently at `missing_modality_prob` like any modality.
+
+    The one behavioural difference is deliberate and measured here: with the indicators droppable,
+    `keep_one` can spend its guarantee on an indicator, so a small fraction of draws has no
+    modality at all (p ** n_modalities = 0.3 ** 5 = 0.24%). Those rows train the conditional
+    prior, which the diffusion transformer represents like any other marginal.
+    """
+    from hydrabflow.registry import build_inference_network
+
+    n = 20000
+    old = build_inference_network(compose(overrides=["experiment=protoplan"])
+                                 .model.inference_network)
+    new = build_inference_network(compose(overrides=["experiment=protoplan_mask_discrete"])
+                                 .model.inference_network)
+
+    assert old.group_names[0] == "discrete" and old.group_sizes[0] == 1
+    assert old.always_observed_groups == 1
+    assert new.group_names[:2] == ["sil_id", "has_cavity"]
+    assert new.group_sizes[:2] == [1, 1]
+    assert new.always_observed_groups == 0, "splitting them is only useful if they can drop"
+    # Same modalities, same widths, same order -- only the leading groups differ.
+    assert old.group_names[1:] == new.group_names[2:]
+    assert old.group_sizes[1:] == new.group_sizes[2:]
+
+    for net, n_discrete in ((old, 1), (new, 2)):
+        mask = np.asarray(net.observed_condition_mask(n))
+        edges = np.cumsum([0] + net.group_sizes)
+        assert mask.shape == (n, sum(net.group_sizes))
+        for name, lo, hi in zip(net.group_names, edges[:-1], edges[1:]):
+            group = mask[:, lo:hi]
+            assert np.all(group == group[:, :1]), f"{name} was not dropped/kept whole"
+        per_group = np.stack([mask[:, lo] for lo in edges[:-1]], axis=-1)
+        assert per_group.sum(axis=-1).min() >= 1, "keep_one left a row with nothing observed"
+
+        observed = per_group.mean(axis=0)
+        assert np.all(observed[:n_discrete] == (1.0 if net is old else pytest.approx(0.7, abs=.02)))
+        assert np.all(observed[n_discrete:] == pytest.approx(0.7, abs=0.02)), \
+            "modalities must keep their 1 - missing_modality_prob observed rate in both layouts"
+
+        no_modality = float((per_group[:, n_discrete:].sum(axis=-1) == 0).mean())
+        assert no_modality == (0.0 if net is old else pytest.approx(0.0024, abs=0.002))

@@ -53,7 +53,7 @@ def observed_condition_mask(network, drop, n_rows: int) -> np.ndarray:
         if name in drop:
             mask[:, offset:offset + size] = 0.0
         offset += size
-    log.info("Masking condition group(s) %s -> %d of %d condition columns zeroed",
+    log.info("Masking condition group(s) %s -> %d of %d condition columns marked unobserved",
              list(drop), int((mask[0] == 0).sum()), mask.shape[1])
     return mask
 
@@ -129,9 +129,14 @@ def run_evaluation(cfg):
     )
     param_names = list(cfg.adapter.inference_variables)
     artifacts.save_posterior(posterior, run_dir)
-    if real:
-        artifacts.save_posterior_plot(posterior, param_names, run_dir)
-    else:
+    # Corner plots either way: prior box behind, median marked, plus the truth when there is one.
+    # A simulated test set has thousands of rows, so only the first few get a figure.
+    truth = None if real else np.column_stack([np.asarray(data[p]).reshape(-1) for p in param_names])
+    artifacts.save_posterior_plot(
+        posterior, param_names, run_dir, truth=truth,
+        bounds=artifacts.load_prior_bounds(cfg.model_dir, param_names),
+        max_obs=None if real else 5)
+    if not real:
         artifacts.run_diagnostics(cfg, posterior, data, param_names, run_dir)
 
     log.info("Inference on %s complete. Artifacts in %s", path, run_dir)

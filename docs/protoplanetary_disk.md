@@ -226,9 +226,54 @@ Two constraints, both enforced rather than documented-and-hoped:
 * `fuse_head: false` is required. An MLP head mixes the branch embeddings, so there is no modality
   boundary left in the fused vector to drop. Get this wrong and the run raises, because the widths
   no longer line up (`group_sizes sums to …`).
-* The two discrete indicators are never dropped (`always_observed_groups=1`). They are conditions on
-  the *density*, not descriptions of a measurement; dropping them would ask the network to
-  marginalise over a parameter it is meant to be conditioned on.
+* The two discrete indicators are never dropped (`always_observed_groups=1`) *by default*. They are
+  conditions on the *density*, not descriptions of a measurement, so dropping them asks the network
+  to marginalise over a parameter it is meant to be conditioned on -- which is sometimes exactly
+  what you want; see below.
+
+### Maskable discrete indicators (`experiment=protoplan_mask_discrete`)
+
+```yaml
+adapter: { inference_conditions: [sil_id, has_cavity] }
+model:
+  inference_network:
+    params:
+      subnet: diffusion_transformer          # required, see below
+      discrete_condition_groups: [sil_id, has_cavity]
+```
+
+`discrete_condition_groups` replaces `discrete_condition_dim`: instead of one always-observed group
+of width 2, each indicator becomes its **own width-1 droppable group**, dropped independently at
+`missing_modality_prob` like a modality (and `always_observed_groups` becomes 0 -- splitting them is
+only useful if they can drop). The names must be `adapter.inference_conditions` in the same order;
+a count mismatch raises at the first training step via the `group_sizes sums to ...` check.
+
+One model then serves four queries, selected at evaluation time:
+
+| `eval.mask_condition_groups` | estimator |
+|---|---|
+| `[]` | `p(θ \| data, sil_id, has_cavity)` |
+| `[sil_id]` | `p(θ \| data, has_cavity)` |
+| `[has_cavity]` | `p(θ \| data, sil_id)` |
+| `[sil_id, has_cavity]` | `p(θ \| data)` |
+
+Three things to know before using it:
+
+* **`subnet: diffusion_transformer` is not optional here.** There each condition scalar is its own
+  token: a masked one gets the learnable *missing* state embedding and is excluded from attention.
+  Under an MLP subnet "missing" degrades to zeroing the column (`GroupedFlowMatching._apply`), and
+  `0` is a legal value of both indicators -- "unknown" would be indistinguishable from
+  "`sil_id=0`, no cavity".
+* **The marginal is over the grid's prior**, which is 50/50 on each indicator *by construction*
+  (12.5k rows in each of the four cells), not a measured occurrence rate. Reweighting means
+  retraining; the mixture route (`Σ p(k|data) p(θ|data,k)`, weights from a separate classifier on
+  the summary embeddings) is the reweightable alternative, and it is also the only route that
+  estimates `p(has_cavity | data)` at all. Masking marginalises the indicator; it never infers it.
+* **`keep_one` can now spend its guarantee on an indicator**, so `p ** n_modalities` of draws
+  (0.3⁵ = 0.24%) have no modality observed at all and train the conditional prior. Deliberate and
+  pinned by
+  `tests/test_protoplan.py::test_per_indicator_condition_groups_are_droppable_and_the_old_layout_is_unchanged`,
+  which checks both layouts side by side.
 
 ---
 
@@ -370,7 +415,7 @@ yet; it needs a finished trained run (`approximator.keras`).
 ## 9. Posterior inference on a real disk
 
 `hydrabflow-evaluate` has one real-data mode for the whole repo (`data.real_data_path`, see
-`docs/running.md`): no truth, no resimulation, posterior pair plots only. Three things are specific
+`docs/running.md`): no truth, no resimulation, posterior corner plots only. Three things are specific
 to this arm, and all three are handled by
 `notebooks/prior_predictive_checks/make_real_npz.py` -- run it first, then evaluate.
 
@@ -383,6 +428,7 @@ DST=$SRC/real_$DISK                                    # this evaluation's own d
 #    still training: it rewrites `approximator_best.weights.h5` on every improvement.
 mkdir -p $DST
 cp $SRC/approximator_best.weights.h5 $SRC/preprocessing_state.npz $DST/
+cp $SRC/prior_bounds.npz $DST/            # the prior box the corner plots shade (optional)
 cp -r $SRC/.hydra $DST/source_run_hydra
 
 # 2. The real observation as an evaluate-ready `.npz`. Prints the mask groups step 3 needs.
@@ -398,9 +444,12 @@ uv run hydrabflow-evaluate experiment=protoplan \
   hydra.run.dir=$DST
 ```
 
-Out come `posterior.npz` (one `(2, num_samples, 1)` array per target), `posterior_pairs_obs0.png`
-(the `has_cavity = 0` branch), `posterior_pairs_obs1.png` (`has_cavity = 1`), `evaluate.log` and this
-launch's `.hydra/`. Prepend `HYDRABFLOW_NUM_GPUS=0` to both python steps for a CPU run -- one disk at
+Out come `posterior.npz` (one `(2, num_samples, 1)` array per target), `posterior_corner_obs0.png`
+(the `has_cavity = 0` branch), `posterior_corner_obs1.png` (`has_cavity = 1`), `evaluate.log` and this
+launch's `.hydra/`. The corner plots shade the training prior's box (from `prior_bounds.npz`, written
+by `train`; absent, the axes just fall back to the posterior's own range) and mark the posterior
+median in blue; on a simulated test set the truth is marked in red instead of nothing, and only the
+first 5 rows get a figure. Prepend `HYDRABFLOW_NUM_GPUS=0` to both python steps for a CPU run -- one disk at
 1000 samples takes about two minutes and needs no GPU.
 
 ### What the three steps are for

@@ -1,0 +1,41 @@
+# @package _global_
+# `experiment=protoplan` with the two discrete indicators turned into *maskable* conditions, so
+# one model serves all four queries instead of one:
+#
+#   eval.mask_condition_groups: []                      p(theta | x, sil_id, has_cavity)
+#                               [sil_id]                p(theta | x, has_cavity)
+#                               [has_cavity]            p(theta | x, sil_id)
+#                               [sil_id, has_cavity]    p(theta | x)
+#
+# This only means anything with `subnet: diffusion_transformer` (inherited): there each condition
+# scalar is its own token, a masked token gets the learnable MISSING state embedding and is
+# excluded from attention. Under `time_mlp` masking degrades to zeroing the column, and 0 is a
+# legal value of both indicators -- i.e. "unknown" would be indistinguishable from "sil_id=0,
+# no cavity".
+defaults:
+  - protoplan
+
+run_name: protoplan_npe_mask_discrete
+
+training:
+  batch_size: 256
+
+adapter:
+  # Both indicators back as conditions: masking one requires the network to see it first. Order
+  # is load-bearing -- `_protoplan_spec.build_adapter` concatenates in this order, and
+  # `discrete_condition_groups` below names the same columns in the same order.
+  inference_conditions: [sil_id, has_cavity]
+
+model:
+  inference_network:
+    params:
+      # Replaces `discrete_condition_dim`: one width-1 group per indicator instead of one
+      # always-observed group of 2, which also sets `always_observed_groups=0`. Each is then
+      # dropped independently at `missing_modality_prob` (0.3, inherited), like a modality.
+      discrete_condition_groups: [sil_id, has_cavity]
+      discrete_condition_dim: null
+
+eval:
+  # per_discrete_branch still splits the test set by (sil_id, has_cavity); with both conditions
+  # supplied that is four conditional posteriors, as in the original run.
+  diagnostics: [metrics, recovery, calibration_ecdf, z_score_contraction, per_discrete_branch]

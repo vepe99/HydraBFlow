@@ -605,6 +605,18 @@ def _protoplan_flow_matching(cfg):
     if prob <= 0.0:
         return bf.networks.FlowMatching(subnet=subnet, subnet_kwargs=subnet_kwargs)
 
+    # `discrete_condition_groups: [sil_id, has_cavity]` (names in `adapter.inference_conditions`
+    # order) makes each indicator its own width-1, *droppable* group, so a mask can marginalise
+    # over one of them independently. Without it the indicators stay one always-observed group of
+    # `discrete_condition_dim` -- the original behaviour. A count mismatch against the adapter is
+    # caught by the width check in `compute_metrics` at the first step.
+    per_indicator = list(cfg.params.get("discrete_condition_groups", []) or [])
+    if per_indicator:
+        discrete_sizes, discrete_names = [1] * len(per_indicator), [str(n) for n in per_indicator]
+    else:
+        discrete_sizes = [int(cfg.params.get("discrete_condition_dim",
+                                             len(DISCRETE_CONDITION_KEYS)))]
+        discrete_names = [DISCRETE_GROUP_NAME]
     dims = _summary_dims(hp)
     return GroupedFlowMatching(
         subnet=subnet,
@@ -616,11 +628,11 @@ def _protoplan_flow_matching(cfg):
         # Width of the always-observed leading group = how many discrete indicators the adapter
         # actually concatenates. Must match `adapter.inference_conditions`; a mismatch raises in
         # `compute_metrics` at the first step rather than silently masking the wrong columns.
-        group_sizes=([int(cfg.params.get("discrete_condition_dim", len(DISCRETE_CONDITION_KEYS)))]
-                     + [dims[k] for k in sorted(dims)]),
-        group_names=[DISCRETE_GROUP_NAME] + sorted(dims),
+        group_sizes=discrete_sizes + [dims[k] for k in sorted(dims)],
+        group_names=discrete_names + sorted(dims),
         missing_modality_prob=prob,
-        always_observed_groups=1,     # the two discrete indicators
+        # 0 when the indicators are their own groups: that is the only reason to split them.
+        always_observed_groups=0 if per_indicator else 1,
     )
 
 
