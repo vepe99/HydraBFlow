@@ -242,4 +242,8 @@ is therefore not an extinction problem, and no amount of A_V sampling will move 
 both a scalar and a range (`parse_av` / `av_ref` / `extinction_correction`); a scalar-only assumption
 fails silently by broadcasting or loudly on `np.isnan(tuple)`.
 
-`check_summary_range` is not ported -- it needs a finished `approximator.keras`.
+`check_summary_range` is the fourth check, in the network's own summary space; it needs a finished
+run, scores per instrument (a disk's absent band is its positive control), and caches the embeddings
+to `<plot_dir>/summaries.npz`. `check_summary_pca` decomposes its Mahalanobis distance over the PCA
+basis -- judge in the 99%-variance subspace, since most of the raw d2 sits in near-degenerate
+directions. `notebooks/overlay_corner.py` overlays several evaluate runs on one corner plot.

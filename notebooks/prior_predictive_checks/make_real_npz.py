@@ -9,7 +9,7 @@ prior-predictive checks do not:
 
 1. **Both discrete branches.**  The estimator is ``p(theta | data, has_cavity)``, and a real disk does
    not come with that indicator, so every row is emitted twice -- ``has_cavity`` 0 then 1.  Two
-   conditional posteriors, not one guess; `evaluate` writes `posterior_pairs_obs0/1.png`.
+   conditional posteriors, not one guess; `evaluate` writes `posterior_corner_obs0/1.png`.
 2. **A placeholder for a band the disk lacks.**  Every adapter key must exist.  A missing band gets a
    zero image and the longest-wavelength measured band's conditions (in-prior, and log-safe -- three
    of them are log-transformed by the adapter, so zeros would be ``-inf``).  Pass the branch to
@@ -27,6 +27,8 @@ Prints the ``eval.mask_condition_groups`` value the evaluate call needs.
 
 import pathlib
 import sys
+
+import itertools
 
 import numpy as np
 
@@ -57,14 +59,28 @@ def build(disk: str, overrides=("experiment=protoplan",)) -> tuple[dict, list[st
     for p in cfg.adapter.inference_variables:
         batch[p] = np.zeros((1, 1), dtype=np.float32)
 
-    data = {k: np.concatenate([v, v], axis=0) for k, v in batch.items()}
-    data["has_cavity"] = np.array([0.0, 1.0], dtype=np.float32)
+    # One row per combination of the discrete indicators the adapter conditions on: a real disk
+    # comes with none of them, so every branch is sampled and read as its own conditional
+    # posterior. `[has_cavity]` gives the original two rows, 0 then 1; `[sil_id, has_cavity]`
+    # gives four, in `itertools.product` order -- (0,0), (0,1), (1,0), (1,1).
+    discrete = list(cfg.adapter.inference_conditions)
+    combos = list(itertools.product([0.0, 1.0], repeat=len(discrete)))
+    data = {k: np.concatenate([v] * len(combos), axis=0) for k, v in batch.items()}
+    for i, name in enumerate(discrete):
+        data[name] = np.array([c[i] for c in combos], dtype=np.float32)
     return data, [BRANCH_NAME[j] for j in missing]
 
 
 if __name__ == "__main__":
+    # make_real_npz.py <disk> <out.npz> [hydra override ...]
+    # The overrides must be the ones the model was *trained* with -- they decide which targets get
+    # placeholders and which indicators get a row.
     disk, out = sys.argv[1], sys.argv[2]
-    data, mask = build(disk)
+    overrides = tuple(sys.argv[3:]) or ("experiment=protoplan",)
+    data, mask = build(disk, overrides)
     np.savez(out, **data)
-    print(f"\n{out}: {len(data)} keys, rows = has_cavity 0 and 1")
+    rows = [k for k in ("sil_id", "has_cavity") if k in data]
+    print(f"\n{out}: {len(data)} keys, {len(data[rows[0]])} rows over {rows}")
+    for i in range(len(data[rows[0]])):
+        print(f"  obs{i}: " + ", ".join(f"{k}={data[k][i]:.0f}" for k in rows))
     print(f"pass to evaluate:  'eval.mask_condition_groups={mask}'".replace("'", "\"", 0))

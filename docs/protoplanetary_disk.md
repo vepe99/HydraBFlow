@@ -409,8 +409,52 @@ it is a different model: `A_V` becomes a marginalised nuisance the networks cann
 posteriors widen, and the JWST asinh knee was tuned against the fixed-`A_V` amplitude distribution
 (see §4) and is worth rechecking.
 
-`check_summary_range` — the same question in the network's own learned summary space — is not ported
-yet; it needs a finished trained run (`approximator.keras`).
+### The same question in the network's own summary space
+
+`check_summary_range.py` is the fourth check and the only one that asks the question where it
+matters — the space the inference network actually conditions on, rather than one we chose. It needs
+a finished run, which is why it came last.
+
+```bash
+uv run python notebooks/prior_predictive_checks/check_summary_range.py <model_dir> [n_rows] \
+    experiment=protoplan_mask_discrete 'adapter.inference_variables=[]' \
+    'augmentation.params.av=[1.0,5.0]'      # the overrides the run was TRAINED with
+```
+
+It streams the training set through the augmentation as configured for training, then through the
+adapter and the summary network with the approximator's own standardization applied, and puts the
+real disk beside it. With `fuse_head: false` the summary vector is the per-branch embeddings
+concatenated in `sorted(backbones)` order, so it scores **per instrument as well as globally**,
+which is what localizes a verdict to a band. Scoring reuses `_realdisk`'s toolkit (rank-transform
+each dimension through the training column's own ECDF, then Mahalanobis against the *empirical*
+distribution of the training rows' own distances) so the numbers stay comparable to the other three.
+
+Three things make it readable:
+
+* **The absent band is a built-in positive control.** oph163131 has no B7, so that branch's
+  embedding comes from a zero image and *must* come out extreme. It does — nearest-neighbour
+  distance 4–5.5x the typical training spacing, against ~2x for the bands the disk really has. If
+  b7 is not the most extreme block, the check is not working.
+* **Judge in the 99%-variance subspace, not the raw one.** Mahalanobis divides by variance, so a
+  near-degenerate direction turns a tiny offset into a huge score: two thirds of oph163131's raw
+  `d2` comes from the ~40 components holding under 1% of the variance between them, where the
+  training covariance is worst estimated. `check_summary_pca.py` decomposes `d2` per component and
+  reports both numbers; the truncated one is the defensible one.
+* **The embeddings are cached** to `<plot_dir>/summaries.npz` (train, real, branch keys, per-row
+  `has_cavity`/`sil_id`). They cost a full augmented pass, so anything else that wants this space
+  reads them from there:
+
+```bash
+uv run python notebooks/prior_predictive_checks/check_summary_pca.py out.png \
+    17-target=<plot_dir_a> 7-target=<plot_dir_b>
+```
+
+Measured on oph163131, and consistent across the 7- and 17-target maskable runs: **p99.98 in the
+99%-variance subspace** (24 and 26 of 64 components), 21–31% of those components placing the disk
+outside their own central 99% against 1% expected, and the displacement driven by the ALMA branches
+(`b9` p99.1–99.9, `b6` p94–99.7) with JWST the most in-distribution (p84–87). PC1–PC2 alone put it
+*inside* the cloud, which is the reminder that a 2-D projection cannot see this — 61% of the
+variance is not the test.
 
 ## 9. Posterior inference on a real disk
 
@@ -444,9 +488,22 @@ uv run hydrabflow-evaluate experiment=protoplan \
   hydra.run.dir=$DST
 ```
 
-Out come `posterior.npz` (one `(2, num_samples, 1)` array per target), `posterior_corner_obs0.png`
-(the `has_cavity = 0` branch), `posterior_corner_obs1.png` (`has_cavity = 1`), `evaluate.log` and this
-launch's `.hydra/`. The corner plots shade the training prior's box (from `prior_bounds.npz`, written
+`make_real_npz.py` takes the overrides the model was **trained** with, and emits one row per
+combination of whatever `adapter.inference_conditions` holds — two for `[has_cavity]`, four for
+`[sil_id, has_cavity]`, in `itertools.product` order. It prints the rows it wrote and the mask
+groups step 3 needs.
+
+Out come `posterior.npz` (one `(n_rows, num_samples, 1)` array per target), one
+`posterior_corner_obs<i>.png` per row, `evaluate.log` and this launch's `.hydra/`.
+`notebooks/overlay_corner.py` puts several of those runs on **one** corner plot — the prior box
+shaded behind, every condition regime overlaid, colour for the regime and linestyle for the branch
+inside it — which is how a masked posterior is compared against the conditioned ones it should sit
+between:
+
+```bash
+uv run python notebooks/overlay_corner.py <dir holding mask_none/ mask_sil_id/ mask_has_cavity/> \
+    out.png rc h_c log_Mgas ...
+``` The corner plots shade the training prior's box (from `prior_bounds.npz`, written
 by `train`; absent, the axes just fall back to the posterior's own range) and mark the posterior
 median in blue; on a simulated test set the truth is marked in red instead of nothing, and only the
 first 5 rows get a figure. Prepend `HYDRABFLOW_NUM_GPUS=0` to both python steps for a CPU run -- one disk at
