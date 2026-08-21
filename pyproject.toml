@@ -25,6 +25,7 @@ dependencies = [
     # Reached by notebooks/prior_predictive_checks/ only: the real-disk observations are dill
     # pickles carrying their class definition inline.
     "dill",
+    "corner>=2.3.0",
 ]
 
 # `uv sync` installs the dev group by default, so a fresh clone can run pytest immediately.

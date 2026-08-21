@@ -124,7 +124,7 @@ uv run hydrabflow-train +experiments=<name> --cfg job
 ## Your own observed data
 
 Set `data.real_data_path` and `evaluate` skips everything truth-aware (no metrics, no
-resimulation) and writes posterior pair plots only:
+resimulation) and writes posterior corner plots only (prior box shaded, median marked):
 
 ```bash
 uv run hydrabflow-evaluate model_dir=<train run> data.real_data_path=data/observed.npz

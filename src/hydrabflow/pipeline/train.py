@@ -48,6 +48,9 @@ def run_training(cfg):
     train_data = select_adapter_keys(train_data, cfg)
     val_data = select_adapter_keys(val_data, cfg) if val_data is not None else None
 
+    # The prior box the evaluate stage's corner plots shade, measured on the training targets.
+    artifacts.save_prior_bounds(train_data, list(cfg.adapter.inference_variables), run_dir)
+
     # 3. Build the workflow. Passing run_dir turns on best-val-loss checkpointing, restored below.
     workflow = build_workflow(cfg, run_dir=run_dir)
 

@@ -262,22 +262,70 @@ def _per_branch_figures(requested, posterior, targets, param_names, run_dir, key
         log.info("Wrote branch diagnostics for %s (n=%d) -> *%s.png", label, n_rows, suffix)
 
 
-def save_posterior_plot(posterior, param_names, run_dir: str) -> None:
-    """Truth-free diagnostic: one posterior pair plot per observation (used for real data)."""
-    import bayesflow as bf
+PRIOR_BOUNDS_NAME = "prior_bounds.npz"
 
-    fn = getattr(bf.diagnostics, "pairs_posterior", None) or getattr(
-        bf.diagnostics, "pairs_samples", None
-    )
-    if fn is None:
-        log.warning("No posterior pair-plot helper found in bayesflow.diagnostics.")
-        return
-    n_obs = int(np.asarray(next(iter(posterior.values()))).shape[0])
+
+def save_prior_bounds(data: dict, param_names, run_dir: str) -> None:
+    """Per-target (min, max) of the training set -- the prior box the corner plots shade."""
+    try:
+        bounds = {p: np.array([np.min(data[p]), np.max(data[p])], dtype="float64")
+                  for p in param_names if p in data}
+        np.savez(os.path.join(run_dir, PRIOR_BOUNDS_NAME), **bounds)
+    except Exception as exc:  # never abort a training run over a plotting aid
+        log.warning("Could not save prior bounds: %s", exc)
+
+
+def load_prior_bounds(model_dir: str, param_names) -> dict | None:
+    """``{name: (lo, hi)}`` written by train, or None if this run predates it."""
+    path = os.path.join(model_dir, PRIOR_BOUNDS_NAME)
+    if not os.path.exists(path):
+        return None
+    z = np.load(path)
+    return {p: tuple(float(x) for x in z[p]) for p in param_names if p in z}
+
+
+def save_posterior_plot(posterior, param_names, run_dir: str, truth=None, bounds=None,
+                        max_obs: int | None = None) -> None:
+    """One corner plot per observation: prior box in the background, median (+ truth) marked.
+
+    ``bounds`` is ``{name: (lo, hi)}`` from ``load_prior_bounds``; the axes are set to the prior
+    span so "the posterior fills the prior" is readable at a glance. ``truth`` is ``(n_obs,
+    n_params)`` on a simulated test set and None on real data.
+    """
+    import corner
+    import matplotlib.pyplot as plt
+
+    chains = np.stack([np.asarray(posterior[p]).reshape(len(posterior[p]), -1)
+                       for p in param_names], axis=-1)          # (n_obs, n_samples, n_params)
+    n_obs = chains.shape[0] if max_obs is None else min(chains.shape[0], max_obs)
+    lo_hi = [bounds.get(p) if bounds else None for p in param_names]
+    # Pad by 5% so the prior box's edges stay visible; 1.0 = corner's own full range for that column.
+    ranges = [1.0 if b is None else (b[0] - 0.05 * (b[1] - b[0]), b[1] + 0.05 * (b[1] - b[0]))
+              for b in lo_hi]
+
     for i in range(n_obs):
-        try:
-            single = {k: np.asarray(v)[i] for k, v in posterior.items()}
-            fig = fn(estimates=single, variable_names=param_names)
-            suffix = "" if n_obs == 1 else f"_obs{i}"
-            fig.savefig(os.path.join(run_dir, f"posterior_pairs{suffix}.png"), bbox_inches="tight")
-        except Exception as exc:
-            log.warning("posterior plot for observation %d failed: %s", i, exc)
+        s = chains[i]
+        med = np.median(s, axis=0)
+        fig = corner.corner(
+            s, labels=param_names, range=ranges,
+            show_titles=True, title_fmt=".3g", quantiles=[0.16, 0.5, 0.84],
+            plot_datapoints=False, fill_contours=True, levels=(0.68, 0.95),
+            truths=None if truth is None else np.asarray(truth)[i],
+            truth_color="tab:red",
+        )
+        # Prior box behind everything: a band on the diagonals, a rectangle off it.
+        axes = np.array(fig.axes).reshape(len(param_names), len(param_names))
+        for r in range(len(param_names)):
+            for c in range(r + 1):
+                ax = axes[r, c]
+                if lo_hi[c]:
+                    ax.axvspan(*lo_hi[c], color="0.90", zorder=-10)
+                if r != c and lo_hi[r]:
+                    ax.axhspan(*lo_hi[r], color="0.90", zorder=-10)
+        corner.overplot_lines(fig, med, color="tab:blue", linestyle="--", linewidth=1.0)
+        corner.overplot_points(fig, med[None], marker="s", color="tab:blue")
+        suffix = "" if chains.shape[0] == 1 else f"_obs{i}"
+        fig.savefig(os.path.join(run_dir, f"posterior_corner{suffix}.png"),
+                    bbox_inches="tight", dpi=120)
+        plt.close(fig)
+    log.info("Wrote %d posterior corner plot(s) to %s", n_obs, run_dir)
