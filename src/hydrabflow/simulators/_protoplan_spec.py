@@ -178,6 +178,16 @@ LOG_CONDITION_KEYS = (
 #: `inference_conditions`, in column order.  Deliberately not log'd: 0/1 indicators, not scales.
 DISCRETE_CONDITION_KEYS = list(DISCRETE_CONDITION_PARAMS)
 
+#: Foreground extinction, exported per row by `augmentation/protoplan_instrument.py::preprocess`.
+#: Not a dataset column and not a discrete indicator, but a legal `inference_conditions` member:
+#: listing it estimates `p(theta | data, ..., A_V)`, omitting it marginalises over the prior.  Left
+#: raw (A_V in [1, 5] spans no decades) -- `training.standardize: [all]` centres the column.
+AV_CONDITION_KEY = "av"
+
+#: Everything `build_adapter` accepts as an `inference_conditions` member.  Every *other* condition
+#: is routed into the summary networks instead, which is why this is an allowlist.
+MASKABLE_CONDITION_KEYS = [*DISCRETE_CONDITION_KEYS, AV_CONDITION_KEY]
+
 
 def summary_condition_groups() -> dict[str, list[str]]:
     """`{summary_group_key: [scalar batch keys, in concatenation order]}`."""
@@ -277,12 +287,12 @@ def build_adapter(params=None, conditions=None, asinh_sigma_jwst=None, asinh_sig
     summary_groups = summary_condition_groups()
     routed = [k for keys in summary_groups.values() for k in keys]
     scalars = list(DISCRETE_CONDITION_KEYS if conditions is None else conditions)
-    unknown = [k for k in scalars if k not in DISCRETE_CONDITION_KEYS]
+    unknown = [k for k in scalars if k not in MASKABLE_CONDITION_KEYS]
     if unknown:
         raise ValueError(
-            f"inference_conditions {unknown} are not discrete indicators; this adapter routes "
-            f"every other condition into the summary networks. Choose from "
-            f"{DISCRETE_CONDITION_KEYS}.")
+            f"inference_conditions {unknown} are not conditions of the density; this adapter "
+            f"routes every other condition into the summary networks. Choose from "
+            f"{MASKABLE_CONDITION_KEYS}.")
 
     adapter = (
         bf.adapters.Adapter()

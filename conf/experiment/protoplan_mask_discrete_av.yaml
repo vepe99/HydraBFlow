@@ -1,0 +1,34 @@
+# @package _global_
+# `experiment=protoplan_mask_discrete` plus the foreground extinction as a *third* maskable
+# condition, so one model answers every combination of "do I know the silicate type / the cavity /
+# A_V?":
+#
+#   eval.mask_condition_groups: []              p(theta | x, sil_id, has_cavity, A_V)
+#                               [av]           p(theta | x, sil_id, has_cavity)   <- the old model
+#                               [sil_id, has_cavity, av]      p(theta | x)
+#
+# A_V is not a dataset column: `augmentation/protoplan_instrument.py::preprocess` draws it per disk
+# and now exports it as `batch['av']`, so conditioning on it costs nothing extra to simulate. It is
+# left raw -- [1, 5] spans no decades, and `training.standardize: [all]` centres the column, unlike
+# the beam/noise scalars in `LOG_CONDITION_KEYS`.
+defaults:
+  - protoplan_mask_discrete
+
+run_name: protoplan_npe_mask_discrete_av
+
+training:
+  n_epochs: 2000
+
+augmentation:
+  params:
+    av: [1.0, 5.0]
+
+adapter:
+  # Order is load-bearing: `_protoplan_spec.build_adapter` concatenates in this order and
+  # `discrete_condition_groups` below names the same columns in the same order.
+  inference_conditions: [sil_id, has_cavity, av]
+
+model:
+  inference_network:
+    params:
+      discrete_condition_groups: [sil_id, has_cavity, av]

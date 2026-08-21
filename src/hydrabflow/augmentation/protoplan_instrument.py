@@ -1096,13 +1096,15 @@ class AugmentationsClass:
 
         # 1. Extinction correction (stays on device).  A scalar `av` is one correction for the
         #    whole batch; an (lo, hi) `av` draws one A_V per disk, so the correction gains a
-        #    leading batch axis.  A_V is *not* handed to the networks as a condition -- it is
-        #    marginalised over, like the ALMA beam when `randomize_alma_setup` is on.
+        #    leading batch axis.  The drawn value is exported as `batch['av']` below: a run that
+        #    lists it in `adapter.inference_conditions` conditions on it, one that does not
+        #    marginalises over it, like the ALMA beam when `randomize_alma_setup` is on.
         if isinstance(self.av, tuple):
             av = jax.random.uniform(
                 self._split_key(), (images.shape[0], 1),
                 minval=self.av[0], maxval=self.av[1], dtype=jnp.float32
             )
+            av_per_row = av[:, 0]
             images = images * (10.0 ** (self._ext_exp_im[jnp.newaxis, :] * av))[
                 :, jnp.newaxis, jnp.newaxis, :]
             sed    = sed    * (10.0 ** (self._ext_exp_sed[jnp.newaxis, :] * av))[
@@ -1112,6 +1114,7 @@ class AugmentationsClass:
                 jnp.newaxis, jnp.newaxis, jnp.newaxis, :]
             sed    = sed    * (10.0 ** (self._ext_exp_sed * self.av))[
                 jnp.newaxis, :, jnp.newaxis]
+            av_per_row = jnp.full((images.shape[0],), self.av, dtype=jnp.float32)
 
         # 2. Distance rescaling — flux ∝ 1/d².  A no-op at the default dist_pc =
         #    dist_fid_pc, but previously `dist_scale_sq` was computed and never applied
@@ -1142,6 +1145,10 @@ class AugmentationsClass:
         new_batch          = dict(batch)
         new_batch["im_jy"] = images
         new_batch["seds"]  = sed
+        # The A_V that was actually applied, one per row, so a run can condition on it.  Written
+        # unconditionally: the adapter drops the key when it is not listed, and a fixed `av` is a
+        # constant column rather than a missing one.
+        new_batch["av"]    = av_per_row
         return new_batch
 
     def apply_psf_and_convolve(self, batch: dict) -> dict:

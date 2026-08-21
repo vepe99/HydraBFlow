@@ -486,3 +486,35 @@ def test_per_indicator_condition_groups_are_droppable_and_the_old_layout_is_unch
 
         no_modality = float((per_group[:, n_discrete:].sum(axis=-1) == 0).mean())
         assert no_modality == (0.0 if net is old else pytest.approx(0.0024, abs=0.002))
+
+
+def test_av_is_exported_per_row_and_becomes_a_third_droppable_group(compose, raw_batch):
+    """`experiment=protoplan_mask_discrete_av`: A_V is a maskable condition, not a nuisance.
+
+    Two halves, because they can drift apart silently: the augmentation has to *export* the A_V it
+    drew (per row, one value per disk), and the flow has to see it as its own width-1 group so a
+    mask can marginalise over it independently of the two indicators.
+    """
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+    from hydrabflow.registry import build_inference_network
+
+    _, data = raw_batch
+    batch = {k: np.asarray(v) for k, v in data.items()}
+
+    aug = AugmentationsClass(px_arcsec_mod=spec.FOV_ARCSEC_MOD / (GRID - 1), av=[1.0, 5.0],
+                             has_jwst=False, randomize_alma_setup=False,
+                             alma_obs_px_arcsec=0.05, seed=0)
+    av = np.asarray(aug.preprocess(batch)["av"])
+    assert av.shape == (N_ROWS,), "one A_V per disk, in the shape the adapter's to_array expects"
+    assert av.min() >= 1.0 and av.max() <= 5.0 and av.std() > 0
+    # A fixed A_V still produces the column, so the key never goes missing.
+    fixed = AugmentationsClass(px_arcsec_mod=spec.FOV_ARCSEC_MOD / (GRID - 1), av=4.0,
+                               has_jwst=False, randomize_alma_setup=False,
+                               alma_obs_px_arcsec=0.05, seed=0)
+    np.testing.assert_allclose(np.asarray(fixed.preprocess(batch)["av"]), 4.0)
+
+    net = build_inference_network(compose(overrides=["experiment=protoplan_mask_discrete_av"])
+                                 .model.inference_network)
+    assert net.group_names[:3] == ["sil_id", "has_cavity", "av"]
+    assert net.group_sizes[:3] == [1, 1, 1]
+    assert net.always_observed_groups == 0
