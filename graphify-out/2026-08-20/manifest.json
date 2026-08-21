@@ -50,8 +50,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1787307367.2914944,
-    "ast_hash": "9c60d7d19ae2aa091ca97b42c43d2b80",
+    "mtime": 1787123950.8688195,
+    "ast_hash": "891a16f03239fd8c419e51954a9d6482",
     "semantic_hash": ""
   },
   "README.md": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate.py": {
-    "mtime": 1787253135.041094,
-    "ast_hash": "c450b90c346ed1fc805cdd1fb86da3cc",
+    "mtime": 1787205579.9589863,
+    "ast_hash": "3f453d68d64861102b72a3c05472c98c",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/io.py": {
@@ -145,7 +145,7 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/train.py": {
-    "mtime": 1787211974.444904,
+    "mtime": 1787205591.563022,
     "ast_hash": "1a723248fe9e3f3cdfe14d012876d680",
     "semantic_hash": ""
   },
@@ -225,7 +225,7 @@
     "semantic_hash": ""
   },
   "pyproject.toml": {
-    "mtime": 1787211974.432904,
+    "mtime": 1787205537.838862,
     "ast_hash": "8837bd700c3d2f60728c5317f4ba6cd9",
     "semantic_hash": ""
   },
@@ -235,7 +235,7 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/artifacts.py": {
-    "mtime": 1787211974.4409041,
+    "mtime": 1787205640.8671777,
     "ast_hash": "64c69bc1e3d28df8a64ca50de8eef0d6",
     "semantic_hash": ""
   },
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/config.py": {
-    "mtime": 1787212506.638978,
-    "ast_hash": "f2649c457b2752fbaef28a5a725b23c0",
+    "mtime": 1787118839.4202952,
+    "ast_hash": "50e7df286a1c726528c3184487079c63",
     "semantic_hash": ""
   },
   "src/hydrabflow/registry.py": {
@@ -290,7 +290,7 @@
     "semantic_hash": ""
   },
   "docs/running.md": {
-    "mtime": 1787211974.408904,
+    "mtime": 1787205690.2073417,
     "ast_hash": "d6a8ba59461e94e1cb614a56553ae23b",
     "semantic_hash": ""
   },
@@ -320,23 +320,23 @@
     "semantic_hash": ""
   },
   "notebooks/prior_predictive_checks/make_real_npz.py": {
-    "mtime": 1787294838.298413,
-    "ast_hash": "c7ef2b36569163e0532c611baa4f02a8",
+    "mtime": 1787205725.4354634,
+    "ast_hash": "036a18519bc371fcf48ecb3c39cde7d6",
     "semantic_hash": ""
   },
   "src/hydrabflow/augmentation/protoplan_instrument.py": {
-    "mtime": 1787253776.576499,
-    "ast_hash": "8ff8e0a04278c0f5763e0029058c6f8b",
+    "mtime": 1787118839.4202952,
+    "ast_hash": "1c3608315a2389b24c1803ee70c183c4",
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/protoplan.py": {
-    "mtime": 1787211974.436904,
-    "ast_hash": "147746a99acb43052d815f92f9b4ef1e",
+    "mtime": 1787118839.4242952,
+    "ast_hash": "2b80cbdfa703a8d11084605261112d73",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/_protoplan_spec.py": {
-    "mtime": 1787253787.116556,
-    "ast_hash": "559fc55fe2101591c0641ee263f2b911",
+    "mtime": 1787118839.4522953,
+    "ast_hash": "bff2935bc5565e029b8d63b201e8d4d1",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/protoplan.py": {
@@ -350,8 +350,8 @@
     "semantic_hash": ""
   },
   "tests/test_protoplan.py": {
-    "mtime": 1787253830.540791,
-    "ast_hash": "351cf479c38118cc14a6f9f0c1918c5d",
+    "mtime": 1787205640.8711777,
+    "ast_hash": "268dd38c5d7348330f4dfecfb00c87db",
     "semantic_hash": ""
   },
   "conf/experiment/protoplan.yaml": {
@@ -375,33 +375,8 @@
     "semantic_hash": ""
   },
   "docs/protoplanetary_disk.md": {
-    "mtime": 1787307367.2914944,
-    "ast_hash": "a813fe72c2ca1320c16e3af5e29bf753",
-    "semantic_hash": ""
-  },
-  "conf/experiment/protoplan_mask_discrete.yaml": {
-    "mtime": 1787211881.284583,
-    "ast_hash": "c0c3d3ccb8c44d5d37800819497bc9b8",
-    "semantic_hash": ""
-  },
-  "notebooks/overlay_corner.py": {
-    "mtime": 1787307294.9071097,
-    "ast_hash": "8143f6392a3a449e37b2a1759b73e93e",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/check_summary_pca.py": {
-    "mtime": 1787307295.0631106,
-    "ast_hash": "2b694f8068ee2d482675b010cd684f64",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/check_summary_range.py": {
-    "mtime": 1787299408.3110921,
-    "ast_hash": "d78d8309909aeee529673b177c206295",
-    "semantic_hash": ""
-  },
-  "conf/experiment/protoplan_mask_discrete_av.yaml": {
-    "mtime": 1787253801.3326328,
-    "ast_hash": "1cde2d907a476394cccfc16730dafa58",
+    "mtime": 1787205677.8793,
+    "ast_hash": "fdaba418fcfde4a9c24ca9f15566ebed",
     "semantic_hash": ""
   }
 }

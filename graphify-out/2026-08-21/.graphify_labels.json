@@ -50,13 +50,11 @@
   "48": "ConditionedFusionNetwork",
   "49": "registry.py",
   "50": "ConditionedConvolutionalNetwork",
-  "51": "_Batched",
   "52": "build_workflow",
   "53": "test_registries.py",
   "54": "EXTRACTED/INFERRED/AMBIGUOUS Audit Trail",
   "55": "Community 55",
   "56": "disk_config",
-  "57": "_objective",
   "58": "Community Detection",
   "59": "Detect Files Step",
   "60": "Existing-Graph Fast Path",
@@ -71,9 +69,6 @@
   "69": "Semantic LLM Extraction",
   "70": "Parallel Subagent Dispatch",
   "71": "hydrabflow",
-  "72": "run_evaluation",
-  "73": "get_run_dir",
-  "74": "test_workflow.py",
   "75": "_ext_hiav",
   "76": "Return the summary network selected by ``cfg.type`` (a ``SummaryNetworkConfig``)",
   "77": "Return the inference (posterior) network selected by ``cfg.type`` (an ``Inferenc",
@@ -108,7 +103,5 @@
   "106": "base.py",
   "107": "_radius_at_fraction",
   "108": "regrid_to_model",
-  "109": "check_sed_range.py",
-  "110": "check_summary_pca.py",
-  "111": "parse_av"
+  "109": "check_sed_range.py"
 }

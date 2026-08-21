@@ -34,46 +34,6 @@
       "norm_label": "marimo notebook: inspect a training run's posterior samples and diagnostics.  ru"
     },
     {
-      "label": "overlay_corner.py",
-      "file_type": "code",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "notebooks_overlay_corner",
-      "community": 98,
-      "norm_label": "overlay_corner.py"
-    },
-    {
-      "label": "chains()",
-      "file_type": "code",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L41",
-      "_origin": "ast",
-      "id": "notebooks_overlay_corner_chains",
-      "community": 98,
-      "norm_label": "chains()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L46",
-      "_origin": "ast",
-      "id": "notebooks_overlay_corner_main",
-      "community": 98,
-      "norm_label": "main()"
-    },
-    {
-      "label": "One corner plot per model: the training prior shaded behind, every condition reg",
-      "file_type": "rationale",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "notebooks_overlay_corner_rationale_1",
-      "community": 98,
-      "norm_label": "one corner plot per model: the training prior shaded behind, every condition reg"
-    },
-    {
       "label": "_realdisk.py",
       "file_type": "code",
       "source_file": "notebooks/prior_predictive_checks/_realdisk.py",
@@ -100,7 +60,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_load_training_data",
-      "community": 25,
+      "community": 10,
       "norm_label": "load_training_data()"
     },
     {
@@ -130,7 +90,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_parse_av",
-      "community": 111,
+      "community": 26,
       "norm_label": "parse_av()"
     },
     {
@@ -180,7 +140,7 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_missing_alma_channels",
-      "community": 56,
+      "community": 103,
       "norm_label": "missing_alma_channels()"
     },
     {
@@ -240,7 +200,7 @@
       "source_location": "L353",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_randomized_alma_obs_px",
-      "community": 26,
+      "community": 49,
       "norm_label": "randomized_alma_obs_px()"
     },
     {
@@ -250,7 +210,7 @@
       "source_location": "L367",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_check_conditions_in_prior",
-      "community": 56,
+      "community": 37,
       "norm_label": "check_conditions_in_prior()"
     },
     {
@@ -280,7 +240,7 @@
       "source_location": "L430",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_load_real_images",
-      "community": 56,
+      "community": 32,
       "norm_label": "load_real_images()"
     },
     {
@@ -290,7 +250,7 @@
       "source_location": "L475",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_interp_real_sed",
-      "community": 56,
+      "community": 32,
       "norm_label": "interp_real_sed()"
     },
     {
@@ -300,7 +260,7 @@
       "source_location": "L495",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_build_real_batch",
-      "community": 56,
+      "community": 32,
       "norm_label": "build_real_batch()"
     },
     {
@@ -310,7 +270,7 @@
       "source_location": "L575",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_configured_augmentation",
-      "community": 96,
+      "community": 56,
       "norm_label": "configured_augmentation()"
     },
     {
@@ -350,7 +310,7 @@
       "source_location": "L668",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_accum_update",
-      "community": 96,
+      "community": 56,
       "norm_label": ".update()"
     },
     {
@@ -560,7 +520,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_115",
-      "community": 25,
+      "community": 10,
       "norm_label": "the row-filtered training cache, via the configured simulator's own `load_datase"
     },
     {
@@ -580,7 +540,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_187",
-      "community": 111,
+      "community": 26,
       "norm_label": "`\"4\"` -> `4.0`; `\"1,5\"` -> `(1.0, 5.0)`; empty -> `default`.      a tuple is wha"
     },
     {
@@ -620,7 +580,7 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_245",
-      "community": 56,
+      "community": 103,
       "norm_label": "the alma channels this disk was never observed in -- dropped everywhere downstre"
     },
     {
@@ -680,7 +640,7 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_354",
-      "community": 26,
+      "community": 49,
       "norm_label": "the alma pixel scale the *randomized* training prior samples at, from a composed"
     },
     {
@@ -690,7 +650,7 @@
       "source_location": "L368",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_368",
-      "community": 56,
+      "community": 37,
       "norm_label": "print each measured condition beside the prior the networks were trained on."
     },
     {
@@ -720,7 +680,7 @@
       "source_location": "L431",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_431",
-      "community": 56,
+      "community": 32,
       "norm_label": "ungridded real images per band: `assets/protoplan/realimg_<disk>.npz` if vendore"
     },
     {
@@ -730,7 +690,7 @@
       "source_location": "L476",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_476",
-      "community": 56,
+      "community": 32,
       "norm_label": "`(flux, err, raw)` -- the real sed on the training wavelength grid, in linear jy"
     },
     {
@@ -740,7 +700,7 @@
       "source_location": "L497",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_497",
-      "community": 56,
+      "community": 32,
       "norm_label": "`(batch, aux)` -- the real observation as the adapter's own keys, n=1.      the"
     },
     {
@@ -750,7 +710,7 @@
       "source_location": "L576",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_realdisk_rationale_576",
-      "community": 96,
+      "community": 56,
       "norm_label": "the augmentation exactly as configured for training -- randomized observing prio"
     },
     {
@@ -1064,136 +1024,6 @@
       "norm_label": "marimo notebook: is a real disk's *morphology* reachable by the simulator?  the"
     },
     {
-      "label": "check_summary_pca.py",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_pca",
-      "community": 110,
-      "norm_label": "check_summary_pca.py"
-    },
-    {
-      "label": "load()",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L24",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_pca_load",
-      "community": 110,
-      "norm_label": "load()"
-    },
-    {
-      "label": "pct()",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L34",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_pca_pct",
-      "community": 110,
-      "norm_label": "pct()"
-    },
-    {
-      "label": "Where in the summary PCA basis does the real disk's distance actually come from?",
-      "file_type": "rationale",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_pca_rationale_1",
-      "community": 110,
-      "norm_label": "where in the summary pca basis does the real disk's distance actually come from?"
-    },
-    {
-      "label": "check_summary_range.py",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range",
-      "community": 101,
-      "norm_label": "check_summary_range.py"
-    },
-    {
-      "label": "with_placeholders()",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L42",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_with_placeholders",
-      "community": 101,
-      "norm_label": "with_placeholders()"
-    },
-    {
-      "label": "summary_fn()",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L59",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_summary_fn",
-      "community": 101,
-      "norm_label": "summary_fn()"
-    },
-    {
-      "label": "blocks()",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L79",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_blocks",
-      "community": 101,
-      "norm_label": "blocks()"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L87",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_main",
-      "community": 101,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Is a real disk inside the training population *in the network's own summary spac",
-      "file_type": "rationale",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_rationale_1",
-      "community": 101,
-      "norm_label": "is a real disk inside the training population *in the network's own summary spac"
-    },
-    {
-      "label": "Zero-fill the target and indicator columns the adapter concatenates but we never",
-      "file_type": "rationale",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L43",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_rationale_43",
-      "community": 101,
-      "norm_label": "zero-fill the target and indicator columns the adapter concatenates but we never"
-    },
-    {
-      "label": "`(batch_dict) -> (B, summary_dim)`, standardized exactly as the flow's condition",
-      "file_type": "rationale",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L60",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_rationale_60",
-      "community": 101,
-      "norm_label": "`(batch_dict) -> (b, summary_dim)`, standardized exactly as the flow's condition"
-    },
-    {
-      "label": "Equal-width per-branch slices; every branch is built with the same `summary_dim`",
-      "file_type": "rationale",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L80",
-      "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_check_summary_range_rationale_80",
-      "community": 101,
-      "norm_label": "equal-width per-branch slices; every branch is built with the same `summary_dim`"
-    },
-    {
       "label": "make_real_npz.py",
       "file_type": "code",
       "source_file": "notebooks/prior_predictive_checks/make_real_npz.py",
@@ -1207,7 +1037,7 @@
       "label": "build()",
       "file_type": "code",
       "source_file": "notebooks/prior_predictive_checks/make_real_npz.py",
-      "source_location": "L43",
+      "source_location": "L41",
       "_origin": "ast",
       "id": "notebooks_prior_predictive_checks_make_real_npz_build",
       "community": 101,
@@ -1227,9 +1057,9 @@
       "label": "`(dataset, mask_groups)` -- the rows to save and the branches to mask when sampl",
       "file_type": "rationale",
       "source_file": "notebooks/prior_predictive_checks/make_real_npz.py",
-      "source_location": "L44",
+      "source_location": "L42",
       "_origin": "ast",
-      "id": "notebooks_prior_predictive_checks_make_real_npz_rationale_44",
+      "id": "notebooks_prior_predictive_checks_make_real_npz_rationale_42",
       "community": 101,
       "norm_label": "`(dataset, mask_groups)` -- the rows to save and the branches to mask when sampl"
     },
@@ -1423,7 +1253,7 @@
       "source_location": "L525",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_default_alma_obs_px_arcsec",
-      "community": 7,
+      "community": 49,
       "norm_label": ".default_alma_obs_px_arcsec()"
     },
     {
@@ -1493,7 +1323,7 @@
       "source_location": "L689",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_beam_area_sr",
-      "community": 7,
+      "community": 37,
       "norm_label": ".beam_area_sr()"
     },
     {
@@ -1630,7 +1460,7 @@
       "label": ".apply_psf_and_convolve()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1154",
+      "source_location": "L1147",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
       "community": 7,
@@ -1640,7 +1470,7 @@
       "label": ".apply_rotation()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1240",
+      "source_location": "L1233",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
       "community": 7,
@@ -1650,7 +1480,7 @@
       "label": ".apply_resampling()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1302",
+      "source_location": "L1295",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
       "community": 7,
@@ -1660,7 +1490,7 @@
       "label": ".apply_noise()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1364",
+      "source_location": "L1357",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
       "community": 7,
@@ -1670,7 +1500,7 @@
       "label": ".apply_sed_noise()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1445",
+      "source_location": "L1438",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
       "community": 7,
@@ -1680,7 +1510,7 @@
       "label": ".log10_sed()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1497",
+      "source_location": "L1490",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_log10_sed",
       "community": 7,
@@ -1690,7 +1520,7 @@
       "label": ".__call__()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1508",
+      "source_location": "L1501",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
       "community": 7,
@@ -1700,7 +1530,7 @@
       "label": "_tuplify()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1546",
+      "source_location": "L1539",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_tuplify",
       "community": 7,
@@ -1710,7 +1540,7 @@
       "label": "protoplan_instrument()",
       "file_type": "code",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1553",
+      "source_location": "L1546",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_protoplan_instrument",
       "community": 7,
@@ -1773,7 +1603,7 @@
       "source_location": "L526",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_526",
-      "community": 7,
+      "community": 49,
       "norm_label": "derive the shared alma observed pixel scale from a beam-major-fwhm prior."
     },
     {
@@ -1843,7 +1673,7 @@
       "source_location": "L690",
       "_origin": "ast",
       "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_690",
-      "community": 7,
+      "community": 37,
       "norm_label": "solid angle [sr] of an elliptical gaussian beam given its fwhms [arcsec]."
     },
     {
@@ -1980,9 +1810,9 @@
       "label": "Convolve each channel with its instrument PSF \u2014 vectorised over N.          Chan",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1155",
+      "source_location": "L1148",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1155",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1148",
       "community": 7,
       "norm_label": "convolve each channel with its instrument psf \u2014 vectorised over n.          chan"
     },
@@ -1990,9 +1820,9 @@
       "label": "Sample one rotation angle per image and apply them all in a single         map_c",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1241",
+      "source_location": "L1234",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1241",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1234",
       "community": 7,
       "norm_label": "sample one rotation angle per image and apply them all in a single         map_c"
     },
@@ -2000,9 +1830,9 @@
       "label": "Resample each channel to its instrument's observed pixel grid.          All inte",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1303",
+      "source_location": "L1296",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1303",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1296",
       "community": 7,
       "norm_label": "resample each channel to its instrument's observed pixel grid.          all inte"
     },
@@ -2010,9 +1840,9 @@
       "label": "Add Gaussian instrument noise to every resampled image array.          Noise lev",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1365",
+      "source_location": "L1358",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1365",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1358",
       "community": 7,
       "norm_label": "add gaussian instrument noise to every resampled image array.          noise lev"
     },
@@ -2020,9 +1850,9 @@
       "label": "Add wavelength-dependent noise to SED fluxes.          Uses a Log-Normal distrib",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1446",
+      "source_location": "L1439",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1446",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1439",
       "community": 7,
       "norm_label": "add wavelength-dependent noise to sed fluxes.          uses a log-normal distrib"
     },
@@ -2030,9 +1860,9 @@
       "label": "Apply log10 compression to SED fluxes, wavelengths, and noise sigma.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1498",
+      "source_location": "L1491",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1498",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1491",
       "community": 7,
       "norm_label": "apply log10 compression to sed fluxes, wavelengths, and noise sigma."
     },
@@ -2040,9 +1870,9 @@
       "label": "Run the full augmentation pipeline in one Python call.          Pass `[augmentat",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1509",
+      "source_location": "L1502",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1509",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1502",
       "community": 7,
       "norm_label": "run the full augmentation pipeline in one python call.          pass `[augmentat"
     },
@@ -2050,9 +1880,9 @@
       "label": "`AugmentationsClass` over `augmentation.params`.      Every constructor argument",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1554",
+      "source_location": "L1547",
       "_origin": "ast",
-      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1554",
+      "id": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1547",
       "community": 7,
       "norm_label": "`augmentationsclass` over `augmentation.params`.      every constructor argument"
     },
@@ -3363,17 +3193,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_evaluate",
-      "community": 72,
+      "community": 2,
       "norm_label": "evaluate.py"
     },
     {
       "label": "observed_condition_mask()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L30",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_evaluate_observed_condition_mask",
-      "community": 72,
+      "community": 2,
       "norm_label": "observed_condition_mask()"
     },
     {
@@ -3383,17 +3213,17 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_evaluate_py_ndarray",
-      "community": 72,
+      "community": 2,
       "norm_label": "ndarray"
     },
     {
       "label": "run_evaluation()",
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L62",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_evaluate_run_evaluation",
-      "community": 72,
+      "community": 2,
       "norm_label": "run_evaluation()"
     },
     {
@@ -3403,17 +3233,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_evaluate_rationale_1",
-      "community": 72,
+      "community": 2,
       "norm_label": "stage 3: posterior inference on held-out data, simulated or real.  loads the app"
     },
     {
       "label": "``(n_rows, sum(group_sizes))``, 0 on every column of a group named in ``drop``.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L31",
+      "source_location": "L30",
       "_origin": "ast",
-      "id": "src_hydrabflow_pipeline_evaluate_rationale_31",
-      "community": 72,
+      "id": "src_hydrabflow_pipeline_evaluate_rationale_30",
+      "community": 2,
       "norm_label": "``(n_rows, sum(group_sizes))``, 0 on every column of a group named in ``drop``."
     },
     {
@@ -3533,7 +3363,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_simulate",
-      "community": 25,
+      "community": 2,
       "norm_label": "simulate.py"
     },
     {
@@ -3543,7 +3373,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_simulate_run_simulation",
-      "community": 25,
+      "community": 2,
       "norm_label": "run_simulation()"
     },
     {
@@ -3553,7 +3383,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_simulate_rationale_1",
-      "community": 25,
+      "community": 2,
       "norm_label": "stage 1: dataset generation.  samples the prior and runs the forward model in ch"
     },
     {
@@ -3563,7 +3393,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_simulate_rationale_26",
-      "community": 25,
+      "community": 2,
       "norm_label": "generate the dataset described by ``cfg`` and return its path."
     },
     {
@@ -3613,7 +3443,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune",
-      "community": 57,
+      "community": 2,
       "norm_label": "tune.py"
     },
     {
@@ -3623,7 +3453,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_suggest",
-      "community": 57,
+      "community": 2,
       "norm_label": "_suggest()"
     },
     {
@@ -3633,7 +3463,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_save_shared_preprocessing",
-      "community": 57,
+      "community": 2,
       "norm_label": "_save_shared_preprocessing()"
     },
     {
@@ -3643,7 +3473,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_objective",
-      "community": 57,
+      "community": 2,
       "norm_label": "_objective()"
     },
     {
@@ -3653,7 +3483,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_run_tuning",
-      "community": 57,
+      "community": 2,
       "norm_label": "run_tuning()"
     },
     {
@@ -3663,7 +3493,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_report",
-      "community": 57,
+      "community": 2,
       "norm_label": "_report()"
     },
     {
@@ -3673,7 +3503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_1",
-      "community": 57,
+      "community": 2,
       "norm_label": "stage 4: hyperparameter tuning with optuna.  a multi-objective study (rmse + cal"
     },
     {
@@ -3683,7 +3513,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_tune_rationale_62",
-      "community": 57,
+      "community": 2,
       "norm_label": "save the fit-once preprocessing state, shared by every trial.      written atomi"
     },
     {
@@ -3693,7 +3523,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_workflow",
-      "community": 37,
+      "community": 52,
       "norm_label": "workflow.py"
     },
     {
@@ -3723,7 +3553,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_pipeline_workflow_rationale_1",
-      "community": 37,
+      "community": 52,
       "norm_label": "assemble the ``bf.basicworkflow`` (adapter + summary network + inference network"
     },
     {
@@ -3993,7 +3823,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize",
-      "community": 49,
+      "community": 5,
       "norm_label": "standardize.py"
     },
     {
@@ -4003,7 +3833,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer",
-      "community": 49,
+      "community": 5,
       "norm_label": "standardizer"
     },
     {
@@ -4013,7 +3843,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer_init",
-      "community": 49,
+      "community": 5,
       "norm_label": ".__init__()"
     },
     {
@@ -4023,7 +3853,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer_fit",
-      "community": 49,
+      "community": 5,
       "norm_label": ".fit()"
     },
     {
@@ -4033,7 +3863,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_py_dataset",
-      "community": 49,
+      "community": 5,
       "norm_label": "dataset"
     },
     {
@@ -4043,7 +3873,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer_transform",
-      "community": 49,
+      "community": 5,
       "norm_label": ".transform()"
     },
     {
@@ -4053,7 +3883,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer_state",
-      "community": 49,
+      "community": 5,
       "norm_label": ".state()"
     },
     {
@@ -4063,7 +3893,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_py_ndarray",
-      "community": 49,
+      "community": 5,
       "norm_label": "ndarray"
     },
     {
@@ -4073,7 +3903,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer_load_state",
-      "community": 49,
+      "community": 5,
       "norm_label": ".load_state()"
     },
     {
@@ -4083,7 +3913,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_preprocessing_standardize_rationale_1",
-      "community": 49,
+      "community": 5,
       "norm_label": "per-feature z-score standardization step.  mean/std are fit on the train split o"
     },
     {
@@ -4273,7 +4103,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_registry",
-      "community": 37,
+      "community": 2,
       "norm_label": "registry.py"
     },
     {
@@ -4283,7 +4113,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_registry",
-      "community": 0,
+      "community": 98,
       "norm_label": "registry"
     },
     {
@@ -4293,7 +4123,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_registry_init",
-      "community": 0,
+      "community": 98,
       "norm_label": ".__init__()"
     },
     {
@@ -4303,7 +4133,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_registry_add",
-      "community": 0,
+      "community": 98,
       "norm_label": ".add()"
     },
     {
@@ -4313,7 +4143,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_py_t",
-      "community": 0,
+      "community": 98,
       "norm_label": "t"
     },
     {
@@ -4323,7 +4153,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_registry_discover",
-      "community": 0,
+      "community": 98,
       "norm_label": ".discover()"
     },
     {
@@ -4333,7 +4163,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_registry_get",
-      "community": 0,
+      "community": 98,
       "norm_label": ".get()"
     },
     {
@@ -4343,7 +4173,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_discover",
-      "community": 0,
+      "community": 98,
       "norm_label": "discover()"
     },
     {
@@ -4353,7 +4183,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_get_simulator",
-      "community": 25,
+      "community": 10,
       "norm_label": "get_simulator()"
     },
     {
@@ -4363,7 +4193,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_py_any",
-      "community": 25,
+      "community": 4,
       "norm_label": "any"
     },
     {
@@ -4373,7 +4203,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_build_pipeline",
-      "community": 37,
+      "community": 2,
       "norm_label": "build_pipeline()"
     },
     {
@@ -4383,7 +4213,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_build_augmentations",
-      "community": 53,
+      "community": 2,
       "norm_label": "build_augmentations()"
     },
     {
@@ -4393,7 +4223,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_py_augmentation",
-      "community": 53,
+      "community": 2,
       "norm_label": "augmentation"
     },
     {
@@ -4413,7 +4243,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_simulator_hook",
-      "community": 25,
+      "community": 10,
       "norm_label": "simulator_hook()"
     },
     {
@@ -4433,7 +4263,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_1",
-      "community": 37,
+      "community": 2,
       "norm_label": "everything you can register, in one file.  five extension points share one mecha"
     },
     {
@@ -4443,7 +4273,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_35",
-      "community": 0,
+      "community": 98,
       "norm_label": "a named collection filled by ``@registry.add(\"name\")`` decorators.      ``packag"
     },
     {
@@ -4453,7 +4283,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_57",
-      "community": 0,
+      "community": 98,
       "norm_label": "import ``self.package``'s modules so their decorators have run. idempotent."
     },
     {
@@ -4463,7 +4293,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_76",
-      "community": 0,
+      "community": 98,
       "norm_label": "import every non-underscore module in a package, so its decorators run."
     },
     {
@@ -4473,7 +4303,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_107",
-      "community": 25,
+      "community": 10,
       "norm_label": "instantiate the simulator selected by ``cfg.simulator``."
     },
     {
@@ -4483,7 +4313,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_112",
-      "community": 37,
+      "community": 2,
       "norm_label": "build the preprocessing pipeline from ``cfg.preprocessing``.      each entry in"
     },
     {
@@ -4493,7 +4323,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_130",
-      "community": 53,
+      "community": 2,
       "norm_label": "build the ordered augmentation list from ``cfg.augmentation``.      each step ge"
     },
     {
@@ -4513,7 +4343,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "src_hydrabflow_registry_rationale_176",
-      "community": 25,
+      "community": 10,
       "norm_label": "a simulator's optional ``basesimulator`` hook, bound, or ``none``.      ``none``"
     },
     {
@@ -4563,7 +4393,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_filter_and_jitter_params",
-      "community": 9,
+      "community": 34,
       "norm_label": "filter_and_jitter_params()"
     },
     {
@@ -4580,7 +4410,7 @@
       "label": "summary_condition_groups()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L192",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_summary_condition_groups",
       "community": 34,
@@ -4590,7 +4420,7 @@
       "label": "summary_condition_routing()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L203",
+      "source_location": "L193",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_summary_condition_routing",
       "community": 29,
@@ -4600,7 +4430,7 @@
       "label": "summary_variable_keys()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L217",
+      "source_location": "L207",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_summary_variable_keys",
       "community": 34,
@@ -4610,7 +4440,7 @@
       "label": "_asinh_images()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L231",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_asinh_images",
       "community": 34,
@@ -4620,7 +4450,7 @@
       "label": "build_adapter()",
       "file_type": "code",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L269",
+      "source_location": "L259",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_build_adapter",
       "community": 34,
@@ -4643,7 +4473,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_spec_rationale_94",
-      "community": 9,
+      "community": 34,
       "norm_label": "read `params_combined.npy` and apply the discrete-as-conditions encoding.      t"
     },
     {
@@ -4660,9 +4490,9 @@
       "label": "`{summary_group_key: [scalar batch keys, in concatenation order]}`.",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L193",
+      "source_location": "L183",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_193",
+      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_183",
       "community": 34,
       "norm_label": "`{summary_group_key: [scalar batch keys, in concatenation order]}`."
     },
@@ -4670,9 +4500,9 @@
       "label": "`{backbone key: [summary condition keys it receives]}` -- derived from the same",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L204",
+      "source_location": "L194",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_204",
+      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_194",
       "community": 29,
       "norm_label": "`{backbone key: [summary condition keys it receives]}` -- derived from the same"
     },
@@ -4680,9 +4510,9 @@
       "label": "Every member of `summary_variables`: the five modalities plus the condition grou",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L218",
+      "source_location": "L208",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_218",
+      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_208",
       "community": 34,
       "norm_label": "every member of `summary_variables`: the five modalities plus the condition grou"
     },
@@ -4690,9 +4520,9 @@
       "label": "Compress each image key as `asinh(x / sigma)`, per band.      Without it the ima",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L232",
+      "source_location": "L222",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_232",
+      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_222",
       "community": 34,
       "norm_label": "compress each image key as `asinh(x / sigma)`, per band.      without it the ima"
     },
@@ -4700,9 +4530,9 @@
       "label": "Map the augmented batch dict onto BayesFlow's variable groups.      `params` def",
       "file_type": "rationale",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L270",
+      "source_location": "L260",
       "_origin": "ast",
-      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_270",
+      "id": "src_hydrabflow_simulators_protoplan_spec_rationale_260",
       "community": 34,
       "norm_label": "map the augmented batch dict onto bayesflow's variable groups.      `params` def"
     },
@@ -4903,7 +4733,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan",
-      "community": 9,
+      "community": 34,
       "norm_label": "protoplan.py"
     },
     {
@@ -4913,7 +4743,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_protoplanetarydisksimulator",
-      "community": 9,
+      "community": 34,
       "norm_label": "protoplanetarydisksimulator"
     },
     {
@@ -4923,7 +4753,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_protoplanetarydisksimulator_sample_prior",
-      "community": 9,
+      "community": 34,
       "norm_label": ".sample_prior()"
     },
     {
@@ -4933,7 +4763,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_py_ndarray",
-      "community": 9,
+      "community": 34,
       "norm_label": "ndarray"
     },
     {
@@ -4943,7 +4773,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_protoplanetarydisksimulator_load_dataset",
-      "community": 9,
+      "community": 34,
       "norm_label": ".load_dataset()"
     },
     {
@@ -4953,7 +4783,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_protoplanetarydisksimulator_build_adapter",
-      "community": 9,
+      "community": 34,
       "norm_label": ".build_adapter()"
     },
     {
@@ -4963,7 +4793,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_rationale_1",
-      "community": 9,
+      "community": 34,
       "norm_label": "the protoplanetary-disk rt dataset, as a simulator that owns its data.  the forw"
     },
     {
@@ -4973,7 +4803,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_rationale_41",
-      "community": 9,
+      "community": 34,
       "norm_label": "reader for the cached rt dataset.  see `conf/simulator/protoplan.yaml` for the k"
     },
     {
@@ -4983,7 +4813,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_rationale_59",
-      "community": 9,
+      "community": 34,
       "norm_label": "the cached rt rows as one dataset dict, row-aligned and filtered.          the j"
     },
     {
@@ -4993,7 +4823,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "src_hydrabflow_simulators_protoplan_rationale_96",
-      "community": 9,
+      "community": 34,
       "norm_label": "the bespoke adapter (asinh images, per-instrument routed conditions, sed fusion)"
     },
     {
@@ -5213,7 +5043,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths",
-      "community": 73,
+      "community": 2,
       "norm_label": "paths.py"
     },
     {
@@ -5223,7 +5053,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_get_run_dir",
-      "community": 73,
+      "community": 2,
       "norm_label": "get_run_dir()"
     },
     {
@@ -5233,7 +5063,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_save_config_snapshot",
-      "community": 73,
+      "community": 2,
       "norm_label": "save_config_snapshot()"
     },
     {
@@ -5243,7 +5073,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_rationale_1",
-      "community": 73,
+      "community": 2,
       "norm_label": "run-directory helpers."
     },
     {
@@ -5253,7 +5083,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_rationale_16",
-      "community": 73,
+      "community": 2,
       "norm_label": "the current hydra run output dir (works regardless of the ``job.chdir`` setting)"
     },
     {
@@ -5263,7 +5093,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_hydrabflow_utils_paths_rationale_35",
-      "community": 73,
+      "community": 2,
       "norm_label": "copy hydra's ``.hydra/`` config folder next to a generated dataset, keyed by its"
     },
     {
@@ -5483,7 +5313,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "tests_test_augmentation_test_two_moons_shapes_and_reproducibility",
-      "community": 25,
+      "community": 10,
       "norm_label": "test_two_moons_shapes_and_reproducibility()"
     },
     {
@@ -5633,7 +5463,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_networks_embed_dim",
-      "community": 46,
+      "community": 25,
       "norm_label": "test_networks_embed_dim.py"
     },
     {
@@ -5643,7 +5473,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_test_networks_embed_dim_test_embed_dim_is_per_head",
-      "community": 46,
+      "community": 25,
       "norm_label": "test_embed_dim_is_per_head()"
     },
     {
@@ -5653,7 +5483,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_networks_embed_dim_test_transformer_backbones_build_for_any_head_count",
-      "community": 4,
+      "community": 25,
       "norm_label": "test_transformer_backbones_build_for_any_head_count()"
     },
     {
@@ -5663,7 +5493,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_networks_embed_dim_rationale_1",
-      "community": 46,
+      "community": 25,
       "norm_label": "attention width is configured per head, so it is always divisible by the head co"
     },
     {
@@ -5673,7 +5503,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_test_networks_embed_dim_rationale_18",
-      "community": 4,
+      "community": 25,
       "norm_label": "a head count that does not divide a raw embed_dim used to fail; per-head width m"
     },
     {
@@ -5703,7 +5533,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeerror",
-      "community": 7,
+      "community": 5,
       "norm_label": "runtimeerror"
     },
     {
@@ -5773,7 +5603,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_preprocessing",
-      "community": 37,
+      "community": 2,
       "norm_label": "test_preprocessing.py"
     },
     {
@@ -5783,7 +5613,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_test_preprocessing_toy_data",
-      "community": 37,
+      "community": 2,
       "norm_label": "_toy_data()"
     },
     {
@@ -5793,7 +5623,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_test_preprocessing_test_pipeline_fit_transform_and_split",
-      "community": 37,
+      "community": 2,
       "norm_label": "test_pipeline_fit_transform_and_split()"
     },
     {
@@ -5803,7 +5633,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_test_preprocessing_test_state_roundtrip",
-      "community": 37,
+      "community": 2,
       "norm_label": "test_state_roundtrip()"
     },
     {
@@ -5813,7 +5643,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_preprocessing_rationale_1",
-      "community": 37,
+      "community": 2,
       "norm_label": "preprocessing pipeline: fit/transform/split + state save/load round-trip."
     },
     {
@@ -6113,7 +5943,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "tests_test_protoplan_raw_batch",
-      "community": 9,
+      "community": 34,
       "norm_label": "raw_batch()"
     },
     {
@@ -6203,7 +6033,7 @@
       "source_location": "L225",
       "_origin": "ast",
       "id": "tests_test_protoplan_test_instrument_model_output_keys_match_the_adapter",
-      "community": 27,
+      "community": 52,
       "norm_label": "test_instrument_model_output_keys_match_the_adapter()"
     },
     {
@@ -6297,16 +6127,6 @@
       "norm_label": "test_per_indicator_condition_groups_are_droppable_and_the_old_layout_is_unchanged()"
     },
     {
-      "label": "test_av_is_exported_per_row_and_becomes_a_third_droppable_group()",
-      "file_type": "code",
-      "source_file": "tests/test_protoplan.py",
-      "source_location": "L491",
-      "_origin": "ast",
-      "id": "tests_test_protoplan_test_av_is_exported_per_row_and_becomes_a_third_droppable_group",
-      "community": 4,
-      "norm_label": "test_av_is_exported_per_row_and_becomes_a_third_droppable_group()"
-    },
-    {
       "label": "Checks for the protoplanetary-disk arm: labels, adapter/network agreement, one t",
       "file_type": "rationale",
       "source_file": "tests/test_protoplan.py",
@@ -6393,7 +6213,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "tests_test_protoplan_rationale_226",
-      "community": 27,
+      "community": 52,
       "norm_label": "the augmentation's key names are the adapter's inputs; a rename drift is silent"
     },
     {
@@ -6487,16 +6307,6 @@
       "norm_label": "`discrete_condition_groups` splits the indicators into width-1 *droppable* group"
     },
     {
-      "label": "`experiment=protoplan_mask_discrete_av`: A_V is a maskable condition, not a nuis",
-      "file_type": "rationale",
-      "source_file": "tests/test_protoplan.py",
-      "source_location": "L492",
-      "_origin": "ast",
-      "id": "tests_test_protoplan_rationale_492",
-      "community": 4,
-      "norm_label": "`experiment=protoplan_mask_discrete_av`: a_v is a maskable condition, not a nuis"
-    },
-    {
       "label": "test_registries.py",
       "file_type": "code",
       "source_file": "tests/test_registries.py",
@@ -6523,7 +6333,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_test_registries_test_augmentation_registry_builds",
-      "community": 53,
+      "community": 2,
       "norm_label": "test_augmentation_registry_builds()"
     },
     {
@@ -6533,7 +6343,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_registries_test_unknown_simulator_errors",
-      "community": 53,
+      "community": 10,
       "norm_label": "test_unknown_simulator_errors()"
     },
     {
@@ -6553,7 +6363,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "tests_test_registries_test_network_registries_list_available_on_unknown_type",
-      "community": 4,
+      "community": 53,
       "norm_label": "test_network_registries_list_available_on_unknown_type()"
     },
     {
@@ -6603,7 +6413,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched",
-      "community": 51,
+      "community": 9,
       "norm_label": "test_simulate_unbatched.py"
     },
     {
@@ -6613,7 +6423,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_batched",
-      "community": 51,
+      "community": 9,
       "norm_label": "_batched"
     },
     {
@@ -6623,7 +6433,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_batched_sample_prior",
-      "community": 51,
+      "community": 9,
       "norm_label": ".sample_prior()"
     },
     {
@@ -6633,7 +6443,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_batched_simulate",
-      "community": 51,
+      "community": 9,
       "norm_label": ".simulate()"
     },
     {
@@ -6643,7 +6453,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_perdraw",
-      "community": 51,
+      "community": 9,
       "norm_label": "_perdraw"
     },
     {
@@ -6653,7 +6463,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_perdraw_simulate",
-      "community": 51,
+      "community": 9,
       "norm_label": ".simulate()"
     },
     {
@@ -6663,7 +6473,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_per_draw_matches_batched",
-      "community": 51,
+      "community": 9,
       "norm_label": "test_per_draw_matches_batched()"
     },
     {
@@ -6673,7 +6483,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_declared_name_mismatch_raises",
-      "community": 51,
+      "community": 9,
       "norm_label": "test_declared_name_mismatch_raises()"
     },
     {
@@ -6683,7 +6493,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_test_wrong_leading_axis_raises",
-      "community": 51,
+      "community": 9,
       "norm_label": "test_wrong_leading_axis_raises()"
     },
     {
@@ -6693,7 +6503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_rationale_1",
-      "community": 51,
+      "community": 9,
       "norm_label": "per-draw simulators (``is_batched = false``) and the shape/name guard in ``bases"
     },
     {
@@ -6703,7 +6513,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_test_simulate_unbatched_rationale_12",
-      "community": 51,
+      "community": 9,
       "norm_label": "a toy forward model. deterministic, so the batched and per-draw paths must agree"
     },
     {
@@ -6713,7 +6523,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_workflow",
-      "community": 74,
+      "community": 34,
       "norm_label": "test_workflow.py"
     },
     {
@@ -6753,7 +6563,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "tests_test_workflow_test_build_workflow",
-      "community": 74,
+      "community": 34,
       "norm_label": "test_build_workflow()"
     },
     {
@@ -6763,7 +6573,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "tests_test_workflow_test_build_workflow_checkpointing",
-      "community": 74,
+      "community": 34,
       "norm_label": "test_build_workflow_checkpointing()"
     },
     {
@@ -6773,7 +6583,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "tests_test_workflow_test_fusion_when_several_summary_variables",
-      "community": 74,
+      "community": 4,
       "norm_label": "test_fusion_when_several_summary_variables()"
     },
     {
@@ -6783,7 +6593,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "tests_test_workflow_test_fusion_adapter_groups_the_keys",
-      "community": 74,
+      "community": 34,
       "norm_label": "test_fusion_adapter_groups_the_keys()"
     },
     {
@@ -6793,7 +6603,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_workflow_rationale_1",
-      "community": 74,
+      "community": 34,
       "norm_label": "adapter / network / workflow construction. skipped if bayesflow isn't installed."
     },
     {
@@ -6803,7 +6613,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_workflow_rationale_41",
-      "community": 74,
+      "community": 34,
       "norm_label": "passing run_dir turns on bayesflow best-weights checkpointing; omitting it leave"
     },
     {
@@ -6813,7 +6623,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "tests_test_workflow_rationale_55",
-      "community": 74,
+      "community": 4,
       "norm_label": "two observable keys -> one backbone per key behind a fusionnetwork, types from p"
     },
     {
@@ -7587,20 +7397,10 @@
       "norm_label": "sampling a_v instead of assuming it"
     },
     {
-      "label": "The same question in the network's own summary space",
-      "file_type": "document",
-      "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L412",
-      "_origin": "ast",
-      "id": "docs_protoplanetary_disk_the_same_question_in_the_network_s_own_summary_space",
-      "community": 28,
-      "norm_label": "the same question in the network's own summary space"
-    },
-    {
       "label": "9. Posterior inference on a real disk",
       "file_type": "document",
       "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L459",
+      "source_location": "L415",
       "_origin": "ast",
       "id": "docs_protoplanetary_disk_9_posterior_inference_on_a_real_disk",
       "community": 28,
@@ -7610,7 +7410,7 @@
       "label": "What the three steps are for",
       "file_type": "document",
       "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L512",
+      "source_location": "L455",
       "_origin": "ast",
       "id": "docs_protoplanetary_disk_what_the_three_steps_are_for",
       "community": 28,
@@ -7620,7 +7420,7 @@
       "label": "10. Troubleshooting",
       "file_type": "document",
       "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L540",
+      "source_location": "L483",
       "_origin": "ast",
       "id": "docs_protoplanetary_disk_10_troubleshooting",
       "community": 28,
@@ -7877,7 +7677,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
       "source_location": "L28",
-      "community": 72,
+      "community": 2,
       "norm_label": "_require_model_dir()",
       "id": "src_hydrabflow_pipeline_evaluate_require_model_dir"
     },
@@ -7886,7 +7686,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
       "source_location": "L68",
-      "community": 72,
+      "community": 2,
       "norm_label": "_run_diagnostics()",
       "id": "src_hydrabflow_pipeline_evaluate_run_diagnostics"
     },
@@ -7931,7 +7731,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/pipeline/tune.py",
       "source_location": "L61",
-      "community": 57,
+      "community": 2,
       "norm_label": "_trial_dir()",
       "id": "src_hydrabflow_pipeline_tune_trial_dir"
     },
@@ -7940,7 +7740,7 @@
       "file_type": "rationale",
       "source_file": "src/hydrabflow/pipeline/tune.py",
       "source_location": "L67",
-      "community": 57,
+      "community": 2,
       "norm_label": "save the fit-once preprocessing state, shared by every trial/model.      written",
       "id": "src_hydrabflow_pipeline_tune_rationale_67"
     },
@@ -7958,7 +7758,7 @@
       "file_type": "code",
       "source_file": "src/hydrabflow/preprocessing/standardize.py",
       "source_location": "L44",
-      "community": 49,
+      "community": 5,
       "norm_label": ".inverse_transform()",
       "id": "src_hydrabflow_preprocessing_standardize_standardizer_inverse_transform"
     },
@@ -8039,7 +7839,7 @@
       "file_type": "rationale",
       "source_file": "src/hydrabflow/utils/paths.py",
       "source_location": "L19",
-      "community": 73,
+      "community": 2,
       "norm_label": "return the current hydra run output dir (works regardless of the ``job.chdir`` s",
       "id": "src_hydrabflow_utils_paths_rationale_19"
     },
@@ -8048,7 +7848,7 @@
       "file_type": "rationale",
       "source_file": "src/hydrabflow/utils/paths.py",
       "source_location": "L31",
-      "community": 73,
+      "community": 2,
       "norm_label": "copy hydra's auto-generated ``.hydra/`` config folder next to a generated artifa",
       "id": "src_hydrabflow_utils_paths_rationale_31"
     },
@@ -8234,7 +8034,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -8597,63 +8397,11 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L41",
-      "weight": 1.0,
-      "source": "notebooks_overlay_corner",
-      "target": "notebooks_overlay_corner_chains",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L46",
-      "weight": 1.0,
-      "source": "notebooks_overlay_corner",
-      "target": "notebooks_overlay_corner_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "notebooks_overlay_corner_rationale_1",
-      "target": "notebooks_overlay_corner",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/overlay_corner.py",
-      "source_location": "L55",
-      "weight": 1.0,
-      "source": "notebooks_overlay_corner_main",
-      "target": "notebooks_overlay_corner_chains",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range",
-      "target": "notebooks_prior_predictive_checks_realdisk",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "notebooks/prior_predictive_checks/make_real_npz.py",
-      "source_location": "L36",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "notebooks_prior_predictive_checks_make_real_npz",
       "target": "notebooks_prior_predictive_checks_realdisk",
@@ -10131,173 +9879,8 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L24",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_pca",
-      "target": "notebooks_prior_predictive_checks_check_summary_pca_load",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L34",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_pca",
-      "target": "notebooks_prior_predictive_checks_check_summary_pca_pct",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_pca.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_pca_rationale_1",
-      "target": "notebooks_prior_predictive_checks_check_summary_pca",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L37",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range",
-      "target": "notebooks_prior_predictive_checks_make_real_npz",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L79",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_blocks",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L87",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L59",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_summary_fn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L42",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_with_placeholders",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_rationale_1",
-      "target": "notebooks_prior_predictive_checks_check_summary_range",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L108",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_main",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_with_placeholders",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L43",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_rationale_43",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_with_placeholders",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L111",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_main",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_summary_fn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L60",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_rationale_60",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_summary_fn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L64",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_summary_fn",
-      "target": "src_hydrabflow_pipeline_workflow_build_workflow"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L124",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_main",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_blocks",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "notebooks/prior_predictive_checks/check_summary_range.py",
-      "source_location": "L80",
-      "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_check_summary_range_rationale_80",
-      "target": "notebooks_prior_predictive_checks_check_summary_range_blocks",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "notebooks/prior_predictive_checks/make_real_npz.py",
-      "source_location": "L43",
+      "source_location": "L41",
       "weight": 1.0,
       "source": "notebooks_prior_predictive_checks_make_real_npz",
       "target": "notebooks_prior_predictive_checks_make_real_npz_build",
@@ -10317,9 +9900,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "notebooks/prior_predictive_checks/make_real_npz.py",
-      "source_location": "L44",
+      "source_location": "L42",
       "weight": 1.0,
-      "source": "notebooks_prior_predictive_checks_make_real_npz_rationale_44",
+      "source": "notebooks_prior_predictive_checks_make_real_npz_rationale_42",
       "target": "notebooks_prior_predictive_checks_make_real_npz_build",
       "confidence_score": 1.0
     },
@@ -10462,7 +10045,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1553",
+      "source_location": "L1546",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_protoplan_instrument",
@@ -10472,7 +10055,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1546",
+      "source_location": "L1539",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_tuplify",
@@ -10523,7 +10106,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1364",
+      "source_location": "L1357",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
@@ -10533,7 +10116,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1154",
+      "source_location": "L1147",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
@@ -10543,7 +10126,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1302",
+      "source_location": "L1295",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
@@ -10553,7 +10136,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1240",
+      "source_location": "L1233",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
@@ -10563,7 +10146,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1445",
+      "source_location": "L1438",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
@@ -10613,7 +10196,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1508",
+      "source_location": "L1501",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
@@ -10713,7 +10296,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1497",
+      "source_location": "L1490",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_log10_sed",
@@ -10824,7 +10407,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1566",
+      "source_location": "L1559",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_protoplan_instrument",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass",
@@ -10849,17 +10432,6 @@
       "source_location": "L67",
       "weight": 1.0,
       "source": "tests_test_protoplan_augmentor",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "tests/test_protoplan.py",
-      "source_location": "L504",
-      "weight": 1.0,
-      "source": "tests_test_protoplan_test_av_is_exported_per_row_and_becomes_a_third_droppable_group",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass"
     },
     {
@@ -10933,7 +10505,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1392",
+      "source_location": "L1385",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_split_key",
@@ -10944,7 +10516,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1275",
+      "source_location": "L1268",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_split_key",
@@ -10955,7 +10527,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1474",
+      "source_location": "L1467",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_split_key",
@@ -10977,7 +10549,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1104",
+      "source_location": "L1103",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_preprocess",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_split_key",
@@ -10998,7 +10570,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1321",
+      "source_location": "L1314",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_model_coords",
@@ -11042,7 +10614,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1140",
+      "source_location": "L1137",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_preprocess",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_model_coords",
@@ -11280,7 +10852,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1329",
+      "source_location": "L1322",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_boxcar_2d",
@@ -11311,7 +10883,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1174",
+      "source_location": "L1167",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_get_jwst_kernel",
@@ -11385,7 +10957,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1429",
+      "source_location": "L1422",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_gaussian_beam_kernel",
@@ -11396,7 +10968,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1204",
+      "source_location": "L1197",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_gaussian_beam_kernel",
@@ -11428,7 +11000,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1186",
+      "source_location": "L1179",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_draw_alma_setup",
@@ -11469,7 +11041,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1176",
+      "source_location": "L1169",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_batch_fftconvolve",
@@ -11480,7 +11052,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1330",
+      "source_location": "L1323",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_batch_fftconvolve",
@@ -11501,7 +11073,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1333",
+      "source_location": "L1326",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_batch_resample_jit",
@@ -11522,7 +11094,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1288",
+      "source_location": "L1281",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_rotate_batch_jit",
@@ -11543,7 +11115,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1489",
+      "source_location": "L1482",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_sed_noise_jit",
@@ -11564,7 +11136,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1473",
+      "source_location": "L1466",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_sed_noise_fixed_sigma_jit",
@@ -11585,7 +11157,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1499",
+      "source_location": "L1492",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_log10_sed",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_log10_arrays",
@@ -11606,7 +11178,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1207",
+      "source_location": "L1200",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_multi_alma_convolve",
@@ -11617,7 +11189,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1343",
+      "source_location": "L1336",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_multi_alma_convolve",
@@ -11638,7 +11210,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1434",
+      "source_location": "L1427",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_correlated_alma_noise",
@@ -11659,7 +11231,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1516",
+      "source_location": "L1509",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_preprocess",
@@ -11680,7 +11252,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1522",
+      "source_location": "L1515",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
@@ -11690,10 +11262,105 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1155",
+      "source_location": "L1148",
       "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1155",
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1148",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_psf_and_convolve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1514",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1234",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1234",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1516",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1296",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1296",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1405",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
+      "target": "runtimeerror"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1517",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1358",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1358",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1520",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
+      "source_location": "L1439",
+      "weight": 1.0,
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1439",
+      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
       "confidence_score": 1.0
     },
     {
@@ -11704,101 +11371,6 @@
       "source_location": "L1521",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1241",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1241",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_rotation",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1523",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1303",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1303",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_resampling",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1412",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
-      "target": "runtimeerror"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1524",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1365",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1365",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_noise",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1527",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1446",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1446",
-      "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_apply_sed_noise",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1528",
-      "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_log10_sed",
       "confidence_score": 1.0
     },
@@ -11806,9 +11378,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1498",
+      "source_location": "L1491",
       "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1498",
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1491",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_log10_sed",
       "confidence_score": 1.0
     },
@@ -11816,9 +11388,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1509",
+      "source_location": "L1502",
       "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1509",
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1502",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_augmentationsclass_call",
       "confidence_score": 1.0
     },
@@ -11827,7 +11399,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1564",
+      "source_location": "L1557",
       "weight": 1.0,
       "source": "src_hydrabflow_augmentation_protoplan_instrument_protoplan_instrument",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_tuplify",
@@ -11837,9 +11409,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/augmentation/protoplan_instrument.py",
-      "source_location": "L1554",
+      "source_location": "L1547",
       "weight": 1.0,
-      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1554",
+      "source": "src_hydrabflow_augmentation_protoplan_instrument_rationale_1547",
       "target": "src_hydrabflow_augmentation_protoplan_instrument_protoplan_instrument",
       "confidence_score": 1.0
     },
@@ -13771,7 +13343,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L30",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_evaluate",
       "target": "src_hydrabflow_pipeline_evaluate_observed_condition_mask",
@@ -13822,7 +13394,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L30",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_evaluate_observed_condition_mask",
       "target": "src_hydrabflow_pipeline_evaluate_py_ndarray",
@@ -13832,9 +13404,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L31",
+      "source_location": "L30",
       "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_evaluate_rationale_31",
+      "source": "src_hydrabflow_pipeline_evaluate_rationale_30",
       "target": "src_hydrabflow_pipeline_evaluate_observed_condition_mask",
       "confidence_score": 1.0
     },
@@ -13843,7 +13415,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L122",
+      "source_location": "L121",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_evaluate_run_evaluation",
       "target": "src_hydrabflow_pipeline_evaluate_observed_condition_mask",
@@ -13888,21 +13460,10 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L73",
+      "source_location": "L72",
       "weight": 1.0,
       "source": "src_hydrabflow_pipeline_evaluate_run_evaluation",
       "target": "src_hydrabflow_registry_build_pipeline"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/hydrabflow/pipeline/evaluate.py",
-      "source_location": "L130",
-      "weight": 1.0,
-      "source": "src_hydrabflow_pipeline_evaluate_run_evaluation",
-      "target": "src_hydrabflow_utils_oom_run_with_oom_backoff"
     },
     {
       "relation": "calls",
@@ -16229,17 +15790,6 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "tests/test_protoplan.py",
-      "source_location": "L516",
-      "weight": 1.0,
-      "source": "tests_test_protoplan_test_av_is_exported_per_row_and_becomes_a_third_droppable_group",
-      "target": "src_hydrabflow_registry_build_inference_network"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "tests/test_protoplan.py",
       "source_location": "L185",
       "weight": 1.0,
       "source": "tests_test_protoplan_test_grouped_flow_matching_group_sizes",
@@ -16302,7 +15852,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L231",
+      "source_location": "L221",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec",
       "target": "src_hydrabflow_simulators_protoplan_spec_asinh_images",
@@ -16312,7 +15862,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L269",
+      "source_location": "L259",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec",
       "target": "src_hydrabflow_simulators_protoplan_spec_build_adapter",
@@ -16332,7 +15882,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L192",
+      "source_location": "L182",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_condition_groups",
@@ -16342,7 +15892,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L203",
+      "source_location": "L193",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_condition_routing",
@@ -16352,7 +15902,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L217",
+      "source_location": "L207",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_variable_keys",
@@ -16404,7 +15954,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L199",
+      "source_location": "L189",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec_summary_condition_groups",
       "target": "src_hydrabflow_simulators_protoplan_spec_alma_band_condition_keys",
@@ -16415,7 +15965,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L287",
+      "source_location": "L277",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec_build_adapter",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_condition_groups",
@@ -16425,9 +15975,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L193",
+      "source_location": "L183",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_193",
+      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_183",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_condition_groups",
       "confidence_score": 1.0
     },
@@ -16436,7 +15986,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L224",
+      "source_location": "L214",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec_summary_variable_keys",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_condition_groups",
@@ -16446,9 +15996,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L204",
+      "source_location": "L194",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_204",
+      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_194",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_condition_routing",
       "confidence_score": 1.0
     },
@@ -16457,7 +16007,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L331",
+      "source_location": "L321",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec_build_adapter",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_variable_keys",
@@ -16467,9 +16017,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L218",
+      "source_location": "L208",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_218",
+      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_208",
       "target": "src_hydrabflow_simulators_protoplan_spec_summary_variable_keys",
       "confidence_score": 1.0
     },
@@ -16478,7 +16028,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L325",
+      "source_location": "L315",
       "weight": 1.0,
       "source": "src_hydrabflow_simulators_protoplan_spec_build_adapter",
       "target": "src_hydrabflow_simulators_protoplan_spec_asinh_images",
@@ -16488,9 +16038,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L232",
+      "source_location": "L222",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_232",
+      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_222",
       "target": "src_hydrabflow_simulators_protoplan_spec_asinh_images",
       "confidence_score": 1.0
     },
@@ -16498,9 +16048,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/hydrabflow/simulators/_protoplan_spec.py",
-      "source_location": "L270",
+      "source_location": "L260",
       "weight": 1.0,
-      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_270",
+      "source": "src_hydrabflow_simulators_protoplan_spec_rationale_260",
       "target": "src_hydrabflow_simulators_protoplan_spec_build_adapter",
       "confidence_score": 1.0
     },
@@ -17435,17 +16985,6 @@
       "source_location": "L164",
       "weight": 1.0,
       "source": "tests_test_protoplan_test_adapter_and_summary_network_use_the_same_keys",
-      "target": "tests_conftest_compose"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "tests/test_protoplan.py",
-      "source_location": "L516",
-      "weight": 1.0,
-      "source": "tests_test_protoplan_test_av_is_exported_per_row_and_becomes_a_third_droppable_group",
       "target": "tests_conftest_compose"
     },
     {
@@ -18570,16 +18109,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_protoplan.py",
-      "source_location": "L491",
-      "weight": 1.0,
-      "source": "tests_test_protoplan",
-      "target": "tests_test_protoplan_test_av_is_exported_per_row_and_becomes_a_third_droppable_group",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_protoplan.py",
       "source_location": "L130",
       "weight": 1.0,
       "source": "tests_test_protoplan",
@@ -18959,16 +18488,6 @@
       "weight": 1.0,
       "source": "tests_test_protoplan_rationale_440",
       "target": "tests_test_protoplan_test_per_indicator_condition_groups_are_droppable_and_the_old_layout_is_unchanged",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_protoplan.py",
-      "source_location": "L492",
-      "weight": 1.0,
-      "source": "tests_test_protoplan_rationale_492",
-      "target": "tests_test_protoplan_test_av_is_exported_per_row_and_becomes_a_third_droppable_group",
       "confidence_score": 1.0
     },
     {
@@ -19927,7 +19446,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L540",
+      "source_location": "L483",
       "weight": 1.0,
       "source": "docs_protoplanetary_disk_the_protoplanetary_disk_project",
       "target": "docs_protoplanetary_disk_10_troubleshooting",
@@ -20017,7 +19536,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L459",
+      "source_location": "L415",
       "weight": 1.0,
       "source": "docs_protoplanetary_disk_the_protoplanetary_disk_project",
       "target": "docs_protoplanetary_disk_9_posterior_inference_on_a_real_disk",
@@ -20097,17 +19616,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L412",
-      "weight": 1.0,
-      "source": "docs_protoplanetary_disk_8_prior_predictive_checks_on_a_real_disk",
-      "target": "docs_protoplanetary_disk_the_same_question_in_the_network_s_own_summary_space",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "docs/protoplanetary_disk.md",
-      "source_location": "L512",
+      "source_location": "L455",
       "weight": 1.0,
       "source": "docs_protoplanetary_disk_9_posterior_inference_on_a_real_disk",
       "target": "docs_protoplanetary_disk_what_the_three_steps_are_for",
@@ -20375,5 +19884,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "58030006df2ba72b49421de4d549885faa34ba9d"
+  "built_at_commit": "3804537954a0591ea799a47d1427930b32279800"
 }
