@@ -1095,6 +1095,62 @@ Every run saves:
     `pkill -f hydrabflow-simulate-multistream` does not match a plain `hydrabflow-simulate`, but the
     margin is uncomfortably thin.
 
+- Session 2026-08-28 (Frenet-Serret stream remapping — Palau & Miralda-Escude 2023 Appendix D,
+  implemented + validated on M68): a cheap surrogate forward model. Simulate ONCE in a fiducial
+  potential, freeze every star into the moving Frenet-Serret trihedron of the progenitor's orbit,
+  and for any new potential re-integrate only the progenitor orbit and drop the stored offsets onto
+  the new trihedra. Same paper (MNRAS 524, 2124) this project's legacy progenitor table came from.
+  Diagnostic only — nothing registered as a simulator, no config added, per user.
+  - **`scripts/trihedron.py`** (portable core, numpy + an `agama` handle, no hydrabflow imports so
+    it lifts into `simulators/` unchanged): `orbit_window` (rewind to -T then one dense forward
+    integration over 2T, the `_rnbody_stream` centre-trajectory idiom), `nearest_time` (blocked
+    argmin over the knot grid + parabolic sub-knot refinement), `trihedron`, `build_template`,
+    `remap`, `auto_window`. Two implementation choices worth keeping: (1) the paper's
+    `a = d/dt(v/|v|)` equals `(g - (g.v^)v^)/|v|`, so **e2 is the normalized perpendicular
+    acceleration taken analytically from `pot.force()`** — no finite differencing of the orbit;
+    (2) interpolation is **cubic Hermite using the orbit's own (x,v) and (v,g)** at the knots, which
+    needs no scipy and makes the fiducial round-trip exact (measured max |dx| = **1.3e-11 kpc** at
+    1e5 stars — the `--check-fiducial` self-test).
+  - **`scripts/compare_trihedron_vs_spray.py`**: three arms at identical potential/progenitor/seed
+    — `rnbody` (ground truth), `trihedron` (template built once at q_fid), `spray` (Chen+2024).
+    Caches every expensive arm under `<outdir>/cache` keyed by (stream, arm, q, N, seed), so
+    re-running only redraws figures. Reuses `stream_frame`/`project_sample`/`robust_lim`/`QTY` from
+    `plot_fixed_potential_samples` and `fit_frame`/`binned_median`/`binned_std`/`WINDOW` from
+    `ppc_summary_statistics`. Note the solar frame is potential-dependent (`_solar_frame` uses
+    `v_circ(R0)+V_Sun`), so the progenitor's Galactocentric state is recomputed per q from its
+    FIXED observed ICRS coordinates — both arms see the same one.
+  - **Run**: M68, **1e5 particles**, Cautun+2020 fixed potential (q_fid = 1.0), q in
+    {0.7, 0.85, 1.0, 1.05, 1.2, 1.4}, T = 200 Myr / 2001 knots, seed 2026. Template diagnostics
+    clean at that T (boundary_frac = 0, ambiguous_frac = 0), so the window contains the whole
+    stream — the paper's own T = 40-60 Myr was NOT enough of a prior to trust here, it was checked.
+  - **RESULT — the remap beats particle spray against the N-body truth at every q.** Median
+    |d phi2 track| over 10 phi1 bins (deg): q=0.7 **0.313** vs spray 0.551; 0.85 **0.259**/0.413;
+    1.0 **0.000**/0.548; 1.05 **0.100**/0.386; 1.2 **0.131**/0.485; 1.4 **0.071**/0.388. The error
+    is **asymmetric about the fiducial** — it grows steadily on the oblate side (q<1) and stays flat
+    and small out to q=1.4 — so plot it against q, never |q - q_fid|, which folds the asymmetry away.
+  - **Cost**: remap **56 ms** per potential for 1e5 stars vs **85-103 s** for the restricted N-body
+    and 11 s for spray, i.e. ~1600x the ground truth and ~200x spray. Template build (excluding its
+    one N-body run) 7.4 s.
+  - **Per-star comparison does NOT work, and that is itself the finding.** `_rnbody_stream` draws
+    the Plummer progenitor before anything potential-dependent, so star i is nominally the same star
+    at every q — but the per-star |dx| is ~10 kpc and **saturates**, identical at dq=0.05 and
+    dq=0.4, decomposing into ~9.5 kpc along-track and only ~1.9 kpc perpendicular. ~10 kpc is about
+    half M68's stream length, i.e. individual stars decorrelate completely over 4 Gyr even in a
+    barely-changed potential. Judge these models distributionally; the script reports the
+    decomposition so the trap is visible rather than mistaken for remap error.
+  - **The method's real limitation is along-track structure, by construction.** `t_hat` is frozen at
+    the fiducial, so the remap CANNOT change how stars are distributed along the orbit. Measured via
+    the phi1 edge/centre density ratio: rnbody swings 2.10-4.82 across the sweep while trihedron is
+    pinned at 1.98-2.18 (spray likewise 1.95-2.10). **Caveat on that statistic here**: M68's
+    progenitor sits at phi1 ~ -85, inside an edge bin, so the ratio is tracking progenitor SURVIVAL
+    (it correlates with `m_bound_final`: 4.82 at q=1.05 where m_bound = 4.6e4, 2.10 at q=1.0 where
+    m_bound = 0), not window overflow as in the 2026-07-29 usage. The remap inherits the fiducial's
+    remnant and so cannot represent q-dependent survival either.
+  - Confirms the 2026-07-29 warning independently: **in-window phi1 extent is useless for M68** —
+    134.4-135.1 deg for all three arms at all six q, fully window-saturated.
+  - **NOT done**: only M68 was run (user scoped it); Pal5/NGC3201, other parameters than q_halo, and
+    the question of whether a per-q `t_hat` rescaling could restore the along-track density are open.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

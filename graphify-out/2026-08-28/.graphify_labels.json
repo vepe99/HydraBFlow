@@ -163,13 +163,5 @@
   "161": "_objective",
   "162": "test_config.py",
   "163": "create_ibata_rnbody_m200c_nfw_dataset.sh",
-  "164": "build_augmentations",
-  "165": "convert_concentration",
-  "166": "main",
-  "167": "checkpoint.py",
-  "168": "sky_projection",
-  "169": "AttachObservedSigmaZ",
-  "170": "AttachObservedVterm",
-  "171": "inferred_names",
-  "172": "compose_cfg"
+  "164": "build_augmentations"
 }

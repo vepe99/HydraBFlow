@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1787902596.3813996,
-    "ast_hash": "6cc0f98babf2fe7162440c37777478db",
+    "mtime": 1785313910.7593968,
+    "ast_hash": "ef9bf21f1b3538a7d9743820c3242ea2",
     "semantic_hash": ""
   },
   "README.md": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "scripts/plot_fixed_potential_samples.py": {
-    "mtime": 1785314681.9437628,
-    "ast_hash": "f94da05237a95d8c6eb4942900426d0a",
+    "mtime": 1785310574.092372,
+    "ast_hash": "afdd434b0e2095af4728824c13118fd1",
     "semantic_hash": ""
   },
   "scripts/plot_training_rows_vs_real.py": {
@@ -1237,21 +1237,6 @@
   "conf/simulator/stream_agama_spray_cautun_fixed.yaml": {
     "mtime": 1785313641.9881523,
     "ast_hash": "7523baa7219e4495fb2605d81a89b08e",
-    "semantic_hash": ""
-  },
-  "scripts/compare_trihedron_vs_spray.py": {
-    "mtime": 1787902478.119165,
-    "ast_hash": "f039beb91a730881d82b7bb0f291ad71",
-    "semantic_hash": ""
-  },
-  "scripts/trihedron.py": {
-    "mtime": 1787901803.7895465,
-    "ast_hash": "bd97a4f565832ff70ed175eae2ae8ad7",
-    "semantic_hash": ""
-  },
-  "conf/simulator/stream_agama_spray_cautun_fixed_tend26.yaml": {
-    "mtime": 1785314482.63839,
-    "ast_hash": "419cd42c77780239823b98b116046887",
     "semantic_hash": ""
   }
 }
