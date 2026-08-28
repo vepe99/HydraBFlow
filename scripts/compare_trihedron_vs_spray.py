@@ -66,8 +66,17 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from scipy.ndimage import gaussian_filter  # noqa: E402
+
 from trihedron import build_template, remap, auto_window  # noqa: E402
-from ppc_summary_statistics import CH, NAMES, binned_median, binned_std  # noqa: E402
+from ppc_summary_statistics import (  # noqa: E402
+    CH,
+    NAMES,
+    WINDOW,
+    augment_sim,
+    binned_median,
+    binned_std,
+)
 from plot_fixed_potential_samples import (  # noqa: E402
     PLX_CH,
     QTY,
@@ -193,8 +202,6 @@ def run_spray(agama, pot, posvel, row, n_particles, seed, time_unit_gyr, method=
 
 
 def in_window(proj, j):
-    from ppc_summary_statistics import WINDOW
-
     lo_ra, hi_ra, lo_dec, hi_dec = WINDOW[j]
     ra, dec = proj[:, CH["ra"]], proj[:, CH["dec"]]
     return (ra >= lo_ra) & (ra <= hi_ra) & (dec >= lo_dec) & (dec <= hi_dec) & np.isfinite(ra)
@@ -219,13 +226,41 @@ def edge_centre_ratio(phi1, frac=0.2):
     return float(edge / mid) if mid > 0 else float("nan")
 
 
-def arm_metrics(proj, j, R, edges):
+def observed_sample(proj_raw, j, args, seed):
+    """The stars an observer would actually have, as ``(sample (n,6), vlos_mask (n,))``.
+
+    ``proj_raw`` is straight out of ``sky_projection``, so channel 2 is heliocentric DISTANCE.
+
+    Without ``--noise`` this is just the RA/Dec window cut, with the ``1/d`` conversion applied so
+    channel 2 is a parallax on both the simulated and the real side (the real npz stores parallax).
+
+    With ``--noise`` the stream is pushed through the training observation model
+    (window -> subsample to the observed member count -> Gaia magnitudes -> DR3 errors -> noise ->
+    v_los mask). That chain cuts each realization down to the observed member count (297 for M68),
+    which is far too few to contour, so ``--noise-realizations`` independent realizations of the
+    SAME underlying stream are drawn and pooled. Each one individually is exactly what the network
+    is fed; pooling them traces the noise-convolved distribution the members are drawn from.
+    """
+    if not args.noise:
+        p = proj_raw[in_window(proj_raw, j)].copy()
+        p[:, PLX_CH] = 1.0 / p[:, PLX_CH]
+        return p, np.ones(len(p), bool)
+    n_real = int(args.noise_realizations)
+    sd = np.repeat(proj_raw[None, None, ...], n_real, axis=0)  # (R, 1, P, 6)
+    jj = np.full((n_real, 1), j, dtype=int)
+    sim, attn, vmask = augment_sim(
+        sd, jj, aug_preset=args.aug, simulator=args.simulator, seed=seed
+    )
+    keep = attn[:, 0].astype(bool)
+    return sim[:, 0][keep], vmask[:, 0][keep].astype(bool)
+
+
+def arm_metrics(sample, R, edges):
     """Distributional summary of one arm, in the stream's great-circle frame."""
-    sel = in_window(proj, j)
-    out = {"n_in_window": int(sel.sum())}
-    if sel.sum() < 10:
+    out = {"n_in_window": int(len(sample))}
+    if len(sample) < 10:
         return out
-    p = project_sample(R, proj[sel])
+    p = project_sample(R, sample)
     out["phi1_extent_deg"] = float(np.ptp(p["phi1"]))
     out["edge_centre_ratio"] = edge_centre_ratio(p["phi1"])
     out["phi2_track"] = binned_median(p["phi1"], p["phi2"], edges).tolist()
@@ -290,6 +325,15 @@ def main() -> None:
     ap.add_argument("--velocity", choices=["relative", "absolute"], default="relative")
     ap.add_argument("--agama-threads", type=int, default=16,
                     help="agama internal threads; the 1e5-particle rnbody arm parallelizes here")
+    ap.add_argument("--noise", action="store_true",
+                    help="push every arm through the training observation model (window -> member "
+                         "subsample -> Gaia magnitudes -> DR3 errors -> vlos mask) before "
+                         "comparing, so sim and real are on the same footing")
+    ap.add_argument("--noise-realizations", type=int, default=40,
+                    help="independent noise realizations pooled per arm; the chain cuts each one "
+                         "to the observed member count, which alone is too sparse to contour")
+    ap.add_argument("--aug", default="stream_global_ibata_grid",
+                    help="augmentation preset supplying the observation model")
     ap.add_argument("--outdir", default="data_local/trihedron")
     ap.add_argument("--out", default="trihedron", help="figure filename stem inside --outdir")
     ap.add_argument("--real", default="assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz")
@@ -397,13 +441,12 @@ def main() -> None:
                 label=f"{name} spray  @ q={q:.4g}",
             )
 
-            proj = {}
+            proj, sample, vmask = {}, {}, {}
             for arm, xv in arms.items():
-                p = sky_projection(xv[None, ...], np.asarray([frame], dtype=float))[0]
-                p[:, PLX_CH] = 1.0 / p[:, PLX_CH]  # distance -> parallax, as the real npz stores
-                proj[arm] = p
+                proj[arm] = sky_projection(xv[None, ...], np.asarray([frame], dtype=float))[0]
+                sample[arm], vmask[arm] = observed_sample(proj[arm], j, args, args.seed)
 
-            m = {arm: arm_metrics(proj[arm], j, R, edges) for arm in ARM_ORDER}
+            m = {arm: arm_metrics(sample[arm], R, edges) for arm in ARM_ORDER}
             # Primary accuracy measure: how far each approximation's binned phi2 track sits from
             # the ground truth's. Distributional on purpose -- see per_star_error's docstring.
             truth = np.array(m["rnbody"].get("phi2_track", [np.nan]))
@@ -426,7 +469,9 @@ def main() -> None:
                   + f" | track offset vs truth: trihedron={m['trihedron']['track_offset_deg']:.3f}"
                   + f" spray={m['spray']['track_offset_deg']:.3f} deg"
                   + f" | m_bound={mb:.3g}")
-            per_q[f"{q:.4g}"]["_proj"] = proj  # kept in memory for the figures, stripped before json
+            # kept in memory for the figures, stripped before the json is written
+            per_q[f"{q:.4g}"]["_sample"] = sample
+            per_q[f"{q:.4g}"]["_vmask"] = vmask
 
         results[name] = dict(
             j=j, q_fid=q_fid, template=tpl.diagnostics, per_q=per_q,
@@ -441,7 +486,7 @@ def main() -> None:
     clean = {}
     for name, res in results.items():
         res = dict(res)
-        res["per_q"] = {q: {k: v for k, v in m.items() if k != "_proj"}
+        res["per_q"] = {q: {k: v for k, v in m.items() if not k.startswith("_")}
                         for q, m in res["per_q"].items()}
         clean[name] = res
     path = outdir / f"{args.out}_metrics.json"
@@ -469,6 +514,42 @@ def load_or_run(path: Path, no_cache: bool, fn, label: str):
 # --------------------------------------------------------------------------------------------
 
 
+def arm_xy(p, key):
+    """One arm's (phi1, quantity), with unmeasured v_los dropped for the v_los panel."""
+    sel = p["vlos_mask"] if key == "vlos" else np.ones(len(p["phi1"]), bool)
+    return p["phi1"][sel], p[key][sel]
+
+
+def density_contours(ax, x, y, color, xlim, ylim, levels=(0.68, 0.95), smooth=2.0, label=None):
+    """Contours enclosing the given fractions of the sample, from a smoothed 2-D histogram.
+
+    Levels are found by sorting the smoothed density and walking down its cumulative sum, so the
+    contour labelled 0.95 encloses 95% of the stars whatever the distribution's shape. The grid is
+    sized from the sample: a fixed fine grid leaves ~0.2 stars per cell once the observation model
+    has cut each realization to the observed member count, and the contours shatter into confetti.
+    """
+    ok = np.isfinite(x) & np.isfinite(y)
+    if ok.sum() < 50:
+        return
+    bins = int(np.clip(np.sqrt(ok.sum() / 4.0), 25, 90))
+    H, xe, ye = np.histogram2d(x[ok], y[ok], bins=bins, range=[list(xlim), list(ylim)])
+    H = gaussian_filter(H, smooth)
+    if H.max() <= 0:
+        return
+    flat = np.sort(H.ravel())[::-1]
+    csum = np.cumsum(flat)
+    csum /= csum[-1]
+    lv = sorted({float(flat[min(np.searchsorted(csum, p), len(flat) - 1)]) for p in levels})
+    if len(lv) < 1:
+        return
+    # levels ascend, so the LAST is the innermost (68%) -- draw that solid, the outer 95% dashed
+    styles = ["--"] * (len(lv) - 1) + ["-"]
+    ax.contour(0.5 * (xe[:-1] + xe[1:]), 0.5 * (ye[:-1] + ye[1:]), H.T, levels=lv,
+               colors=color, linewidths=1.3, linestyles=styles)
+    if label:
+        ax.plot([], [], color=color, lw=1.3, label=label)
+
+
 def make_figures(name, j, R, real, real_vmask, per_q, args, outdir: Path, edges, q_fid) -> None:
     qs = list(per_q.keys())
 
@@ -480,11 +561,12 @@ def make_figures(name, j, R, real, real_vmask, per_q, args, outdir: Path, edges,
     for qi, q in enumerate(qs):
         proj_cache[q] = {}
         for arm in ARM_ORDER:
-            p = per_q[q]["_proj"][arm]
-            sel = in_window(p, j)
-            proj_cache[q][arm] = project_sample(R, p[sel]) if sel.sum() else None
-            if proj_cache[q][arm] is not None:
-                lims.append(proj_cache[q][arm]["phi2"])
+            s = per_q[q]["_sample"][arm]
+            p = project_sample(R, s) if len(s) else None
+            if p is not None:
+                p["vlos_mask"] = per_q[q]["_vmask"][arm]
+                lims.append(p["phi2"])
+            proj_cache[q][arm] = p
     ylim = robust_lim(real["phi2"], *lims) if lims else (-5, 5)
     for qi, q in enumerate(qs):
         ax = axes[qi, 0]
@@ -525,9 +607,9 @@ def make_figures(name, j, R, real, real_vmask, per_q, args, outdir: Path, edges,
                 p = proj_cache[q][arm]
                 if p is None:
                     continue
-                ax.scatter(p["phi1"], p[key], s=1.0, alpha=0.2, c=ARM_COLORS[arm],
-                           rasterized=True)
-                vals.append(p[key])
+                x, y = arm_xy(p, key)
+                ax.scatter(x, y, s=1.0, alpha=0.2, c=ARM_COLORS[arm], rasterized=True)
+                vals.append(y)
             ax.set_ylim(*robust_lim(*vals))
             if qi == 0:
                 ax.set_ylabel(label, fontsize=8)
@@ -540,6 +622,56 @@ def make_figures(name, j, R, real, real_vmask, per_q, args, outdir: Path, edges,
     fig.subplots_adjust(left=0.06, right=0.99, top=0.94, bottom=0.05, hspace=0.08, wspace=0.18)
     path = outdir / f"{args.out}_{name}_overlay.png"
     fig.savefig(path, dpi=130)
+    plt.close(fig)
+    print(f"wrote {path}")
+
+    # --- contour version: the three arms as density contours, real Gaia members as points -----
+    # Scatter at 1e5 stars saturates and hides which arm sits where; 68/95% contours make the
+    # arms comparable and let the real members read as what they are -- a sparse sample.
+    noise_note = (f"noise-convolved, {args.noise_realizations} realizations pooled"
+                  if args.noise else "raw simulator output, window cut only")
+    fig, axes = plt.subplots(len(QTY), len(qs), figsize=(3.3 * len(qs), 2.2 * len(QTY)),
+                             sharex="col", squeeze=False)
+    xlim = robust_lim(real["phi1"], pad=0.05)
+    # One y-range per observable, shared across q, so the q-trend is readable down each row.
+    ylims = {}
+    for key, _ in QTY:
+        rmask = real_vmask.astype(bool) if key == "vlos" else np.ones(len(real["phi1"]), bool)
+        vals = [real[key][rmask]]
+        for q in qs:
+            for arm in ARM_ORDER:
+                p = proj_cache[q][arm]
+                if p is not None:
+                    vals.append(arm_xy(p, key)[1])
+        ylims[key] = robust_lim(*vals)
+    for qi, q in enumerate(qs):
+        for ri, (key, label) in enumerate(QTY):
+            ax = axes[ri, qi]
+            rmask = real_vmask.astype(bool) if key == "vlos" else np.ones(len(real["phi1"]), bool)
+            ylim = ylims[key]
+            for arm in ARM_ORDER:
+                p = proj_cache[q][arm]
+                if p is None:
+                    continue
+                x, y = arm_xy(p, key)
+                density_contours(ax, x, y, ARM_COLORS[arm], xlim, ylim,
+                                 label=arm if (ri == 0 and qi == 0) else None)
+            ax.scatter(real["phi1"][rmask], real[key][rmask], s=5, c="k", zorder=5,
+                       label="Gaia members" if (ri == 0 and qi == 0) else None)
+            ax.set_xlim(*xlim)
+            ax.set_ylim(*ylim)
+            if qi == 0:
+                ax.set_ylabel(label, fontsize=8)
+            if ri == 0:
+                ax.set_title(f"q = {q}", fontsize=9)
+            ax.tick_params(labelsize=7)
+        axes[-1, qi].set_xlabel("phi1 [deg]", fontsize=8)
+    axes[0, 0].legend(fontsize=6, loc="best", framealpha=0.9)
+    fig.suptitle(f"{name}: 68/95% density contours per forward model, real Gaia members as points "
+                 f"({noise_note})", fontsize=9)
+    fig.subplots_adjust(left=0.06, right=0.99, top=0.94, bottom=0.05, hspace=0.10, wspace=0.20)
+    path = outdir / f"{args.out}_{name}_contour.png"
+    fig.savefig(path, dpi=140)
     plt.close(fig)
     print(f"wrote {path}")
 
