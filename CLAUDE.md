@@ -921,6 +921,180 @@ Every run saves:
     K_phi1 / going per-stream adaptive is unexploited; (d) whether to add a remnant-survival screen is
     an open decision resting on the pilot numbers.
 
+- Session 2026-07-29 (streams in a FIXED Cautun+2020 potential — 10-realization observation-space
+  check): a controlled forward-model check with the Galaxy held fixed, so the only variation is the
+  progenitors' present-day phase-space coordinates within their measurement errors. Nothing trained.
+  - **`conf/simulator/stream_agama_rnbody_cautun_fixed.yaml`** (inherits `stream_agama_rnbody`):
+    every global is `identity`, so `global_parameter_names == []` and `local_parameter_names ==
+    [vr, r, mu_ra_cosdec, mu_dec]` (ra/dec stay identity, m_progenitor/a_progenitor/t_end pinned).
+    `vcirc_rejection: null` (a fixed potential makes the cut all-or-nothing).
+  - **Cautun mapping.** `agama/data/Cautun20.ini` and this project's Ibata potential are the SAME
+    component family for every baryonic component, so those transfer exactly (thin 7.31e8/2.63/0.30,
+    thick 1.01e8/3.80/0.90 via `dz_thick_Disk=0.60`, bulge amplitude 1.03e11 into
+    `bulge_density_norm` — the rest of `BULGE_PARAMS` already matches Cautun's Spheroid — and
+    Cautun's HI/H2 gas disks ARE `GAS_HI/H2_PARAMS` to <1%). `disk_vertical: isothermal` because
+    the ini uses positive scaleHeight. The ONE component that does not transfer is the dark halo
+    (Cautun's is adiabatically contracted, tabulated as a spherical `Multipole`), so it was FITTED:
+    least squares on the fractional TOTAL v_circ residual over 2-60 kpc with the baryons fixed on
+    both sides → **rho = 2.7196e7, a = 9.8011 kpc, gamma = 1.0188** (beta 3, q 1, alpha 1, r_t 1000).
+    Median |frac dev| 1.28% / max 3.09%; M(<r) +3.9% at 10 kpc, +5.4% at 20, -3.4% at 50, **-15.1% at
+    100 kpc** (Cautun's CGM Spheroid r_s=219 kpc — deliberately unfitted, no orbit here reaches it).
+    Verified through the full simulator path (`_host_potential` reproduces the fit exactly).
+  - **`scripts/plot_fixed_potential_samples.py`**: N-samples x 3-streams panel grid + an
+    all-samples overlay (phi2 / parallax / mu_phi1 / mu_phi2 / v_los vs phi1) in each stream's
+    data-driven great-circle frame, reusing `ppc_summary_statistics` (`fit_frame`/`project`/
+    `augment_sim`). Defaults to the noise-convolved training observation model; `--no-noise` applies
+    the chain's own `1/d` so channel 2 is a parallax on both sides (the real npz stores parallax,
+    `sky_projection` emits distance — an easy trap).
+  - **Results** (10 rows, seed 2026, 95 s; `data_local/cautun_fixed/`). Yardstick = the sample-to-
+    sample scatter, which IS the measurement-error-only spread: Pal5 tracks are reproduced within
+    ~1.3x that scatter; **NGC3201 is off in the mean** (phi2 +1.32 deg vs 0.39 scatter = 3.4x,
+    mu_phi1 -2.92 vs 1.28 mas/yr = 2.3x); and **both NGC3201 and M68 come out far too LONG** —
+    phi1 extent 107 vs 67 deg and 132 vs 102 deg against a realization scatter of only ~1.5 deg.
+    Cautun+t_end=4 Gyr over-strips those two. Parallax panels are pure Gaia noise (as expected).
+  - **Progenitor survival is the sharpest result: Pal 5 dissolves completely in 10/10 rows**
+    (`m_bound_final = 0`) even at the CORRECTED B&H18 present-day mass 1.34e4 with a 21 pc Plummer
+    radius, while the real cluster still exists. NGC3201 survives 6/10, M68 4/10 (2 NaN each). So the
+    2026-07-28 dissolution finding is NOT an artifact of the old 4.3e3 remnant mass, and not
+    potential-specific — at 1.34e4 Pal 5 still cannot survive 4 Gyr. That points at the mass
+    (literature INITIAL 4.7-7e4, i.e. the upper edge of the freed `_prog` prior) rather than at the
+    Galaxy, and is worth checking before the freed-prior dataset is taken as settled.
+  - **A/B against the LEGACY progenitors** (user-requested; sibling config
+    `stream_agama_rnbody_cautun_fixed_legacyprog.yaml`, identical potential, `priors_local` restored
+    to the base `stream_agama.yaml` values: m 4.3e3/6.47e4/5.7e4, a 8.43/4.9/6.4 pc, t_end
+    4/1.5/1.5 Gyr — note `stream_agama_rnbody` overrides NGC3201/M68 t_end to 4.0, so 1.5 has to be
+    written out explicitly, not merely un-overridden). Same seed, so the phase-space draws match
+    row-for-row and the two runs differ ONLY in the progenitor inputs. Results:
+    * **t_end = 1.5 Gyr makes NGC3201 and M68 unobservable.** In-window particles (of 1000) collapse
+      from a median 222 / 472 to **3 / 24**, against 195 / 297 real members — every row falls below
+      the observed count, so there is no stream to compare and their track statistics are
+      meaningless at that t_end. Both clusters survive 10/10 retaining ~99% of their initial mass
+      (m_bound 64053/64700 and 55746/57000): at 1.5 Gyr the restricted N-body model has barely
+      stripped anything. This reproduces the 2026-07-05 t_end finding in the Cautun potential and
+      confirms it is a property of the rnbody forward model, not of the halo parameterization —
+      spray fabricated stripping uniformly over t_end and so never exposed it.
+    * **Pal 5 (t_end = 4 in both) is the clean comparison, and the corrected progenitor wins on
+      length while the legacy one wins on thinness**: legacy tails are tighter (realization scatter
+      0.083 vs 0.140 deg) but too SHORT — phi1 extent 22.2 vs real 28.9 deg (**-6.7**, against the
+      corrected run's -1.1) and a phi2 offset of +0.23 deg = 2.8x the realization scatter (corrected:
+      1.3x). The light, compact legacy progenitor under-produces tail length as well as width, which
+      is the documented "too cold" symptom seen from the other side.
+    * **Pal 5 dissolves in 10/10 rows under BOTH progenitor sets** — so its non-survival is
+      insensitive to the 4.3e3 -> 1.34e4 mass and 8.43 -> 21 pc radius correction, and points at the
+      literature INITIAL mass (4.7-7e4) as the only remaining lever.
+    Artifacts: `data_local/cautun_fixed{,_legacyprog}/*_{panels,overlay}.png` + the datasets and
+    their `.hydra` snapshots.
+  - **Scaled up to 100 realizations x 10^4 particles** (corrected-progenitor config, seed 2026,
+    `data_local/cautun_fixed_1e4/`): 42 min wall at `n_workers=48` nice'd (~8 s per stream-sim;
+    300 stream-sims), 216 MB npz. `plot_fixed_potential_samples.py` reworked to what this needs —
+    ONE 10x10 phi2-only grid PER STREAM (`--grid-cols`, `<out>_<stream>_phi2.png`) plus the
+    all-observables overlay (phi2/parallax/mu_phi1/mu_phi2/v_los), with marker size/alpha and the
+    legend auto-scaled above 12 samples. 0 NaN rows; in-window particles median 8292/2229/4692 of
+    10^4, so no row is member-starved.
+    * With 100 draws the sim envelope resolves into a proper band, and the verdict from the 10-row
+      run **holds with better-determined scatter**: NGC3201 phi2 **+1.00 deg = 2.7x** the realization
+      scatter and mu_phi1 **-2.38 mas/yr = 2.6x** (real sits ABOVE the whole sim band); phi1 extent
+      +38.6 deg for NGC3201 and +30.0 deg for M68 — but those two extent numbers are
+      **window-saturated and must not be quoted as arm-length excesses** (retraction + the correct
+      edge/centre-density diagnostic in the freed-t_end entry below). Pal 5 remains consistent, and
+      its mu_phi1 offset went from -0.064 to **-0.008** mas/yr — the 10-row value was noise, so do
+      not read single-digit-sample offsets as measurements.
+    * New at this sample size: the real members of Pal 5 and M68 sit at the **upper edge** of the
+      simulated phi2 band rather than in its middle, i.e. the model's spread is asymmetric about the
+      observed track — a shape mismatch that only the 100-draw band makes visible.
+    * **Survival at 10^4 particles: Pal 5 0/100** (83 zero, 17 NaN), NGC3201 78/100, M68 43/100.
+      Remember `m_bound_final` is resolution-dependent, so these are their own measurement and NOT
+      comparable to the 10^3-particle fractions above; the one robust statement across both is that
+      **Pal 5 never survives**.
+  - **Same 100 x 10^4 run with the PARTICLE-SPRAY forward model** (`stream_agama_spray_cautun_fixed`
+    .yaml — inherits the rnbody Cautun config wholesale so the potential is byte-identical, changing
+    only `name: stream_agama` + `spray_method: chen`; same seed 2026, so the phase-space draws match
+    the rnbody run row-for-row and the ONLY difference is the forward model).
+    **2.5 min vs 42 min** — spray is ~17x cheaper here (no per-update Multipole refit). Artifacts in
+    `data_local/cautun_fixed_spray_1e4/`. NaN rows 3/2/2 (rnbody had 0); in-window medians
+    9330/1749/3891 vs 8292/2229/4692.
+    Offsets in units of the realization scatter, rnbody -> spray:
+    | | Pal5 phi2 | Pal5 vlos | NGC3201 phi2 | NGC3201 mu_phi1 | phi1 extent NGC/M68 |
+    |---|---|---|---|---|---|
+    | rnbody | 1.1x | 0.5x | 2.7x | 2.6x | +38.6 / +30.0 deg |
+    | spray  | **2.6x** | **2.3x** | **5.6x** | **3.9x** | +39.0 / +30.6 deg |
+    * **Spray is not better — it is worse wherever the two differ**, and for a specific reason: its
+      realization scatter is uniformly SMALLER (Pal5 phi2 0.144 -> 0.080 deg, Pal5 v_los 4.23 -> 1.54
+      km/s), i.e. spray tails are colder/thinner, so the same mean offset becomes far more
+      significant. This is the known "sims too cold" symptom isolated cleanly: at identical potential,
+      progenitor and phase-space draws, the stripping model alone sets the tail width.
+    * Proper-motion medians are essentially perfect in BOTH (Pal5 mu_phi1 -0.008 rnbody / -0.001
+      spray), so the pm agreement is not diagnostic of the forward model.
+    * The arm-length excess came out identical in the two models (+39/+31 deg for NGC3201/M68).
+      **RETRACTED — see the freed-t_end entry below**: for those two streams the in-window phi1 extent
+      is saturated by the observation window, so the agreement was an artifact of the statistic and
+      carries no information about the stripping physics. Only Pal 5's extent (-1.7 rnbody / -3.4
+      spray) is unclipped and readable.
+    * Caveat when reading spray here: `m_progenitor` only sets the Jacobi radius and `a_progenitor` is
+      unused, so there is no `m_bound_final` and the "Pal 5 dissolves in every row" result cannot even
+      be posed — spray fabricates stripping over `t_end` regardless of survivability (the 2026-07-05
+      blind spot). Do not read spray's healthy in-window counts as evidence the progenitor is viable.
+  - **500-row spray run with the STRIPPING AGE FREED** (`stream_agama_spray_cautun_fixed_tend26.yaml`
+    — inherits the spray Cautun config, `t_end ~ U[2,6]` Gyr for all three streams; 10^4 particles,
+    seed 2026, `data_local/cautun_fixed_spray_tend26/`, ~10 min / 1.44 GB).
+    Motivated by the rnbody-vs-spray result above: both stripping models give the SAME arm-length
+    excess, so `t_end` and the potential own it — this run tests whether any single stripping age in
+    the Cautun potential reproduces all three observed arm lengths at once. Range narrowed from the
+    v2 config's U[2,10] to U[2,6]: below ~2 Gyr NGC3201/M68 have essentially no in-window stars
+    (measured: 3 and 24 of 10^4 at 1.5 Gyr), and 6 Gyr keeps the rewind short of the Gaia-Enceladus
+    merger where a static halo gets hard to defend; Palau, Wang & Han (2025) put M68's stream age at
+    3.04 (+5.63/-0.29) Gyr, inside the window.
+    * **Freeing t_end changes what the realization scatter MEANS**: `local_parameter_names` goes from
+      `[vr, r, mu_ra_cosdec, mu_dec]` to `[t_end, vr, r, mu_ra_cosdec, mu_dec]`, so the spread now
+      mixes measurement error with the t_end prior and is NOT the measurement-error-only yardstick the
+      t_end=4 runs provided. Do not compare "x scatter" significances across the two.
+    * Spray caveat that bites harder here: no `m_bound_final`, and `m_progenitor` only sets the Jacobi
+      radius, so spray will strip a cluster for 6 Gyr that could not have survived it. A long-t_end row
+      matching the observed arms is NOT evidence the age is physical — that needs rnbody.
+    * **RESULT — no single stripping age fits all three, and for two of them t_end is not even the
+      relevant knob.** Median in-window phi1 extent by t_end bin (deg; observed in brackets):
+      | stream | 2-3 | 3-4 | 4-5 | 5-6 | observed |
+      |---|---|---|---|---|---|
+      | Pal5 | 18.2 | 23.4 | 27.4 | 29.6 | 28.9 |
+      | NGC3201 | 106.3 | 106.5 | 106.3 | 106.5 | 67.3 |
+      | M68 | 130.9 | 132.7 | 132.9 | 133.0 | 102.2 |
+      Pal 5 grows monotonically and crosses the observed extent at **t_end ~ 5.1 Gyr**. NGC3201 and
+      M68 are **completely flat in t_end** and too long at every age sampled.
+    * **CORRECTION to the earlier "arm-length excess" numbers (this session, 100-row runs above):
+      the +39 deg / +31 deg excesses quoted for NGC3201 and M68 were measuring the OBSERVATION
+      WINDOW, not the stream.** Diagnostic (`scratchpad/window_check.py`, raw projection, no
+      augmentation): for NGC3201 the RAW pre-window extent grows 208 -> 242 deg from t_end 2-3 to
+      5-6 Gyr while the in-window extent is pinned at 107.0 -> 107.1; M68 raw 173 -> 210 vs in-window
+      131.8 -> 133.2. The statistic is saturated, which is exactly why it looked identical between
+      rnbody and spray. **So the attribution I recorded from that A/B — "over-long arms are set by
+      t_end and the potential, not by the stripping physics" — is wrong on both halves:** t_end
+      demonstrably does not move it, and the agreement between models was a window artifact, not
+      physics. The extent statistic is only meaningful for Pal 5 (raw 20.1 vs in-window 19.4 at
+      2-3 Gyr, i.e. unclipped; mild clipping sets in above ~4 Gyr, raw 49.2 vs in-window 30.9 at
+      5-6 Gyr, so even the 5.1 Gyr crossing is slightly contaminated).
+    * **What IS diagnostic instead: the phi1 edge/centre number density.** A stream that overflows its
+      window piles up at the edges. Sim gives 2.30 (NGC3201) and 2.13-2.48 (M68) versus **0.81 / 0.77
+      for the real members** — the real streams fall off towards their ends, the simulated ones do not.
+      So NGC3201 and M68 genuinely are far more extended than observed, at EVERY age in [2,6] Gyr,
+      which points at the orbit/potential rather than the stripping age. Pal 5's ratio is 0.27 at
+      2-3 Gyr (real 0.30) rising to 0.59 by 5-6 Gyr. **Use this ratio, not the extent, for any future
+      arm-length claim on the two wide-window streams.**
+  - **Plot-script generalization for large sample counts** (`plot_fixed_potential_samples.py`):
+    `--grid-cols 0` (new default) picks a roughly square grid (500 -> 23x22 instead of 10x50); new
+    `--panel-w/--panel-h` (default 2.4x2.0 in) and `--dpi` (auto: 150, stepping to 110 above 120
+    panels, to stay inside matplotlib's pixel limit); panels packed edge to edge via
+    `subplots_adjust` — NOT `tight_layout`, which recomputes spacing and undoes the packing; x labels
+    go on the last *populated* axis of each column since the final row can be partial. Titles now
+    name the varying inputs, read off the stored draws. **Gotcha**: that detection must reduce over
+    the ROW axis (`np.ptp(arr, axis=0).max()`) — a ptp over the whole `(n_rows, n_streams, 1)` array
+    reports every per-stream constant (m_progenitor, ra, dec) as varying, since those differ between
+    streams by construction.
+  - **Note on shared-box etiquette**: a user-owned `hydrabflow-simulate` run (`freemass_t26_norej`,
+    1000 rows, `n_workers=180`) was live throughout. Budget workers against it (48 nice'd here, not
+    the 96 first attempted) and scope any `pkill` to the dataset name in your own command line —
+    `pkill -f hydrabflow-simulate-multistream` does not match a plain `hydrabflow-simulate`, but the
+    margin is uncomfortably thin.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

@@ -1,0 +1,33 @@
+# Same fixed Cautun+(2020) potential and same fixed progenitors as
+# stream_agama_rnbody_cautun_fixed, but with the PARTICLE-SPRAY forward model instead of restricted
+# N-body — i.e. a controlled A/B on the forward model alone.
+#
+# Inherits the rnbody Cautun config wholesale rather than restating the ~40 identity values, so the
+# potential is guaranteed byte-identical to the rnbody run; only `name` and `spray_method` change.
+# The experiment structure is inherited too: all globals are `identity`, so `global_parameter_names`
+# is empty and the only variation between rows is the progenitors' four present-day phase-space
+# coordinates (`vr`, `r`, `mu_ra_cosdec`, `mu_dec`) within their measurement errors.
+#
+# `spray_method: chen` = Chen, Gnedin & Li (2024), the release recipe the current-generation spray
+# datasets use (`stream_agama_spray_huang.yaml`); it was verified in the 2026-07-08 session to be a
+# clean IC-only swap against gala's `ChenStreamDF._sample`. Set `params.spray_method: fardal` (or
+# delete the key — Fardal+2015 is the class default) for the older recipe.
+#
+# WHAT DIFFERS PHYSICALLY, and what to expect in the comparison:
+#   * The progenitor is a fixed point mass releasing particles at the Lagrange points, so
+#     `m_progenitor` only sets the Jacobi radius — it no longer strips self-consistently. There is
+#     therefore NO `m_bound_final` diagnostic, and the "Pal 5 dissolves in every row" result of the
+#     rnbody runs cannot even be posed here: spray fabricates stripping uniformly over `t_end`
+#     regardless of whether the cluster could have survived. That is exactly the blind spot the
+#     2026-07-05 t_end finding was about, so read spray arm lengths with that in mind.
+#   * `a_progenitor` is unused by the spray ICs (no self-consistent Plummer), so Pal 5's corrected
+#     21 pc radius has no effect here.
+#   * The rnbody-only knobs inherited via `stream_agama_rnbody` (`n_updates`, `traj_per_update`,
+#     `accuracy`, `agama_num_threads`) are inert on this class — harmless, but do not read them as
+#     describing this run.
+defaults:
+  - stream_agama_rnbody_cautun_fixed
+
+name: stream_agama          # the spray class (stream_agama_rnbody is the restricted-N-body subclass)
+params:
+  spray_method: chen        # Chen, Gnedin & Li (2024); `fardal` for Fardal+2015

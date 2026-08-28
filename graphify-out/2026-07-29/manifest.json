@@ -75,8 +75,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1785313910.7593968,
-    "ast_hash": "ef9bf21f1b3538a7d9743820c3242ea2",
+    "mtime": 1785313396.7329261,
+    "ast_hash": "094d87c79590aff2d8a0a9c4d8a21a5f",
     "semantic_hash": ""
   },
   "README.md": {
@@ -1232,11 +1232,6 @@
   "conf/simulator/stream_agama_rnbody_cautun_fixed_legacyprog.yaml": {
     "mtime": 1785310004.974405,
     "ast_hash": "4d36dbba50d5ece0f974cd49bf851a3a",
-    "semantic_hash": ""
-  },
-  "conf/simulator/stream_agama_spray_cautun_fixed.yaml": {
-    "mtime": 1785313641.9881523,
-    "ast_hash": "7523baa7219e4495fb2605d81a89b08e",
     "semantic_hash": ""
   }
 }

@@ -10847,7 +10847,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "tests_test_m200c_halo_priors_local_ident",
-      "community": 101,
+      "community": 160,
       "norm_label": "_priors_local_ident()"
     },
     {
@@ -10857,7 +10857,7 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "tests_test_m200c_halo_m200c_params",
-      "community": 101,
+      "community": 160,
       "norm_label": "_m200c_params()"
     },
     {
@@ -10867,7 +10867,7 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "tests_test_m200c_halo_test_simulate_stores_derived_rho_a_for_m200c",
-      "community": 101,
+      "community": 160,
       "norm_label": "test_simulate_stores_derived_rho_a_for_m200c()"
     },
     {
@@ -10877,7 +10877,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "tests_test_m200c_halo_test_simulate_no_derived_keys_for_rho_a",
-      "community": 101,
+      "community": 160,
       "norm_label": "test_simulate_no_derived_keys_for_rho_a()"
     },
     {
@@ -11037,7 +11037,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "tests_test_m200c_halo_rationale_214",
-      "community": 101,
+      "community": 160,
       "norm_label": "m200_c: simulate() emits rho/a_..._derived (n,1) equal to the per-row _halo_para"
     },
     {
@@ -11047,7 +11047,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "tests_test_m200c_halo_rationale_238",
-      "community": 101,
+      "community": 160,
       "norm_label": "legacy rho_a halo: simulate() does not emit the *_derived diagnostic keys."
     },
     {
@@ -13054,7 +13054,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "CLAUDE.md",
-      "source_location": "L1039",
+      "source_location": "L1013",
       "_origin": "ast",
       "id": "claude_graphify",
       "community": 34,
@@ -14790,7 +14790,7 @@
       "contributor": null,
       "community": 8,
       "norm_label": "graphify skill trigger",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_trigger"
     },
     {
       "label": "Knowledge Graph",
@@ -36046,7 +36046,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CLAUDE.md",
-      "source_location": "L1039",
+      "source_location": "L1013",
       "weight": 1.0,
       "source": "claude_hydrabflow_sbi_pipeline_template_with_bayesflow",
       "target": "claude_graphify",

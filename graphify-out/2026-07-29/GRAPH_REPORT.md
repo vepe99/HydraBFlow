@@ -1,7 +1,7 @@
 # Graph Report - HydraBFlow  (2026-07-29)
 
 ## Corpus Check
-- 135 files · ~430,831 words
+- 135 files · ~430,142 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -323,8 +323,8 @@ Cohesion: 0.17
 Nodes (17): concatenate_chunks(), load_chunk(), load_dataset(), _n_rows(), Dataset, Dataset IO. Datasets are ``.npz`` archives where each key maps to an array whose, Concatenate a list of dataset dicts along the leading (simulation) axis., Write a chunk ``.npz`` atomically (temp file + rename), so a crash mid-write can (+9 more)
 
 ### Community 101 - "Running a full pipeline with the Two Moons simulator"
-Cohesion: 0.09
-Nodes (29): convert_concentration(), Convert an NFW halo concentration between spherical-overdensity definitions., _m200c_params(), _priors_local_ident(), Tests for the (M200, c_v') halo reparameterization (McMillan 2017; stream_agama., The NFW config fixes gamma/alpha/beta (so they are not inferred) and keeps q/p/t, m200_c dispatch builds a potential whose halo == the rho_a halo with the derived, m200_c: simulate() emits rho/a_..._derived (n,1) equal to the per-row _halo_para (+21 more)
+Cohesion: 0.10
+Nodes (23): convert_concentration(), Convert an NFW halo concentration between spherical-overdensity definitions., Tests for the (M200, c_v') halo reparameterization (McMillan 2017; stream_agama., The NFW config fixes gamma/alpha/beta (so they are not inferred) and keeps q/p/t, m200_c dispatch builds a potential whose halo == the rho_a halo with the derived, Without priors the frame is the fixed literature default; V_Sun is PECULIAR, so, The projection and the progenitor's ICRS -> Galactocentric conversion must use O, `params.marginalize` keeps the Solar parameters out of the inferred set (and the (+15 more)
 
 ### Community 102 - "_load_clean"
 Cohesion: 0.43
@@ -499,8 +499,8 @@ Cohesion: 0.20
 Nodes (9): Logger, limit_gpus(), Pin compute settings *before* keras/bayesflow/JAX are imported anywhere.  Two th, Pin ``CUDA_VISIBLE_DEVICES`` to the least-used GPU(s) before JAX/CUDA initialize, Set ``KERAS_BACKEND`` unless the user already chose one. Returns the active back, set_backend(), get_logger(), Minimal logging helper so all pipeline stages log consistently. (+1 more)
 
 ### Community 160 - "RestrictedNbodyStreamSimulator"
-Cohesion: 0.33
-Nodes (5): Stellar streams via restricted N-body (agama example_tidal_stream method)., Swap the forward-model worker for the restricted-N-body one; the base class's, RestrictedNbodyStreamSimulator, The restricted-N-body simulator goes through the same simulate() assembly (_row_, test_rnbody_simulate_m200c_ancillary_and_derived_keys()
+Cohesion: 0.17
+Nodes (11): Stellar streams via restricted N-body (agama example_tidal_stream method)., Swap the forward-model worker for the restricted-N-body one; the base class's, RestrictedNbodyStreamSimulator, _m200c_params(), _priors_local_ident(), m200_c: simulate() emits rho/a_..._derived (n,1) equal to the per-row _halo_para, Legacy rho_a halo: simulate() does NOT emit the *_derived diagnostic keys., The restricted-N-body simulator goes through the same simulate() assembly (_row_ (+3 more)
 
 ### Community 161 - "_objective"
 Cohesion: 0.29
@@ -526,7 +526,7 @@ Nodes (4): build_augmentations(), Augmentation, Build the ordered augmentation l
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AgamaStreamSimulator` connect `Community 11` to `RestrictedNbodyStreamSimulator`, `Running a full pipeline with the Two Moons simulator`, `Config Schemas`, `MaskedFusionNetwork`, `MaskedFusionNetwork`, `ndarray`, `stream_agama.py`, `stream_common.py`, `extended_rotation_curve`?**
+- **Why does `AgamaStreamSimulator` connect `Community 11` to `RestrictedNbodyStreamSimulator`, `Config Schemas`, `MaskedFusionNetwork`, `MaskedFusionNetwork`, `ndarray`, `stream_agama.py`, `stream_common.py`, `extended_rotation_curve`?**
   _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Why does `get_simulator()` connect `MaskedFusionNetwork` to `test_streams.py`, `Community 32`, `Augmentation Registry & Tests`, `Simulate Stage & Registries`, `Running a full pipeline with the Two Moons simulator`, `Config Schemas`, `Community 40`, `Config Composition Tests`, `Dataset IO`, `JAX Backend Pin`, `Logging Helper`, `extended_rotation_curve`, `Community 56`, `PerStreamParameterStandardize`, `build_workflow`?**
   _High betweenness centrality (0.095) - this node is a cross-community bridge._

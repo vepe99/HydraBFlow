@@ -1,0 +1,63 @@
+# Same fixed Cautun+(2020) potential as stream_agama_rnbody_cautun_fixed, but with the ORIGINAL
+# (pre-2026-07-28) progenitor inputs restored.
+#
+# Everything about the potential is inherited unchanged — see the parent's header for the Cautun
+# mapping and the halo fit — as is the structure of the experiment: all globals are `identity`, so
+# the only variation between rows is the progenitors' four present-day phase-space coordinates
+# (`vr`, `r`, `mu_ra_cosdec`, `mu_dec`) within their measurement errors.
+#
+# The only difference is `priors_local`, restored to the legacy values of the base
+# `conf/simulator/stream_agama.yaml`:
+#
+#   stream     m_progenitor   a_progenitor   t_end     (parent's corrected values, for reference)
+#   Pal5       4.3e3          8.43 pc        4.0 Gyr   (1.34e4, 21.0 pc, 4.0)
+#   NGC3201    6.47e4         4.9  pc        1.5 Gyr   (1.93e5, 6.65 pc, 4.0)
+#   M68        5.7e4          6.4  pc        1.5 Gyr   (1.28e5, 6.4  pc, 4.0)
+#
+# Note that `stream_agama_rnbody` itself overrides NGC3201's and M68's t_end to 4.0, so restoring
+# 1.5 Gyr has to be written out explicitly here — it is not simply a matter of dropping the parent's
+# override block.
+#
+# WHY this config exists as a sibling rather than an edit: the corrected values are a documented
+# correction, not a tuning knob (`stream_agama_rnbody_ibata_m200c_prog.yaml` carries the full
+# provenance — the legacy masses are variously a bound remnant, a luminous mass and a +-50%
+# dynamical fit, all used as INITIAL masses, and Pal5's 8.43 pc is a King core radius fed in as a
+# Plummer scale radius). Keeping both configs makes the pair a controlled A/B on the progenitor
+# inputs at a fixed Galaxy, which is the only way to attribute a mismatch in observation space to
+# the progenitor rather than to the potential.
+defaults:
+  - stream_agama_rnbody_cautun_fixed
+
+name: stream_agama_rnbody
+params:
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: identity
+        prior_parameters: [4.3e3]
+      a_progenitor:
+        type: identity
+        prior_parameters: [8.43]
+      t_end:
+        type: identity
+        prior_parameters: [4.0]
+    NGC3201:
+      m_progenitor:
+        type: identity
+        prior_parameters: [6.47e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [4.9]
+      t_end:
+        type: identity
+        prior_parameters: [1.5]
+    M68:
+      m_progenitor:
+        type: identity
+        prior_parameters: [5.7e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [6.4]
+      t_end:
+        type: identity
+        prior_parameters: [1.5]

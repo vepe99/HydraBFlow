@@ -1,0 +1,107 @@
+# Restricted-N-body Ibata / one-disk / beta=3 / (M200, c_v') simulator, WARMER-STREAM variant:
+# freed progenitor masses + freed stripping age t_end in [2, 6] Gyr + NO rotation-curve rejection.
+#
+# Everything else is inherited unchanged from stream_agama_rnbody_ibata_onedisk_beta3_m200c: the full
+# Ibata potential (fixed bulge + McMillan gas disks + single free exponential stellar disk + halo
+# truncated at 1000 kpc), the m200_c halo reparameterization with gamma capped [-2, 1.5], the
+# extended 50-radii Zhou u Huang vcirc observable, and the ancillary observables
+# (v_term / Sigma_z / rho_z). Run it with n_particles=10000 to match the 10k-star dataset it is
+# meant to supersede.
+#
+# ---------------------------------------------------------------------------------------------
+# 1. Freed progenitor masses (the "too cold streams" fix; the primary lever).
+# ---------------------------------------------------------------------------------------------
+# `m_progenitor` is the Plummer mass at t = -t_end, i.e. an INITIAL condition, but the inherited
+# values are present-day (or worse) masses from Table 2 of Palau & Miralda-Escude (2023), which holds
+# the cluster mass fixed over the integration. Traced to source:
+#
+#   stream     inherited   what it actually is                                  present-day (B&H18)  initial
+#   Pal5       4.3e3       bound REMNANT only (Ibata, Lewis & Martin 2017)        1.34e4              7.0e4 (Dehnen+2004)
+#   NGC3201    6.47e4      present-day LUMINOUS mass (Sollima & Baumgardt 2017)   1.93e5              5.61e5 (M_Ini)
+#   M68        5.7e4       present-day DYNAMICAL mass, +-50% Plummer fit          1.28e5              5.46e5 (M_Ini)
+#                          (Lane et al. 2010)
+#
+# So the progenitors were under-massed by ~3x against present-day values and ~9-16x against initial
+# ones. Directly confirmed by the bound-mass diagnostic: at m=4.3e3 the Pal 5 progenitor DISSOLVES
+# COMPLETELY over 4 Gyr (m_bound_final = 0) even though the real cluster still exists. Under-massed
+# progenitors under-produce tail width, which is the "simulated streams are too cold" symptom.
+#
+# Each prior runs from the modern present-day mass (a hard lower bound - the cluster cannot have
+# started lighter than it is now) up to the literature initial mass. Ranges identical to
+# stream_agama_rnbody_ibata_m200c_prog.
+#
+# NOTE - `a_progenitor` is deliberately LEFT AS INHERITED here (mass and t_end only, per the run
+# request). Be aware that Pal 5's inherited 8.43 pc is the wrong KIND of radius: it matches none of
+# B&H18's radii (r_c 15.35, r_h,l 20.42, r_h,m 27.63 pc) and is most plausibly a King CORE radius
+# from the Ibata+2017 fit, used here as a Plummer SCALE radius - which makes the Pal 5 progenitor
+# ~2.5x too compact in the half-mass sense (r_h,m/1.305 -> ~21 pc) and is an independent route to the
+# same under-produced tail width. If the Pal 5 phi2 width still comes out low, override:
+#   +simulator.params.priors_local.Pal5.a_progenitor.prior_parameters=[21.0]
+# (or free it over [10, 35] as in the _prog config, where freeing it also proxies the cluster
+# inflation from retained stellar-mass black holes - Weatherford & Bonaca 2025).
+#
+# ---------------------------------------------------------------------------------------------
+# 2. Freed stripping age, t_end ~ U[2, 6] Gyr for ALL THREE streams.
+# ---------------------------------------------------------------------------------------------
+# t_end sets the rewind/integration span and, in the restricted-N-body worker, the mass-loss
+# resolution (tupd = t_end / n_updates). It was identity 4.0 Gyr for all three.
+#
+# Why it is needed on top of the mass fix: M68's width SATURATES in mass. Probes found m_progenitor
+# x8 (4.6e5 Msun) still ~40% short in phi2 with mu_phi2 unmoved, and a_progenitor x3 did nothing;
+# t_end was the only lever that moved all four quantities (t_end = 8 Gyr bracketed them).
+#
+# Why all three rather than per-stream: `local_parameter_names` is derived from the FIRST stream only
+# (stream_agama.py:667-669). In the ad-hoc `_wide` config M68's freed t_end varied per row but was
+# silently NOT an inference variable, because Pal5's stayed identity. Freeing all three promotes it
+# consistently. At composition=global these locals are nuisance-marginalised.
+#
+# Range: [2, 6] Gyr (narrower than the v2 config's [2, 10]). Palau, Wang & Han (2025) infer M68's
+# stream age at 3.04 (+5.63/-0.29) Gyr, peaking well inside this window. The upper end is kept at 6
+# deliberately: a genuinely long t_end pushes the integration back through the Gaia-Enceladus merger,
+# where a static halo of fixed mass AND SHAPE is hard to defend - and halo shape is exactly what is
+# being inferred. Cost also scales roughly linearly with t_end, so U[2,6] averages ~1.0x the fixed-4
+# per-row cost (vs ~1.5x for U[2,10]).
+#
+# ---------------------------------------------------------------------------------------------
+# 3. Rotation-curve rejection prior removed.
+# ---------------------------------------------------------------------------------------------
+# The rotation curve is already an observable (`vcirc_kms` + the mask_vcirc_radii / add_noise_to_vcirc
+# augmentations + attach_observed_vcirc on real data), so the banded Zhou u Huang cut double-counted
+# it and truncated the halo-shape prior. Removing it also makes the analytic compositional prior
+# score exactly correct rather than correct-only-inside-the-accepted-region, and makes prior sampling
+# free (the cut cost ~12.6 potential screens per accepted row).
+#
+# Known cost, measured on the NFW dataset that also dropped the cut: without the screen a sizeable
+# fraction of rows put too few stars in a stream's RA window or land off the observed great circle
+# (NGC3201 ~37% too-few / ~29% off-locus, M68 ~32% / ~27%, vs ~0% for the screened 10k-star set).
+# Those rows are legitimate prior samples and the occupancy channels tell the network they are sparse,
+# but the effective sample size per stream is reduced accordingly.
+defaults:
+  - stream_agama_rnbody_ibata_onedisk_beta3_m200c
+
+name: stream_agama_rnbody
+params:
+  vcirc_rejection: null   # switch the inherited banded Zhou u Huang cut off (section 3 above)
+
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.34e4, 7.0e4]   # B&H18 present-day -> Dehnen+2004 initial
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 6.0]
+    NGC3201:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.93e5, 5.61e5]  # B&H18 present-day -> M_Ini
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 6.0]
+    M68:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.28e5, 5.46e5]  # B&H18 present-day -> M_Ini
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 6.0]

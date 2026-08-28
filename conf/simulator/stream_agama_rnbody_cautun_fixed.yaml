@@ -1,0 +1,147 @@
+# Restricted-N-body streams in the Cautun+(2020) potential, held FIXED.
+#
+# Diagnostic configuration, not a training set: every global potential parameter and every
+# progenitor parameter is an `identity` constant, so the ONLY things that vary between rows are the
+# four present-day phase-space coordinates of each progenitor (`vr`, `r`, `mu_ra_cosdec`, `mu_dec`;
+# `ra`/`dec` stay fixed, as in every config in this project). Drawing n rows therefore gives n
+# realizations of the three streams in one and the same Galaxy, which is what makes them comparable
+# in observation space.
+#
+# ---------------------------------------------------------------------------------------------
+# Where the potential numbers come from.
+# ---------------------------------------------------------------------------------------------
+# `agama/data/Cautun20.ini` (shipped with agama; "best-fit potential from Cautun+(2020), including
+# an adiabatically contracted halo"). That model and this project's Ibata potential are the SAME
+# component family for every BARYONIC component, so those transfer exactly:
+#
+#   component     Cautun20.ini                                   this config
+#   thin disk     Sigma 7.31e8, Rd 2.63, h 0.30                  Sigma_Disk / r_Disk / z_Disk
+#   thick disk    Sigma 1.01e8, Rd 3.80, h 0.90                  Sigma_thick_Disk / r_thick_Disk /
+#                                                                dz_thick_Disk = 0.90 - 0.30
+#   bulge         rho 1.03e11, gamma 0, beta 1.8, Rs 0.075,       bulge_density_norm (the rest of
+#                 q 0.5, rcut 2.1, cutoffStrength 2              BULGE_PARAMS already matches)
+#   HI gas        5.3e7 / Rd 7 / h 0.085 / Rm 4                   GAS_HI_PARAMS (5.31e7, McMillan)
+#   H2 gas        2.20e9 / Rd 1.5 / h 0.045 / Rm 12               GAS_H2_PARAMS (2.18e9, McMillan)
+#
+# Both stellar disks use agama's POSITIVE scaleHeight in the ini, i.e. the isothermal sech^2
+# vertical profile, hence `disk_vertical: isothermal` (not the `exponential` of the Ibata configs).
+#
+# The one component that does NOT transfer is the dark halo: Cautun's is adiabatically contracted
+# and tabulated as a spherical `Multipole`, whereas this project's family is an alpha-beta-gamma
+# `Spheroid`. It was therefore FITTED, holding the baryons above fixed on both sides, by
+# least-squares on the fractional TOTAL circular-velocity residual over R = 2-60 kpc (60 log-spaced
+# radii) — v_circ being the quantity both the stream orbits and the vcirc/vterm observables respond
+# to, and 2-60 kpc covering the three streams (NGC3201 r=4.9, M68 10.3, Pal5 20.6 kpc, apocentres
+# to ~30) plus the reach of the Zhou u Huang rotation-curve grid. Free (rho, a, gamma) with
+# beta = 3, q = 1 (Cautun's halo is spherical), alpha = 1, r_t = 1000 kpc:
+#
+#     rho = 2.7196e7 Msun/kpc^3,  a = 9.8011 kpc,  gamma = 1.0188
+#
+# Quality of that fit against the full Cautun potential:
+#     v_circ, 2-60 kpc:  median |frac dev| 1.28%, max 3.09%
+#                        R =  4.00 kpc  221.11 -> 220.42  (-0.31%)
+#                        R =  8.18 kpc  237.27 -> 232.60  (-1.97%)
+#                        R = 20.00 kpc  208.76 -> 212.96  (+2.01%)
+#                        R = 50.00 kpc  183.80 -> 180.84  (-1.61%)
+#     M(<r):             +3.9% at 10 kpc, +5.4% at 20 kpc, -3.4% at 50 kpc, -15.1% at 100 kpc
+# The 100 kpc deficit is Cautun's CGM Spheroid (r_s = 219 kpc) plus the outer contracted halo, which
+# no truncated two-power profile can follow and which no orbit here reaches — deliberately not fitted.
+#
+# No rotation-curve rejection prior: the potential is a single fixed point, so the cut could only
+# accept every row or none.
+#
+# ---------------------------------------------------------------------------------------------
+# Progenitors: fixed at the CORRECTED values.
+# ---------------------------------------------------------------------------------------------
+# Masses = Baumgardt & Hilker (2018) PRESENT-DAY masses, radii = Plummer scale radii, both as
+# established in stream_agama_rnbody_ibata_m200c_prog.yaml (see that file's header for the full
+# provenance and for why the inherited legacy values were wrong). These are the lower edge of that
+# config's freed priors — the hard floor, since a cluster cannot have started lighter than it is now.
+# t_end = 4.0 Gyr for all three streams.
+defaults:
+  - stream_agama_rnbody
+
+name: stream_agama_rnbody
+params:
+  n_particles: 1000
+  vcirc_rejection: null       # fixed potential => a rejection cut is all-or-nothing (see above)
+
+  # --- Cautun potential configuration ---------------------------------------------------------
+  halo_r_t_kpc: 1000.0        # halo truncation (the fit was performed with this taper in place)
+  gas_disks: true             # fixed McMillan HI + H2 gas disks == Cautun's gas disks
+  thick_disk: true            # Cautun has a thin AND a thick stellar disk
+  disk_vertical: isothermal   # Cautun20.ini uses positive scaleHeight => sech^2
+  bulge_density_norm: 1.03e11 # Cautun bulge amplitude (class default 9.6e10)
+
+  priors_global:
+    # Dark halo: the two-power fit to Cautun's contracted Multipole halo (see header).
+    rho_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [2.719573e7]
+    a_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [9.801140]
+    gamma_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.018819]
+    beta_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [3.0]
+    q_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.0]     # Cautun's halo is spherical
+    # Thin stellar disk (Cautun's values, exactly).
+    Sigma_Disk:
+      type: identity
+      prior_parameters: [7.31e8]
+    r_Disk:
+      type: identity
+      prior_parameters: [2.63]
+    z_Disk:
+      type: identity
+      prior_parameters: [0.30]
+    # Thick stellar disk. dz_thick_Disk is the OFFSET: zd_thick = z_Disk + dz_thick_Disk = 0.90.
+    Sigma_thick_Disk:
+      type: identity
+      prior_parameters: [1.01e8]
+    r_thick_Disk:
+      type: identity
+      prior_parameters: [3.80]
+    dz_thick_Disk:
+      type: identity
+      prior_parameters: [0.60]
+
+  # --- Progenitors fixed; only the four present-day phase-space coordinates vary ---------------
+  # (vr, r, mu_ra_cosdec, mu_dec keep their inherited normal priors = the Gaia/literature
+  # measurement uncertainties; ra, dec stay identity.)
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.34e4]   # B&H18 present-day (was 4.3e3 = the bound remnant only)
+      a_progenitor:
+        type: identity
+        prior_parameters: [21.0]     # Plummer a from r_h,m/1.305 (was 8.43 = a King core radius)
+      t_end:
+        type: identity
+        prior_parameters: [4.0]
+    NGC3201:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.93e5]   # B&H18 present-day (was 6.47e4 = luminous mass)
+      a_progenitor:
+        type: identity
+        prior_parameters: [6.65]     # B&H18 r_h,m/1.305 (was 4.9, S&B17)
+      t_end:
+        type: identity
+        prior_parameters: [4.0]
+    M68:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.28e5]   # B&H18 present-day (was 5.7e4 = Lane+2010 dynamical)
+      a_progenitor:
+        type: identity
+        prior_parameters: [6.4]      # Lane+2010 fitted Plummer a (unchanged)
+      t_end:
+        type: identity
+        prior_parameters: [4.0]

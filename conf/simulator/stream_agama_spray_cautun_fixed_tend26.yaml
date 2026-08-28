@@ -1,0 +1,49 @@
+# Spray streams in the fixed Cautun+(2020) potential, with the STRIPPING AGE FREED for all three
+# streams: t_end ~ U[2, 6] Gyr.
+#
+# Inherits stream_agama_spray_cautun_fixed (which in turn inherits the rnbody Cautun config), so the
+# potential and the progenitor mass/radius are byte-identical to both earlier runs and the only added
+# freedom is t_end.
+#
+# WHY t_end: the rnbody-vs-spray A/B at fixed t_end = 4 Gyr showed the two stripping models produce
+# the SAME arm-length excess (+39 deg for NGC3201, +31 deg for M68 against a realization scatter of
+# ~2 deg), so over-long arms are set by t_end and the potential, not by the stripping physics. Freeing
+# t_end is the direct test of whether any single stripping age in this potential reproduces all three
+# observed arm lengths at once — recall Pal 5 was already consistent at 4 Gyr, so the question is
+# whether NGC3201 and M68 want a shorter age and whether that age is compatible with Pal 5's.
+#
+# Range U[2, 6] Gyr (narrower than the v2 config's U[2, 10]): 2 Gyr is below the value at which the
+# rnbody legacy run left NGC3201/M68 with essentially no in-window stars (3 and 24 of 10^4 at 1.5 Gyr),
+# and 6 Gyr keeps the integration short enough that a static halo of fixed mass and shape stays
+# defensible (a long t_end pushes the rewind back through the Gaia-Enceladus merger). Palau, Wang &
+# Han (2025) put M68's stream age at 3.04 (+5.63/-0.29) Gyr, comfortably inside this window.
+#
+# STRUCTURAL NOTE: `local_parameter_names` is derived from the FIRST stream only
+# (stream_agama.py:667-669), so t_end has to be freed for all three to be promoted consistently —
+# freeing only some would let it vary per row while silently not being an inference variable. Freeing
+# it moves the local set from [vr, r, mu_ra_cosdec, mu_dec] to [t_end, vr, r, mu_ra_cosdec, mu_dec],
+# so this run no longer isolates the four present-day phase-space coordinates: the realization scatter
+# now mixes measurement error with the t_end prior. Compare against the t_end = 4 runs accordingly.
+#
+# CAVEAT specific to spray + free t_end: `m_progenitor` only sets the Jacobi radius here and there is
+# no `m_bound_final`, so spray will happily strip a cluster for 6 Gyr that could not have survived it.
+# A long-t_end row that reproduces the observed arms is therefore NOT by itself evidence that the age
+# is physical — that check needs the restricted-N-body model.
+defaults:
+  - stream_agama_spray_cautun_fixed
+
+name: stream_agama
+params:
+  priors_local:
+    Pal5:
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 6.0]
+    NGC3201:
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 6.0]
+    M68:
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 6.0]
