@@ -591,11 +591,12 @@ def _protoplan_flow_matching(cfg):
         subnet_kwargs = {}
         if "dt_width" in hp and "dt_num_layers" in hp:
             subnet_kwargs["widths"] = [int(hp["dt_width"])] * int(hp["dt_num_layers"])
-        for key, cast in (("dt_num_heads", int), ("dt_expansion_factor", float),
-                          ("dt_time_embedding_dim", int), ("dt_dropout", float)):
+        for key, name, cast in (("dt_num_heads", "num_heads", int),
+                                ("dt_expansion_factor", "expansion_factor", float),
+                                ("dt_time_embedding_dim", "time_embedding_dim", int),
+                                ("dt_dropout", "dropout", float)):
             if key in hp:
-                subnet_kwargs[key[3:] if key != "dt_time_embedding_dim" else "time_embedding_dim"] \
-                    = cast(hp[key])
+                subnet_kwargs[name] = cast(hp[key])
     else:
         subnet_kwargs = {
             "widths": [int(hp["inference_mlp_width"])] * int(hp["inference_mlp_depth"]),

@@ -75,7 +75,7 @@ from hydrabflow.simulators._protoplan_spec import DIST_FID_PC
 
 #: Small reference tables shipped with the repo: the McClure (2009) extinction law and the real
 #: disks' SED error bars the wavelength-binned SED noise is calibrated from.  Resolved from
-#: `__file__`, not the cwd, and overridable per run (`extinction_law_path` / `sed_data_prefix`).
+#: `__file__`, not the cwd.
 ASSETS_DIR = pathlib.Path(__file__).resolve().parents[3] / "assets" / "protoplan"
 DEFAULT_EXTINCTION_LAW_PATH = ASSETS_DIR / "extinction_law_mcclure09.txt"
 DEFAULT_SED_DATA_PREFIX = str(ASSETS_DIR / "seddata_")
@@ -153,9 +153,6 @@ class AugmentationsClass:
         prior over all orientations (default).  Pass (θ, θ) to fix a single
         angle for the whole batch.  The sampled angles are stored in the
         returned batch under the key 'rot_deg' as a (N,) array.
-    extinction_corr : array-like of shape (C,) or None
-        Multiplicative extinction correction factor per channel.
-        Pass None to skip (identity correction).
     jwst_channel : int
         Index of the JWST channel in the C axis of batch['im_jy'] (default 0).
     jwst_lam_um : float
@@ -182,9 +179,18 @@ class AugmentationsClass:
         [-1.5, +1.5], vs. 106x106 for the notebook's fixed 0.2" beam at the same
         convention) — pass an explicit float to trade fidelity for a smaller/cheaper grid.
     alma_beam_fwhm_maj_range : sequence of (lo, hi), one per ALMA channel
-        Uniform prior on the beam major-axis FWHM [arcsec].
-    alma_beam_axis_ratio_range : (lo, hi)
-        Uniform prior on minor/major, so the minor axis is always ≤ major.
+        Uniform prior on the beam major-axis FWHM [arcsec].  Ignored when
+        `alma_beam_theta_range` is given.
+    alma_beam_theta_range : sequence of (lo, hi), one per ALMA channel, or None
+        Uniform prior on the geometric-mean FWHM θ = sqrt(maj·min) [arcsec].  Given, it
+        replaces `alma_beam_fwhm_maj_range`: maj = θ/sqrt(q), min = θ·sqrt(q).  This is
+        the parametrisation the measured beams are tight in — an array configuration sets
+        the resolution θ, while the axis ratio q is the uv-coverage's shape — so a band's
+        box can be narrowed without also constraining its elongation.  None (default)
+        keeps the major-axis parametrisation, so archived run configs reload unchanged.
+    alma_beam_axis_ratio_range : (lo, hi), or one (lo, hi) per ALMA channel
+        Uniform prior on minor/major, so the minor axis is always ≤ major.  A single pair
+        is broadcast to every band.
     alma_beam_pa_deg_range : (lo, hi)
         Uniform prior on the beam position angle [deg], measured CCW from
         the image row axis.
@@ -280,7 +286,6 @@ class AugmentationsClass:
         # Either a fixed magnitude (float) or a [min, max] range, in which case one A_V is
         # drawn uniformly *per disk* in the batch.
         av: float | tuple[float, float] = 4.0,
-        extinction_corr: bool = True,
         # ── JWST ──────────────────────────────────────────────────────────
         jwst_channel: int = 0,
         jwst_lam_um: float = 3.9,
@@ -298,7 +303,12 @@ class AugmentationsClass:
         # (450 / 880 / 1300 um).  See the class constant for provenance.
         alma_beam_fwhm_maj_range: tuple[tuple[float, float], ...] =
             DEFAULT_ALMA_BEAM_FWHM_MAJ_RANGE,
-        alma_beam_axis_ratio_range: tuple[float, float] = DEFAULT_ALMA_BEAM_AXIS_RATIO_RANGE,
+        # Per-channel prior on the *geometric-mean* FWHM theta = sqrt(maj * min) [arcsec].
+        # When given it replaces `alma_beam_fwhm_maj_range`: maj = theta / sqrt(q),
+        # min = theta * sqrt(q).  None keeps the major-axis parametrisation.
+        alma_beam_theta_range: tuple[tuple[float, float], ...] | None = None,
+        # Either one (lo, hi) shared by every band, or one pair per band.
+        alma_beam_axis_ratio_range = DEFAULT_ALMA_BEAM_AXIS_RATIO_RANGE,
         # Beam position angle is unconstrained on the sky.
         alma_beam_pa_deg_range: tuple[float, float] = (0.0, 180.0),
         alma_noise_jy_beam_range: tuple[tuple[float, float], ...] =
@@ -340,12 +350,6 @@ class AugmentationsClass:
         obs_half_extent: float = 1.5,
         # ── Reproducible random state ─────────────────────────────────────
         seed: int = 42,
-        # ── Reference tables ──────────────────────────────────────────────
-        # Paths rather than module constants so a run can point at its own tables; `sed_disks`
-        # is read only when `sed_sigma_jy` is None.
-        extinction_law_path=None,
-        sed_data_prefix=None,
-        sed_disks=DEFAULT_SED_DISKS,
     ) -> None:
 
         # ── Single random generator (all noise draws flow through here) ───
@@ -363,7 +367,6 @@ class AugmentationsClass:
         # ── Misc observation settings ─────────────────────────────────────
         self.rot_range_deg = (float(rot_range_deg[0]), float(rot_range_deg[1]))
         self.av = (tuple(map(float, av)) if isinstance(av, (list, tuple)) else float(av))
-        self.extinction_corr = extinction_corr
 
         # ── JWST settings ─────────────────────────────────────────────────
         self.has_jwst           = bool(has_jwst)
@@ -380,12 +383,27 @@ class AugmentationsClass:
         self.alma_channels       = list(alma_channels)
         self.alma_beams          = list(alma_beams)         # [(maj, min, pa), …]
         self.alma_noises_jy_beam = list(alma_noises_jy_beam)
-        if alma_obs_px_arcsec is None:
-            alma_obs_px_arcsec = self.default_alma_obs_px_arcsec(alma_beam_fwhm_maj_range)
-        self.alma_obs_px_arcsec  = float(alma_obs_px_arcsec)
         self.alma_beam_fwhm_maj_range   = [tuple(map(float, r))
                                            for r in alma_beam_fwhm_maj_range]
-        self.alma_beam_axis_ratio_range = tuple(map(float, alma_beam_axis_ratio_range))
+        self.alma_beam_theta_range = (
+            None if alma_beam_theta_range is None
+            else [tuple(map(float, r)) for r in alma_beam_theta_range])
+        # One (lo, hi) is shorthand for "the same range in every band"; a list of pairs sets
+        # it per band, which the measured elongations need (they differ band to band).
+        self.alma_beam_axis_ratio_range = (
+            [tuple(map(float, r)) for r in alma_beam_axis_ratio_range]
+            if np.ndim(alma_beam_axis_ratio_range) == 2
+            else [tuple(map(float, alma_beam_axis_ratio_range))] * len(self.alma_channels))
+        # The major-axis span the prior can actually reach, whichever parametrisation is in
+        # use.  Both the convolution kernel sizes below and the observed pixel scale derive
+        # from it, and both fail *silently* when it is wrong (a truncated beam / the wrong
+        # grid), so it is computed once here rather than read off the raw knob.
+        self._maj_lo_hi = self.effective_maj_range(
+            self.alma_beam_fwhm_maj_range, self.alma_beam_theta_range,
+            self.alma_beam_axis_ratio_range)
+        if alma_obs_px_arcsec is None:
+            alma_obs_px_arcsec = self.default_alma_obs_px_arcsec(self._maj_lo_hi)
+        self.alma_obs_px_arcsec  = float(alma_obs_px_arcsec)
         self.alma_beam_pa_deg_range     = tuple(map(float, alma_beam_pa_deg_range))
         self.alma_noise_jy_beam_range   = [tuple(map(float, r))
                                            for r in alma_noise_jy_beam_range]
@@ -405,24 +423,32 @@ class AugmentationsClass:
                 f"alma_noise_jy_beam_range has {len(self.alma_noise_jy_beam_range)} "
                 f"entries but there are {n_ch} ALMA channels"
             )
+        if len(self.alma_beam_axis_ratio_range) != n_ch:
+            raise ValueError(
+                f"alma_beam_axis_ratio_range has {len(self.alma_beam_axis_ratio_range)} "
+                f"entries but there are {n_ch} ALMA channels"
+            )
+        if (self.alma_beam_theta_range is not None
+                and len(self.alma_beam_theta_range) != n_ch):
+            raise ValueError(
+                f"alma_beam_theta_range has {len(self.alma_beam_theta_range)} "
+                f"entries but there are {n_ch} ALMA channels"
+            )
 
-        # ── Kernel caches (keyed by n_pix so the class handles any image size)
+        # ── PSF cache (keyed by n_pix so the class handles any image size)
         self._jwst_psf_cache: dict[int, np.ndarray] = {}
-        self._alma_kernel_cache: dict[tuple, np.ndarray] = {}
 
-        # ── Precompute raw stpsf PSF and ALMA beam parameters (done once) ─
+        # ── Precompute the raw stpsf PSF (done once) ──────────────────────
         # Skip the (expensive) stpsf calculation entirely for a JWST-less instance —
         # it would never be read, since apply_psf_and_convolve/apply_resampling only
         # touch it when has_jwst is True.
         if self.has_jwst:
             self._init_jwst_psf(jwst_lam_um)
-        self._init_alma_params()
 
         # Absolute, via paths.py: this used to be a bare relative path, so the class
         # silently required the repo root as the working directory.
         ext_lam, ext_loav, ext_hiav = np.loadtxt(
-            DEFAULT_EXTINCTION_LAW_PATH if extinction_law_path is None else extinction_law_path,
-            skiprows=21).T # um, alam/ak for low ak, alam/ak for high ak
+            DEFAULT_EXTINCTION_LAW_PATH, skiprows=21).T # um, alam/ak for low ak, alam/ak for high ak
         # Per-magnitude-of-A_V exponent: A_lam = (av / 7.75) * ext_hiav and the correction is
         # 10**(-A_lam/2.5), so factor `av` out and raise to it later.  That is what lets A_V vary
         # per disk without re-interpolating the 1532-point table on every batch.
@@ -439,9 +465,8 @@ class AugmentationsClass:
         )
 
 
-        self.disks    = list(sed_disks)
-        self.sed_path = (DEFAULT_SED_DATA_PREFIX if sed_data_prefix is None
-                         else str(sed_data_prefix))
+        self.disks    = list(DEFAULT_SED_DISKS)
+        self.sed_path = DEFAULT_SED_DATA_PREFIX
         self.bin_edges = np.array([
             5.0400001e-01, 6.3300002e-01, 9.9500000e-01,
             1.4390000e+00, 1.9100001e+00, 2.8850000e+00,
@@ -468,11 +493,9 @@ class AugmentationsClass:
         _jwst_ax = jnp.asarray(self._obs_axis(E, self.jwst_obs_px_arcsec))
         self._jwst_obs_axes: tuple[jnp.ndarray, jnp.ndarray] = (_jwst_ax, _jwst_ax)
 
-        # All ALMA channels now share one fixed observed pixel scale.
+        # All ALMA channels share one fixed observed pixel scale.
         _alma_ax = jnp.asarray(self._obs_axis(E, self.alma_obs_px_arcsec))
-        self._alma_obs_axes: list[tuple[jnp.ndarray, jnp.ndarray]] = [
-            (_alma_ax, _alma_ax) for _ in self.alma_channels
-        ]
+        self._alma_obs_axis: tuple[jnp.ndarray, jnp.ndarray] = (_alma_ax, _alma_ax)
         self.n_alma_obs_px = int(_alma_ax.shape[0])
 
         # ── Convolution kernel sizes, from the widest beam in the prior ───────
@@ -482,7 +505,7 @@ class AugmentationsClass:
         # default=0.0 -> ksize floors at _odd_kernel_size's minimum of 3: an ALMA-less
         # instance (alma_channels=(), e.g. the per-modality JWST-only MCMC forward
         # model) never reads these, but __init__ still needs them to not crash.
-        max_fwhm_maj = max((r[1] for r in self.alma_beam_fwhm_maj_range), default=0.0)
+        max_fwhm_maj = max((r[1] for r in self._maj_lo_hi), default=0.0)
         self._alma_beam_ksize = self._odd_kernel_size(
             8.0 * max_fwhm_maj / FWHM_PER_SIGMA / self.px_arcsec_mod
         )
@@ -500,8 +523,6 @@ class AugmentationsClass:
         self._ext_exp_sed = None  # log10 extinction correction per mag, per SED wavelength
         self._log_sig_mu            = None  # SED noise: mean log10(sigma) per wavelength bin
         self._log_sig_std           = None  # SED noise: std  log10(sigma) per wavelength bin
-        # All ALMA channels now share one fixed observed pixel scale by construction.
-        self._alma_axes_uniform = True
 
         # Anti-aliasing box filters, keyed by (n_model_px, obs_px) — tiny and reusable.
         self._boxcar_cache: dict[tuple, jnp.ndarray] = {}
@@ -520,6 +541,22 @@ class AugmentationsClass:
         half = self.fov_arcsec / 2.0
         x = jnp.linspace(-half, half, n_pix, endpoint=True)
         return x, x.copy()
+
+    @staticmethod
+    def effective_maj_range(alma_beam_fwhm_maj_range, alma_beam_theta_range,
+                            alma_beam_axis_ratio_range) -> list[tuple[float, float]]:
+        """
+        Per band, the (lo, hi) major-axis FWHM the beam prior can actually draw [arcsec].
+
+        With the theta parametrisation the major axis is a *derived* quantity — maj =
+        theta / sqrt(q) — so its extremes pair the extreme theta with the opposite extreme
+        of the axis ratio.  `alma_beam_axis_ratio_range` must already be per band here.
+        """
+        if alma_beam_theta_range is None:
+            return [tuple(map(float, r)) for r in alma_beam_fwhm_maj_range]
+        return [(t_lo / np.sqrt(q_hi), t_hi / np.sqrt(q_lo))
+                for (t_lo, t_hi), (q_lo, q_hi)
+                in zip(alma_beam_theta_range, alma_beam_axis_ratio_range)]
 
     @staticmethod
     def default_alma_obs_px_arcsec(alma_beam_fwhm_maj_range) -> float:
@@ -549,7 +586,7 @@ class AugmentationsClass:
         return np.linspace(-half_extent, half_extent, n, endpoint=True)
 
     @staticmethod
-    def _odd_kernel_size(width_px: float, cap: int | None = None) -> int:
+    def _odd_kernel_size(width_px: float) -> int:
         """
         Smallest ODD kernel size >= width_px.
 
@@ -560,10 +597,7 @@ class AugmentationsClass:
         k = int(np.ceil(width_px))
         if k % 2 == 0:
             k += 1
-        k = max(k, 3)
-        if cap is not None:
-            k = min(k, cap if cap % 2 == 1 else cap - 1)
-        return k
+        return max(k, 3)
 
     def _boxcar_2d(self, n_model_px: int, obs_px_arcsec: float) -> jnp.ndarray:
         """
@@ -667,24 +701,6 @@ class AugmentationsClass:
 
     # ── ALMA beam ─────────────────────────────────────────────────────────
 
-    def _init_alma_params(self) -> None:
-        """
-        Pre-compute beam σ values (in model pixels) and beam solid angles for
-        every ALMA channel of the *fixed* (non-randomized) setup.
-
-        Only used when `randomize_alma_setup=False`, i.e. when re-simulating one specific
-        source with its measured beams.  Note σ = FWHM / 2.3548 here; the original code
-        used FWHM / 2, which made every beam 17.7% too wide.
-        """
-        self._alma_params: list[tuple[float, float, float, float]] = []
-        for maj, min_, pa in self.alma_beams:
-            sigma_maj_px = maj  / self.px_arcsec / FWHM_PER_SIGMA
-            sigma_min_px = min_ / self.px_arcsec / FWHM_PER_SIGMA
-            self._alma_params.append(
-                (sigma_maj_px, sigma_min_px, np.deg2rad(pa),
-                 self.beam_area_sr(maj, min_))
-            )
-
     @staticmethod
     def beam_area_sr(fwhm_maj_arcsec, fwhm_min_arcsec):
         """Solid angle [sr] of an elliptical Gaussian beam given its FWHMs [arcsec]."""
@@ -763,10 +779,19 @@ class AugmentationsClass:
             maj, ratio = np.empty(n_ch), np.empty(n_ch)
             pa, rms = np.empty(n_ch), np.empty(n_ch)
             for c in range(n_ch):
-                lo, hi = self.alma_beam_fwhm_maj_range[c]
-                maj[c] = lo + u[g, c, 0] * (hi - lo)
-                r_lo, r_hi = self.alma_beam_axis_ratio_range
+                r_lo, r_hi = self.alma_beam_axis_ratio_range[c]
                 ratio[c] = r_lo + u[g, c, 1] * (r_hi - r_lo)
+                if self.alma_beam_theta_range is not None:
+                    # Resolution and elongation are drawn independently: theta =
+                    # sqrt(maj * min) is what the array configuration sets, q = min/maj
+                    # is the uv-coverage's shape.  Same u draw, so the PRNG stream is
+                    # identical in shape to the major-axis parametrisation.
+                    t_lo, t_hi = self.alma_beam_theta_range[c]
+                    theta = t_lo + u[g, c, 0] * (t_hi - t_lo)
+                    maj[c] = theta / np.sqrt(ratio[c])
+                else:
+                    lo, hi = self.alma_beam_fwhm_maj_range[c]
+                    maj[c] = lo + u[g, c, 0] * (hi - lo)
                 p_lo, p_hi = self.alma_beam_pa_deg_range
                 pa[c] = p_lo + u[g, c, 2] * (p_hi - p_lo)
                 # Noise spans decades, so sample log-uniformly.
@@ -783,33 +808,6 @@ class AugmentationsClass:
                 "sigma_mjy_sr": rms / self.beam_area_sr(maj, mn) / 1.0e6,
             })
         return groups
-
-    def _get_alma_kernel(self, ch_idx: int, n_pix: int) -> np.ndarray:
-        """
-        Normalised Gaussian beam kernel for ALMA channel `ch_idx` of the *fixed* setup.
-
-        Uses the compact odd kernel size derived in `__init__` rather than the full image
-        size: 8σ is accurate to well below a part in 10^6 and, being odd, introduces no
-        half-pixel shift under fftconvolve(mode="same").
-
-        Cached by (ch_idx, n_pix).  Only reachable when `randomize_alma_setup=False`;
-        the randomized path builds kernels analytically in `_gaussian_beam_kernel`.
-        """
-        key = (ch_idx, n_pix)
-        if key in self._alma_kernel_cache:
-            return self._alma_kernel_cache[key]
-
-        sigma_maj, sigma_min, pa_rad, _ = self._alma_params[ch_idx]
-        k = self._odd_kernel_size(8.0 * sigma_maj, cap=2 * n_pix - 1)
-        kernel = np.asarray(
-            self._gaussian_beam_kernel(
-                jnp.float32(sigma_maj), jnp.float32(sigma_min), jnp.float32(pa_rad), k
-            ),
-            dtype=np.float64,
-        )
-
-        self._alma_kernel_cache[key] = kernel
-        return kernel
 
     # ── Vectorised resampling ──────────────────────────────────────────────
 
@@ -1283,6 +1281,11 @@ class AugmentationsClass:
             ).astype(jnp.float32)
         else:
             flip = None
+            # No flip still *is* a parity, and `sky_flip` is a geometry condition the adapter
+            # reads unconditionally (`_protoplan_spec.GEOMETRY_CONDITION_KEYS`). Recording +1
+            # keeps a `random_flip=False` batch adapter-readable; leaving the key out made a
+            # fixed-parity reference population impossible to embed.
+            batch["sky_flip"] = jnp.ones(N, dtype=jnp.float32)
 
         # ── Rotate all N images and all C channels in one JIT-compiled call
         images = self._rotate_batch_jit(images, angles_rad, flip)
@@ -1335,8 +1338,8 @@ class AugmentationsClass:
             )
 
         # ALMA — one JIT call for all channels (they share one fixed obs pixel scale)
-        if self._alma_axes_uniform and self.alma_channels:
-            tx, ty = self._alma_obs_axes[0]
+        if self.alma_channels:
+            tx, ty = self._alma_obs_axis
             alma_imgs = images[..., self.alma_channels]      # (N, H, W, n_alma)
             if self.antialias_resampling:
                 box = self._boxcar_2d(H, self.alma_obs_px_arcsec)
@@ -1351,12 +1354,6 @@ class AugmentationsClass:
             )
             for i in range(len(self.alma_channels)):
                 batch[f"im_jy_alma_{i}"] = alma_resampled[..., i:i+1]
-        else:
-            for i, ch in enumerate(self.alma_channels):
-                tx, ty = self._alma_obs_axes[i]
-                batch[f"im_jy_alma_{i}"] = self._batch_resample_jit(
-                    images[..., ch, None], src_x, src_y, tx, ty, fill_value=0.0
-                )
 
         batch.pop("im_jy", None)
         return batch
@@ -1538,8 +1535,9 @@ class AugmentationsClass:
 #: static methods' closure-free precomputation and match the declared defaults.
 _TUPLE_ARGS = (
     "rot_range_deg", "jwst_noise_mjy_sr", "alma_channels", "alma_beam_fwhm_maj_range",
-    "alma_beam_axis_ratio_range", "alma_beam_pa_deg_range", "alma_noise_jy_beam_range",
-    "alma_beams", "alma_noises_jy_beam", "sed_disks",
+    "alma_beam_theta_range", "alma_beam_axis_ratio_range", "alma_beam_pa_deg_range",
+    "alma_noise_jy_beam_range",
+    "alma_beams", "alma_noises_jy_beam",
 )
 
 
