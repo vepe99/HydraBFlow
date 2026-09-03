@@ -59,15 +59,27 @@ def build(disk: str, overrides=("experiment=protoplan",)) -> tuple[dict, list[st
     for p in cfg.adapter.inference_variables:
         batch[p] = np.zeros((1, 1), dtype=np.float32)
 
-    # One row per combination of the discrete indicators the adapter conditions on: a real disk
+    # One row per combination of the *discrete* indicators the adapter conditions on: a real disk
     # comes with none of them, so every branch is sampled and read as its own conditional
     # posterior. `[has_cavity]` gives the original two rows, 0 then 1; `[sil_id, has_cavity]`
     # gives four, in `itertools.product` order -- (0,0), (0,1), (1,0), (1,1).
-    discrete = list(cfg.adapter.inference_conditions)
+    #
+    # A continuous condition (`av`) is not enumerated: 0/1 are not extinctions, and writing them
+    # would only look harmless while the group is masked. It gets the disk's assumed A_V from
+    # `DISKS` instead -- the same number every notebook echoes -- so an unmasked run conditions on
+    # something meaningful rather than on nonsense.
+    conditions = list(cfg.adapter.inference_conditions)
+    discrete = [c for c in conditions if c in R.spec.DISCRETE_CONDITION_KEYS]
     combos = list(itertools.product([0.0, 1.0], repeat=len(discrete)))
     data = {k: np.concatenate([v] * len(combos), axis=0) for k, v in batch.items()}
     for i, name in enumerate(discrete):
         data[name] = np.array([c[i] for c in combos], dtype=np.float32)
+    for name in conditions:
+        if name not in discrete:
+            if name != R.spec.AV_CONDITION_KEY:
+                raise ValueError(f"no real-disk value known for the condition {name!r}")
+            data[name] = np.full(len(combos), R.av_ref(R.disk_config(disk)["av"]),
+                                 dtype=np.float32)
     return data, [BRANCH_NAME[j] for j in missing]
 
 

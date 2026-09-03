@@ -1,0 +1,47 @@
+# @package _global_
+# `experiment=protoplan_mask_discrete_av` with the ALMA beam prior re-scoped per band, in the
+# parametrisation the measurements are actually tight in: theta = sqrt(BMAJ * BMIN) (what the
+# array configuration sets) and q = BMIN / BMAJ (what the uv coverage's shape sets), drawn
+# independently, with maj = theta / sqrt(q) and min = theta * sqrt(q).
+#
+# The old ranges came from `assets/protoplan/obs_setup_measurements.json` -- four disks, one
+# axis-ratio range shared by all bands, and a B7 major-axis span of a factor 4. The new ALMA maps
+# in `assets/protoplan/extracted_fits/` are much finer, and two of their beams fall *outside* that
+# prior (hvtauc B7 0.0999", hvtauc B9 0.1238"), so a model trained on it extrapolates on exactly
+# the disks it is for.
+#
+# Measured (theta, q), all inside the boxes below:
+#   B9  oph 0.123/0.59   hvtau 0.102/0.68
+#   B7  oph 0.183/0.64   hvtau 0.083/0.70   <- a factor ~2 in resolution: two array configurations
+#   B6  oph 0.169/0.59   hvtau 0.183/0.76
+# B6/B9 tighten genuinely; B7 stays wide *on purpose* and leans on the per-band beam conditioning
+# already routed into its CNN (`_protoplan_spec.summary_condition_routing`) to tell the two
+# configurations apart, which is the right combination here.
+defaults:
+  - protoplan_mask_discrete_av
+
+run_name: protoplan_npe_newbeam
+
+augmentation:
+  params:
+    # Per band, in the channel order the rest of the block uses: 450 (B9) / 880 (B7) / 1300 um (B6).
+    # `alma_beam_fwhm_maj_range`, inherited from `protoplan.yaml`, goes inert under this.
+    alma_beam_theta_range:      [[0.088, 0.140], [0.070, 0.205], [0.145, 0.205]]
+    alma_beam_axis_ratio_range: [[0.54,  0.73],  [0.58,  0.78],  [0.53,  0.82]]
+    # Jy/beam, log-uniform. The measured per-band noise with ~15-20% margin.
+    alma_noise_jy_beam_range:   [[4.0e-4, 7.0e-4], [5.0e-5, 1.1e-4], [1.0e-5, 1.0e-4]]
+    jwst_noise_mjy_sr: [0.5, 1.0]
+
+    # PINNED, not null. Derived it would be min(maj)/7 = (0.070/sqrt(0.78))/7 = 0.01132" -> a
+    # 266x266 grid per band, 2.7x the pixels of the runs this one is compared against. 0.018619"
+    # is those runs' grid (162x162) and still samples the finest B7 beam at 4.3 px/FWHM.
+    alma_obs_px_arcsec: 0.018619
+
+# The asinh knees track the noise (see `_protoplan_spec._asinh_images`): the geometric mean of
+# `rms_jy_beam / beam_area_sr / 1e6` over the prior above, and sqrt(lo*hi) for JWST. Was
+# 0.7636 / [1325.9, 105.6, 29.2] under the old, wider prior. Sanity check: the B9 knee sits next to
+# oph163131's measured B9 rms of 1398 MJy/sr.
+simulator:
+  params:
+    asinh_sigma_jwst: 0.7071
+    asinh_sigma_alma: [1556.0, 161.0, 39.0]

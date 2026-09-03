@@ -147,9 +147,19 @@ DISKS = {
         jwst_attr="g395",
         dist_pc=spec.DIST_FID_PC,
         av=4.0,
-        sigma_jwst=0.26031930302860234,   # JSON bg_std_mjy_sr -- see the caveat above
+        sigma_jwst=0.8,                   # assumed floor, not measured -- see the caveat above
         rot_band="B6",
-        alma_channels=(0, 2),             # B9 450 and B6 1300; no B7 measurement exists
+        alma_channels=(0, 1, 2),          # B7 arrived with assets/protoplan/extracted_fits/
+    ),
+    "hvtauc": dict(
+        pickle="imdata_hvtauc.pkl",
+        sed="seddata_hvtauc.txt",
+        jwst_attr="g395",
+        dist_pc=spec.DIST_FID_PC,
+        av=4.0,
+        sigma_jwst=0.8,                   # assumed floor; the annulus reads 2.2 off the envelope
+        rot_band="B6",
+        alma_channels=(0, 1, 2),
     ),
     "saucer": dict(
         pickle="imdata_saucer.pkl",
@@ -256,6 +266,37 @@ def present_image_keys(disk: str) -> list[str]:
 # ──────────────────────────────────────────────────────────────────────────
 # The measured observing setup
 # ──────────────────────────────────────────────────────────────────────────
+def _obs_setup_from_npz(disk: str, cfg: dict):
+    """
+    `(setup, rot_deg)` out of `realimg_<disk>.npz`, when it was vendored from the FITS.
+
+    The FITS route measures the beam, the noise and the position angle itself and stores them
+    beside the images (`_vendor_fits_images.py`), so the disk carries its own setup and there is
+    nothing to keep in step with `obs_setup_measurements.json`.  Returns None for a disk vendored
+    the old way, which falls through to the JSON.
+    """
+    path = ASSETS_DIR / f"realimg_{disk}.npz"
+    if not path.exists():
+        return None
+    z = np.load(path)
+    if not any(k.endswith("_beam") for k in z.files):
+        return None
+
+    setup, theta_deg = {}, {}
+    for j in cfg["alma_channels"]:
+        if f"alma_{j}_beam" not in z.files:
+            raise RuntimeError(
+                f"{disk}: the registry declares ALMA channel {j} but {path.name} has no beam for "
+                f"it -- one of the two is stale")
+        maj, mn, bpa = (float(v) for v in z[f"alma_{j}_beam"])
+        band = ALMA_CHANNELS[j][0]
+        setup[j] = dict(band=band, fwhm_maj=maj, fwhm_min=mn, bpa_deg=bpa,
+                        sigma_mjy_sr=float(z[f"alma_{j}_bkg"][1]))
+        theta_deg[band] = float(z[f"alma_{j}_theta_deg"])
+    band = cfg["rot_band"] if cfg["rot_band"] in theta_deg else setup[max(setup)]["band"]
+    return setup, theta_deg[band]
+
+
 def load_obs_setup(disk: str, path=OBS_SETUP_JSON) -> tuple[dict, float]:
     """
     `(setup, rot_deg)` for one disk, from `assets/protoplan/obs_setup_measurements.json`.
@@ -272,6 +313,9 @@ def load_obs_setup(disk: str, path=OBS_SETUP_JSON) -> tuple[dict, float]:
     unchanged.
     """
     cfg = disk_config(disk)
+    from_npz = _obs_setup_from_npz(disk, cfg)
+    if from_npz is not None:
+        return from_npz
     with open(path) as fh:
         meas = json.load(fh)
 
@@ -314,6 +358,13 @@ def jwst_footprint_gap(disk: str, path=OBS_SETUP_JSON) -> float:
     deflated by roughly this fraction -- about 0.06 dex at 13%.  Reported rather than corrected: a
     threshold that removed them would bias each band by its own SNR instead, which is worse.
     """
+    vendored = ASSETS_DIR / f"realimg_{disk}.npz"
+    if vendored.exists():
+        z = np.load(vendored)
+        if "jwst_observed" in z.files:
+            # The FITS route knows this exactly, per pixel, instead of re-deriving it from a
+            # zero-fill: `observed` is False only where the IFU footprint never reached.
+            return float(np.mean(~z["jwst_observed"]))
     with open(path) as fh:
         rows = json.load(fh)["jwst_per_disk"]
     for row in rows:
@@ -360,8 +411,15 @@ def randomized_alma_obs_px(cfg) -> float:
     params = cfg.augmentation.params
     if params.get("alma_obs_px_arcsec") is not None:
         return float(params.alma_obs_px_arcsec)
+    theta = params.get("alma_beam_theta_range")
+    ratio = params.alma_beam_axis_ratio_range
+    n_ch = len(params.alma_beam_fwhm_maj_range)
     return AugmentationsClass.default_alma_obs_px_arcsec(
-        [tuple(r) for r in params.alma_beam_fwhm_maj_range])
+        AugmentationsClass.effective_maj_range(
+            [tuple(r) for r in params.alma_beam_fwhm_maj_range],
+            None if theta is None else [tuple(r) for r in theta],
+            [tuple(r) for r in ratio] if np.ndim(ratio) == 2
+            else [tuple(ratio)] * n_ch))
 
 
 def check_conditions_in_prior(setup: dict, sigma_jwst: float) -> bool:
@@ -591,6 +649,26 @@ def configured_augmentation(cfg, disk: str | None = None, **overrides) -> Augmen
     return AugmentationsClass(**params)
 
 
+def measured_beams_noises(setup: dict) -> tuple[list[tuple[float, float, float]], list[float]]:
+    """
+    `(alma_beams, alma_noises_jy_beam)` for `AugmentationsClass` from one disk's measured setup.
+
+    A channel this disk lacks still needs *some* beam for the forward model to produce all
+    `spec.N_ALMA` channels, so it is given the widest measured one and every output of it is
+    dropped downstream.  Split out of `fixed_setup_augmentation` because `summary_neighbours.py`
+    needs the same beams on a *different* pixel grid -- the one the network was trained on -- so it
+    cannot reuse the whole augmentation.
+    """
+    widest = max(setup.values(), key=lambda s: s["fwhm_maj"])
+    beams, noises = [], []
+    for j in range(spec.N_ALMA):
+        s = setup.get(j, widest)
+        beams.append((s["fwhm_maj"], s["fwhm_min"], s["bpa_deg"]))
+        noises.append(s["sigma_mjy_sr"] * 1e6
+                      * AugmentationsClass.beam_area_sr(s["fwhm_maj"], s["fwhm_min"]))
+    return beams, noises
+
+
 def fixed_setup_augmentation(disk: str, n_model_px: int, random_rotation: bool = False,
                              av: float | tuple[float, float] | None = None,
                              **overrides) -> AugmentationsClass:
@@ -614,13 +692,7 @@ def fixed_setup_augmentation(disk: str, n_model_px: int, random_rotation: bool =
     setup, rot_deg = load_obs_setup(disk)
     px = alma_obs_px(setup)
 
-    widest = max(setup.values(), key=lambda s: s["fwhm_maj"])
-    beams, noises = [], []
-    for j in range(spec.N_ALMA):
-        s = setup.get(j, widest)          # placeholder for a missing channel; outputs are dropped
-        beams.append((s["fwhm_maj"], s["fwhm_min"], s["bpa_deg"]))
-        noises.append(s["sigma_mjy_sr"] * 1e6
-                      * AugmentationsClass.beam_area_sr(s["fwhm_maj"], s["fwhm_min"]))
+    beams, noises = measured_beams_noises(setup)
 
     kwargs = dict(
         px_arcsec_mod=spec.FOV_ARCSEC_MOD / (n_model_px - 1),

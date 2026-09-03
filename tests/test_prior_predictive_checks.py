@@ -141,9 +141,20 @@ def test_registry_and_measurements_json_agree_on_every_disk():
         assert np.isfinite(rot_deg)
 
 
-def test_oph163131_has_no_b7_anywhere():
-    assert rd.missing_alma_channels("oph163131") == (1,)
-    assert "im_jy_alma_1" not in rd.present_image_keys("oph163131")
+def test_oph163131_gained_its_b7_and_hvtauc_is_registered():
+    """
+    oph163131's missing B7 was a standing special case until `extracted_fits/` supplied one.
+
+    The registry and the vendored images have to agree about that, in both directions: a channel
+    declared here but absent from the `.npz` is a stale registry, and one present but undeclared is
+    a band silently dropped from every check.
+    """
+    for disk in ["oph163131", "hvtauc"]:
+        assert rd.DISKS[disk]["alma_channels"] == (0, 1, 2)
+        assert rd.missing_alma_channels(disk) == ()
+        assert set(rd.present_image_keys(disk)) >= {f"im_jy_alma_{j}" for j in range(3)}
+        setup, rot_deg = rd.load_obs_setup(disk)          # raises on a registry/data mismatch
+        assert set(setup) == {0, 1, 2} and np.isfinite(rot_deg)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -211,3 +222,182 @@ def test_extinction_is_negligible_at_alma_wavelengths_over_any_av():
         assert abs(np.log10(rd.extinction_ratio(lam, 1.0, av_ref=5.0))) < 1e-3, lam
     # The optical, by contrast, swings by more than a decade over the same range.
     assert np.log10(rd.extinction_ratio(0.504, 1.0, av_ref=5.0)) > 1.0
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# The FITS reader (`_fitsdisk`) -- skipped when `extracted_fits/` is absent
+# ──────────────────────────────────────────────────────────────────────────
+fd = pytest.importorskip("_fitsdisk")
+pytestmark_fits = pytest.mark.skipif(not fd.FITS_DIR.exists(),
+                                     reason="assets/protoplan/extracted_fits/ not present")
+
+
+@pytestmark_fits
+@pytest.mark.parametrize("disk", ["hvtauc", "oph163131"])
+def test_every_band_is_registered_on_the_same_source(disk):
+    """
+    The point of `SOURCE_RADEC`: cut about one sky position and all four bands hold the same disk.
+
+    Cutting about each file's own CRPIX instead leaves oph163131's B6 1.4" off -- the disk falls
+    into a corner -- so this is the assertion that would catch a reader that silently drops back to
+    the reference pixel.
+    """
+    for key, b in fd.read_disk(disk).items():
+        cx, cy = b["centroid"]
+        # The mm continuum is symmetric about the star, so it must land on it.  JWST scattered
+        # light is one-sided (the near side is brighter), so its centroid legitimately sits a
+        # couple of tenths off -- the RT models it is compared against are asymmetric the same way.
+        tol = 0.35 if key == "jwst" else 0.15
+        assert np.hypot(cx, cy) < tol, f"{disk} {key}: centroid ({cx:+.2f}, {cy:+.2f})\" off centre"
+        half = fd.HALF_ARCSEC
+        assert b["rRA"][0] > b["rRA"][-1], "rRA must decrease with column (East to the left)"
+        assert b["rDEC"][0] < b["rDEC"][-1], "rDEC must increase with row"
+        assert abs(b["rRA"]).max() <= half + 1e-6 and abs(b["rDEC"]).max() <= half + 1e-6
+        nan_frac = float(np.mean(~np.isfinite(b["img"])))
+        if key == "jwst":
+            # NaN corners are the IFU footprint, not missing data -- `_realdisk.jwst_footprint_gap`
+            # is the existing accounting for them. They must stay a corner, not eat the field.
+            assert nan_frac < 0.15, f"{disk}: {nan_frac:.0%} of the JWST cut is outside the IFU"
+        else:
+            assert nan_frac == 0.0, f"{disk} {key}: the central field must be inside the pb"
+
+
+@pytestmark_fits
+def test_alma_headers_land_inside_the_trained_beam_prior():
+    """Every measured (theta, q) is inside `experiment=protoplan_newbeam`'s per-band box."""
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+
+    # The boxes the runs were launched with, in the augmentation's channel order.
+    theta = [(0.088, 0.140), (0.070, 0.205), (0.145, 0.205)]
+    ratio = [(0.54, 0.73), (0.58, 0.78), (0.53, 0.82)]
+    seen = 0
+    for disk in fd.SOURCE_RADEC:
+        for band, j in fd.BAND_CHANNEL.items():
+            if not (fd.FITS_DIR / f"{disk}_{band}.fits").exists():
+                continue
+            b = fd.read_alma(disk, band)
+            assert theta[j][0] <= b["theta"] <= theta[j][1], f"{disk} {band} theta {b['theta']:.4f}"
+            assert ratio[j][0] <= b["q"] <= ratio[j][1], f"{disk} {band} q {b['q']:.3f}"
+            # The Jy/beam -> MJy/sr conversion uses the forward model's own solid angle.
+            np.testing.assert_allclose(
+                b["omega_beam_sr"],
+                AugmentationsClass.beam_area_sr(b["fwhm_maj"], b["fwhm_min"]), rtol=0)
+            seen += 1
+    assert seen == 6, "two disks x three bands"
+
+
+@pytestmark_fits
+@pytest.mark.parametrize("disk", ["hvtauc", "oph163131"])
+def test_jwst_and_alma_share_one_sky_parity(disk):
+    """
+    The NIRSpec cubes carry `PC1_1 = -1` against a positive `CDELT1`.
+
+    Read `CDELT` raw and the JWST image comes out mirrored against the ALMA ones -- the disk visibly
+    inclined the other way.  Both must give RA decreasing with column, from the CD matrix.
+    """
+    bands = fd.read_disk(disk)
+    for key, b in bands.items():
+        assert b["rRA"][0] > b["rRA"][-1], f"{disk} {key}: RA must decrease with column"
+
+    # Same physical disk, so the position angle of the emission agrees between JWST and ALMA. The
+    # second moment's orientation is parity-sensitive, which is exactly what a mirrored axis breaks.
+    def pa(b):
+        img = np.nan_to_num(b["img"], nan=0.0)
+        w = np.where(img > 0.2 * img.max(), img, 0.0)
+        x, y = np.meshgrid(b["rRA"], b["rDEC"])
+        x = x - (w * x).sum() / w.sum()
+        y = y - (w * y).sum() / w.sum()
+        return 0.5 * np.arctan2(2 * (w * x * y).sum(), (w * x * x).sum() - (w * y * y).sum())
+
+    def elongation(b):
+        img = np.nan_to_num(b["img"], nan=0.0)
+        w = np.where(img > 0.2 * img.max(), img, 0.0)
+        x, y = np.meshgrid(b["rRA"], b["rDEC"])
+        x, y = x - (w * x).sum() / w.sum(), y - (w * y).sum() / w.sum()
+        cxx, cyy, cxy = (w * x * x).sum(), (w * y * y).sum(), (w * x * y).sum()
+        r = np.hypot(cxx - cyy, 2 * cxy) / (cxx + cyy)
+        return float(r)
+
+    ref = pa(bands["alma_0"])
+    for key, b in bands.items():
+        if key == "alma_0":
+            continue
+        # A round source has no PA to compare -- hvtauc's JWST core is nearly circular, and its
+        # second-moment angle is then noise. Only bands that are actually elongated can vote.
+        if elongation(b) < 0.25:
+            continue
+        d = np.rad2deg(np.arctan2(np.sin(pa(b) - ref), np.cos(pa(b) - ref)))
+        assert abs(d) < 25.0, f"{disk} {key}: PA differs from B9 by {d:.0f} deg -- mirrored?"
+
+
+@pytestmark_fits
+def test_the_ra_direction_comes_from_the_cd_matrix_not_cdelt():
+    """The JWST cubes' `CDELT1` is positive and their `PC1_1` is -1; only the product is the truth."""
+    from astropy.io import fits
+
+    for path in sorted(fd.FITS_DIR.glob("*.fits")):
+        hdr = fits.open(path)[0].header
+        d_ra, d_dec = fd._pixel_deltas(fd._celestial_wcs(hdr))
+        assert d_ra < 0 < d_dec, f"{path.name}: RA must run East-left, DEC North-up"
+        if "g395" in path.name:
+            assert hdr["CDELT1"] > 0 and hdr["PC1_1"] == -1, \
+                "the premise of this test: raw CDELT1 would give the wrong sign here"
+
+
+@pytestmark_fits
+@pytest.mark.parametrize("disk", ["hvtauc", "oph163131"])
+def test_unobserved_pixels_are_noise_filled_and_flagged(disk):
+    """No NaN reaches a consumer, the fill is background-level, and `observed` says where it is."""
+    for key, b in fd.read_disk(disk).items():
+        assert np.isfinite(b["img"]).all(), f"{disk} {key}: a NaN survived the fill"
+        n_filled = int((~b["observed"]).sum())
+        assert n_filled == 0 or key == "jwst", f"{disk} {key}: only JWST should need filling"
+        if n_filled:
+            filled = b["img"][~b["observed"]]
+            # Background-level, not signal: within a few sigma of the measured sky.
+            assert np.abs(filled - b["bkg"][0]).max() < 6.0 * b["bkg"][1]
+            assert np.abs(filled).max() < 0.05 * b["img"].max()
+
+    # Seeded on the disk name, not on `hash()`, which is salted per process.
+    assert np.array_equal(fd.read_jwst(disk)["img"], fd.read_jwst(disk)["img"])
+    raw = fd.read_jwst(disk, fill_unobserved=False)
+    assert not np.isfinite(raw["img"]).all(), "the fill must be doing something"
+
+
+@pytestmark_fits
+@pytest.mark.parametrize("disk", ["hvtauc", "oph163131"])
+def test_measured_alma_noise_is_inside_the_trained_prior(disk):
+    """
+    The measured per-band rms must sit in `experiment=protoplan_newbeam`'s noise prior.
+
+    Sensitive to the annulus: the B9 maps are pbcor'd against a ~8.7" primary beam, so measuring
+    the sky at 3-6" (what the older, coarser maps used) inflates sigma by ~1.6x and puts both disks
+    out of prior. `NOISE_ANNULUS_ARCSEC` is off-source but inside the flat part.
+    """
+    prior = {0: (4.0e-4, 7.0e-4), 1: (5.0e-5, 1.1e-4), 2: (1.0e-5, 1.0e-4)}   # Jy/beam
+    for band, j in fd.BAND_CHANNEL.items():
+        b = fd.read_alma(disk, band)
+        rms = b["bkg"][1] * 1e6 * b["omega_beam_sr"]
+        lo, hi = prior[j]
+        assert lo <= rms <= hi, f"{disk} {band}: rms {rms:.2e} Jy/beam outside [{lo:.1e}, {hi:.1e}]"
+
+
+@pytestmark_fits
+@pytest.mark.parametrize("disk", ["hvtauc", "oph163131"])
+def test_jwst_noise_is_the_assumed_floor_not_the_measured_halo(disk):
+    """
+    The JWST sigma is a declared assumption (0.8 MJy/sr), not what the annulus reads.
+
+    Even the off-source annulus sits on these disks' extended envelopes, so it measures the halo's
+    scatter -- 2.2 MJy/sr for hvtauc, outside the [0.5, 1.0] prior the models train under.  Same
+    call upstream made for the saucer (0.03 for a measured 0.98).  The override is width-only: the
+    fill level stays the measured local median, so the filled corners join continuously onto the
+    observed pixels rather than stepping to some global number.
+    """
+    b = fd.read_jwst(disk)
+    assert b["bkg"][1] == fd.JWST_NOISE_MJY_SR[disk] == 0.8
+    assert 0.5 <= b["bkg"][1] <= 1.0, "the assumed floor must be inside the trained prior"
+    assert b["measured_sigma"] != b["bkg"][1], "what the annulus read must still be reported"
+    # The registry hands the network the same number the fill used -- two places, one value.
+    assert rd.DISKS[disk]["sigma_jwst"] == b["bkg"][1]
+    assert rd.DISKS[disk]["dist_pc"] == 140.0 and rd.DISKS[disk]["av"] == 4.0

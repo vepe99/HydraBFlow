@@ -518,3 +518,109 @@ def test_av_is_exported_per_row_and_becomes_a_third_droppable_group(compose, raw
     assert net.group_names[:3] == ["sil_id", "has_cavity", "av"]
     assert net.group_sizes[:3] == [1, 1, 1]
     assert net.always_observed_groups == 0
+
+
+def test_no_random_flip_still_records_the_parity():
+    """`random_flip=False` must still emit `sky_flip`, and it must be +1 for every row.
+
+    The parity flip is a *second* draw, independent of `rot_range_deg`: a reference population
+    pinned to one position angle is still half-mirrored unless the flip is switched off too. When
+    it is, `sky_flip` is a geometry condition the adapter reads unconditionally, so leaving the key
+    out made such a population impossible to embed.
+    """
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+
+    kw = dict(px_arcsec_mod=spec.FOV_ARCSEC_MOD / (GRID - 1), has_jwst=False,
+              randomize_alma_setup=False, alma_obs_px_arcsec=0.05, seed=0,
+              rot_range_deg=(30.0, 30.0))
+    images = np.random.default_rng(0).normal(size=(16, GRID, GRID, spec.N_ALMA + 1))
+
+    fixed = AugmentationsClass(random_flip=False, **kw).apply_rotation({"im_jy": images.copy()})
+    np.testing.assert_allclose(np.asarray(fixed["sky_flip"]), np.ones(16))
+    np.testing.assert_allclose(np.asarray(fixed["rot_deg"]), 30.0)
+
+    drawn = np.asarray(AugmentationsClass(random_flip=True, **kw)
+                       .apply_rotation({"im_jy": images.copy()})["sky_flip"])
+    assert set(np.unique(drawn)) == {-1.0, 1.0}, "the flip is what makes a fixed angle insufficient"
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════
+# The per-band (theta, q) beam prior
+# ══════════════════════════════════════════════════════════════════════════════════════
+
+#: (theta = sqrt(BMAJ*BMIN), q = BMIN/BMAJ) read off the headers of
+#: `assets/protoplan/extracted_fits/`, per band in the augmentation's channel order
+#: (450 / 880 / 1300 um).  The point of the new prior is that every one of them is inside it.
+MEASURED_THETA_Q = {
+    0: [(0.1233, 0.590), (0.1023, 0.682)],   # B9  oph163131, hvtauc
+    1: [(0.1827, 0.640), (0.0834, 0.697)],   # B7
+    2: [(0.1687, 0.589), (0.1827, 0.759)],   # B6
+}
+
+
+def test_theta_q_beam_prior_draws_inside_its_per_band_boxes(compose):
+    """
+    theta and q are drawn independently per band, and maj/min are derived from them.
+
+    Checked against the composed `protoplan_newbeam` config rather than restated numbers, so a
+    config edit that steps off the measured beams fails here instead of silently training.
+    """
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+
+    params = compose(overrides=["experiment=protoplan_newbeam"]).augmentation.params
+    theta = [tuple(r) for r in params.alma_beam_theta_range]
+    ratio = [tuple(r) for r in params.alma_beam_axis_ratio_range]
+
+    aug = AugmentationsClass(px_arcsec_mod=spec.FOV_ARCSEC_MOD / (GRID - 1), has_jwst=False,
+                             randomize_alma_setup=True, alma_beam_theta_range=theta,
+                             alma_beam_axis_ratio_range=ratio,
+                             alma_obs_px_arcsec=float(params.alma_obs_px_arcsec), seed=0)
+    groups = aug._draw_alma_setup(64)
+    assert len(groups) == aug.n_beam_groups
+
+    for g in groups:
+        maj, mn = g["fwhm_maj"], g["fwhm_min"]
+        assert np.all(mn <= maj), "minor = q * major, q < 1, so the beam can never invert"
+        for c in range(len(theta)):
+            t, q = float(np.sqrt(maj[c] * mn[c])), float(mn[c] / maj[c])
+            assert theta[c][0] <= t <= theta[c][1], f"band {c}: theta {t} outside {theta[c]}"
+            assert ratio[c][0] <= q <= ratio[c][1], f"band {c}: q {q} outside {ratio[c]}"
+
+    for c, pairs in MEASURED_THETA_Q.items():
+        for t, q in pairs:
+            assert theta[c][0] <= t <= theta[c][1], f"band {c}: measured theta {t} out of prior"
+            assert ratio[c][0] <= q <= ratio[c][1], f"band {c}: measured q {q} out of prior"
+
+    # The observed grid is pinned to the reference runs' 162x162: derived from theta it would be
+    # min(theta/sqrt(q_hi))/7 -> 266 px, 2.7x the pixels, for no gain the conditioning cannot give.
+    assert aug.n_alma_obs_px == 162
+    assert AugmentationsClass.default_alma_obs_px_arcsec(aug._maj_lo_hi) < aug.alma_obs_px_arcsec
+
+
+def test_major_axis_beam_prior_is_unchanged_when_no_theta_range_is_given(compose):
+    """`alma_beam_theta_range=None` must leave every archived run's prior exactly as it was."""
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+
+    params = compose(overrides=["experiment=protoplan_mask_discrete_av"]).augmentation.params
+    maj_range = [tuple(r) for r in params.alma_beam_fwhm_maj_range]
+    q_range = tuple(params.alma_beam_axis_ratio_range)
+
+    kw = dict(px_arcsec_mod=spec.FOV_ARCSEC_MOD / (GRID - 1), has_jwst=False,
+              randomize_alma_setup=True, alma_beam_fwhm_maj_range=maj_range,
+              alma_beam_axis_ratio_range=q_range, seed=0)
+    aug = AugmentationsClass(**kw)
+    # A single (lo, hi) is broadcast to every band, and the derived grid still comes off the
+    # major-axis knob -- 162 px, as the two reference runs were trained on.
+    assert aug.alma_beam_axis_ratio_range == [q_range] * 3
+    assert aug._maj_lo_hi == maj_range
+    assert aug.n_alma_obs_px == 162
+
+    for g in aug._draw_alma_setup(64):
+        for c in range(3):
+            assert maj_range[c][0] <= g["fwhm_maj"][c] <= maj_range[c][1]
+            assert q_range[0] <= g["fwhm_min"][c] / g["fwhm_maj"][c] <= q_range[1]
+    # Same seed, same draws: the theta branch reuses the existing u[g, c, :], adding no dimension.
+    for a, b in zip(AugmentationsClass(**kw)._draw_alma_setup(64),
+                    AugmentationsClass(**kw)._draw_alma_setup(64)):
+        np.testing.assert_array_equal(a["fwhm_maj"], b["fwhm_maj"])
+        np.testing.assert_array_equal(a["rms_jy_beam"], b["rms_jy_beam"])

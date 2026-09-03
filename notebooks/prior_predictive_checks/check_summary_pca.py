@@ -22,8 +22,17 @@ if not RUNS:
 
 
 def load(d):
-    z = np.load(d + "/summaries.npz")
-    F, r = z["train"].astype(np.float64), z["real"].astype(np.float64)
+    """The cached embeddings from either producer, absent branches dropped.
+
+    `check_summary_range` writes `<plot_dir>/summaries.npz` with the population under `train`;
+    `summary_neighbours` writes `summary_neighbours*.npz` with it under `test` (and pins the PA, so
+    the two are not the same population). A path ending in `.npz` is taken as either file directly,
+    which is what lets the observing-setup variants (`_fixedsetup`) be compared here without a
+    second GPU pass.
+    """
+    z = np.load(d if d.endswith(".npz") else d + "/summaries.npz")
+    pop = "train" if "train" in z else "test"
+    F, r = z[pop].astype(np.float64), z["real"].astype(np.float64)
     keys, absent = list(z["branch_keys"]), set(z["absent"].tolist())
     w = F.shape[1] // len(keys)
     cols = np.concatenate([np.arange(i * w, (i + 1) * w)
@@ -36,7 +45,7 @@ def pct(train, value):
     return 100.0 * np.searchsorted(t, value) / len(t)
 
 
-fig, axes = plt.subplots(len(RUNS), 3, figsize=(16.5, 4.2 * len(RUNS)), squeeze=False)
+fig, axes = plt.subplots(len(RUNS), 4, figsize=(22.0, 4.2 * len(RUNS)), squeeze=False)
 for row, (label, d) in enumerate(RUNS):
     P, r = load(d)
     mu = P.mean(0)
@@ -96,6 +105,25 @@ for row, (label, d) in enumerate(RUNS):
     a.set_xlabel("component"); a.set_ylabel("cumulative share of the disk's $d^2$ (%)")
     a.set_title(f"{label}: {100*d2_99/d2_full:.0f}% of $d^2$ inside the 99%-variance subspace",
                 fontsize=10)
+
+    # PC1-PC2, the projection everyone reaches for first -- and the one that cannot answer the
+    # question.  The two leading components carry most of the variance but only `contrib[:2]` of
+    # the disk's d2, so a disk sitting comfortably inside this cloud can still be far outside the
+    # population: for oph163131 it is inside here while p99.98 over the 99%-variance subspace.
+    # Plotted so that "inside in 2-D" is visibly not the test, with the numbers to say so.
+    a = axes[row][3]
+    a.hexbin(S[:, 0], S[:, 1], gridsize=60, bins="log", cmap="Blues", mincnt=1, linewidths=0)
+    a.plot(s[0], s[1], marker="*", ms=20, color="#D55E00", mec="black", mew=.8, zorder=5)
+    a.axhline(0, color="0.7", lw=.7); a.axvline(0, color="0.7", lw=.7)
+    a.set_xlabel(f"PC1 ({100*var[0]/var.sum():.1f}% of variance)")
+    a.set_ylabel(f"PC2 ({100*var[1]/var.sum():.1f}%)")
+    p1, p2 = pct(S[:, 0], s[0]), pct(S[:, 1], s[1])
+    a.set_title(f"{label}: PC1 p{p1:.1f} (z={z[0]:+.2f}), PC2 p{p2:.1f} (z={z[1]:+.2f})\n"
+                f"these two hold {100*np.cumsum(contrib)[1]/d2_full:.1f}% of the disk's $d^2$",
+                fontsize=10)
+    print(f"  PC1-PC2 projection: PC1 p{p1:.2f} (z={z[0]:+.2f}), PC2 p{p2:.2f} (z={z[1]:+.2f}), "
+          f"carrying {100*np.cumsum(contrib)[1]/d2_full:.1f}% of d2 over "
+          f"{100*cum[1]:.1f}% of the variance")
 
 fig.suptitle(f"Summary-space PCA in depth — {DISK} vs the training population", fontsize=12)
 fig.tight_layout()

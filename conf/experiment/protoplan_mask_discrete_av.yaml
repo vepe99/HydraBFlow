@@ -18,6 +18,7 @@ run_name: protoplan_npe_mask_discrete_av
 
 training:
   n_epochs: 2000
+  batch_size: 256
 
 augmentation:
   params:

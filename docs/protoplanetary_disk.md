@@ -111,8 +111,9 @@ augmentation:
 | `alma_beams` | `[[FWHM_maj, FWHM_min, PA], …]`, one entry per band (450 / 880 / 1300 µm), arcsec and degrees |
 | `alma_noises_jy_beam` | per-band RMS, Jy/beam |
 | `jwst_noise_mjy_sr` | `[lo, hi]` MJy/sr, drawn uniform per image; `[x, x]` pins it |
-| `alma_beam_fwhm_maj_range` | per-band `[lo, hi]` major FWHM for the randomized prior, arcsec |
-| `alma_beam_axis_ratio_range` | minor = `ratio × major`, so the beam cannot come out inverted — **there is no separate minor-axis range** |
+| `alma_beam_fwhm_maj_range` | per-band `[lo, hi]` major FWHM for the randomized prior, arcsec. Ignored when `alma_beam_theta_range` is set |
+| `alma_beam_theta_range` | per-band `[lo, hi]` on θ = `sqrt(maj·min)`, arcsec — the *other* parametrisation: `maj = θ/sqrt(q)`, `min = θ·sqrt(q)`. The measured beams are tight in it (an array configuration sets the resolution θ, the uv coverage's shape sets `q`), so a band's box can be narrowed without also constraining its elongation. `null` keeps the major-axis one, which is what every run before `experiment=protoplan_newbeam` used |
+| `alma_beam_axis_ratio_range` | minor = `ratio × major`, so the beam cannot come out inverted — **there is no separate minor-axis range**. One `[lo, hi]` is broadcast to every band; a list of three sets it per band |
 | `alma_noise_jy_beam_range` | per-band `[lo, hi]`, log-uniform |
 | `alma_obs_px_arcsec` | ALMA output pixel scale; `null` → `min(beam major)/7`, which under the randomized prior is a function of *that prior* and so moves between runs |
 | `dist_pc` | the source's distance; the RT models are at 140 pc |
