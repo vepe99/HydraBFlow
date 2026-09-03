@@ -295,8 +295,8 @@
     "semantic_hash": ""
   },
   "notebooks/prior_predictive_checks/_realdisk.py": {
-    "mtime": 1788353725.0515633,
-    "ast_hash": "8ecb11a7cdbed0b7df25a1dbd79c2c24",
+    "mtime": 1787126177.4990323,
+    "ast_hash": "47fa3687fec0b5a966863f3f449a002f",
     "semantic_hash": ""
   },
   "notebooks/prior_predictive_checks/_vendor_real_images.py": {
@@ -325,13 +325,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/augmentation/protoplan_instrument.py": {
-    "mtime": 1788421362.0223055,
-    "ast_hash": "ddeb2a97305c2fa73b7ab8fe1d718c3e",
+    "mtime": 1787896963.1955078,
+    "ast_hash": "399b9f8e582af0865de6abc4f65e6036",
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/protoplan.py": {
-    "mtime": 1788421362.0303054,
-    "ast_hash": "bb29dbef79a19e6f4ee79a50a990e7f6",
+    "mtime": 1787211974.436904,
+    "ast_hash": "147746a99acb43052d815f92f9b4ef1e",
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/_protoplan_spec.py": {
@@ -345,13 +345,13 @@
     "semantic_hash": ""
   },
   "tests/test_prior_predictive_checks.py": {
-    "mtime": 1788255344.249115,
-    "ast_hash": "298d7ed14ffa4109864f952b86e0cdda",
+    "mtime": 1787123901.904692,
+    "ast_hash": "86d0c0410f9d2b7585fc603ba531b2bd",
     "semantic_hash": ""
   },
   "tests/test_protoplan.py": {
-    "mtime": 1788248023.9969108,
-    "ast_hash": "615b7fccc99cd0c9a6f226efbba2c12f",
+    "mtime": 1787896998.0316966,
+    "ast_hash": "07e8f1686c101a8a99c0f0135a09d5d8",
     "semantic_hash": ""
   },
   "conf/experiment/protoplan.yaml": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "docs/protoplanetary_disk.md": {
-    "mtime": 1788249130.3811257,
-    "ast_hash": "8c65756d4249736e3d3eeca2cadb9f8d",
+    "mtime": 1787307367.2914944,
+    "ast_hash": "a813fe72c2ca1320c16e3af5e29bf753",
     "semantic_hash": ""
   },
   "conf/experiment/protoplan_mask_discrete.yaml": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "notebooks/prior_predictive_checks/check_summary_pca.py": {
-    "mtime": 1788354335.058897,
-    "ast_hash": "1d584cb13df76efab1e3c576421d4892",
+    "mtime": 1787307295.0631106,
+    "ast_hash": "2b694f8068ee2d482675b010cd684f64",
     "semantic_hash": ""
   },
   "notebooks/prior_predictive_checks/check_summary_range.py": {
@@ -405,38 +405,8 @@
     "semantic_hash": ""
   },
   "notebooks/prior_predictive_checks/summary_neighbours.py": {
-    "mtime": 1788353752.5917106,
-    "ast_hash": "2ad16ae7bfe235bb0a1370675a7d9aad",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/_fitsdisk.py": {
-    "mtime": 1788341180.6514752,
-    "ast_hash": "1ef6918dd7b3b9219c19bcc4528f00a4",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/_vendor_fits_images.py": {
-    "mtime": 1788341117.9510875,
-    "ast_hash": "f51549b14c4ede0ccc568fa41d339a1f",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/plot_8nn.py": {
-    "mtime": 1788341539.137678,
-    "ast_hash": "97f069e70e7caacbb247c158c9789ccb",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/plot_fits_images.py": {
-    "mtime": 1788251372.1392798,
-    "ast_hash": "5a6e98d150003dd703585a6bbc71a0b0",
-    "semantic_hash": ""
-  },
-  "notebooks/prior_predictive_checks/summary_edge.py": {
-    "mtime": 1788344038.6437678,
-    "ast_hash": "474c91eb81aaae50d3015d6775ec47f8",
-    "semantic_hash": ""
-  },
-  "conf/experiment/protoplan_newbeam.yaml": {
-    "mtime": 1788247972.5005295,
-    "ast_hash": "b2e046270918e3a45c7240fb864c5b42",
+    "mtime": 1787896972.3835576,
+    "ast_hash": "65db789bd2c64add6098db861986bd44",
     "semantic_hash": ""
   }
 }

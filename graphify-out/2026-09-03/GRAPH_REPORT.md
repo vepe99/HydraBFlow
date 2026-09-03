@@ -1,12 +1,12 @@
-# Graph Report - HydraBFlow  (2026-09-03)
+# Graph Report - HydraBFlow  (2026-08-28)
 
 ## Corpus Check
-- 72 files · ~74,308 words
+- 67 files · ~64,515 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 944 nodes · 1275 edges · 118 communities (73 shown, 45 thin omitted)
-- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 127 edges (avg confidence: 0.78)
+- 860 nodes · 1150 edges · 113 communities (67 shown, 46 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 122 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -110,44 +110,39 @@
 - [[_COMMUNITY_check_summary_pca.py|check_summary_pca.py]]
 - [[_COMMUNITY_4. Three coupled choices in the encoding|4. Three coupled choices in the encoding]]
 - [[_COMMUNITY_HydraBFlow|HydraBFlow]]
-- [[_COMMUNITY_build_pipeline|build_pipeline]]
-- [[_COMMUNITY_get_run_dir|get_run_dir]]
-- [[_COMMUNITY_test_workflow.py|test_workflow.py]]
-- [[_COMMUNITY_5. Four image branches, one per band|5. Four image branches, one per band]]
-- [[_COMMUNITY_plot_dir|plot_dir]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `AugmentationsClass` - 42 edges
-2. `compose()` - 22 edges
+1. `AugmentationsClass` - 41 edges
+2. `compose()` - 20 edges
 3. `build_workflow()` - 17 edges
 4. `ConditionedFusionNetwork` - 14 edges
 5. `PreprocessStep` - 14 edges
-6. `read_alma()` - 12 edges
-7. `read_jwst()` - 12 edges
-8. `GroupedFlowMatching` - 12 edges
-9. `build_real_batch()` - 11 edges
-10. `run_training()` - 11 edges
+6. `GroupedFlowMatching` - 12 edges
+7. `build_real_batch()` - 11 edges
+8. `run_training()` - 11 edges
+9. `build_summary_network()` - 11 edges
+10. `BaseSimulator` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `test_build_workflow()` --calls--> `build_workflow()`  [INFERRED]
   tests/test_workflow.py → src/hydrabflow/pipeline/workflow.py
-- `test_unknown_simulator_errors()` --calls--> `get_simulator()`  [INFERRED]
-  tests/test_registries.py → src/hydrabflow/registry.py
-- `test_unknown_preprocess_step_errors()` --calls--> `build_pipeline()`  [INFERRED]
-  tests/test_registries.py → src/hydrabflow/registry.py
-- `test_build_adapter()` --calls--> `build_adapter()`  [INFERRED]
-  tests/test_workflow.py → src/hydrabflow/simulators/_protoplan_spec.py
 - `load_cfg()` --calls--> `register_configs()`  [INFERRED]
   notebooks/prior_predictive_checks/_realdisk.py → src/hydrabflow/config.py
+- `load_cfg()` --calls--> `compose()`  [INFERRED]
+  notebooks/prior_predictive_checks/_realdisk.py → tests/conftest.py
+- `Accum` --uses--> `AugmentationsClass`  [INFERRED]
+  notebooks/prior_predictive_checks/_realdisk.py → src/hydrabflow/augmentation/protoplan_instrument.py
+- `summary_fn()` --calls--> `build_workflow()`  [INFERRED]
+  notebooks/prior_predictive_checks/check_summary_range.py → src/hydrabflow/pipeline/workflow.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (118 total, 45 thin omitted)
+## Communities (113 total, 46 thin omitted)
 
 ### Community 0 - "Preprocessing Pipeline & Steps"
-Cohesion: 0.07
-Nodes (25): PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that runs them.  A step transforms, Dataset-in, dataset-out transform with optional fitted state., Estimate any state from ``data`` (train split). Stateless steps leave this empty, Return a transformed copy/view of ``data``. (+17 more)
+Cohesion: 0.13
+Nodes (13): CastDtype, DropNaNSimulations, _num_rows(), Dataset, Built-in stateless preprocessing steps (besides standardization).  Add your own, Drop rows (simulations) that contain any NaN/Inf in the listed keys., Random hold-out split. Steps listed after this one are fit on the train split on, Cast the listed keys (or all keys) to a target dtype, e.g. float32 for training. (+5 more)
 
 ### Community 1 - "Eval / Checkpoint Stages"
 Cohesion: 0.33
@@ -162,12 +157,12 @@ Cohesion: 0.07
 Nodes (27): AdapterConfig, AugmentationConfig, DataConfig, EvalConfig, InferenceNetworkConfig, ModelConfig, PreprocessingConfig, Typed config schema. ``conf/config.yaml`` fills these in; the factories read the (+19 more)
 
 ### Community 4 - "Simulate Stage & Registries"
-Cohesion: 0.15
-Nodes (14): build_inference_network(), build_summary_network(), Return the summary network selected by ``cfg.type``.      One key (the default):, Return the inference (posterior) network selected by ``cfg.type``., A head count that does not divide a raw embed_dim used to fail; per-head width m, test_transformer_backbones_build_for_any_head_count(), Six groups -- the discrete indicators, then one per band/modality -- indicators, `discrete_condition_groups` splits the indicators into width-1 *droppable* group (+6 more)
+Cohesion: 0.22
+Nodes (9): build_inference_network(), Return the inference (posterior) network selected by ``cfg.type``., Six groups -- the discrete indicators, then one per band/modality -- indicators, `discrete_condition_groups` splits the indicators into width-1 *droppable* group, `experiment=protoplan_mask_discrete_av`: A_V is a maskable condition, not a nuis, test_av_is_exported_per_row_and_becomes_a_third_droppable_group(), test_grouped_flow_matching_group_sizes(), test_per_indicator_condition_groups_are_droppable_and_the_old_layout_is_unchanged() (+1 more)
 
 ### Community 5 - "Example Simulators (Skeleton/TwoMoons)"
-Cohesion: 0.17
-Nodes (14): BaseException, is_oom_error(), T, Retry a GPU computation at a smaller batch size when it runs out of memory.  JAX, True if ``exc`` looks like a GPU out-of-memory error (matches on the message)., Call ``fn(batch_size)``, halving the batch size on OOM until ``min_batch``., run_with_oom_backoff(), _FakeOOM (+6 more)
+Cohesion: 0.05
+Nodes (49): BaseException, observed_condition_mask(), ndarray, Stage 3: posterior inference on held-out data, simulated or real.  Loads the app, ``(n_rows, sum(group_sizes))``, 0 on every column of a group named in ``drop``., _require_model_dir(), _run_diagnostics(), run_evaluation() (+41 more)
 
 ### Community 6 - "Config Schemas"
 Cohesion: 0.08
@@ -175,15 +170,15 @@ Nodes (27): epoch_log_callback(), fix_keras_model(), load_approximator(), load_p
 
 ### Community 7 - "Network Factory & Adapter"
 Cohesion: 0.05
-Nodes (41): randomized_alma_obs_px(), The ALMA pixel scale the *randomized* training prior samples at, from a composed, AugmentationsClass, compute_sed_bin_statistics(), protoplan_instrument(), ndarray, protoplan_instrument.py ======================= Vectorised post-processing pipel, JIT-compiled correlated ALMA noise for one channel.          Convolves i.i.d. wh (+33 more)
+Nodes (39): RuntimeError, AugmentationsClass, compute_sed_bin_statistics(), protoplan_instrument(), ndarray, protoplan_instrument.py ======================= Vectorised post-processing pipel, JIT-compiled correlated ALMA noise for one channel.          Convolves i.i.d. wh, Three unit-conversion steps, all fully vectorised:          1. Extinction correc (+31 more)
 
 ### Community 9 - "Base Simulator Interface"
-Cohesion: 0.07
-Nodes (21): ABC, BaseSimulator, BaseSimulator, Any, ndarray, Base interface every forward model implements.  A simulator is the only piece a, Abstract forward model. Subclass + register via ``@register_simulator``., Draw ``n`` prior samples. Returns ``{param_name: (n, 1)}``. (+13 more)
+Cohesion: 0.06
+Nodes (28): ABC, BaseSimulator, PreprocessPipeline, PreprocessStep, Dataset, ndarray, Preprocessing step protocol and the pipeline that runs them.  A step transforms, Dataset-in, dataset-out transform with optional fitted state. (+20 more)
 
 ### Community 10 - "Config Composition Tests"
-Cohesion: 0.33
-Nodes (5): check_conditions_in_prior(), measured_beams_noises(), Print each measured condition beside the prior the networks were trained on., `(alma_beams, alma_noises_jy_beam)` for `AugmentationsClass` from one disk's mea, Solid angle [sr] of an elliptical Gaussian beam given its FWHMs [arcsec].
+Cohesion: 0.50
+Nodes (3): check_conditions_in_prior(), Print each measured condition beside the prior the networks were trained on., Solid angle [sr] of an elliptical Gaussian beam given its FWHMs [arcsec].
 
 ### Community 11 - "Community 11"
 Cohesion: 0.25
@@ -194,16 +189,16 @@ Cohesion: 0.12
 Nodes (20): _(), _(), Marimo notebook: is a real disk's *amplitude* inside the training population?  T, Marimo notebook: is a real disk's *morphology* reachable by the simulator?  The, concatenate_chunks(), load_config_dataset(), load_dataset(), n_rows() (+12 more)
 
 ### Community 13 - "Hydra App Boilerplate"
-Cohesion: 0.08
-Nodes (40): background_stats(), _celestial_wcs(), _centroid(), _cut(), disks(), _fill_unobserved(), measure_band_radec(), measure_source_radec() (+32 more)
+Cohesion: 0.33
+Nodes (5): gaussian_noise(), jax_noise(), Augmentation, Observational-noise augmentations — and the template for your own.  An augmentat, Add zero-mean Gaussian noise to one observable key.      Params: ``noise_key`` (
 
 ### Community 14 - "JAX Backend Pin"
 Cohesion: 0.33
 Nodes (5): limit_gpus(), Pin GPU selection and the Keras backend *before* keras/bayesflow/JAX import anyw, Pin ``CUDA_VISIBLE_DEVICES`` to the least-used GPU(s) before JAX/CUDA initialize, Set ``KERAS_BACKEND`` unless the user already chose one. Returns the active back, set_backend()
 
 ### Community 23 - "test_prior_predictive_checks.py"
-Cohesion: 0.06
-Nodes (33): feats(), gaussian(), Analytic checks for the prior-predictive notebooks' shared numerics.  `_realdisk, A registry that has drifted from the measurements is a silent wrong-beam bug., oph163131's missing B7 was a standing special case until `extracted_fits/` suppl, A scalar A_V gives one correction for the population; a range gives one row each, Why sampling A_V cannot meaningfully move an ALMA finding.      Extinction enter, The point of `SOURCE_RADEC`: cut about one sky position and all four bands hold (+25 more)
+Cohesion: 0.11
+Nodes (17): feats(), gaussian(), Analytic checks for the prior-predictive notebooks' shared numerics.  `_realdisk, A registry that has drifted from the measurements is a silent wrong-beam bug., A scalar A_V gives one correction for the population; a range gives one row each, Why sampling A_V cannot meaningfully move an ALMA finding.      Extinction enter, The A_V claim, pinned.      Extinction enters as one scalar per channel, so with, ring() (+9 more)
 
 ### Community 25 - "adapter.py"
 Cohesion: 0.16
@@ -211,19 +206,19 @@ Nodes (15): load_cfg(), Compose the root Hydra config, exactly as the CLI stages
 
 ### Community 26 - "_realdisk.py"
 Cohesion: 0.08
-Nodes (23): av_ref(), av_suffix(), jwst_footprint_gap(), mahalanobis(), neighbour_panel(), parse_av(), percentile_rank(), Shared machinery for the prior-predictive check notebooks.  The notebooks beside (+15 more)
+Nodes (23): av_ref(), av_suffix(), jwst_footprint_gap(), neighbour_panel(), parse_av(), plot_dir(), randomized_alma_obs_px(), Shared machinery for the prior-predictive check notebooks.  The notebooks beside (+15 more)
 
 ### Community 27 - "test_protoplan.py"
-Cohesion: 0.09
-Nodes (19): data_path(), Checks for the protoplanetary-disk arm: labels, adapter/network agreement, one t, Each band's CNN sees its own beam/noise plus the shared geometry, and nothing el, With p=1 the mask is group-coherent, keep_one leaves one droppable group, and th, A `split_combined/`-shaped directory of five `.npy` caches., The one config error that would otherwise be silent: a differently-sampled image, The mask must reach the network, under either subnet.      Regression test for a, `av: [lo, hi]` draws one extinction per disk; `av: x` is the old batch-wide cons (+11 more)
+Cohesion: 0.11
+Nodes (15): data_path(), Checks for the protoplanetary-disk arm: labels, adapter/network agreement, one t, Each band's CNN sees its own beam/noise plus the shared geometry, and nothing el, A `split_combined/`-shaped directory of five `.npy` caches., The one config error that would otherwise be silent: a differently-sampled image, `av: [lo, hi]` draws one extinction per disk; `av: x` is the old batch-wide cons, The corner plot survives a prior box, a median and a truth row., `random_flip=False` must still emit `sky_flip`, and it must be +1 for every row. (+7 more)
 
 ### Community 28 - "The protoplanetary-disk project"
-Cohesion: 0.15
-Nodes (13): 10. Troubleshooting, 1. What the pipeline is, 2. Prerequisites, 3. The knobs: beam and noise, 6. Reading the output, 7. Checks, 8. Prior-predictive checks on a real disk, 9. Posterior inference on a real disk (+5 more)
+Cohesion: 0.12
+Nodes (16): 10. Troubleshooting, 1. What the pipeline is, 2. Prerequisites, 3. The knobs: beam and noise, 5. Four image branches, one per band, 6. Reading the output, 7. Checks, 8. Prior-predictive checks on a real disk (+8 more)
 
 ### Community 29 - "protoplan.py"
-Cohesion: 0.05
-Nodes (33): Layer, gaussian_noise(), jax_noise(), Augmentation, Observational-noise augmentations — and the template for your own.  An augmentat, Add zero-mean Gaussian noise to one observable key.      Params: ``noise_key`` (, ConditionedConvolutionalNetwork, ConditionedFusionNetwork (+25 more)
+Cohesion: 0.18
+Nodes (15): _hp(), _protoplan_flow_matching(), _protoplan_fusion(), The two conditioned summary networks and the modality-dropout flow, plus their b, The architecture dict out of `cfg.params.hp`, defaulted key by key.      Default, `hp[f"{name}_{tag}"]`, falling back to the shared `_alma` value for an ALMA band, Per-backbone output width, keyed by input key.  Also the `group_sizes` source., One conditioned CNN per image band (JWST + ALMA B9/B7/B6) + a SED transformer, l (+7 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.08
@@ -234,12 +229,12 @@ Cohesion: 0.18
 Nodes (13): alma_obs_px(), build_real_batch(), extinction_correction(), interp_real_sed(), load_real_images(), obs_axes(), ndarray, The `(N, L)` (or `(1, L)`) multiplicative extinction correction `preprocess` app (+5 more)
 
 ### Community 33 - "GroupedFlowMatching"
-Cohesion: 0.17
-Nodes (11): build_augmentations(), Augmentation, Build the ordered augmentation list from ``cfg.augmentation``.      Each step ge, Registry resolution: unknown names fail loudly, custom builders plug in., Every extension point is a Registry filled on discovery (registry.py)., Adding an experimental architecture = one decorated function, no infrastructure, test_augmentation_registry_builds(), test_custom_network_builder_registers() (+3 more)
+Cohesion: 0.18
+Nodes (9): GroupedFlowMatching, `FlowMatching` with modality-coherent condition dropout, in place of stock     `, `(batch_size, sum(group_sizes))`, 0 on every column of a dropped group., Zero the columns of `conditions` that `mask` marks unobserved.          Upstream, The sampling-time counterpart of the masking in `compute_metrics`.          `_in, With p=1 the mask is group-coherent, keep_one leaves one droppable group, and th, The mask must reach the network, under either subnet.      Regression test for a, test_missing_modality_mask_actually_changes_the_output() (+1 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.20
-Nodes (13): alma_band_condition_keys(), _asinh_images(), build_adapter(), Parameter spec, condition layout and adapter for the protoplanetary-disk RT data, The five batch keys describing ALMA channel `j`'s beam and noise, in column orde, `{summary_group_key: [scalar batch keys, in concatenation order]}`., Every member of `summary_variables`: the five modalities plus the condition grou, Compress each image key as `asinh(x / sigma)`, per band.      Without it the ima (+5 more)
+Cohesion: 0.16
+Nodes (16): alma_band_condition_keys(), _asinh_images(), build_adapter(), Parameter spec, condition layout and adapter for the protoplanetary-disk RT data, The five batch keys describing ALMA channel `j`'s beam and noise, in column orde, `{summary_group_key: [scalar batch keys, in concatenation order]}`., Every member of `summary_variables`: the five modalities plus the condition grou, Compress each image key as `asinh(x / sigma)`, per band.      Without it the ima (+8 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.18
@@ -247,43 +242,43 @@ Nodes (11): A dataset with no simulator, GPU / CPU, Install, One config file per
 
 ### Community 37 - "_Batched"
 Cohesion: 0.24
-Nodes (10): _noise(), plot_band(), plot_disk(), Path, Plot the central field of every band in `assets/protoplan/extracted_fits/`., Every band of one disk, cut to +/-`half_arcsec`, into one PNG.      `source="ven, MAD noise of the cut, from the pixels outside the central half -- robust to the, One band into one axis: asinh image, beam ellipse, centroid marker. (+2 more)
+Nodes (5): _Batched, _PerDraw, Per-draw simulators (``is_batched = False``) and the shape/name guard in ``BaseS, A toy forward model. Deterministic, so the batched and per-draw paths must agree, test_per_draw_matches_batched()
 
 ### Community 39 - "compose"
-Cohesion: 0.19
-Nodes (10): compose(), Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., The typed schema is the only validation layer now that group YAMLs have no base, test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override(), test_unknown_key_is_rejected() (+2 more)
+Cohesion: 0.24
+Nodes (8): compose(), Expose the composer so tests can build configs with custom overrides., Config composition + schema validation smoke tests., The typed schema is the only validation layer now that group YAMLs have no base, test_adapter_derived_from_simulator(), test_adapter_explicit_config_wins(), test_group_override(), test_unknown_key_is_rejected()
 
 ### Community 46 - "Community 46"
-Cohesion: 0.23
-Nodes (11): _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, The shipped network builders. A builder maps a network config to a BayesFlow net, Attention width, expressed per head so ``embed_dim % num_heads == 0`` always hol, _set_transformer() (+3 more)
+Cohesion: 0.19
+Nodes (13): _deep_set(), _diffusion(), _embed_dim(), _flow_matching(), Any, The shipped network builders. A builder maps a network config to a BayesFlow net, Attention width, expressed per head so ``embed_dim % num_heads == 0`` always hol, _set_transformer() (+5 more)
 
 ### Community 48 - "ConditionedFusionNetwork"
-Cohesion: 0.24
-Nodes (8): _n(), Stage 2: training.  Load dataset -> preprocessing (fit on train, save the state, Train the approximator and return (workflow, history)., run_training(), _save_loss_plot(), Seeding helpers for reproducible runs., Seed Python, NumPy, and (best effort) Keras.      Returns a ``Generator`` to thr, seed_everything()
+Cohesion: 0.27
+Nodes (4): ConditionedFusionNetwork, `FusionNetwork` plus a routing table saying which entries of `summary_variables`, `(B, sum_of_widths)` for a routed backbone, `None` for an unrouted one., Mirrors `FusionNetwork.compute_metrics`, including collecting an optional
 
 ### Community 49 - "registry.py"
 Cohesion: 0.22
 Nodes (4): Dataset, ndarray, Per-feature z-score standardization step.  Mean/std are fit on the train split o, Standardizer
 
 ### Community 50 - "ConditionedConvolutionalNetwork"
-Cohesion: 0.33
-Nodes (9): _objective(), Stage 4: hyperparameter tuning with Optuna.  A multi-objective study (RMSE + cal, Save the fit-once preprocessing state, shared by every trial.      Written atomi, Save the fit-once preprocessing state, shared by every trial/model.      Written, _report(), run_tuning(), _save_shared_preprocessing(), _suggest() (+1 more)
+Cohesion: 0.20
+Nodes (3): ConditionedConvolutionalNetwork, A `ConvolutionalNetwork` whose pooled features are concatenated with a condition, SummaryNetwork
 
 ### Community 51 - "HydraBFlow: SBI pipeline template (BayesFlow + Hydra)"
-Cohesion: 0.13
-Nodes (14): Design principles, docs/, Four image branches, one per band, graphify, HydraBFlow: SBI pipeline template (BayesFlow + Hydra), Layout, Notes worth keeping, Prior-predictive checks on a real disk (+6 more)
+Cohesion: 0.20
+Nodes (9): Design principles, docs/, graphify, HydraBFlow: SBI pipeline template (BayesFlow + Hydra), Layout, Notes worth keeping, Stack, Stages (+1 more)
 
 ### Community 52 - "build_workflow"
-Cohesion: 0.15
-Nodes (16): build_workflow(), Any, Build a ``bf.BasicWorkflow`` from the root ``cfg``.      ``run_dir`` (passed by, Build a ``bf.BasicWorkflow`` from the root ``cfg``., _augmentor(), The augmentation's key names are the adapter's inputs; a rename drift is silent, Adapter -> four CNNs + transformer -> flow, and a gradient that actually moves w, The `group_sizes` width must equal the resolved condition width, or `ops.repeat` (+8 more)
+Cohesion: 0.13
+Nodes (18): build_workflow(), Any, Build a ``bf.BasicWorkflow`` from the root ``cfg``.      ``run_dir`` (passed by, Build a ``bf.BasicWorkflow`` from the root ``cfg``., _augmentor(), The augmentation's key names are the adapter's inputs; a rename drift is silent, Adapter -> four CNNs + transformer -> flow, and a gradient that actually moves w, The `group_sizes` width must equal the resolved condition width, or `ops.repeat` (+10 more)
 
 ### Community 53 - "test_registries.py"
-Cohesion: 0.15
-Nodes (12): load_training_data(), The row-filtered training cache, via the configured simulator's own `load_datase, Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), Assemble the ``bf.BasicWorkflow`` (adapter + summary network + inference network, get_simulator(), Everything you can register, in one file.  Five extension points share one mecha (+4 more)
+Cohesion: 0.06
+Nodes (37): load_training_data(), The row-filtered training cache, via the configured simulator's own `load_datase, Stage 1: dataset generation.  Samples the prior and runs the forward model in ch, Generate the dataset described by ``cfg`` and return its path., run_simulation(), Assemble the ``bf.BasicWorkflow`` (adapter + summary network + inference network, build_pipeline(), build_summary_network() (+29 more)
 
 ### Community 56 - "disk_config"
-Cohesion: 0.24
-Nodes (10): configured_augmentation(), disk_config(), fixed_setup_augmentation(), load_obs_setup(), _obs_setup_from_npz(), `(setup, rot_deg)` out of `realimg_<disk>.npz`, when it was vendored from the FI, `(setup, rot_deg)` for one disk, from `assets/protoplan/obs_setup_measurements.j, The augmentation exactly as configured for training -- randomized observing prio (+2 more)
+Cohesion: 0.32
+Nodes (7): configured_augmentation(), disk_config(), fixed_setup_augmentation(), load_obs_setup(), `(setup, rot_deg)` for one disk, from `assets/protoplan/obs_setup_measurements.j, The augmentation exactly as configured for training -- randomized observing prio, `AugmentationsClass` fixed to this disk's own measured beams, noise, distance an
 
 ### Community 57 - "Configuration"
 Cohesion: 0.33
@@ -294,8 +289,8 @@ Cohesion: 0.33
 Nodes (6): A forward model you cannot run in-process, Augmentation (stochastic, per batch), Extending, Preprocessing step (deterministic, once, fit on train), Your network, Your simulator
 
 ### Community 73 - "The protoplanetary-disk arm (`protoplan_sbi` branch)"
-Cohesion: 0.27
-Nodes (6): discover(), T, A named collection filled by ``@registry.add("name")`` decorators.      ``packag, Import ``self.package``'s modules so their decorators have run. Idempotent., Import every non-underscore module in a package, so its decorators run., Registry
+Cohesion: 0.40
+Nodes (5): Four image branches, one per band, Prior-predictive checks on a real disk, The encoding: three coupled choices, The instrument model is an augmentation, The protoplanetary-disk arm (`protoplan_sbi` branch)
 
 ### Community 75 - "_ext_hiav"
 Cohesion: 0.33
@@ -303,23 +298,19 @@ Nodes (6): _ext_hiav(), extinction_ratio(), implied_av(), `A_lam / A_K` from the
 
 ### Community 78 - "_vendor_real_images.py"
 Cohesion: 0.40
-Nodes (5): _crop(), Path, Vendor the real-disk images into `assets/protoplan/` -- run once, then the noteb, `(img, ra_1d, dec_1d)` cut to +/-HALF_ARCSEC.  Accepts 1-D or 2-D coordinate arr, vendor()
+Nodes (5): _crop(), Vendor the real-disk images into `assets/protoplan/` -- run once, then the noteb, `(img, ra_1d, dec_1d)` cut to +/-HALF_ARCSEC.  Accepts 1-D or 2-D coordinate arr, vendor(), Path
 
 ### Community 98 - "compose_cfg"
 Cohesion: 0.67
 Nodes (3): chains(), main(), One corner plot per model: the training prior shaded behind, every condition reg
-
-### Community 99 - ".__init__"
-Cohesion: 0.36
-Nodes (7): check(), _pca_subspace(), query_stats(), Is the real disk *interior* to the training population in summary space, or on i, `(scores_train, score_real, k)` in the leading PCs of the **raw** summary space., `(radius, knn_dist)` for one query `q` against pool `W`.      `drop_self` is for, report()
 
 ### Community 101 - "make_real_npz.py"
 Cohesion: 0.15
 Nodes (14): blocks(), main(), Is a real disk inside the training population *in the network's own summary spac, Zero-fill the target and indicator columns the adapter concatenates but we never, `(batch_dict) -> (B, summary_dim)`, standardized exactly as the flow's condition, Equal-width per-branch slices; every branch is built with the same `summary_dim`, summary_fn(), with_placeholders() (+6 more)
 
 ### Community 102 - "mahalanobis"
-Cohesion: 0.36
-Nodes (7): observed_condition_mask(), ndarray, Stage 3: posterior inference on held-out data, simulated or real.  Loads the app, ``(n_rows, sum(group_sizes))``, 0 on every column of a group named in ``drop``., _require_model_dir(), _run_diagnostics(), run_evaluation()
+Cohesion: 0.50
+Nodes (4): mahalanobis(), percentile_rank(), Fraction of training rows below `value`, in percent., `(d2 of every training row, d2 of the real disk, percentile of the latter)`.
 
 ### Community 103 - "missing_alma_channels"
 Cohesion: 0.50
@@ -337,10 +328,6 @@ Nodes (4): _radius_at_fraction(), Radius enclosing `frac` of the flux, linearly 
 Cohesion: 0.50
 Nodes (4): Flip `img` along `axis` if `coord` descends, so both end up ascending., Bilinearly resample a real image onto the square model observed grid.      Conve, regrid_to_model(), _to_ascending()
 
-### Community 110 - "check_summary_pca.py"
-Cohesion: 0.40
-Nodes (3): load(), Where in the summary PCA basis does the real disk's distance actually come from?, The cached embeddings from either producer, absent branches dropped.      `check
-
 ### Community 111 - "4. Three coupled choices in the encoding"
 Cohesion: 0.50
 Nodes (4): 4. Three coupled choices in the encoding, Discrete parameters are conditions, not targets, Images are compressed with asinh, The measurement conditions go into the summary networks
@@ -349,41 +336,25 @@ Nodes (4): 4. Three coupled choices in the encoding, Discrete parameters are con
 Cohesion: 0.50
 Nodes (4): Adding your own simulator, Design at a glance, HydraBFlow, Quickstart
 
-### Community 113 - "build_pipeline"
-Cohesion: 0.36
-Nodes (7): build_pipeline(), Any, Build the preprocessing pipeline from ``cfg.preprocessing``.      Each entry in, Preprocessing pipeline: fit/transform/split + state save/load round-trip., test_pipeline_fit_transform_and_split(), test_state_roundtrip(), _toy_data()
-
-### Community 114 - "get_run_dir"
-Cohesion: 0.29
-Nodes (7): get_run_dir(), Run-directory helpers., The current Hydra run output dir (works regardless of the ``job.chdir`` setting), Return the current Hydra run output dir (works regardless of the ``job.chdir`` s, Copy Hydra's auto-generated ``.hydra/`` config folder next to a generated artifa, Copy Hydra's ``.hydra/`` config folder next to a generated dataset, keyed by its, save_config_snapshot()
-
-### Community 115 - "test_workflow.py"
-Cohesion: 0.25
-Nodes (7): Adapter / network / workflow construction. Skipped if bayesflow isn't installed., Passing run_dir turns on BayesFlow best-weights checkpointing; omitting it leave, Two observable keys -> one backbone per key behind a FusionNetwork, types from p, test_build_adapter(), test_build_workflow(), test_build_workflow_checkpointing(), test_fusion_when_several_summary_variables()
-
-### Community 116 - "5. Four image branches, one per band"
-Cohesion: 0.67
-Nodes (3): 5. Four image branches, one per band, Maskable discrete indicators (`experiment=protoplan_mask_discrete`), Missing-modality robustness
-
 ## Knowledge Gaps
 - **99 isolated node(s):** `hydrabflow`, `ModelConfig`, `DataConfig`, `TrainingConfig`, `TuningConfig` (+94 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **45 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **46 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AugmentationsClass` connect `Network Factory & Adapter` to `Accum`, `Simulate Stage & Registries`, `compose`, `Config Composition Tests`, `build_workflow`, `disk_config`, `test_protoplan.py`?**
-  _High betweenness centrality (0.158) - this node is a cross-community bridge._
-- **Why does `get_simulator()` connect `test_registries.py` to `adapter.py`, `build_pipeline`, `GroupedFlowMatching`?**
-  _High betweenness centrality (0.111) - this node is a cross-community bridge._
-- **Why does `compose()` connect `compose` to `Community 34`, `Simulate Stage & Registries`, `Network Factory & Adapter`, `Dataset IO`, `test_workflow.py`, `build_workflow`, `adapter.py`, `protoplan.py`?**
-  _High betweenness centrality (0.078) - this node is a cross-community bridge._
-- **Are the 7 inferred relationships involving `AugmentationsClass` (e.g. with `Accum` and `_augmentor()`) actually correct?**
-  _`AugmentationsClass` has 7 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 19 inferred relationships involving `compose()` (e.g. with `load_cfg()` and `test_adapter_derived_from_simulator()`) actually correct?**
-  _`compose()` has 19 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `AugmentationsClass` connect `Network Factory & Adapter` to `Accum`, `Simulate Stage & Registries`, `Config Composition Tests`, `build_workflow`, `disk_config`, `test_protoplan.py`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
+- **Why does `get_simulator()` connect `test_registries.py` to `adapter.py`?**
+  _High betweenness centrality (0.098) - this node is a cross-community bridge._
+- **Why does `compose()` connect `compose` to `Community 34`, `Simulate Stage & Registries`, `Dataset IO`, `Community 46`, `build_workflow`, `test_registries.py`, `adapter.py`, `protoplan.py`?**
+  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+- **Are the 5 inferred relationships involving `AugmentationsClass` (e.g. with `Accum` and `_augmentor()`) actually correct?**
+  _`AugmentationsClass` has 5 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 17 inferred relationships involving `compose()` (e.g. with `load_cfg()` and `test_adapter_derived_from_simulator()`) actually correct?**
+  _`compose()` has 17 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 13 inferred relationships involving `build_workflow()` (e.g. with `summary_fn()` and `run_evaluation()`) actually correct?**
   _`build_workflow()` has 13 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Marimo notebook: inspect a training run's posterior samples and diagnostics.  Ru`, `One corner plot per model: the training prior shaded behind, every condition reg`, `Read the real disks straight out of `assets/protoplan/extracted_fits/`.  The res` to the rest of the system?**
-  _411 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `Marimo notebook: inspect a training run's posterior samples and diagnostics.  Ru`, `One corner plot per model: the training prior shaded behind, every condition reg`, `Shared machinery for the prior-predictive check notebooks.  The notebooks beside` to the rest of the system?**
+  _372 weakly-connected nodes found - possible documentation gaps or missing edges._

@@ -111,10 +111,5 @@
   "109": "check_sed_range.py",
   "110": "check_summary_pca.py",
   "111": "4. Three coupled choices in the encoding",
-  "112": "HydraBFlow",
-  "113": "build_pipeline",
-  "114": "get_run_dir",
-  "115": "test_workflow.py",
-  "116": "5. Four image branches, one per band",
-  "117": "plot_dir"
+  "112": "HydraBFlow"
 }
