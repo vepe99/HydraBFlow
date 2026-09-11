@@ -134,7 +134,7 @@ def main():
                                      **setup_kwargs)
     batches = [(i, j, {k: np.asarray(v) for k, v in aug(raw).items()})
                for i, j, raw in rd.training_batches(test, 256, n_pool)]
-    embed, keys = csr.summary_fn(cfg, csr.with_placeholders(batches[0][2], cfg))
+    embed, keys, _approx = csr.summary_fn(cfg, csr.with_placeholders(batches[0][2], cfg))
 
     F = np.concatenate([embed(csr.with_placeholders(b, cfg)) for _i, _j, b in batches],
                        axis=0).astype(np.float64)

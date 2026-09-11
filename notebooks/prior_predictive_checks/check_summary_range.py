@@ -73,7 +73,7 @@ def summary_fn(cfg, probe):
         return np.asarray(approx.summary_network(sv, training=False))
 
     # Branch layout: `ConditionedFusionNetwork` concatenates in `sorted(backbones)` order.
-    return embed, sorted(approx.summary_network.backbones)
+    return embed, sorted(approx.summary_network.backbones), approx
 
 
 def blocks(keys, total):
@@ -108,13 +108,18 @@ def main():
     probe = with_placeholders(
         {k: np.asarray(v) for k, v in aug(next(iter(rd.training_batches(data, 8, 8)))[2]).items()},
         cfg)
-    embed, keys = summary_fn(cfg, probe)
+    embed, keys, approx = summary_fn(cfg, probe)
 
-    emb = []
+    emb, ref_raw = [], []
     total = len(data["im_jy"]) if n_rows in (0, None) else min(n_rows, len(data["im_jy"]))
     for i, j, raw in rd.training_batches(data, 512, n_rows):
-        emb.append(embed(with_placeholders(
-            {k: np.asarray(v) for k, v in aug(raw).items()}, cfg)))
+        batch = with_placeholders({k: np.asarray(v) for k, v in aug(raw).items()}, cfg)
+        # `summary_space_comparison` re-embeds raw data, so it cannot take the whole training set
+        # (four image cubes x 49k rows). Two batches are what it gets; the full-population version
+        # of the same statistic is `mmd()` below, on the embeddings we compute anyway.
+        if len(ref_raw) < 2:
+            ref_raw.append(batch)
+        emb.append(embed(batch))
         if (i // 512) % 10 == 0:
             print(f"  rows {j}/{total}", flush=True)
     F_tr = np.concatenate(emb, axis=0).astype(np.float64)
@@ -159,6 +164,53 @@ def main():
     d2_tr, d2_sa, pct_all = score(present_cols, "all present bands")
     per = {k: score(np.arange(F_tr.shape[1])[blk[k]], k) for k in keys}
 
+    # ── MMD: the kernel two-sample statistic BayesFlow ships for exactly this question ────
+    # `bf.diagnostics.metrics.summary_space_comparison` (Schmitt et al. 2021, model
+    # misspecification) is `approximator.summarize()` followed by `bootstrap_comparison`, and
+    # `embed` above already *is* summarize() -- adapter, inference-stage standardization, summary
+    # network. So the cached embeddings go straight to the inner function: same statistic, same
+    # bootstrap null, no second GPU pass, and the reference is the whole population rather than
+    # what fits in memory as raw images. The high-level call is run too, on a small raw subsample,
+    # because it is the number a reader following the BayesFlow docs would get.
+    #
+    # Whitened rank-normal space, not raw: the kernel is an IM-RBF mixture over hard-coded scales
+    # on Euclidean distances, so on raw summaries the few high-variance directions set the
+    # bandwidth and the rest of the vector stops mattering. Whitening also makes this directly
+    # comparable to the Mahalanobis numbers above -- same space, different assumption (MMD needs
+    # no ellipticity, which is what makes it worth having when the population is bimodal in
+    # `has_cavity`).
+    from bayesflow.diagnostics.metrics import bootstrap_comparison, summary_space_comparison
+    from bayesflow.metrics.functional import maximum_mean_discrepancy
+
+    print("\nMMD against the training population (bootstrap null over the training rows):")
+    rng = np.random.default_rng(0)
+
+    def mmd(cols, label, n_ref=2000, n_null=500):
+        Z_tr, z_sa = rd.normal_score_block(F_tr[:, cols], f_sa[cols])
+        W_tr, w_sa = rd.whiten(Z_tr, z_sa)
+        # `bootstrap_comparison` recomputes the reference-reference kernel on every null draw, so
+        # the reference is subsampled: at 49k rows that term alone is a 49k^2 matrix, 500 times.
+        ref = W_tr[rng.choice(len(W_tr), min(n_ref, len(W_tr)), replace=False)].astype(np.float32)
+        d, null = bootstrap_comparison(w_sa[None].astype(np.float32), ref,
+                                       maximum_mean_discrepancy, num_null_samples=n_null)
+        p = 100.0 * float((null < d).mean())
+        print(f"  {label:26s} MMD={d:10.5f}  p{p:6.2f} of the null   "
+              f"(null median {np.median(null):.5f}, max {null.max():.5f})", flush=True)
+        return d, null, p
+
+    mmd_all = mmd(present_cols, "all present bands")
+    mmd_per = {k: mmd(np.arange(F_tr.shape[1])[blk[k]], k) for k in keys}
+
+    ref_dict = {k: np.concatenate([b[k] for b in ref_raw]) for k in ref_raw[0]}
+    d_ss, null_ss = summary_space_comparison(real, ref_dict, approx, num_null_samples=200)
+    print(f"  {'summary_space_comparison':26s} MMD={d_ss:10.5f}  "
+          f"p{100 * float((null_ss < d_ss).mean()):6.2f} of the null   "
+          f"(library default: raw unwhitened summaries, {len(next(iter(ref_dict.values())))} rows)",
+          flush=True)
+
+    from bayesflow.diagnostics.plots import mmd_hypothesis_test
+    rd.save(mmd_hypothesis_test(mmd_all[1], mmd_all[0]), out_dir, "summary_mmd")
+
     # ── save the embeddings ──────────────────────────────────────────────────────────
     # They cost a full augmented pass over the training set to produce, so anything else that
     # wants this space (a PCA, a neighbour hunt, another disk) reads them from here instead.
@@ -166,7 +218,10 @@ def main():
                         real=f_sa.astype(np.float32), branch_keys=np.array(keys),
                         absent=np.array(absent),
                         has_cavity=np.asarray(data["has_cavity"][:len(F_tr)]).reshape(-1),
-                        sil_id=np.asarray(data["sil_id"][:len(F_tr)]).reshape(-1))
+                        sil_id=np.asarray(data["sil_id"][:len(F_tr)]).reshape(-1),
+                        mmd_observed=np.array([mmd_all[0]]), mmd_null=mmd_all[1],
+                        mmd_per_branch=np.array([mmd_per[k][0] for k in keys]),
+                        mmd_per_branch_p=np.array([mmd_per[k][2] for k in keys]))
 
     # ── figure ───────────────────────────────────────────────────────────────────────
     import matplotlib
