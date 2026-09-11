@@ -1,0 +1,39 @@
+# @package _global_
+# `experiment=protoplan_newbeam` with the two forward-model misspecifications found in the
+# prior-predictive audit removed.  Nothing else changes, so this is a controlled comparison
+# against `newbeam_all17`.
+#
+# 1. The JWST PSF becomes a circular Gaussian.  The stpsf NIRSpec kernel carries the
+#    hexagonal-aperture diffraction structure, and that structure is fixed on the *detector*
+#    while `apply_rotation` spins the source through 0-360 deg.  So in training the spike
+#    pattern always sits at the same angle relative to the array while the disk rotates against
+#    it -- an absolute orientation reference that exists only in our training set, since a real
+#    JWST observation has its own V3 position angle.  It is the same class of error as
+#    convolving before rotating (already fixed in `__call__`): the physics is right and a
+#    training-only landmark is left in the kernel.
+#
+#    0.16" is the stpsf kernel's *measured* half-max core width, not the 0.151" textbook
+#    diffraction limit -- match what the old runs actually convolved with.  What is lost is the
+#    halo: the stpsf kernel's second-moment FWHM is 0.527", with 20% of the flux beyond r=0.23"
+#    and 10% beyond r=0.43" on a 3.1" field.  Dropping it raises the peak of a bright compact
+#    source by 1.3-1.6x, so this is not a cosmetic swap; it is the trade being tested.
+#
+# 2. The SED noise gains a flux-proportional calibration term.  The drawn sigma was an
+#    *absolute* error bar in Jy, fitted to five bright real disks and independent of the row's
+#    own flux -- across a population spanning fourteen decades that gave a median training SED
+#    of S/N 67, cleaner than any real photometry.  With `sed_frac_cal_err: 0.04` the median is
+#    S/N 25 and the p10-p90 is 3.4-43, which brackets the two targets' own measured error bars
+#    (hvtauc 2.3% -> S/N 43, oph163131 4.7% -> S/N 21).
+#
+#    The 4% of bins at S/N < 1 are *unchanged*, and deliberately so: those are faint rows below
+#    a real absolute noise floor, i.e. genuine non-detections.  A proportional term cannot and
+#    should not rescue them.
+defaults:
+  - protoplan_newbeam
+
+run_name: protoplan_npe_gausspsf
+
+augmentation:
+  params:
+    jwst_psf_gaussian_fwhm_arcsec: 0.16
+    sed_frac_cal_err: 0.04

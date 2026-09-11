@@ -331,12 +331,29 @@ class AugmentationsClass:
         # wavelength-binned log-normal drawn from real disks' error bars.  See
         # `apply_sed_noise`; give it a real source's per-bin error bars to reproduce that source.
         sed_sigma_jy=None,
+        # Fractional calibration error added in quadrature to the drawn absolute floor, so
+        # sigma = sqrt((frac * flux)^2 + floor^2).  The floor alone (the default 0.0, i.e. the
+        # original model) is measured in Jy from five bright real disks and carries no flux
+        # dependence, so it hands a faint training row the error bar of a bright one: the
+        # median training SED comes out at S/N 67 -- cleaner than any real photometry -- while
+        # 4% of bins land at S/N < 1 and become pure noise realisations.  Real disks' measured
+        # fractional error bars are 2.3% (hvtauc) and 4.7% (oph163131); 0.07 puts the bulk of
+        # the population on top of them.  Ignored when `sed_sigma_jy` is given, which is a
+        # specific source's own total error bar and already includes its calibration term.
+        sed_frac_cal_err: float = 0.0,
         # Set False to build a JWST-less instance over an ALMA-only (or otherwise
         # JWST-free) channel set — needed for the per-modality emulator MCMC path,
         # where the `alma` emulator's target has no channel 0 to run the (expensive,
         # unrelated) JWST PSF through.  Default True preserves every existing caller,
         # which always has channel 0 = JWST.
         has_jwst: bool = True,
+        # Replace the stpsf NIRSpec PSF with a circular Gaussian of this FWHM [arcsec].
+        # None keeps stpsf.  A Gaussian drops the diffraction spikes and the Airy wings --
+        # i.e. it drops every feature whose orientation is fixed on the detector rather than
+        # on the sky -- and removes the `$STPSF_PATH` reference-data dependency.  Use the
+        # diffraction scale, 1.22 * lam / D = 0.151" at 3.9 um on JWST's 6.5 m, unless
+        # matching a measured empirical PSF.
+        jwst_psf_gaussian_fwhm_arcsec: float | None = None,
         # ── Anti-aliasing ─────────────────────────────────────────────────
         # Average the model image over each output pixel before sampling it, so the
         # decimation matches a pixel-integrating detector instead of point-sampling an
@@ -370,6 +387,7 @@ class AugmentationsClass:
 
         # ── JWST settings ─────────────────────────────────────────────────
         self.has_jwst           = bool(has_jwst)
+        self.sed_frac_cal_err   = float(sed_frac_cal_err)
         self.jwst_channel       = jwst_channel
         self.jwst_obs_px_arcsec = jwst_obs_px_arcsec
         self.jwst_noise_mjy_sr  = jwst_noise_mjy_sr
@@ -442,7 +460,10 @@ class AugmentationsClass:
         # Skip the (expensive) stpsf calculation entirely for a JWST-less instance —
         # it would never be read, since apply_psf_and_convolve/apply_resampling only
         # touch it when has_jwst is True.
-        if self.has_jwst:
+        self.jwst_psf_gaussian_fwhm_arcsec = (
+            None if jwst_psf_gaussian_fwhm_arcsec is None
+            else float(jwst_psf_gaussian_fwhm_arcsec))
+        if self.has_jwst and self.jwst_psf_gaussian_fwhm_arcsec is None:
             self._init_jwst_psf(jwst_lam_um)
 
         # Absolute, via paths.py: this used to be a bare relative path, so the class
@@ -678,6 +699,18 @@ class AugmentationsClass:
 
         src_x, _ = self._model_coords(n_pix)
         model_px = float(np.asarray(src_x)[1] - np.asarray(src_x)[0])
+
+        if self.jwst_psf_gaussian_fwhm_arcsec is not None:
+            # Circular Gaussian instead of stpsf.  Truncated at +-3 sigma, where the
+            # enclosed flux is 98.9% -- close enough that the unit-sum renormalisation
+            # below absorbs the rest without a visible pedestal.
+            sig_px = self.jwst_psf_gaussian_fwhm_arcsec / FWHM_PER_SIGMA / model_px
+            k = self._odd_kernel_size(6.0 * sig_px)
+            ax = np.arange(k, dtype=np.float64) - (k - 1) / 2.0
+            mx, my = np.meshgrid(ax, ax, indexing="ij")
+            kernel = np.exp(-0.5 * (mx ** 2 + my ** 2) / sig_px ** 2)
+            self._jwst_psf_cache[n_pix] = kernel / kernel.sum()
+            return self._jwst_psf_cache[n_pix]
 
         # Kernel extent: as much of the PSF as the stpsf FOV actually provides, on an odd
         # grid so the peak lands on a pixel centre.
@@ -944,10 +977,16 @@ class AugmentationsClass:
         log_sig_std: jnp.ndarray,
         key1: jnp.ndarray,
         key2: jnp.ndarray,
+        frac_cal_err: float = 0.0,
     ):
         """JIT-compiled log-normal SED noise (all ops fused in one XLA call)."""
         log_sigma   = log_sig_mu + jax.random.normal(key1, seds_2d.shape) * log_sig_std
-        sigma       = 10.0 ** log_sigma
+        # sigma = (calibration error x flux) (+) (absolute floor), added in quadrature -- the
+        # two independent terms of a real photometric error bar.  The drawn `log_sigma` is the
+        # floor: it is measured from real disks' error bars in Jy, so it carries no dependence
+        # on this row's own flux.  With frac_cal_err = 0 (the default) only the floor survives
+        # and this reduces exactly to the original expression.
+        sigma       = jnp.sqrt((frac_cal_err * seds_2d) ** 2 + (10.0 ** log_sigma) ** 2)
         sigma_sq_ln = jnp.log(1.0 + sigma ** 2 / seds_2d ** 2)
         mu_ln       = jnp.log(seds_2d) - 0.5 * sigma_sq_ln
         seds_noisy  = jnp.exp(mu_ln + jax.random.normal(key2, seds_2d.shape) * jnp.sqrt(sigma_sq_ln))
@@ -1451,6 +1490,13 @@ class AugmentationsClass:
         (sed_lams is constant across all batches), so the digitize/lookup
         overhead is paid only once per run.
 
+        `sed_frac_cal_err` adds a calibration term proportional to the row's own flux, in
+        quadrature with the drawn floor.  The floor by itself is an *absolute* error bar in Jy
+        with no flux dependence, which is wrong in both directions across a population spanning
+        fourteen decades: the median row lands at S/N 67 (cleaner than real photometry) while
+        4% of bins land at S/N < 1, where the log-normal is so right-skewed that the bin is a
+        noise realisation rather than a measurement.
+
         `sed_sigma_jy` (constructor) replaces that whole population lookup with one fixed
         per-bin sigma in Jy -- the measured error bars of the *specific* source being
         re-simulated.  It is the SED's analogue of `randomize_alma_setup=False`: the
@@ -1484,7 +1530,7 @@ class AugmentationsClass:
         k1 = self._split_key()
         k2 = self._split_key()
         seds_noisy, sigma = self._sed_noise_jit(
-            seds_2d, self._log_sig_mu, self._log_sig_std, k1, k2
+            seds_2d, self._log_sig_mu, self._log_sig_std, k1, k2, self.sed_frac_cal_err
         )
 
         batch['seds']           = seds_noisy[..., jnp.newaxis]  # (N, L, 1)

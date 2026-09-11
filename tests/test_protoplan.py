@@ -624,3 +624,73 @@ def test_major_axis_beam_prior_is_unchanged_when_no_theta_range_is_given(compose
                     AugmentationsClass(**kw)._draw_alma_setup(64)):
         np.testing.assert_array_equal(a["fwhm_maj"], b["fwhm_maj"])
         np.testing.assert_array_equal(a["rms_jy_beam"], b["rms_jy_beam"])
+
+
+def test_gaussian_jwst_psf_replaces_stpsf_without_its_reference_data():
+    """`jwst_psf_gaussian_fwhm_arcsec` swaps the stpsf NIRSpec PSF for a circular Gaussian.
+
+    Pinned because the swap is not a cosmetic one: the stpsf kernel's core FWHM is 0.16" but its
+    second-moment FWHM is 0.53" -- 20% of the flux sits beyond r=0.23" -- so a core-matched
+    Gaussian raises the peak of a compact source by tens of percent.  The three invariants that
+    keep it a *drop-in* are checked here: unit sum (flux conservation, as for the stpsf kernel),
+    the peak on a pixel centre (an even kernel shifts the image by half a pixel), and no stpsf
+    call at all, so the option also works without `$STPSF_PATH`.
+    """
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+
+    GRID = 300
+    px = spec.FOV_ARCSEC_MOD / (GRID - 1)
+    fwhm = 0.151                                    # 1.22 * 3.9um / 6.5m
+    aug = AugmentationsClass(px_arcsec_mod=px, fov_arcsec_mod=spec.FOV_ARCSEC_MOD,
+                             jwst_psf_gaussian_fwhm_arcsec=fwhm, seed=0)
+    assert not hasattr(aug, "_psf_raw"), "stpsf must not be called when a Gaussian is requested"
+
+    k = aug._get_jwst_kernel(GRID)
+    assert k.shape[0] == k.shape[1] and k.shape[0] % 2 == 1
+    assert k.sum() == pytest.approx(1.0, abs=1e-9)
+    c = (k.shape[0] - 1) // 2
+    assert np.unravel_index(np.argmax(k), k.shape) == (c, c)
+
+    prof = k[c]
+    above = np.flatnonzero(prof >= prof.max() / 2)
+    measured = (above[-1] - above[0]) * px
+    assert measured == pytest.approx(fwhm, abs=1.5 * px)   # half-max crossing, to a pixel
+
+
+def test_sed_frac_cal_err_adds_a_flux_proportional_term_and_defaults_to_the_old_model(raw_batch):
+    """`sigma = sqrt((frac * flux)^2 + floor^2)`, with the floor alone as the default.
+
+    The drawn floor is an *absolute* error bar in Jy measured from five bright disks, so on its
+    own it hands a faint row the error bar of a bright one -- the median training SED comes out
+    at S/N ~67, cleaner than any real photometry, while the faint tail is pure noise.  Pinned
+    here: default 0.0 reproduces the old sigma bit-for-bit (so every existing run stays valid),
+    a non-zero value can only widen sigma, and the added term is exactly `frac * flux`.
+    """
+    from hydrabflow.augmentation.protoplan_instrument import AugmentationsClass
+
+    _, data = raw_batch
+    GRID = np.asarray(data["im_jy"]).shape[1]
+    FRAC = 0.04
+    kw = dict(px_arcsec_mod=spec.FOV_ARCSEC_MOD / (GRID - 1), randomize_alma_setup=False,
+              alma_obs_px_arcsec=0.05, seed=0)
+
+    def sigma(frac):
+        """The drawn per-bin sigma [Jy], and the pre-noise flux `apply_sed_noise` saw."""
+        aug = AugmentationsClass(sed_frac_cal_err=frac, **kw)
+        batch = aug.preprocess({k: np.asarray(v).copy() for k, v in data.items()})
+        clean = np.squeeze(np.asarray(batch["seds"]), -1).astype(np.float64)
+        out = aug.log10_sed(aug.apply_sed_noise(batch))
+        return 10.0 ** np.asarray(out["sigma_sed_flux"]).astype(np.float64), clean
+
+    floor, clean = sigma(0.0)
+    both, _ = sigma(FRAC)
+    assert np.allclose(sigma(0.0)[0], floor)                  # same seed -> same floor draw
+    assert np.all(both >= floor - 1e-12), "the extra term can only widen sigma"
+    assert np.median(both) > np.median(floor) * 1.01, "and it must actually widen it"
+
+    # Recover the proportional term from the quadrature sum.  Only where it dominates the
+    # floor, since elsewhere the subtraction is all float32 cancellation.
+    dominates = FRAC * clean > 3.0 * floor
+    assert dominates.sum() > 20, "no bin where the calibration term dominates; test is vacuous"
+    recovered = np.sqrt(np.clip(both ** 2 - floor ** 2, 0.0, None))
+    assert np.allclose(recovered[dominates] / clean[dominates], FRAC, rtol=5e-2)
