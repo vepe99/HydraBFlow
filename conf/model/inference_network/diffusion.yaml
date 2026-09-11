@@ -1,7 +1,4 @@
 # Diffusion posterior network. Expressive; typically more sampling steps than flow matching.
-defaults:
-  - base_inference_network
-
 type: diffusion
 mlp_depth: 4
 mlp_width: 128

@@ -142,13 +142,13 @@ def augment_sim(sd, j, aug_preset="stream_global_ibata_grid", simulator="stream_
     os.environ.setdefault("HYDRABFLOW_SIM_QUIET", "1")
     from omegaconf import OmegaConf
 
-    from hydrabflow.augmentation.registry import build_augmentations
+    from hydrabflow.registry import build_augmentations
 
     if aug_cfg is None:  # compose the named preset (caller may instead pass a run's own node,
         # pre-resolved against its root config — e.g. the TRAIN augmentation of a model_dir)
         from hydra import compose, initialize_config_dir
 
-        from hydrabflow.config.schema import register_configs
+        from hydrabflow.config import register_configs
 
         register_configs()
         conf_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "conf")

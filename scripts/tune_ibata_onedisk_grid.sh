@@ -118,14 +118,14 @@ run_worker() {  # $1 = gpu id (or "cpu"), $2 = worker index
     export XLA_PYTHON_CLIENT_PREALLOCATE=false
   fi
   echo "[worker ${idx}] CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<cpu>}  trials=${PER}"
-  uv run python scripts/tune.py \
+  uv run python -m hydrabflow.pipeline.tune \
     simulator="${SIM}" model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
     tuning="${TUNING}" tuning.study_name="${STUDY}" \
     data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
     tuning.n_trials="${PER}" tuning.n_epochs="${N_EPOCHS}" \
     training.batch_size="${BATCH_SIZE}" seed="${SEED}" \
-    inference.batch_size="${INFER_BATCH}" inference.num_samples="${INFER_SAMPLES}" \
+    eval.batch_size="${INFER_BATCH}" eval.num_samples="${INFER_SAMPLES}" \
     augmentation.params.resources_dir="${RES}"
 }
 
@@ -181,7 +181,7 @@ while IFS=$'\t' read -r NUM ADIR OVERRIDES; do
   TEDIR="${EVALS_DIR}/trial_${NUM}"
   export_eval_gpu
   echo "    [sim]  -> ${TEDIR}/eval_sim"
-  uv run python scripts/evaluate.py \
+  uv run python -m hydrabflow.pipeline.evaluate \
     simulator="${SIM}" model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
     eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \
@@ -190,7 +190,7 @@ while IFS=$'\t' read -r NUM ADIR OVERRIDES; do
     ${OVERRIDES} hydra.run.dir="${TEDIR}/eval_sim" \
     || echo "WARN: sim eval failed for trial ${NUM}."
   echo "    [real] -> ${TEDIR}/eval_real"
-  uv run python scripts/evaluate_real.py \
+  uv run python -m hydrabflow.pipeline.evaluate \
     simulator="${SIM}" model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing="${REAL_PREPROC}" augmentation="${REAL_AUG}" \
     data.real_data_path="${REAL}" \

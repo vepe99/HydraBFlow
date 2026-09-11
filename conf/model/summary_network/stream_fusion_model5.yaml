@@ -4,9 +4,6 @@
 # at 0.1 in the reference study (not part of its search space); everything else below is read
 # straight from the trial's params. The reference SetTransformer's `num_seeds` (PMA seed count)
 # has no equivalent in bf's current SetTransformer builder and is dropped.
-defaults:
-  - base_summary_network
-
 type: fusion
 params:
   mask_backbone: sim_data_projected
@@ -17,16 +14,14 @@ params:
       num_blocks: 4
       num_heads: 3
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 14
+      embed_dim_per_head: 14
     vcirc_kms:
       type: time_series_transformer
       summary_dim: 62
       num_blocks: 5
       num_heads: 6
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 11
+      embed_dim_per_head: 11
   head:
     width: 48
     depth: 4

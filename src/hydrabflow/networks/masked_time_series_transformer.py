@@ -49,7 +49,8 @@ from bayesflow.networks.summary.summary_network import SummaryNetwork
 from bayesflow.types import Tensor
 from bayesflow.utils.serialization import deserialize, serializable, serialize
 
-from hydrabflow.networks.factory import _embed_dim, register_summary_network
+from hydrabflow.networks.factory import _embed_dim
+from hydrabflow.registry import register_summary_network
 
 
 @serializable("hydrabflow.networks")

@@ -7,9 +7,6 @@
 # summary vector already reflects the observational window). sigma_z is NOT a backbone here — the
 # adapter routes it to inference_conditions. The Optuna study flips sim_summary.type to `mlp` on
 # some trials (drop-in on the same rank-2 input). Pair with adapter=stream_ibata_sumstats.
-defaults:
-  - base_summary_network
-
 type: fusion
 params:
   mask_backbone: null
@@ -20,24 +17,21 @@ params:
       num_blocks: 3
       num_heads: 4
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 8
+      embed_dim_per_head: 8
     vcirc_kms:
       type: time_series_transformer
       summary_dim: 62
       num_blocks: 5
       num_heads: 6
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 11
+      embed_dim_per_head: 11
     vterm_kms:
       type: time_series_transformer
       summary_dim: 32
       num_blocks: 3
       num_heads: 4
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 8
+      embed_dim_per_head: 8
   head:
     width: 64
     depth: 4

@@ -6,9 +6,6 @@
 # stream index j) rather than a summary backbone. rho_z is excluded entirely (no real-data datum).
 # Pair with model=stream_fusion_ibata_sumstats, augmentation=stream_global_ibata_sumstats,
 # preprocessing=stream_global_log10_ibata_sumstats, simulator=stream_agama_ibata, composition=global.
-defaults:
-  - base_adapter
-
 inference_variables: []
 summary_variables:
   - sim_summary

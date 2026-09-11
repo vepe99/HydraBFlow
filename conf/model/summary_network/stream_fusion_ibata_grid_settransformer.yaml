@@ -3,9 +3,6 @@
 # but ADDS a `sim_data_projected` SetTransformer backbone and routes the attention mask to it
 # (mask_backbone: sim_data_projected). Pair with adapter=stream_ibata_grid_settransformer,
 # augmentation=stream_global_ibata_grid.
-defaults:
-  - base_summary_network
-
 type: fusion
 params:
   mask_backbone: sim_data_projected     # attention mask routed only to the particle (set) backbone
@@ -18,16 +15,15 @@ params:
       mlp_depth: 2
       mlp_width: 128
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 14
+      embed_dim_per_head: 14
     sim_summary:
       type: time_series_transformer
       summary_dim: 32
       num_blocks: 3
       num_heads: 4
       dropout: 0.1
+      embed_dim_per_head: 8
       params:
-        embed_dim_multiplier: 8
         time_axis: -1          # last channel of sim_summary is the φ1 bin-centre (the time coord)
     vcirc_kms:
       type: time_series_transformer
@@ -35,16 +31,14 @@ params:
       num_blocks: 5
       num_heads: 6
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 11
+      embed_dim_per_head: 11
     vterm_kms:
       type: time_series_transformer
       summary_dim: 32
       num_blocks: 3
       num_heads: 4
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 8
+      embed_dim_per_head: 8
   head:
     width: 64
     depth: 4

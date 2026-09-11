@@ -1,8 +1,9 @@
-"""Stage 5: application to real (observed) data.
+"""Real-data mode of the evaluate stage (``data.real_data_path`` set).
 
-Like :mod:`evaluate`, but the input is a user-provided real-data ``.npz`` with no ground-truth
-parameters: there is no prior sampling and no resimulation. We replay the fitted preprocessing,
-draw posterior samples, and write truth-free diagnostics (posterior pair plots).
+Dispatched to by :mod:`evaluate`; not a stage of its own. The input is a user-provided real-data
+``.npz`` with no ground-truth parameters: there is no prior sampling and no resimulation. We replay
+the fitted preprocessing, draw posterior samples, and write truth-free diagnostics (posterior pair
+plots).
 
 Three paths, selected by ``composition.level``:
 
@@ -24,13 +25,13 @@ steps are replayed (see ``conf/preprocessing/stream_real_*`` and
 
 from __future__ import annotations
 
+import logging
+
 import os
 
 import numpy as np
 
-from hydrabflow.pipeline import io
-from hydrabflow.pipeline._app import make_cli
-from hydrabflow.pipeline.checkpoint import load_approximator
+from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline.compositional import (
     apply_augmentations_once,
     build_prior_score,
@@ -38,25 +39,25 @@ from hydrabflow.pipeline.compositional import (
     condition_keys,
     group_members,
     log10_keys_from_pipeline,
+    sample_kwargs,
 )
 from hydrabflow.pipeline.misspecification import (
     run_misspecification_test,
     save_member_summaries,
 )
 from hydrabflow.pipeline.workflow import build_workflow
-from hydrabflow.preprocessing.registry import build_pipeline
-from hydrabflow.utils.logging import get_logger
+from hydrabflow.registry import build_pipeline
 from hydrabflow.utils.paths import POSTERIOR_SAMPLES, PREPROCESSING_STATE, get_run_dir
 from hydrabflow.utils.seed import seed_everything
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def run_real_evaluation(cfg):
     seed_everything(cfg.seed)
     run_dir = get_run_dir()
     if not cfg.model_dir:
-        raise ValueError("evaluate_real requires `model_dir` (a completed training run).")
+        raise ValueError("real-data evaluation requires `model_dir` (a completed training run).")
     if not cfg.data.real_data_path:
         raise ValueError("Set `data.real_data_path` to your observed-data .npz.")
 
@@ -66,7 +67,7 @@ def run_real_evaluation(cfg):
 
     # ------------------------------ single-level (template default) ----------------------- #
     workflow = build_workflow(cfg)
-    workflow.approximator = load_approximator(cfg.model_dir)
+    workflow.approximator = artifacts.load_approximator(cfg.model_dir)
     pipeline = build_pipeline(cfg.preprocessing)
     pipeline.load(os.path.join(cfg.model_dir, PREPROCESSING_STATE))
 
@@ -74,12 +75,12 @@ def run_real_evaluation(cfg):
     real_data = pipeline.transform(real_data)
 
     posterior = workflow.sample(
-        num_samples=int(cfg.inference.num_samples),
+        num_samples=int(cfg.eval.num_samples),
         conditions=real_data,
-        batch_size=int(cfg.inference.batch_size),
+        batch_size=int(cfg.eval.batch_size),
     )
-    _save_posterior(posterior, run_dir)
-    _save_posterior_plot(posterior, list(cfg.adapter.inference_variables), run_dir)
+    artifacts.save_posterior(posterior, run_dir)
+    artifacts.save_posterior_plot(posterior, list(cfg.adapter.inference_variables), run_dir)
     log.info("Real-data inference complete. Artifacts in %s", run_dir)
     return posterior
 
@@ -128,7 +129,7 @@ def _prepare_real_members(cfg):
 
 def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     workflow = build_workflow(cfg)
-    workflow.approximator = load_approximator(cfg.model_dir)
+    workflow.approximator = artifacts.load_approximator(cfg.model_dir)
     pipeline = build_pipeline(cfg.preprocessing)
     pipeline.load(os.path.join(cfg.model_dir, PREPROCESSING_STATE))
 
@@ -142,17 +143,10 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     grouped = group_members(flat, 1, m)
     conditions = {k: grouped[k] for k in condition_keys(cfg) if k in grouped}
 
-    from omegaconf import OmegaConf
-
-    sample_kwargs = cfg.eval.sample_kwargs
-    sample_kwargs = (
-        OmegaConf.to_container(sample_kwargs, resolve=True)
-        if OmegaConf.is_config(sample_kwargs)
-        else dict(sample_kwargs)
-    )
+    kwargs = sample_kwargs(cfg)
 
     if level == "global":
-        from hydrabflow.simulators.registry import get_simulator
+        from hydrabflow.registry import get_simulator
 
         log10_keys = log10_keys_from_pipeline(pipeline)
         prior_score = build_prior_score(
@@ -164,17 +158,17 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
         )
         log.info("Compositional (global) sampling on the observed group of %d members", m)
         posterior = workflow.compositional_sample(
-            num_samples=int(cfg.inference.num_samples),
+            num_samples=int(cfg.eval.num_samples),
             conditions=conditions,
             compute_prior_score=prior_score,
-            batch_size=int(cfg.inference.batch_size),
-            **sample_kwargs,
+            batch_size=int(cfg.eval.batch_size),
+            **kwargs,
         )
         # Saved in the model's native (possibly log10) space — the local level's ancestral
         # sampling reloads this file as conditions and expects training-time units. The pair
         # plot below is for humans, so it gets the physical-unit inverse instead.
-        _save_posterior(posterior, run_dir)
-        _save_posterior_plot(
+        artifacts.save_posterior(posterior, run_dir)
+        artifacts.save_posterior_plot(
             pipeline.inverse_transform(dict(posterior)), list(cfg.adapter.inference_variables), run_dir
         )
         # Overlay corner: pooled global posterior + each single-stream posterior on the shared
@@ -216,8 +210,8 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     posterior = workflow.ancestral_sample(
         conditions=conditions,
         ancestral_conditions=ancestral,
-        batch_size=int(cfg.inference.batch_size),
-        **sample_kwargs,
+        batch_size=int(cfg.eval.batch_size),
+        **kwargs,
     )
 
     # Back to physical units (per-stream prior normalization is invertible given j).
@@ -225,23 +219,17 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     posterior["j"] = grouped["j"]
     posterior = pipeline.inverse_transform(posterior)
     posterior.pop("j")
-    _save_posterior(posterior, run_dir)
+    artifacts.save_posterior(posterior, run_dir)
 
     # Truth-free per-member pair plots: leading axis = member.
     param_names = list(cfg.adapter.inference_variables)
     per_member = {
         k: np.asarray(v)[0].reshape(m, -1, 1) for k, v in posterior.items() if k in param_names
     }
-    _save_posterior_plot(per_member, param_names, run_dir)
+    artifacts.save_posterior_plot(per_member, param_names, run_dir)
     log.info("Local (ancestral) real-data inference complete. Artifacts in %s", run_dir)
     return posterior
 
-
-def _save_posterior(posterior, run_dir: str, name: str = POSTERIOR_SAMPLES) -> None:
-    np.savez(
-        os.path.join(run_dir, name),
-        **{k: np.asarray(v) for k, v in posterior.items()},
-    )
 
 
 def _save_global_vs_streams_corner(cfg, workflow, flat, global_posterior, pipeline, run_dir) -> None:
@@ -265,7 +253,7 @@ def _save_global_vs_streams_corner(cfg, workflow, flat, global_posterior, pipeli
         import matplotlib.pyplot as plt  # noqa: E402
         from matplotlib.lines import Line2D  # noqa: E402
 
-        from hydrabflow.simulators.registry import get_simulator
+        from hydrabflow.registry import get_simulator
 
         param_names = list(cfg.adapter.inference_variables)
 
@@ -273,11 +261,11 @@ def _save_global_vs_streams_corner(cfg, workflow, flat, global_posterior, pipeli
         # base mode uses. Conditioned on one member's data at a time (no pooling).
         flat_conditions = {k: flat[k] for k in condition_keys(cfg) if k in flat}
         per_stream = workflow.sample(
-            num_samples=int(cfg.inference.num_samples),
+            num_samples=int(cfg.eval.num_samples),
             conditions=flat_conditions,
-            batch_size=int(cfg.inference.batch_size),
+            batch_size=int(cfg.eval.batch_size),
         )
-        _save_posterior(per_stream, run_dir, name="single_stream_posterior.npz")
+        artifacts.save_posterior(per_stream, run_dir, name="single_stream_posterior.npz")
 
         global_phys = pipeline.inverse_transform(dict(global_posterior))
         per_stream_phys = pipeline.inverse_transform(dict(per_stream))
@@ -330,33 +318,3 @@ def _save_global_vs_streams_corner(cfg, workflow, flat, global_posterior, pipeli
     except Exception as exc:
         log.warning("global-vs-streams corner plot failed: %s", exc)
 
-
-def _save_posterior_plot(posterior, param_names, run_dir) -> None:
-    """Save a posterior pair plot per observation (real data has no ground truth)."""
-    try:
-        import matplotlib
-
-        matplotlib.use("Agg")
-        import bayesflow as bf
-
-        fn = getattr(bf.diagnostics, "pairs_posterior", None) or getattr(
-            bf.diagnostics, "pairs_samples", None
-        )
-        if fn is None:
-            log.warning("No posterior pair-plot helper found in bayesflow.diagnostics.")
-            return
-        n_obs = int(np.asarray(next(iter(posterior.values()))).shape[0])
-        for i in range(n_obs):
-            single = {k: np.asarray(v)[i] for k, v in posterior.items()}  # (n_samples, 1) each
-            fig = fn(estimates=single, variable_names=param_names)
-            suffix = "" if n_obs == 1 else f"_obs{i}"
-            fig.savefig(os.path.join(run_dir, f"posterior_pairs{suffix}.png"), bbox_inches="tight")
-    except Exception as exc:
-        log.warning("posterior plot failed: %s", exc)
-
-
-cli = make_cli(run_real_evaluation)
-
-
-if __name__ == "__main__":
-    cli()

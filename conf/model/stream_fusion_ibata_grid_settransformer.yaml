@@ -4,9 +4,8 @@
 # augmentation=stream_global_ibata_grid, preprocessing=stream_global_log10_ibata_sumstats(_sigmastd),
 # simulator=stream_agama_ibata_onedisk_beta3, composition=global.
 defaults:
-  - base_model
-  - summary_network: stream_fusion_ibata_grid_settransformer
-  - inference_network: diffusion
+  - override summary_network: stream_fusion_ibata_grid_settransformer
+  - override inference_network: diffusion
   - _self_
 
 name: stream_fusion_ibata_grid_settransformer

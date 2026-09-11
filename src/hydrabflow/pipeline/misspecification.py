@@ -26,16 +26,17 @@ abort a (possibly chained) evaluation run.
 
 from __future__ import annotations
 
+import logging
+
 import json
 import os
 from typing import Callable, Mapping
 
 import numpy as np
 
-from hydrabflow.utils.logging import get_logger
 from hydrabflow.utils.paths import MISSPECIFICATION_JSON, MMD_PLOT, SUMMARIES
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def _bf_mmd(x: np.ndarray, y: np.ndarray) -> float:
@@ -209,7 +210,7 @@ def run_misspecification_test(
 
         # Human names for the member ids, when the simulator declares them.
         try:
-            from hydrabflow.simulators.registry import get_simulator
+            from hydrabflow.registry import get_simulator
 
             streams = getattr(get_simulator(cfg.simulator), "target_streams", None) or {}
             names = {int(v): str(k) for k, v in streams.items()}

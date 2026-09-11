@@ -4,6 +4,10 @@ multirun/
 
 # Generated datasets (root-anchored: must not swallow conf/data/)
 /data/
+/data_experiments/
+
+# Local generated datasets (2 GB+; regenerate with scripts/create_*_dataset.sh)
+/data_local/
 
 # Python
 __pycache__/
@@ -31,6 +35,3 @@ dist/
 
 # Reference projects (embedded git repo, not part of this project)
 references/
-
-# Local generated datasets (2 GB+; regenerate with scripts/create_*_dataset.sh)
-/data_local/

@@ -3,9 +3,6 @@
 # datum yet (Ibata 2017b Fig 12f, still to digitize) — training without it keeps sim and (future)
 # real inference on the same observable set. rho_z can still be present in the .npz; it is simply
 # never selected. Pair with model=stream_fusion_ibata_norho.
-defaults:
-  - base_adapter
-
 inference_variables: []
 summary_variables:
   - sim_data_projected

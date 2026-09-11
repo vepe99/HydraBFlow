@@ -1,16 +1,27 @@
 """Base interface every forward model implements.
 
-A simulator is the ONLY piece a new user must write (plus a matching ``conf/simulator`` YAML).
-It samples parameters from the prior and maps them to observables. Everything downstream
-(dataset generation, adapter, training, evaluation) is driven by ``parameter_names`` and
-``observable_keys`` and never needs to change.
+A simulator is the only piece a new user must write (plus a ``conf/simulator/<name>.yaml``). Shapes
+are batched, leading axis = number of simulations ``n``:
 
-Convention for shapes (batched, leading axis = number of simulations ``n``):
-  * ``sample_prior(n, rng)`` -> ``{param_name: array of shape (n, 1)}``
-  * ``simulate(params, rng)`` -> ``{observable_key: array of shape (n, *event_shape)}``
+  * ``sample_prior(n, rng)`` -> ``{param_name: (n, 1)}``
+  * ``simulate(theta, rng)`` -> ``{observable_key: (n, *event_shape)}``
 
-The dataset written to disk is the union of both dicts, so each ``.npz`` row is one
-(parameters, observation) pair.
+Set ``is_batched = False`` when the forward model cannot vectorize (a parameter that sets a loop
+length, an ODE solver, an external binary): ``simulate`` then gets one draw ``{param_name: (1,)}``
+and returns ``{observable_key: event_shape}``, and ``sample`` loops and stacks.
+
+``theta`` is the prior draw(s); ``self.params`` is the free-form ``simulator.params`` config
+mapping (prior bounds, set sizes). Two different things, deliberately two different names.
+
+The dataset on disk is the union of both dicts, so each row is one (parameters, observation) pair.
+A simulator may return *extra* arrays beyond its declared names (fixed constants, diagnostics,
+context keys); the adapter drops what it does not use. All randomness must come from the passed
+``rng``, so runs reproduce from ``cfg.seed``.
+
+Hierarchical (compositional) simulators additionally split their parameters into *global* ones,
+shared by a group of exchangeable observations (one galactic potential, several streams), and
+*local* per-member ones, and implement ``sample_compositional``. The flat defaults below mean a
+single-level simulator needs none of that.
 """
 
 from __future__ import annotations
@@ -24,19 +35,16 @@ import numpy as np
 class BaseSimulator(ABC):
     """Abstract forward model. Subclass + register via ``@register_simulator``."""
 
+    #: Ordered names of the inferred parameters (become ``inference_variables``).
+    parameter_names: list[str] = []
+    #: Keys of the observable arrays. One key = single observable; >1 enables fusion.
+    observable_keys: list[str] = []
+    #: False -> ``simulate`` handles one draw at a time and ``sample`` loops and stacks.
+    is_batched: bool = True
+
     def __init__(self, params: Mapping[str, Any] | None = None) -> None:
-        # `params` is the free-form `simulator.params` mapping from config.
+        # The free-form `simulator.params` mapping from config.
         self.params: Dict[str, Any] = dict(params or {})
-
-    @property
-    @abstractmethod
-    def parameter_names(self) -> list[str]:
-        """Ordered names of the inferred parameters (become ``inference_variables``)."""
-
-    @property
-    @abstractmethod
-    def observable_keys(self) -> list[str]:
-        """Keys of the observable arrays. One key = single observable; >1 enables fusion."""
 
     @abstractmethod
     def sample_prior(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
@@ -44,26 +52,36 @@ class BaseSimulator(ABC):
 
     @abstractmethod
     def simulate(
-        self, params: Mapping[str, np.ndarray], rng: np.random.Generator
+        self, theta: Mapping[str, np.ndarray], rng: np.random.Generator
     ) -> Dict[str, np.ndarray]:
-        """Run the forward model on a batch of parameters. Returns ``{observable_key: (n, ...)}``."""
+        """Batched: ``{param_name: (n, 1)}`` -> ``{observable_key: (n, *event_shape)}``.
+        With ``is_batched = False``: one draw ``{param_name: (1,)}`` -> ``{observable_key: shape}``.
+        """
 
-    # --------------------------------------------------------------------------------------- #
-    # Convenience: one call producing a full dataset chunk (parameters + observables merged).
-    # Infrastructure (pipeline.simulate) uses this; subclasses normally need not override it.
-    # --------------------------------------------------------------------------------------- #
     def sample(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
-        params = self.sample_prior(n, rng)
-        observables = self.simulate(params, rng)
-        return {**params, **observables}
+        """One dataset chunk: prior draws merged with their observables. Rarely overridden."""
+        theta = self.sample_prior(n, rng)
+        if self.is_batched:
+            obs = self.simulate(theta, rng)
+        else:
+            rows = [self.simulate({k: v[i] for k, v in theta.items()}, rng) for i in range(n)]
+            obs = {k: np.stack([row[k] for row in rows]) for k in rows[0]}
+        data = {**theta, **obs}
 
-    # --------------------------------------------------------------------------------------- #
-    # Hierarchical (compositional) seam. A hierarchical simulator has *global* parameters
-    # shared by a group of exchangeable observations (e.g. one galactic potential constraining
-    # several stellar streams) and *local* parameters specific to each group member. The flat
-    # defaults below mean existing single-level simulators need no changes; a hierarchical
-    # simulator overrides the three properties and `sample_compositional`.
-    # --------------------------------------------------------------------------------------- #
+        # run_chunked concatenates chunks on axis 0 and the adapter looks up the declared names, so
+        # a mis-named or non-row-major return would land on disk as a plausible-looking corrupt file.
+        want = set(self.parameter_names) | set(self.observable_keys)
+        got = {k: np.shape(v) for k, v in data.items()}
+        missing = sorted(want - set(got))
+        bad_axis = sorted(k for k, s in got.items() if s[:1] != (n,))
+        if missing or bad_axis:
+            raise ValueError(
+                f"{type(self).__name__} must return {sorted(want)} with leading axis n={n}; "
+                f"missing={missing}, wrong leading axis={bad_axis}, got {got}"
+            )
+        return data
+
+    # --- hierarchical (compositional) seam -------------------------------------------------- #
 
     @property
     def global_parameter_names(self) -> list[str]:
@@ -84,13 +102,9 @@ class BaseSimulator(ABC):
     def sample_compositional(self, n: int, rng: np.random.Generator) -> Dict[str, np.ndarray]:
         """Draw ``n`` grouped datasets: one shared global draw + one local draw per member.
 
-        Shape convention (``m`` = number of group members):
-          * global parameters: ``(n, 1)``
-          * local parameters / context keys: ``(n, m, 1)``
-          * observables: ``(n, m, *event_shape)`` (member-independent observables may stay
-            ``(n, *event_shape)``)
-
-        Used by the ``simulate_multistream`` stage to build compositional test sets.
+        Shape convention (``m`` = group members): globals ``(n, 1)``; locals / context keys
+        ``(n, m, 1)``; observables ``(n, m, *event_shape)`` (member-independent observables may
+        stay ``(n, *event_shape)``). Used by ``simulate_multistream`` for compositional test sets.
         """
         raise NotImplementedError(
             f"{type(self).__name__} does not implement sample_compositional(); it is a "

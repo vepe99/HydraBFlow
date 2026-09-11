@@ -1,9 +1,6 @@
 # Optuna search space for the stream fusion model (global level), mirroring the reference
 # nocompositional/rotationcurve/agama study: both summary backbones, the fusion head, and the
 # diffusion subnet. Dotted paths address any config field, including nested fusion params.
-defaults:
-  - base_tuning
-
 study_name: stream_fusion_study
 n_trials: 50
 n_epochs: 10
@@ -16,7 +13,7 @@ search_space:
   model.summary_network.params.backbones.sim_data_projected.num_heads:
     { type: int, low: 3, high: 8 }
   # attention width = num_heads * multiplier (keeps embed_dim divisible by num_heads)
-  model.summary_network.params.backbones.sim_data_projected.params.embed_dim_multiplier:
+  model.summary_network.params.backbones.sim_data_projected.embed_dim_per_head:
     { type: int, low: 4, high: 16 }
   model.summary_network.params.backbones.vcirc_kms.summary_dim:
     { type: int, low: 32, high: 64 }
@@ -24,7 +21,7 @@ search_space:
     { type: int, low: 2, high: 6 }
   model.summary_network.params.backbones.vcirc_kms.num_heads:
     { type: int, low: 3, high: 8 }
-  model.summary_network.params.backbones.vcirc_kms.params.embed_dim_multiplier:
+  model.summary_network.params.backbones.vcirc_kms.embed_dim_per_head:
     { type: int, low: 4, high: 16 }
   model.summary_network.params.head.width:
     { type: int, low: 32, high: 256, step: 16 }

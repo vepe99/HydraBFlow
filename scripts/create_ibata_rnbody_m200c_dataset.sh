@@ -62,11 +62,11 @@ echo ">>> rnbody Ibata m200_c dataset generation | sim=${SIM} data_dir=${DATA_DI
 # --------------------------------------------------------------------------------------------- #
 if [[ "${RUN_PILOT}" == "1" ]]; then
   echo ">>> [pilot] 2000 flat + 30 multistream for the pre-flight PPC"
-  uv run python scripts/simulate.py \
+  uv run python -m hydrabflow.pipeline.simulate \
     simulator=${SIM} composition=global \
     data.data_dir="${DATA_DIR}/pilot" data.n_simulations=2000 data.chunk_size=2000 \
     simulator.params.n_workers="${N_WORKERS}" seed="${SEED}"
-  uv run python scripts/simulate_multistream.py \
+  uv run python -m hydrabflow.pipeline.simulate_multistream \
     simulator=${SIM} composition=global \
     data.data_dir="${DATA_DIR}/pilot" data.n_simulations=30 data.chunk_size=30 \
     data.dataset_name=test_multistream_30.npz \
@@ -89,7 +89,7 @@ fi
 # STEP 1: full 10^4 flat rnbody training set (the vcirc rejection prior is applied per draw).
 # --------------------------------------------------------------------------------------------- #
 echo ">>> [full] ${N_FULL} flat restricted-N-body rows"
-uv run python scripts/simulate.py \
+uv run python -m hydrabflow.pipeline.simulate \
   simulator=${SIM} composition=global \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_FULL}" data.chunk_size=2000 \
   simulator.params.n_workers="${N_WORKERS}" seed="${SEED}"
@@ -98,7 +98,7 @@ uv run python scripts/simulate.py \
 # STEP 2: 333-group multistream test set (one shared potential per group, 3 streams each).
 # --------------------------------------------------------------------------------------------- #
 echo ">>> [full] ${N_GROUPS}-group multistream test set"
-uv run python scripts/simulate_multistream.py \
+uv run python -m hydrabflow.pipeline.simulate_multistream \
   simulator=${SIM} composition=global \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_GROUPS}" data.chunk_size="${N_GROUPS}" \
   data.dataset_name=test_multistream_${N_GROUPS}.npz \

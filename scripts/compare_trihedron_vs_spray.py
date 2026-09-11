@@ -155,8 +155,8 @@ def prior_center(spec) -> float:
 def load_simulator(name: str):
     """Instantiate the simulator named by a config, purely to read its resolved params."""
     from hydra import compose, initialize_config_dir
-    from hydrabflow.config.schema import register_configs
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.config import register_configs
+    from hydrabflow.registry import get_simulator
 
     register_configs()
     with initialize_config_dir(config_dir=str(REPO / "conf"), version_base=None):

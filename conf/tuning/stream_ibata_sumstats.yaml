@@ -4,9 +4,6 @@
 # subnet. Dotted paths address any nested config field. Concurrency-safe: launch this same command
 # once per GPU (identical study_name + storage_dir) and the processes cooperatively fill one
 # JournalStorage `.log`. Pair with model=stream_fusion_ibata_sumstats adapter=stream_ibata_sumstats.
-defaults:
-  - base_tuning
-
 study_name: stream_ibata_sumstats_study
 storage_dir: ${data.data_dir}/tuning
 n_trials: 50
@@ -29,7 +26,7 @@ search_space:
     { type: int, low: 2, high: 6 }
   model.summary_network.params.backbones.sim_summary.num_heads:
     { type: int, low: 3, high: 8 }
-  model.summary_network.params.backbones.sim_summary.params.embed_dim_multiplier:
+  model.summary_network.params.backbones.sim_summary.embed_dim_per_head:
     { type: int, low: 4, high: 16 }
   # --- vcirc_kms backbone (rotation curve) ---
   model.summary_network.params.backbones.vcirc_kms.summary_dim:
@@ -38,7 +35,7 @@ search_space:
     { type: int, low: 2, high: 6 }
   model.summary_network.params.backbones.vcirc_kms.num_heads:
     { type: int, low: 3, high: 8 }
-  model.summary_network.params.backbones.vcirc_kms.params.embed_dim_multiplier:
+  model.summary_network.params.backbones.vcirc_kms.embed_dim_per_head:
     { type: int, low: 4, high: 16 }
   # --- vterm_kms backbone (HI terminal velocity) ---
   model.summary_network.params.backbones.vterm_kms.summary_dim:
@@ -47,7 +44,7 @@ search_space:
     { type: int, low: 2, high: 5 }
   model.summary_network.params.backbones.vterm_kms.num_heads:
     { type: int, low: 2, high: 6 }
-  model.summary_network.params.backbones.vterm_kms.params.embed_dim_multiplier:
+  model.summary_network.params.backbones.vterm_kms.embed_dim_per_head:
     { type: int, low: 4, high: 12 }
   # --- fusion head ---
   model.summary_network.params.head.width:

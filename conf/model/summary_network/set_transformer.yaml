@@ -1,12 +1,9 @@
 # Permutation-invariant set encoder. Good default for unordered point clouds / particle data.
-defaults:
-  - base_summary_network
-
 type: set_transformer
 summary_dim: 32
 num_blocks: 2
 num_heads: 4
-embed_dim: 64
+embed_dim_per_head: 16   # attention width = num_heads * this, so it is always divisible
 mlp_depth: 2
 mlp_width: 128
 dropout: 0.05

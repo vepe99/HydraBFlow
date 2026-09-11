@@ -16,14 +16,15 @@ in as best-effort steps that must not abort a training or evaluation run.
 
 from __future__ import annotations
 
+import logging
+
 import json
 import math
 import os
 from typing import Any
 
-from hydrabflow.utils.logging import get_logger
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 # --------------------------------------------------------------------------------------------- #

@@ -44,9 +44,9 @@ def _vlos_batch(n=4, particles=N_PARTICLES, seed=0):
 
 
 def _build(name, params, seed=0):
-    from hydrabflow.augmentation.registry import _REGISTRY
+    from hydrabflow.registry import AUGMENTATIONS
 
-    return _REGISTRY[name](params, np.random.default_rng(seed))
+    return AUGMENTATIONS.get(name)(params, np.random.default_rng(seed), {})
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -150,15 +150,15 @@ VALUE_CH, SIGMA_CH, MASK_CH = 5, 11, 13
 
 
 def _tiny_masked_net():
-    from hydrabflow.config.schema import SummaryNetworkConfig
-    from hydrabflow.networks.factory import build_summary_network
+    from hydrabflow.config import SummaryNetworkConfig
+    from hydrabflow.registry import build_summary_network
 
     spec = {
         "type": "masked_set_transformer",
         "summary_dim": 4,
         "num_blocks": 1,
         "num_heads": 2,
-        "embed_dim": 8,
+        "embed_dim_per_head": 4,  # 2 heads x 4 = width 8
         "mlp_depth": 1,
         "mlp_width": 8,
         "dropout": 0.0,
@@ -182,9 +182,9 @@ def _star_batch(seed=0, n=2, particles=12):
 
 def test_masked_set_transformer_registered():
     import hydrabflow.networks  # noqa: F401  (discovery)
-    from hydrabflow.networks.factory import _SUMMARY_BUILDERS
+    from hydrabflow.registry import SUMMARY_NETWORKS
 
-    assert "masked_set_transformer" in _SUMMARY_BUILDERS
+    assert "masked_set_transformer" in SUMMARY_NETWORKS.discover().items
 
 
 def test_masked_net_output_shape_and_missing_invariance():

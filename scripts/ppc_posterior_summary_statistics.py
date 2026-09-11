@@ -73,8 +73,8 @@ def main():
     from omegaconf import OmegaConf
 
     from hydrabflow.pipeline.compositional import log10_keys_from_pipeline
-    from hydrabflow.preprocessing.registry import build_pipeline
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import build_pipeline
+    from hydrabflow.registry import get_simulator
     from hydrabflow.simulators.stream_common import sample_prior_value
 
     cfg = OmegaConf.load(os.path.join(args.run_dir, ".hydra", "config.yaml"))

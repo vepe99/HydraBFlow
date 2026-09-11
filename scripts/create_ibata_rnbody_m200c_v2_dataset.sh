@@ -133,11 +133,11 @@ PY
 # --------------------------------------------------------------------------------------------- #
 if [[ "${RUN_PILOT}" == "1" ]]; then
   echo ">>> [pilot] ${N_PILOT} flat + ${N_PILOT_GROUPS} multistream for the pre-flight PPC"
-  uv run python scripts/simulate.py \
+  uv run python -m hydrabflow.pipeline.simulate \
     simulator=${SIM} composition=global \
     data.data_dir="${DATA_DIR}/pilot" data.n_simulations="${N_PILOT}" data.chunk_size="${N_PILOT}" \
     simulator.params.n_workers="${N_WORKERS}" seed="${SEED}" "${PARTICLE_OVERRIDE[@]}"
-  uv run python scripts/simulate_multistream.py \
+  uv run python -m hydrabflow.pipeline.simulate_multistream \
     simulator=${SIM} composition=global \
     data.data_dir="${DATA_DIR}/pilot" data.n_simulations="${N_PILOT_GROUPS}" data.chunk_size="${N_PILOT_GROUPS}" \
     data.dataset_name=test_multistream_${N_PILOT_GROUPS}.npz \
@@ -174,7 +174,7 @@ fi
 # STEP 1: full flat rnbody training set.
 # --------------------------------------------------------------------------------------------- #
 echo ">>> [full] ${N_FULL} flat restricted-N-body rows"
-uv run python scripts/simulate.py \
+uv run python -m hydrabflow.pipeline.simulate \
   simulator=${SIM} composition=global \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_FULL}" data.chunk_size=2000 \
   simulator.params.n_workers="${N_WORKERS}" seed="${SEED}" "${PARTICLE_OVERRIDE[@]}"
@@ -183,7 +183,7 @@ uv run python scripts/simulate.py \
 # STEP 2: multistream test set (one shared potential per group, 3 streams each).
 # --------------------------------------------------------------------------------------------- #
 echo ">>> [full] ${N_GROUPS}-group multistream test set"
-uv run python scripts/simulate_multistream.py \
+uv run python -m hydrabflow.pipeline.simulate_multistream \
   simulator=${SIM} composition=global \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_GROUPS}" data.chunk_size="${N_GROUPS}" \
   data.dataset_name=test_multistream_${N_GROUPS}.npz \

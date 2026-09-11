@@ -1,87 +1,37 @@
-"""Build BayesFlow networks from structured dataclass configs (no ``_target_``).
+"""The shipped network builders. A builder maps a network config to a BayesFlow network.
 
-Builders are resolved by ``cfg.type`` through name -> builder registries, so a custom
-architecture plugs in without touching this file: drop a module into ``src/hydrabflow/networks/``
-with an ``@register_summary_network("my_net")`` (or ``@register_inference_network``) decorated
-builder — the package auto-imports it — and select it with ``model/summary_network.type=my_net``.
-Custom builders can read free-form extras from ``cfg.params``.
+To add your own, drop a module in this package and decorate a function:
 
-The shipped builders are thin, opinionated wrappers around ``bayesflow.networks``. They translate
-the scalar hyperparameters in ``SummaryNetworkConfig`` / ``InferenceNetworkConfig`` into the
-constructor kwargs each network expects (e.g. expanding ``num_blocks`` into per-block tuples).
-``bayesflow`` is imported lazily so config-only contexts (and the test suite) don't require the
-backend.
+    @register_summary_network("my_net")
+    def _my_net(cfg):
+        return MyNetwork(summary_dim=cfg.summary_dim, **cfg.params)
 
-Multi-observable **fusion** is the documented extension seam: when an adapter groups several
-observable keys into ``summary_variables``, build one summary net per key and combine them with
-``bayesflow.networks.FusionNetwork``. The default single-observable path returns one net.
+Then select it with ``model.summary_network.type=my_net``. Extra knobs go in ``cfg.params``.
+``bayesflow`` is imported inside each builder so config-only contexts don't need the backend.
+
+The stream models add three more builders in this package: ``fusion`` (``fusion.py``, one backbone
+per grouped observable + attention-mask routing), ``masked_set_transformer`` and
+``masked_time_series_transformer`` (missingness-aware variants of the stock transformers).
 """
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
-Builder = Callable[[Any], Any]  # network config dataclass -> BayesFlow/keras network
-
-_SUMMARY_BUILDERS: Dict[str, Builder] = {}
-_INFERENCE_BUILDERS: Dict[str, Builder] = {}
-
-
-def register_summary_network(name: str):
-    """Decorator registering a summary-network builder under ``name`` (the config ``type``)."""
-
-    def _wrap(fn: Builder) -> Builder:
-        _SUMMARY_BUILDERS[name] = fn
-        return fn
-
-    return _wrap
-
-
-def register_inference_network(name: str):
-    """Decorator registering an inference-network builder under ``name`` (the config ``type``)."""
-
-    def _wrap(fn: Builder) -> Builder:
-        _INFERENCE_BUILDERS[name] = fn
-        return fn
-
-    return _wrap
-
-
-def build_summary_network(cfg) -> Any:
-    """Return the summary network selected by ``cfg.type`` (a ``SummaryNetworkConfig``)."""
-    if cfg.type not in _SUMMARY_BUILDERS:
-        raise ValueError(
-            f"Unknown summary_network.type '{cfg.type}'. Available: {sorted(_SUMMARY_BUILDERS)}. "
-            "Register custom architectures with @register_summary_network in "
-            "src/hydrabflow/networks/."
-        )
-    return _SUMMARY_BUILDERS[cfg.type](cfg)
-
-
-def build_inference_network(cfg) -> Any:
-    """Return the inference (posterior) network selected by ``cfg.type`` (an ``InferenceNetworkConfig``)."""
-    if cfg.type not in _INFERENCE_BUILDERS:
-        raise ValueError(
-            f"Unknown inference_network.type '{cfg.type}'. Available: {sorted(_INFERENCE_BUILDERS)}. "
-            "Register custom architectures with @register_inference_network in "
-            "src/hydrabflow/networks/."
-        )
-    return _INFERENCE_BUILDERS[cfg.type](cfg)
-
-
-# --------------------------------------------------------------------------------------------- #
-# Shipped builders
-# --------------------------------------------------------------------------------------------- #
+from hydrabflow.registry import register_inference_network, register_summary_network
 
 
 def _embed_dim(cfg) -> int:
-    """Attention embedding width. ``params.embed_dim_multiplier`` (per attention head) takes
-    precedence over ``embed_dim`` — attention requires embed_dim % num_heads == 0, so tuning
-    searches the multiplier instead of the raw width."""
-    multiplier = cfg.params.get("embed_dim_multiplier") if cfg.params else None
-    if multiplier:
-        return int(cfg.num_heads) * int(multiplier)
-    return int(cfg.embed_dim)
+    """Attention width, expressed per head so ``embed_dim % num_heads == 0`` always holds."""
+    return int(cfg.num_heads) * int(cfg.embed_dim_per_head)
+
+
+def _time_axis_kwargs(cfg) -> Dict[str, Any]:
+    """``params.time_axis``: index of a time channel carried inside the observation (e.g. -1 when a
+    time column was concatenated onto the values, or the phi1 bin-centre of the gridded stream
+    summary); absent/None = evenly spaced steps."""
+    time_axis = cfg.params.get("time_axis") if cfg.params else None
+    return {} if time_axis is None else {"time_axis": int(time_axis)}
 
 
 @register_summary_network("set_transformer")
@@ -104,17 +54,12 @@ def _time_series_transformer(cfg) -> Any:
     import bayesflow as bf
 
     blocks = int(cfg.num_blocks)
-    kwargs: Dict[str, Any] = {}
-    # Optional ``params.time_axis``: index of the input channel to use as the time coordinate for
-    # the time2vec embedding (default: implicit integer sequence position). E.g. the φ1-gridded
-    # summary (``stream_summary_grid``) carries the φ1 bin-centre in its last channel -> time_axis=-1.
-    if cfg.params and cfg.params.get("time_axis") is not None:
-        kwargs["time_axis"] = int(cfg.params["time_axis"])
     return bf.networks.TimeSeriesTransformer(
         summary_dim=int(cfg.summary_dim),
         embed_dims=(_embed_dim(cfg),) * blocks,
         num_heads=(int(cfg.num_heads),) * blocks,
-        **kwargs,
+        dropout=float(cfg.dropout),
+        **_time_axis_kwargs(cfg),
     )
 
 
@@ -122,26 +67,21 @@ def _time_series_transformer(cfg) -> Any:
 def _deep_set(cfg) -> Any:
     import bayesflow as bf
 
-    return bf.networks.DeepSet(
-        summary_dim=int(cfg.summary_dim),
-        dropout=float(cfg.dropout),
-    )
+    return bf.networks.DeepSet(summary_dim=int(cfg.summary_dim), dropout=float(cfg.dropout))
 
 
 @register_summary_network("mlp")
 def _mlp(cfg) -> Any:
-    """A plain MLP summary backbone for *already-summarised* (rank-2, ``(batch, features)``)
-    inputs — e.g. a hand-crafted per-stream summary-statistics vector fed to a fusion backbone.
-    Not a permutation-invariant set network; use ``set_transformer``/``deep_set`` for point clouds.
-    Returns ``(batch, summary_dim)``. In a :class:`MaskedFusionNetwork` this is routed through the
-    non-``SummaryNetwork`` branch of ``compute_metrics`` (it carries no own loss)."""
+    """A plain MLP backbone for *already-summarised* rank-2 ``(batch, features)`` inputs — e.g. a
+    hand-crafted per-stream summary-statistics vector fed to a fusion backbone. Not permutation
+    invariant; use ``set_transformer``/``deep_set`` for point clouds. Returns ``(batch, summary_dim)``."""
     import bayesflow as bf
     import keras
 
-    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
     return keras.Sequential(
         [
-            bf.networks.MLP(widths=widths, dropout=float(cfg.dropout)),
+            bf.networks.MLP(widths=[int(cfg.mlp_width)] * int(cfg.mlp_depth),
+                            dropout=float(cfg.dropout)),
             keras.layers.Dense(units=int(cfg.summary_dim)),
         ]
     )
@@ -149,17 +89,9 @@ def _mlp(cfg) -> Any:
 
 @register_summary_network("feature_transformer")
 def _feature_transformer(cfg) -> Any:
-    """A Transformer summary backbone for *already-summarised* (rank-2, ``(batch, features)``)
-    inputs — e.g. a hand-crafted per-stream summary-statistics vector fed to a fusion backbone.
-
-    The flat feature vector has no sequence/set axis, so the stock ``time_series_transformer`` /
-    ``set_transformer`` builders (which need a genuine rank-3 input) cannot consume it directly.
-    This wrapper reshapes ``(batch, F)`` into ``(batch, F, 1)`` feature tokens and runs a
-    ``bayesflow.networks.TimeSeriesTransformer`` over them, so a Transformer can stand in for the
-    ``mlp`` backbone on exactly the same input (they are drop-in alternatives selectable by
-    ``type`` — useful e.g. as an Optuna categorical). Returns ``(batch, summary_dim)``. Like
-    ``mlp`` it is a plain ``keras.Sequential`` (routed through the non-``SummaryNetwork`` branch of
-    the fusion ``compute_metrics``; carries no own loss)."""
+    """A Transformer over the entries of a flat ``(batch, F)`` feature vector, reshaped to
+    ``(batch, F, 1)`` tokens — a drop-in alternative to ``mlp`` on the same input (useful as an
+    Optuna categorical). Returns ``(batch, summary_dim)``."""
     import bayesflow as bf
     import keras
 
@@ -180,9 +112,11 @@ def _feature_transformer(cfg) -> Any:
 def _flow_matching(cfg) -> Any:
     import bayesflow as bf
 
-    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
     return bf.networks.FlowMatching(
-        subnet_kwargs={"widths": widths, "dropout": float(cfg.dropout)},
+        subnet_kwargs={
+            "widths": [int(cfg.mlp_width)] * int(cfg.mlp_depth),
+            "dropout": float(cfg.dropout),
+        },
     )
 
 
@@ -190,10 +124,9 @@ def _flow_matching(cfg) -> Any:
 def _diffusion(cfg) -> Any:
     import bayesflow as bf
 
-    widths = [int(cfg.mlp_width)] * int(cfg.mlp_depth)
     return bf.networks.DiffusionModel(
         subnet_kwargs={
-            "widths": widths,
+            "widths": [int(cfg.mlp_width)] * int(cfg.mlp_depth),
             "time_embedding_dim": int(cfg.time_embedding_dim),
         },
     )

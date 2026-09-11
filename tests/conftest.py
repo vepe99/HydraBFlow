@@ -18,7 +18,7 @@ def compose_cfg(overrides=None, fill=True):
     from hydra import compose, initialize_config_dir
     from hydra.core.global_hydra import GlobalHydra
 
-    from hydrabflow.config import register_configs
+    from hydrabflow.config import register_configs  # hydrabflow/config.py
     from hydrabflow.pipeline.adapter import fill_adapter_from_simulator
 
     register_configs()

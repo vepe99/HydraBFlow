@@ -1,146 +1,160 @@
-# HydraBFlow: SBI Pipeline Template with BayesFlow 
+# HydraBFlow: SBI pipeline template (BayesFlow + Hydra)
 
-## Goal
+A cookiecutter-style repo for Simulation-Based Inference. Infrastructure (dataset generation,
+training, inference, tuning, tracing) is fixed; a new user writes a simulator and picks networks.
+This branch (`stream_project`) hosts the stellar-stream / Milky-Way-potential project on top of it
+(hierarchical compositional inference, AGAMA stream simulators, the Gaia observation model); the
+research history is the Decisions Log at the end of this file.
 
-A reusable, cookiecutter-style repository for setting up Simulation-Based Inference (SBI)
-pipelines using BayesFlow and Hydra. The template handles all infrastructure (training,
-inference, dataset generation, experiment tracking) so that a new user only needs to:
+## Design principles
 
-1. Write their simulator (forward model)
-2. Choose and configure their SBI components (summary network, inference network, etc.)
+- **Full traceability**: every run writes its resolved Hydra config into its output dir. A run is
+  valid only if it can be reconstructed from that folder.
+- **Hydra-native**: all entry points are Hydra apps, no argparse.
+- **Structured configs + registries, not `_target_`**: typed dataclasses in `config.py` (only
+  `RootConfig` is in the ConfigStore, as `base_config`); YAML fills in values; a name string bridges
+  config to code through the five registries in `hydrabflow/registry.py`. Components self-register
+  (`@register_simulator`, `@register_step`, `@register_augmentation`, `@register_summary_network`,
+  `@register_inference_network`), and each registry lazily imports its whole package on the first
+  failed lookup (`Registry.discover`), so adding a component = drop a file + a config entry. No
+  `__init__.py` edit.
+- **The simulator owns the variable names**: empty `adapter.inference_variables` /
+  `summary_variables` are filled from `parameter_names` / `observable_keys`
+  (`pipeline.adapter.fill_adapter_from_simulator`); under `composition=global|local` from the
+  simulator's `global_parameter_names` / `local_parameter_names` / `context_keys`. Explicit config
+  wins (bring-your-own-data). `fill_stream_grid_from_simulator` does the same for the stream
+  simulators' rotation-curve grid.
+- **Single-level inference by default, compositional as an opt-in**: `composition=none` is
+  `bf.BasicWorkflow`; `global` / `local` switch to `bf.CompositionalWorkflow` and train/evaluate one
+  level of a hierarchical simulator (see `docs/streams.md`).
+- **Preprocessing ≠ augmentation**: preprocessing is deterministic, whole-dataset, fit on the train
+  split, state saved and replayed (`preprocessing/`); augmentation is stochastic and per-batch inside
+  `fit_offline` (`augmentation/`).
 
-Everything else — config management, output tracing, reproducibility — is fixed infrastructure.
+## Stack
 
-## Core Design Principles
+BayesFlow 2.x (Keras 3) on JAX — `KERAS_BACKEND=jax` pinned by `utils/backend.py`, imported first by
+`hydrabflow/__init__.py`, GPU chosen by `autocvd`. `uv` for packaging (src-layout, `hydrabflow-*`
+console scripts). Optuna for multi-objective tuning. Marimo for `notebooks/explore.py`. Streams:
+`agama` (CPU/joblib), `astropy`, `corner`.
 
-- **Full traceability**: every run (training, inference, dataset generation) must save its
-  Hydra config to the output directory. A run is only valid if it can be fully reconstructed
-  from its output folder.
-- **Hydra-native**: all entry points are Hydra apps. No argparse. Config composition via
-  config groups covers all axes of variation (model, simulator, training, data).
-- **Modularity via structured configs + registries** (NOT `_target_`): every config group has a
-  typed dataclass schema registered in Hydra's `ConfigStore`; YAML files fill in values. Factory
-  functions read those dataclasses and resolve names through registries (`networks.factory`,
-  `simulators.registry`, `preprocessing.registry`, `augmentation.registry`, `pipeline.adapter`).
-  Components self-register by name (`@register_simulator`, `@register_step`,
-  `@register_augmentation`, `@register_summary_network`, `@register_inference_network`), and each
-  package auto-imports its modules (`utils.discovery`), so adding a component = dropping a file +
-  a config entry, no infrastructure edits (not even `__init__.py`).
-- **The simulator is the single source of truth for variable names**: empty
-  `adapter.inference_variables` / `summary_variables` are derived from the simulator's
-  `parameter_names` / `observable_keys` at CLI entry (`pipeline.adapter.fill_adapter_from_simulator`).
-  Explicit adapter config overrides (required for bring-your-own-data, where no class exists).
-- **Separation of concerns**: infrastructure code (training loop, logging, checkpointing)
-  is never modified by the end user. User-facing code lives in clearly marked locations
-  (`src/hydrabflow/simulators/`, plus optional custom `networks`/`preprocessing`/`augmentation`).
-- **Single-level inference by default, compositional as an opt-in level** (stream_project
-  branch): `composition=none` keeps the original `bf.BasicWorkflow` path. `composition=global` /
-  `composition=local` switch to `bf.CompositionalWorkflow` and train/evaluate one level of a
-  hierarchical simulator (global parameters shared by exchangeable group members vs per-member
-  local parameters). The simulator declares the split (`global_parameter_names`,
-  `local_parameter_names`, `context_keys`, `sample_compositional`); the adapter derivation
-  follows `composition.level`. Evaluation: global = `compositional_sample` with the simulator's
-  prior score; local = per-member sampling on simulated data and `ancestral_sample` on real data
-  (globals drawn from a saved global posterior, `composition.global_run_dir`).
-- **Preprocessing vs augmentation are distinct stages**: preprocessing is deterministic,
-  whole-dataset, applied once and fitted on the train split (`src/hydrabflow/preprocessing/`);
-  augmentation is stochastic and per-batch, applied inside `fit_offline`
-  (`src/hydrabflow/augmentation/`).
+BayesFlow stays on the PyPI **2.0.12** release: `pipeline/_bf_patches.py` fixes its
+compositional-conditions reshape bug and is version-specific. `main` tracks the bayesflow git HEAD
+(2.0.13) — re-check the patch before following.
 
-## Tech Stack
+## Layout
 
-- **SBI framework**: BayesFlow 2.x (Keras 3)
-- **Compute backend**: JAX. `KERAS_BACKEND=jax` is pinned by `hydrabflow.utils.backend` (imported
-  first via `hydrabflow/__init__.py`) before any keras/bayesflow import. Override via env var.
-- **Packaging / env**: `uv` (`pyproject.toml`, src-layout, console scripts `hydrabflow-*`).
-- **Config management**: Hydra with structured dataclass configs (`ConfigStore`) + config groups.
-- **Neural architectures**: SetTransformer / DeepSet / TimeSeriesTransformer (summary network),
-  FlowMatching / DiffusionModel (inference network) — user-swappable via config. Summary defaults
-  to a single observable; multi-observable FusionNetwork is a documented seam in
-  `pipeline.adapter` + `networks.factory`.
-- **Hyperparameter tuning**: Optuna (multi-objective: RMSE + calibration error).
-- **Notebooks**: Marimo (`notebooks/explore.py`).
+```
+conf/
+  config.yaml                  # everything: seed, run_name, model_dir, data, training,
+                               #   preprocessing, augmentation, adapter, composition, eval, tuning
+  simulator/                   # two_moons, multimodal, stream_agama*, ...
+  model/summary_network/       # set_transformer | deep_set | time_series_transformer | fusion | stream_fusion_*
+  model/inference_network/     # flow_matching | diffusion
+  model/                       # whole-model presets (stream_fusion_model5, ...): model=<name>
+  adapter/ augmentation/ preprocessing/ training/ tuning/ eval/ composition/
+                               # stream PRESETS only; the defaults are the blocks in config.yaml
+src/hydrabflow/
+  config.py                    # all dataclass schemas + register_configs()
+  registry.py                  # all 5 registries + decorators + the 3 builders
+  simulators/                  # USER: base.py, two_moons.py, multimodal.py; stream_agama*.py, stream_common.py
+  networks/                    # factory.py (shipped builders), fusion.py, masked_*_transformer.py
+  preprocessing/               # base, standardize, steps, streams
+  augmentation/                # noise.py; streams.py (Gaia observation model), stream_summary.py
+  pipeline/                    # INFRA: _app, adapter, workflow, io, artifacts, simulate,
+                               #   simulate_multistream, train, evaluate (+ evaluate_real helpers),
+                               #   tune, compositional, misspecification, _bf_patches
+  utils/                       # backend (JAX/GPU pin), seed, paths, oom, progress, quiet, reporting
+scripts/                       # stream dataset/training/tuning runners + PPC & diagnostics scripts
+assets/gaia/                   # small static Gaia inputs (git-tracked); datasets live in data*/ (gitignored)
+tests/  docs/  outputs/ (gitignored)
+```
 
-## Folder Structure (finalized)
+## Stages
 
-HydraBFlow/
-├── pyproject.toml               # uv-managed; deps + console scripts (hydrabflow-*)
-├── conf/                        # Hydra config groups (YAML values; schemas live in code)
-│   ├── config.yaml              # Root: defaults list, seed, model_dir, hydra.run.dir
-│   ├── simulator/               # skeleton.yaml (+ your simulators)
-│   ├── model/                   # default.yaml -> summary_network/ + inference_network/
-│   ├── training/  data/  preprocessing/  augmentation/
-│   ├── adapter/   inference/    eval/   tuning/
-├── src/hydrabflow/
-│   ├── config/schema.py         # ALL dataclass schemas + register_configs()
-│   ├── simulators/              # USER MODIFIES: base.py, registry.py, skeleton.py
-│   ├── networks/factory.py      # build_summary_network / build_inference_network
-│   ├── preprocessing/           # base, standardize, steps, registry (deterministic, once)
-│   ├── augmentation/            # base/registry + examples (stochastic, per-batch)
-│   ├── pipeline/                # INFRASTRUCTURE: adapter, workflow, io, checkpoint,
-│   │                            #   simulate, train, evaluate, evaluate_real, tune, _app
-│   └── utils/                   # backend (JAX pin), seed, logging, paths
-├── scripts/                     # thin Hydra entry points -> pipeline.<stage>.cli
-│   ├── simulate.py  train.py  evaluate.py  evaluate_real.py  tune.py
-├── tests/                       # config-compose, registries, preprocessing, workflow smoke tests
-├── notebooks/explore.py         # Marimo
-├── outputs/                     # Hydra run dirs (gitignored)
-└── CLAUDE.md
+`hydrabflow-<stage>` (or `python -m hydrabflow.pipeline.<stage>`), output dir
+`outputs/${simulator.name}/${run_name}/<timestamp>`:
 
-### Run stages (6 entry points)
-- `simulate`  — sample prior + run forward model in chunks -> aggregated `.npz`.
-- `simulate_multistream` — compositional datasets: one shared global draw per row, one
-                observation per group member (`sample_compositional`) -> grouped `.npz`
-                (globals `(n,1)`, member arrays `(n,m,...)`); used by compositional evaluation.
-- `train`     — load `.npz` -> preprocessing (fit on train, save state) -> `fit_offline` with
-                augmentations -> save approximator + loss curve.
-- `evaluate`  — load model + preprocessing state from `model_dir`, sample posterior on a
-                simulated test set, write truth-aware diagnostics (RMSE/calibration, recovery,
-                calibration ECDF, z-score contraction).
-- `evaluate_real` — same, but on a user-provided real-data `.npz` (no truth, no resimulation).
-- `tune`      — Optuna multi-objective study over a config-driven search space.
+- `simulate` — prior + forward model in chunks → `.npz` + a `<stem>.hydra/` config snapshot next to
+  it. Chunks are checkpointed to a sidecar dir, so a crashed multi-hour stream run resumes.
+- `simulate_multistream` — compositional datasets: one shared global draw per row, one observation
+  per group member (`sample_compositional`) → grouped `.npz` (globals `(n,1)`, members `(n,m,...)`).
+- `train` — `.npz` → preprocessing (fit on train, save state) → `fit_offline` with augmentations →
+  `approximator.keras`, `approximator_best.weights.h5`, `preprocessing_state.npz`, `loss.png`,
+  `history.json`, `convergence.json`.
+- `evaluate` — loads model + preprocessing state from `model_dir`, samples the posterior. One entry
+  point: simulated test set (truth-aware diagnostics + `metrics.json`; at `composition=global` both
+  `base_*` per-member and `compositional_*` pooled, plus `summaries.npz` for the MMD test) or
+  `data.real_data_path` set (posterior pair plots; at `composition=global` also
+  `single_stream_posterior.npz`, `real_global_vs_streams_corner.png`, `misspecification.json`;
+  at `local` ancestral sampling from `composition.global_run_dir`). Real-data code:
+  `pipeline/evaluate_real.py` (a module, not a stage).
+- `tune` — Optuna multi-objective (RMSE + calibration error) over `tuning.search_space`;
+  `best_trials.json`, study in `tuning.storage_dir` (concurrency-safe log → N parallel launches
+  extend one study); OOM backoff on fit and sampling.
 
-## What the User Modifies
+## What the user modifies
 
-- `conf/simulator/<name>.yaml` + `src/hydrabflow/simulators/<name>.py`: the forward model
-  (a `@register_simulator`-decorated `BaseSimulator` subclass; auto-imported, self-registers).
-- `conf/adapter/*`: normally untouched — variables derive from the simulator. Explicit config
-  only for bring-your-own-data or to override the derivation (subset inference, fusion).
-- `conf/model/...`: choose/configure summary + inference networks.
-- Optionally: custom preprocessing steps, augmentations, or network architectures (drop a module
-  in the package; each self-registers; no infra edits).
-- Nothing else should need to change for a new problem.
+`conf/simulator/<name>.yaml` + `src/hydrabflow/simulators/<name>.py`; the network group YAMLs;
+knobs in `conf/config.yaml` or a preset under `conf/<group>/`. Optionally custom preprocessing
+steps, augmentations, or network builders. The `adapter:` block stays untouched unless there is no
+simulator. Nothing else.
 
-## What Is Fixed Infrastructure (do not modify)
+**Fixed infrastructure**: `pipeline/` (stages, `make_cli`, adapter/workflow builders, io,
+artifacts), `config.py`, `registry.py`, `utils/backend.py`, the `hydra:` block in `config.yaml`.
 
-- Entry point scripts (`scripts/`) and the `pipeline.*.cli` wrappers (`pipeline/_app.py`).
-- The five run stages, adapter/workflow builders, IO, checkpointing (`src/hydrabflow/pipeline/`).
-- Config schema + registration (`src/hydrabflow/config/schema.py`).
-- Hydra output directory setup and config saving; JAX backend pin (`utils/backend.py`).
+## Notes worth keeping
 
-## Output Directory Convention
+- `training.learning_rate` is the peak LR passed as `initial_learning_rate`; `BasicWorkflow`
+  wraps it in cosine decay with 5% warmup + AdamW. Passing an explicit optimizer disables that
+  schedule, so `training.optimizer` deliberately does not exist.
+- `training.standardize` is `[inference_variables, summary_variables]` here (main: inference only):
+  the stream observables are standardized per batch *after* augmentation, not by a preprocessing
+  step, and the trained stream models depend on it. For the plain `standardize`-preprocessed path
+  the second pass is a near-identity. `training=stream_local` uses `inference_conditions` instead.
+- Networks take `embed_dim_per_head` (attention width = `num_heads * embed_dim_per_head`), so any
+  tuner draw stays divisible by the head count — also inside the fusion `params.backbones` and in
+  the `conf/tuning/stream*.yaml` search paths (was `params.embed_dim_multiplier`).
+- Fusion: >1 `summary_variables` → one backbone per key behind `bf.networks.FusionNetwork` with
+  per-key type via `params.backbones={key: type}`; `type: fusion` (`networks/fusion.py`) instead
+  takes full per-key specs, an MLP head and `mask_backbone` (the one backbone that receives the
+  `summary_attention_mask`); its builder is flagged `consumes_grouped_inputs` so the registry does
+  not wrap it again.
+- The stream presets are Hydra groups with **no default file**: `conf/config.yaml` lists them as
+  `- adapter: null` etc. and puts `_self_` *before* the groups so a selected preset wins over the
+  inline block. Whole-model presets (`conf/model/*.yaml`) select their nets with
+  `- override summary_network: <name>` (relative; an absolute `/model/...` path gets a doubled
+  package). Preset YAMLs may inherit other presets in the same group (`defaults: - stream_global`).
+- `load_approximator` passes `compile=False` (evaluation never resumes training) — without it,
+  loading a TimeSeriesTransformer fails on AdamW slot-variable shapes.
+- `BaseSimulator.sample` checks the declared names are present with leading axis `n` but allows
+  extra keys — the stream simulators return fixed constants, `j`, derived diagnostics
+  (`*_derived`, `m_bound_final`) that the adapter drops (`select_adapter_keys`).
+- Augmentation factories take `(params, rng, context)`; `context["pipeline"]` is the fitted
+  preprocessing pipeline (`per_stream_standardize` reads `stream_observation_stats` from it).
+- Stream augmentations read Gaia tables from `augmentation.params.resources_dir` (default `data/`,
+  a symlink to shared storage); on a fresh clone pass `++augmentation.params.resources_dir=assets/gaia`.
+- Shared box: default OpenBLAS/XLA thread pools hit the per-user thread limit on the 256-core host
+  when other users run large jobs (`pthread_create failed`, `mmap error 12`); run tests with
+  `OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 XLA_FLAGS="--xla_cpu_multi_thread_eigen=false
+  intra_op_parallelism_threads=1" JAX_PLATFORMS=cpu HYDRABFLOW_NUM_GPUS=0`. GPU runs: `autocvd`.
+- Open: no `fit_online` support — the pipeline is offline-only.
 
-Hydra's `hydra.run.dir` is set to:
-`outputs/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}`
+## docs/
 
-Every run saves:
-- `.hydra/` folder with full config (Hydra does this automatically)
-- `simulate`: dataset `.npz` in `data.data_dir`, plus a `<dataset_stem>.hydra/` config snapshot
-  next to it (copied from Hydra's `.hydra/` via `utils.paths.save_config_snapshot`) so each
-  dataset is traceable to the config that generated it. Keyed by the dataset filename so
-  training and test sets in the same `data_dir` don't overwrite each other's snapshot.
-- `train`: `approximator.keras`, `preprocessing_state.npz`, `loss.png`
-- `evaluate`: `posterior.npz`, `metrics.json`, diagnostic plots
-- `evaluate_real`: `posterior.npz`, posterior pair plots. At `composition=global` it additionally
-  saves `single_stream_posterior.npz` (per-member posteriors) and
-  `real_global_vs_streams_corner.png` — an overlay corner plot of the pooled global posterior plus
-  each single-stream posterior over the shared global parameters (mirrors the reference
-  `main_eval_gaiastreams.py` `global_cornerplot`; members named from the simulator's
-  `target_streams`). Best-effort hook (never aborts the run).
-- `tune`: `best_trials.json` (Optuna study in `tuning.storage_dir`)
+`running.md` (install, stages, walkthroughs, real data, tuning, GPU env vars), `configuration.md`
+(config blocks + groups), `extending.md` (the drop-a-module-and-decorate pattern),
+`streams.md` (the compositional stream project: levels, stages, presets, resources).
 
-`evaluate` / `evaluate_real` load the trained model + fitted preprocessing from `model_dir`
-(set it to a completed `train` run dir).
+## graphify
+
+Knowledge graph at `graphify-out/`.
+
+- For codebase questions, run `graphify query "<question>"` first (also `graphify path "<A>" "<B>"`,
+  `graphify explain "<concept>"`) — a scoped subgraph, far smaller than `GRAPH_REPORT.md` or grep.
+- `graphify-out/wiki/index.md`, if present, beats raw source browsing for navigation.
+- Read `GRAPH_REPORT.md` only for broad architecture review.
+- After changing code, run `graphify update .` (AST-only, no API cost).
 
 ## Decisions Log
 
@@ -1213,12 +1227,32 @@ Every run saves:
     rescaling could restore the along-track density is still open and is now clearly THE lever, since
     it is the same defect behind both the mass-axis failure and the edge/centre pinning.
 
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- Session 2026-09-11 (merge of main's codebase slimming into stream_project): pulled `origin/main`
+  (commits d7b265e..44f016c: "Strip the package to bare bones", "Consolidate five registries into
+  one", "Fold checkpoint.py into artifacts.py", ...) and ported the stream work onto its structure
+  instead of resurrecting the old one. Adopted from main: single `registry.py` (lazy per-package
+  discovery; the old `simulators/preprocessing/augmentation/registry.py`, `utils/discovery.py`,
+  `utils/logging.py` are gone — stdlib `logging.getLogger`), `config.py` with only `RootConfig`
+  registered (all `- base_<group>` defaults stripped from 56 preset YAMLs), `pipeline/artifacts.py`
+  (absorbs `checkpoint.py` + the train/eval save helpers; `load_approximator(compile=False)`),
+  `evaluate` with the real-data mode on `data.real_data_path` (`evaluate_real.py` kept as the
+  helper module; the `hydrabflow-evaluate-real` console script and the `inference` config group are
+  gone — `eval.num_samples/batch_size`), `run_name`-based run dirs (`run_name: ${model.name}`;
+  `ModelConfig.name` defaults to `<summary>+<inference>` so whole-model presets keep labelling runs),
+  `embed_dim_per_head` (replaces `params.embed_dim_multiplier` and raw `embed_dim` everywhere incl.
+  tuning search paths), `BaseSimulator.is_batched`, `Adapter.create_default`, the thin `scripts/*.py`
+  entry points deleted (shell scripts call `python -m hydrabflow.pipeline.<stage>`), main's tests and
+  docs (`running/configuration/extending.md`) + a new `docs/streams.md`. Kept from the branch:
+  everything stream-specific (simulators, augmentations, preprocessing steps, fusion/masked nets,
+  compositional + misspecification pipeline, `_bf_patches`, resumable chunked `io.run_chunked`,
+  convergence report, `report.md`), the group-preset mechanism (now `- <group>: null` placeholders
+  in `config.yaml` with `_self_` first; model presets use `override summary_network:`),
+  `training.standardize` incl. `summary_variables`, and the **bayesflow 2.0.12 PyPI pin** (main moved
+  to the git HEAD 2.0.13; the compositional patch is version-specific — not followed, flagged).
+  `BaseSimulator.sample` now validates declared keys/leading axis but tolerates the extra arrays the
+  stream simulators emit. Verified: every preset composes; the full test suite passes (run
+  single-threaded on the shared box, see Notes); two_moons simulate→train→evaluate→evaluate(real)
+  end-to-end on CPU; three stream workflows (model5/global, ibata_grid_masked/global,
+  maskedvlos/local) build with the fusion nets + compositional patch. Not done: no GPU training rerun
+  of a stream model on the merged code (the architectures are unchanged, so old checkpoints remain
+  loadable only if their configs are re-expressed with `embed_dim_per_head`).

@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Giuseppe Viterbo", email = "viterbogiuseppe99@gmail.com" }]
 dependencies = [
+    # BayesFlow stays on the PyPI 2.0.12 release: the compositional-sampling patch in
+    # pipeline/_bf_patches.py targets it (main tracks the bayesflow git HEAD instead).
     "bayesflow>=2.0",
     "keras>=3.5",
     "jax[cuda12]>=0.4.30",
@@ -18,6 +20,7 @@ dependencies = [
     "marimo>=0.9",
     "tqdm>=4.66",
     "gpustat",
+    # Stellar-stream simulators + their diagnostics.
     "astropy>=8.0.0",
     "joblib>=1.5.3",
     "scipy>=1.17.1",
@@ -34,13 +37,14 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6", "setuptools", "wheel"]
 
-# Console entry points mirror the scripts/ Hydra apps.
+# The run stages. Each is also runnable as `python -m hydrabflow.pipeline.<stage>`.
+# `evaluate` covers simulated and real data (set `data.real_data_path`); `simulate-multistream`
+# writes the grouped (compositional) test sets used by `composition=global|local`.
 [project.scripts]
 hydrabflow-simulate = "hydrabflow.pipeline.simulate:cli"
 hydrabflow-simulate-multistream = "hydrabflow.pipeline.simulate_multistream:cli"
 hydrabflow-train = "hydrabflow.pipeline.train:cli"
 hydrabflow-evaluate = "hydrabflow.pipeline.evaluate:cli"
-hydrabflow-evaluate-real = "hydrabflow.pipeline.evaluate_real:cli"
 hydrabflow-tune = "hydrabflow.pipeline.tune:cli"
 
 # agama's setup.py imports numpy at build time, so it cannot build in an isolated env, and its

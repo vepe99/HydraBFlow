@@ -2,9 +2,6 @@
 # Priors reproduce the reference agama training set (data/streams/data_agama/.hydra/config.yaml).
 # Global = potential parameters shared by all streams; local = per-stream phase-space coordinates;
 # `identity` entries are fixed constants (fed to the forward model, not inferred).
-defaults:
-  - base_simulator
-
 name: stream_agama
 params:
   n_particles: 1000

@@ -54,7 +54,7 @@ MODEL_DIR=${MODEL_DIR:-${RUNS_DIR}/train}
 EVAL_DIR=${EVAL_DIR:-${RUNS_DIR}/eval_sim_${N_TEST}}
 
 echo "=== [1/2] TRAIN  -> ${MODEL_DIR} ==="
-uv run python scripts/train.py \
+uv run python -m hydrabflow.pipeline.train \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
@@ -63,7 +63,7 @@ uv run python scripts/train.py \
   hydra.run.dir="${MODEL_DIR}"
 
 echo "=== [2/2] EVALUATE on simulated ${N_TEST}-group multistream test set -> ${EVAL_DIR} ==="
-uv run python scripts/evaluate.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \

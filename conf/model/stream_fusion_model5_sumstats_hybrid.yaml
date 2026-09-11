@@ -1,9 +1,8 @@
 # Hybrid summary-statistics variant of model_5: raw particles + summary-statistics vector +
 # rotation curve, fused, with the model_5 diffusion inference network.
 defaults:
-  - base_model
-  - summary_network: stream_fusion_model5_sumstats_hybrid
-  - inference_network: diffusion
+  - override summary_network: stream_fusion_model5_sumstats_hybrid
+  - override inference_network: diffusion
   - _self_
 
 name: stream_fusion_model5_sumstats_hybrid

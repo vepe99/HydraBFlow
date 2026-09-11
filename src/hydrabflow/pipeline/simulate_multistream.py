@@ -2,9 +2,8 @@
 
 Like :mod:`simulate`, but each row is a *group* of observations sharing one global-parameter
 draw (e.g. all target streams evolved in the same Milky Way potential), produced by
-``BaseSimulator.sample_compositional``. These datasets are what the compositional evaluation
-stage consumes (global posterior via compositional sampling over the group members).
-Generalizes the reference ``simulate_multistream_main.py``.
+``BaseSimulator.sample_compositional``. These datasets are what ``evaluate composition=global|local``
+consumes (global posterior via compositional sampling over the group members).
 
 Shape convention (``m`` = group members): globals ``(n, 1)``; locals / context keys
 ``(n, m, 1)``; member observables ``(n, m, *event_shape)``.
@@ -12,16 +11,16 @@ Shape convention (``m`` = group members): globals ``(n, 1)``; locals / context k
 
 from __future__ import annotations
 
+import logging
 import os
 
 from hydrabflow.pipeline import io
 from hydrabflow.pipeline._app import make_cli
-from hydrabflow.simulators.registry import get_simulator
-from hydrabflow.utils.logging import get_logger
+from hydrabflow.registry import get_simulator
 from hydrabflow.utils.paths import save_config_snapshot
 from hydrabflow.utils.seed import seed_everything
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def run_multistream_simulation(cfg) -> str:
@@ -37,8 +36,6 @@ def run_multistream_simulation(cfg) -> str:
         simulator.observable_keys,
     )
 
-    # Checkpoint each chunk to disk as it completes (resumable): a crash only costs the in-flight
-    # chunk, and re-running skips the chunks already on disk. See io.run_chunked.
     out_path = os.path.join(cfg.data.data_dir, cfg.data.dataset_name)
     io.run_chunked(
         out_path,
@@ -49,8 +46,9 @@ def run_multistream_simulation(cfg) -> str:
         desc="simulating (compositional)",
     )
 
-    stem = os.path.splitext(cfg.data.dataset_name)[0]
-    snapshot = save_config_snapshot(cfg.data.data_dir, stem)
+    snapshot = save_config_snapshot(
+        cfg.data.data_dir, os.path.splitext(cfg.data.dataset_name)[0]
+    )
     if snapshot:
         log.info("Saved config snapshot -> %s", snapshot)
     return out_path

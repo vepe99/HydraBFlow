@@ -29,7 +29,7 @@ from typing import Dict, Mapping
 
 import numpy as np
 
-from hydrabflow.simulators.registry import register_simulator
+from hydrabflow.registry import register_simulator
 from hydrabflow.simulators.stream_agama import (
     AgamaStreamSimulator,
     _agama,

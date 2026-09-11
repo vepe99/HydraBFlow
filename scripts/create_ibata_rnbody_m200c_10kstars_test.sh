@@ -53,7 +53,7 @@ echo "    n_particles=${N_PARTICLES} n_full=${N_FULL} n_groups=${N_GROUPS} worke
 # STEP 1: 1e3 flat restricted-N-body rows at n_particles=10000 (vcirc rejection prior per draw).
 # --------------------------------------------------------------------------------------------- #
 echo ">>> [flat] ${N_FULL} rows, ${N_PARTICLES} stars/stream"
-uv run python scripts/simulate.py \
+uv run python -m hydrabflow.pipeline.simulate \
   simulator=${SIM} composition=global \
   simulator.params.n_particles="${N_PARTICLES}" \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_FULL}" data.chunk_size="${CHUNK}" \
@@ -64,7 +64,7 @@ uv run python scripts/simulate.py \
 #         per-stream summary-statistic tracks used by the cold-stream PPC.
 # --------------------------------------------------------------------------------------------- #
 echo ">>> [multistream] ${N_GROUPS} groups, ${N_PARTICLES} stars/stream"
-uv run python scripts/simulate_multistream.py \
+uv run python -m hydrabflow.pipeline.simulate_multistream \
   simulator=${SIM} composition=global \
   simulator.params.n_particles="${N_PARTICLES}" \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_GROUPS}" data.chunk_size="${N_GROUPS}" \

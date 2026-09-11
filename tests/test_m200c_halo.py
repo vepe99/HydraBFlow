@@ -114,7 +114,7 @@ def test_nfw_halo_scale_radius_is_r200_over_c200(q):
 
 def test_nfw_simulator_config_pins_the_halo_exponents(compose):
     """The NFW config fixes gamma/alpha/beta (so they are not inferred) and keeps q/p/tilt free."""
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     cfg = compose(overrides=["simulator=stream_agama_rnbody_ibata_m200c_nfw", "composition=global"])
     sim = get_simulator(cfg.simulator)
@@ -451,7 +451,7 @@ def test_sky_projection_agama_matches_astropy_on_the_default_frame():
 def test_solar_params_are_marginalized_not_inferred(compose):
     """`params.marginalize` keeps the Solar parameters out of the inferred set (and therefore out of
     the compositional prior score) while still drawing them per row for the forward model."""
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     sim = get_simulator(compose(["simulator=stream_agama_rnbody_ibata_m200c_v2"]).simulator)
     solar = ["R0_Sun", "U_Sun", "V_Sun", "W_Sun"]

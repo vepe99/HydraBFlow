@@ -1,7 +1,7 @@
 """Marimo notebook: inspect a training run's posterior samples and diagnostics.
 
 Run with:  uv run marimo edit notebooks/explore.py
-Point RUN_DIR at a completed evaluate / evaluate_real output dir (it must contain posterior.npz).
+Point RUN_DIR at a completed evaluate output dir (it must contain posterior.npz).
 """
 
 import marimo
@@ -15,7 +15,7 @@ def _():
     import marimo as mo
 
     run_dir = mo.ui.text(
-        value="outputs/skeleton/default/REPLACE_WITH_TIMESTAMP",
+        value="outputs/two_moons/set_transformer+flow_matching/REPLACE_WITH_TIMESTAMP",
         label="Run dir (contains posterior.npz)",
         full_width=True,
     )

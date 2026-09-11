@@ -2,9 +2,6 @@
 # normalization steps — per_stream_parameter_standardize so posterior samples can be mapped back
 # to physical units (inverse), and stream_observation_stats so the per_stream_standardize
 # augmentation finds its fitted stats (loaded from the training run's preprocessing state).
-defaults:
-  - base_preprocessing
-
 steps:
   - name: attach_observed_vcirc
   - name: mask_vcirc_radii

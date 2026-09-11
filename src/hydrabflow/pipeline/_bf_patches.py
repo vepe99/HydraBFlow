@@ -11,9 +11,10 @@ shape. Drop this module once the fix lands upstream.
 
 from __future__ import annotations
 
-from hydrabflow.utils.logging import get_logger
+import logging
 
-log = get_logger(__name__)
+
+log = logging.getLogger(__name__)
 
 
 def apply_bayesflow_patches() -> None:

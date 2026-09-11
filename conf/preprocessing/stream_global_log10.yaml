@@ -4,9 +4,6 @@
 # `pipeline.compositional.prior_score_from_spec` must be told about these keys (via
 # `log10_keys_from_pipeline`) so compositional sampling's prior score accounts for the resulting
 # change-of-variables Jacobian — see preprocessing.steps.Log10Transform's docstring.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: drop_nan
     keys: ${adapter.summary_variables}

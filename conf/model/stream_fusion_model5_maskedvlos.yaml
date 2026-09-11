@@ -3,9 +3,8 @@
 # stars without a measured v_los enter the summary network. Train with
 # augmentation.params.vlos_impute=zero so the zeroed channels never leak simulated v_los.
 defaults:
-  - base_model
-  - summary_network: stream_fusion_model5_maskedvlos
-  - inference_network: diffusion
+  - override summary_network: stream_fusion_model5_maskedvlos
+  - override inference_network: diffusion
   - _self_
 
 name: stream_fusion_model5_maskedvlos

@@ -1,28 +1,137 @@
-# Root Hydra config. Composes one choice from every config group, layered on top of the
-# `base_config` structured schema (registered in hydrabflow.config.schema). `_self_` is last so
-# values set here win over group defaults.
+# The one config file for the whole pipeline. Every value you would normally tune lives here.
+#
+# Groups with real alternatives are swappable files (`simulator=<name>`,
+# `model/summary_network=deep_set`, ...). The stream experiments add whole-experiment PRESETS for
+# the other blocks (conf/adapter/stream*.yaml, conf/augmentation/stream*.yaml, ...): those groups
+# have no default file — the blocks below ARE the defaults — and a preset is layered on top with
+# `adapter=stream composition=global augmentation=stream_global ...`. `_self_` therefore comes
+# before the group entries, so a selected preset wins over the inline block.
+# Types come from the dataclasses in `hydrabflow/config.py`, so a typo here fails loudly.
 defaults:
   - base_config
-  - simulator: two_moons
-  - model: default
-  - data: default
-  - training: default
-  - preprocessing: default
-  - augmentation: default
-  - adapter: default
-  - composition: none
-  - inference: default
-  - eval: default
-  - tuning: default
   - _self_
+  - simulator: two_moons
+  - model/summary_network: set_transformer
+  - model/inference_network: flow_matching
+  - model: null                 # whole-model presets: model=stream_fusion_model5 (conf/model/)
+  - training: null              # e.g. training=stream_local
+  - preprocessing: null         # e.g. preprocessing=stream_global_log10
+  - augmentation: null          # e.g. augmentation=stream_global
+  - adapter: null               # e.g. adapter=stream
+  - composition: null           # composition=global | local (default: single-level)
+  - eval: null                  # e.g. eval=stream_compositional
+  - tuning: null                # e.g. tuning=stream
 
 seed: 42
 
-# Full traceability: every run lands in a timestamped dir keyed by simulator + model, and Hydra
-# writes the resolved config into its `.hydra/` subfolder automatically.
+# Directory of a completed `train` run (holds approximator.keras + preprocessing_state.npz).
+# Required by evaluate: `model_dir=outputs/<sim>/<run>/<timestamp>`.
+model_dir: null
+
+# Names the output directory. Defaults to the model name (= "<summary>+<inference>", or the name
+# of a whole-model preset). Override it to label an experiment: `run_name=wider_summary`.
+run_name: ${model.name}
+
+# Dataset generation + on-disk layout.
+data:
+  data_dir: data
+  n_simulations: 10000
+  chunk_size: 1000
+  dataset_name: training_data_${data.n_simulations}.npz
+  real_data_path: null            # set it and `evaluate` runs on your observed data instead
+
+training:
+  n_epochs: 50
+  batch_size: 512
+  # Peak learning rate. BayesFlow wraps it in a cosine-decay schedule with 5% warmup and uses
+  # AdamW (weight_decay=5e-3, clipnorm=1.5) for offline training -- see BasicWorkflow.build_optimizer.
+  learning_rate: 5e-4
+  validation_fraction: 0.1
+  # BayesFlow's internal z-scoring. The stream models were trained with the summary side included
+  # (their observables are standardized per batch, after augmentation, not by a preprocessing
+  # step), so it stays on; for a dataset standardized by the `standardize` preprocessing step below
+  # the second pass is a harmless near-identity.
+  standardize: [inference_variables, summary_variables]
+  verbose: 2
+  save_best_weights: true         # keep the best-val-loss weights, not the last epoch's
+
+# Deterministic, whole-dataset transforms: applied once, fit on the train split, state saved to the
+# run dir and replayed by evaluate. Each entry is {name: <registry key>, ...params}.
+preprocessing:
+  steps:
+    - name: drop_nan              # drop simulations with any NaN (failed forward runs)
+      keys: ${adapter.summary_variables}
+    - name: train_val_split       # steps after this one are fit on the train split only
+      validation_fraction: ${training.validation_fraction}
+    - name: standardize
+      keys: ${adapter.summary_variables}
+
+# Stochastic, per-batch transforms applied inside fit_offline. Names resolve through the
+# augmentation registry; drop a module in src/hydrabflow/augmentation/ to add your own.
+augmentation:
+  steps: []
+  params: {}
+
+# Dataset keys -> BayesFlow roles. Empty lists are filled from the selected simulator's
+# parameter_names / observable_keys (or its global/local split under `composition`), so a
+# registered simulator needs nothing here. Set them explicitly only for data no simulator
+# produced (docs/running.md), or to infer a subset. Several summary_variables enables
+# multi-observable fusion (see pipeline/adapter.py).
+adapter:
+  inference_variables: []
+  summary_variables: []
+  inference_conditions: []
+  drop: []
+  attention_mask_key: null        # batch key of a per-element mask -> summary_attention_mask
+
+# Hierarchical (compositional) inference: none = single-level bf.BasicWorkflow; global / local
+# train one level of a hierarchical simulator with bf.CompositionalWorkflow (docs/streams.md).
+composition:
+  level: none
+  global_run_dir: null            # local-level real-data eval: the global model's eval run dir
+
+# Posterior sampling + diagnostics. The truth-aware diagnostics are skipped on real data.
+eval:
+  test_dataset_name: test_data_${data.n_simulations}.npz
+  num_samples: 1000
+  batch_size: 256
+  diagnostics: [metrics, recovery, calibration_ecdf, coverage, z_score_contraction]
+  sample_kwargs: {}               # forwarded to compositional_sample (method, steps, ...)
+  misspecification_reference: "" # `evaluate composition=global` run dir with summaries.npz
+  misspecification_num_null: 200
+  prior_score: spec               # compositional prior score: spec (analytic) | kde
+  prior_kde_samples: ""
+  prior_kde_max_points: 4096
+  prior_kde_bandwidth: 0.0
+  prior_kde_impl: diagonal
+
+# Optuna search (minimize RMSE and calibration error). search_space maps a dotted config path to a
+# sampling spec: {type: int|float|categorical, low, high, step, log, choices}. Add/remove freely.
+# The study lives in a concurrency-safe .log, so launching this command N times extends one study.
+tuning:
+  study_name: hydrabflow_study
+  storage_dir: ${data.data_dir}/tuning
+  artifacts_dir: ${tuning.storage_dir}/${tuning.study_name}
+  save_artifacts: true            # persist every trial's model + posterior + plots
+  n_trials: 50
+  n_epochs: 10                    # short budget per trial
+  directions: [minimize, minimize]
+  search_space:
+    model.summary_network.summary_dim: {type: int, low: 16, high: 64}
+    model.summary_network.num_heads: {type: int, low: 2, high: 8}
+    model.summary_network.embed_dim_per_head: {type: int, low: 8, high: 32, step: 8}
+    model.inference_network.mlp_depth: {type: int, low: 2, high: 8}
+    model.inference_network.mlp_width: {type: int, low: 32, high: 256, step: 16}
+    training.learning_rate: {type: float, low: 1e-4, high: 1e-3, log: true}
+
+# The only output-path setting in this file: train, evaluate and tune all write here, so there is no
+# per-block `output_dir`. Every launch gets its own timestamped dir and Hydra writes the resolved
+# config into its `.hydra/` subfolder automatically -- artifacts and their config never desync.
+# `data.data_dir` and `tuning.storage_dir` stay outside it on purpose: they are shared across launches
+# (one dataset, many runs; one Optuna study, N parallel tune processes). See docs/running.md.
 hydra:
   run:
-    dir: outputs/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: outputs/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
   sweep:
-    dir: multirun/${simulator.name}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: multirun/${simulator.name}/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
     subdir: ${hydra.job.num}

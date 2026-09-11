@@ -4,9 +4,6 @@
 #     replayed on posterior samples at evaluation), and
 #   - "streamnorm": fit per-stream observation stats + log10(vcirc) bin stats on the train
 #     split; applied per batch by the per_stream_standardize augmentation.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: drop_nan
     keys: ${adapter.summary_variables}

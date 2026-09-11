@@ -1,8 +1,0 @@
-# Stochastic, per-batch transforms applied INSIDE workflow.fit_offline. Names resolve through
-# the augmentation registry. Empty by default; add your own (e.g. observational noise) and list
-# them here in application order. See src/hydrabflow/augmentation/.
-defaults:
-  - base_augmentation
-
-steps: []
-params: {}

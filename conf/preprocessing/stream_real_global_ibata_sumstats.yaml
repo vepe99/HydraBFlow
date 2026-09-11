@@ -7,9 +7,6 @@
 # is a no-op on real data (no parameter-truth columns) but declares the reparametrized keys so the
 # prior score operates in the same space. rho_z is NOT attached (excluded from this variant; it has
 # no real datum). Pair with augmentation=stream_real_global_ibata_sumstats.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: attach_observed_vcirc
   - name: attach_observed_vterm

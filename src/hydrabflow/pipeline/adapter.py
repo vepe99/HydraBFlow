@@ -1,57 +1,60 @@
-"""Build the BayesFlow ``Adapter`` from ``AdapterConfig``.
+"""Build the BayesFlow ``Adapter``: dataset keys -> the roles BayesFlow expects.
 
-The adapter is the structural (non-stochastic) transform that maps raw dataset keys to the roles
-BayesFlow expects: ``inference_variables`` (the target), ``summary_variables`` (fed to the
-summary network), and ``inference_conditions`` (direct conditions). Generalizes the reference's
-hand-written adapter chain (main_train_new_rotationcurve_agama.py:108-122).
-
-Single observable (default): the one ``summary_variables`` key is renamed to the BayesFlow role.
-Fusion seam: with multiple keys, ``group`` them into ``summary_variables`` and build one summary
-backbone per key in ``networks.factory`` (left commented below — uncomment + adjust to enable).
+``inference_variables`` is the target, ``summary_variables`` feeds the summary network, and
+``inference_conditions`` are passed to the inference network directly. One summary key is renamed to
+the role; several are ``group``ed, which is what a fusion network consumes (see
+``registry.build_summary_network``). ``attention_mask_key`` (stream runs) renames a per-element
+boolean mask to BayesFlow's ``summary_attention_mask`` role.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Any, List
 
+log = logging.getLogger(__name__)
 
-def _as_list(x) -> List[str]:
+
+def _lists(cfg) -> tuple[List[str], List[str], List[str], List[str]]:
+    """The four adapter key lists as plain lists (resolving interpolations)."""
     from omegaconf import OmegaConf
 
-    if OmegaConf.is_config(x):
-        return list(OmegaConf.to_container(x, resolve=True))
-    return list(x)
+    c = OmegaConf.to_container(cfg, resolve=True) if OmegaConf.is_config(cfg) else dict(cfg)
+    return (
+        list(c["inference_variables"]),
+        list(c["summary_variables"]),
+        list(c["inference_conditions"]),
+        list(c["drop"]),
+    )
+
+
+def composition_level(cfg) -> str:
+    """``cfg.composition.level`` as a plain string (``none`` when the block is absent)."""
+    return str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
 
 
 def fill_adapter_from_simulator(cfg) -> None:
     """Fill empty adapter variable lists from the simulator's own declaration (in place).
 
-    The simulator class is the single source of truth for its parameter names and observable
-    keys, so by default the adapter derives ``inference_variables`` / ``summary_variables`` from
-    it and the user never repeats them in config. Explicit (non-empty) config values win — that
-    is the escape hatch for datasets not produced by a registered simulator (bring-your-own-data),
-    where no simulator may exist: in that case the lists are left empty here and
-    :func:`build_adapter` raises with instructions.
+    Explicit config values win — the escape hatch for data no registered simulator produced.
 
-    With compositional score modeling (``composition.level``), the same derivation targets one
-    level of the simulator's hierarchy:
-      * ``global`` — infer ``global_parameter_names``, conditioned on ``context_keys``;
-      * ``local`` — infer ``local_parameter_names``, conditioned on the global parameters +
-        ``context_keys``.
+    With compositional score modeling (``composition.level``) the derivation targets one level of
+    the simulator's hierarchy: ``global`` infers ``global_parameter_names`` conditioned on
+    ``context_keys``; ``local`` infers ``local_parameter_names`` conditioned on the globals +
+    ``context_keys``.
     """
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
-    needs_inference = not _as_list(cfg.adapter.inference_variables)
-    needs_summary = not _as_list(cfg.adapter.summary_variables)
-    needs_conditions = not _as_list(cfg.adapter.inference_conditions)
+    inference, summary, conditions, _ = _lists(cfg.adapter)
+    needs_inference, needs_summary, needs_conditions = not inference, not summary, not conditions
     if not (needs_inference or needs_summary or needs_conditions):
         return
     try:
         simulator = get_simulator(cfg.simulator)
     except KeyError:
-        return  # no registered simulator: adapter must be configured explicitly
+        return  # no registered simulator: the adapter must be configured explicitly
 
-    level = str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
+    level = composition_level(cfg)
     if level == "global":
         inference_variables = simulator.global_parameter_names
         inference_conditions = simulator.context_keys
@@ -73,28 +76,22 @@ def fill_adapter_from_simulator(cfg) -> None:
 def fill_stream_grid_from_simulator(cfg) -> None:
     """Align the training-time rotation-curve grid with the simulator's ``vcirc_kms`` grid.
 
-    The rotation-curve observable can live on a non-default radial grid (e.g. the extended
-    Zhou u Huang union grid, ``simulator.params.obs_r_grid: extended``, 50 radii). Two
-    training-time components hardcode the default Zhou grid and would otherwise mismatch it:
-
-      * the ``mask_vcirc_radii`` preprocessing step (raises if the observable's bin count differs
-        from its configured ``radii``);
-      * the ``add_noise_to_vcirc`` augmentation, whose per-bin sigma is drawn from the augmentation
-        params' ``obs_sigma_vc`` / ``obs_r_kpc`` (defaulting to the Zhou grid).
-
-    So when the simulator exposes a non-default grid, inject *its* radii + per-bin sigma into those
-    two config nodes where the user has not set them explicitly. The simulator stays the single
-    source of truth (``obs_r_kpc`` / ``obs_sigma_vc`` properties). No-op for simulators without a
-    vcirc grid or when the config already pins the grid, so the default Zhou path is untouched.
+    The rotation-curve observable can live on a non-default radial grid (the extended Zhou u Huang
+    union grid, ``simulator.params.obs_r_grid: extended``). Three config nodes hardcode the default
+    Zhou grid and would otherwise mismatch it: the ``mask_vcirc_radii`` preprocessing step, the
+    ``attach_observed_vcirc`` step (real data) and the ``add_noise_to_vcirc`` augmentation's per-bin
+    sigma. When the simulator exposes a non-default grid, inject *its* radii / sigma / observed
+    curve wherever the user left them unset. No-op for every other simulator and for the default
+    grid, so the plain pipeline is untouched.
     """
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
+    params = getattr(cfg.simulator, "params", None)
+    if str(getattr(params, "obs_r_grid", "") or "") != "extended":
+        return
     try:
         simulator = get_simulator(cfg.simulator)
     except KeyError:
-        return
-    # Only stream simulators declaring a non-default grid need this; guard cheaply on the param.
-    if str(getattr(getattr(cfg.simulator, "params", None), "obs_r_grid", "") or "") != "extended":
         return
     if not hasattr(simulator, "obs_r_kpc") or not hasattr(simulator, "obs_sigma_vc"):
         return
@@ -105,9 +102,6 @@ def fill_stream_grid_from_simulator(cfg) -> None:
     sigma = [float(x) for x in simulator.obs_sigma_vc]
     obs_vc = [float(x) for x in simulator.obs_vc_kms] if hasattr(simulator, "obs_vc_kms") else None
 
-    # Preprocessing: give mask_vcirc_radii the full (untrimmed) grid so its bin-count check passes
-    # and it trims to r >= r_min consistently with the augmentation; and give attach_observed_vcirc
-    # (real-data eval) the observed curve on that same grid so its shape matches the mask.
     for step in getattr(getattr(cfg, "preprocessing", None), "steps", []) or []:
         # Use .get() (not getattr): DictConfig exposes dict methods as attributes, so
         # getattr(step, "values") would return the bound .values() method, not the config key.
@@ -119,7 +113,6 @@ def fill_stream_grid_from_simulator(cfg) -> None:
             with open_dict(step):
                 step.values = obs_vc
 
-    # Augmentation: give add_noise_to_vcirc the matching per-bin errors on the same grid.
     aug_params = getattr(getattr(cfg, "augmentation", None), "params", None)
     if aug_params is not None:
         with open_dict(aug_params):
@@ -130,19 +123,14 @@ def fill_stream_grid_from_simulator(cfg) -> None:
 
 
 def adapter_keys(cfg) -> List[str]:
-    """All dataset keys the adapter (``cfg.adapter``) consumes, in a stable order.
+    """Every dataset key the adapter consumes.
 
-    ``drop`` is included so keys the adapter drops still survive :func:`select_adapter_keys`: a
-    dropped key may be a *per-batch augmentation input* (e.g. the raw ``sim_data_projected`` star
-    cloud a summary-statistics augmentation reads) that the network must NOT see — it has to reach
-    the augmentation chain, then the adapter's ``.drop()`` removes it before the approximator.
+    ``drop`` is included so dropped keys still survive :func:`select_adapter_keys`: a dropped key may
+    be an augmentation *input* (e.g. the raw star cloud a summary-statistics augmentation reads) that
+    must reach the augmentation chain before ``.drop()`` removes it.
     """
-    keys = (
-        _as_list(cfg.adapter.inference_variables)
-        + _as_list(cfg.adapter.summary_variables)
-        + _as_list(cfg.adapter.inference_conditions)
-        + _as_list(cfg.adapter.drop)
-    )
+    inference, summary, conditions, drop = _lists(cfg.adapter)
+    keys = inference + summary + conditions + drop
     mask_key = getattr(cfg.adapter, "attention_mask_key", None)
     if mask_key:
         keys.append(str(mask_key))
@@ -150,63 +138,39 @@ def adapter_keys(cfg) -> List[str]:
 
 
 def select_adapter_keys(data: dict, cfg) -> dict:
-    """Keep only the dataset keys the adapter consumes (the generalized ``keys_to_drop``).
-
-    Simulator datasets carry extra arrays (fixed constants, intermediate coordinates) that the
-    model must not see; BayesFlow would otherwise pass them through to the approximator.
-    Keys created later, per batch, by augmentations are unaffected.
-    """
+    """Keep only the dataset keys the adapter consumes (simulators write extra arrays)."""
     wanted = set(adapter_keys(cfg))
     dropped = [k for k in data if k not in wanted]
     if dropped:
-        from hydrabflow.utils.logging import get_logger
-
-        get_logger(__name__).info("Dropping dataset keys the adapter does not use: %s", dropped)
+        log.info("Dropping keys the adapter does not use: %s", dropped)
     return {k: v for k, v in data.items() if k in wanted}
 
 
 def build_adapter(cfg) -> Any:
-    """Construct ``bf.adapters.Adapter`` from ``cfg`` (an ``AdapterConfig``)."""
+    """Construct ``bf.adapters.Adapter`` from an ``AdapterConfig``."""
     import bayesflow as bf
 
-    inference_variables = _as_list(cfg.inference_variables)
-    summary_variables = _as_list(cfg.summary_variables)
+    inference_variables, summary_variables, inference_conditions, drop = _lists(cfg)
 
     if not inference_variables:
         raise ValueError(
             "adapter.inference_variables is empty and could not be derived from the simulator. "
             "Either select a registered simulator (they declare parameter_names/observable_keys) "
-            "or set adapter.inference_variables / adapter.summary_variables explicitly "
-            "(see conf/adapter/two_moons.yaml for an explicit example and "
-            "docs/bring_your_own_data.md for the no-simulator workflow)."
+            "or set adapter.inference_variables / adapter.summary_variables in conf/config.yaml "
+            "(see docs/running.md for the no-simulator workflow)."
         )
-    inference_conditions = _as_list(cfg.inference_conditions)
-    drop = _as_list(cfg.drop)
 
-    adapter = (
-        bf.adapters.Adapter()
-        .to_array()
-        .convert_dtype("float64", "float32")
-        .concatenate(inference_variables, into="inference_variables")
-    )
-
+    # create_default = to_array + convert_dtype(float64->float32) + concatenate(into inference_variables)
+    adapter = bf.adapters.Adapter.create_default(inference_variables)
     if drop:
         adapter = adapter.drop(drop)
-
-    # Boolean per-particle mask (e.g. from an observational-window augmentation) renamed to the
-    # role BayesFlow's approximator forwards to the summary network as `attention_mask`.
     mask_key = getattr(cfg, "attention_mask_key", None)
     if mask_key:
         adapter = adapter.rename(str(mask_key), "summary_attention_mask")
-
     if len(summary_variables) == 1:
         adapter = adapter.rename(summary_variables[0], "summary_variables")
     elif len(summary_variables) > 1:
-        # Fusion: group multiple observables into summary_variables; the `fusion` summary network
-        # (networks/fusion.py) builds one backbone per key to consume them.
-        adapter = adapter.group(summary_variables, into="summary_variables")
-
+        adapter = adapter.group(summary_variables, into="summary_variables")  # fusion
     if inference_conditions:
         adapter = adapter.concatenate(inference_conditions, into="inference_conditions")
-
     return adapter

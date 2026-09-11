@@ -5,9 +5,6 @@
 # state key `standardize#0.sigma_z__*` round-trips). It MUST come after attach_observed_sigma_z (which
 # creates sigma_z on real data). Use this whenever training used the _sigmastd preprocessing. Pair
 # with augmentation=stream_real_global_ibata_grid (or _sumstats).
-defaults:
-  - base_preprocessing
-
 steps:
   - name: attach_observed_vcirc
   - name: attach_observed_vterm

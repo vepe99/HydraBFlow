@@ -21,7 +21,7 @@ EVAL_DIR=${RUNS_DIR}/eval_sim_333
 REAL_DIR=${RUNS_DIR}/eval_real
 
 # 1) TRAIN (base model, 300 epochs)
-uv run python scripts/train.py \
+uv run python -m hydrabflow.pipeline.train \
   simulator=stream_agama_rnbody_huang model=stream_fusion composition=global \
   adapter=stream preprocessing=stream_global augmentation=stream_global \
   data.data_dir="${DATA_DIR}" data.n_simulations=60000 \
@@ -30,7 +30,7 @@ uv run python scripts/train.py \
   hydra.run.dir="${MODEL_DIR}"
 
 # 2) EVALUATE on the simulated 333-group multistream test set
-uv run python scripts/evaluate.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator=stream_agama_rnbody_huang model=stream_fusion composition=global \
   adapter=stream preprocessing=stream_global augmentation=stream_global \
   eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations=333 \
@@ -38,7 +38,7 @@ uv run python scripts/evaluate.py \
   hydra.run.dir="${EVAL_DIR}"
 
 # 3) EVALUATE REAL (observed Gaia Pal5/NGC3201/M68); MMD vs the sim-eval summaries
-uv run python scripts/evaluate_real.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator=stream_agama_rnbody_huang model=stream_fusion composition=global \
   adapter=stream preprocessing=stream_real_global augmentation=stream_real_global \
   data.real_data_path="${REAL}" \

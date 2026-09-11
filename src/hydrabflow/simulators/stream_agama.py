@@ -36,7 +36,7 @@ from typing import Dict, Mapping
 import numpy as np
 
 from hydrabflow.simulators.base import BaseSimulator
-from hydrabflow.simulators.registry import register_simulator
+from hydrabflow.registry import register_simulator
 from hydrabflow.simulators.stream_common import (
     OBS_R_KPC,
     OBS_SIGMA_VC,

@@ -34,7 +34,7 @@ from bayesflow.networks.summary.summary_network import SummaryNetwork
 from bayesflow.types import Shape, Tensor
 from bayesflow.utils.serialization import deserialize, serializable, serialize
 
-from hydrabflow.networks.factory import build_summary_network, register_summary_network
+from hydrabflow.registry import build_summary_network, register_summary_network
 
 
 @serializable("hydrabflow.networks")
@@ -153,7 +153,7 @@ def _fusion(cfg):
     import bayesflow as bf
     from omegaconf import OmegaConf
 
-    from hydrabflow.config.schema import SummaryNetworkConfig
+    from hydrabflow.config import SummaryNetworkConfig
 
     params = (
         OmegaConf.to_container(cfg.params, resolve=True)
@@ -194,3 +194,8 @@ def _fusion(cfg):
         head=head,
         mask_backbone=params.get("mask_backbone"),
     )
+
+
+# ``registry.build_summary_network`` auto-fuses several summary keys behind bf's FusionNetwork;
+# this builder does its own per-key construction, so it must receive the whole config instead.
+_fusion.consumes_grouped_inputs = True

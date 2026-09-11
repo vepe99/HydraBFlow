@@ -21,9 +21,6 @@
 #   [med_φ2, std_φ2, med_plx, std_plx, med_μφ1, std_μφ1, med_μφ2, std_μφ2,
 #    med_vlos, std_vlos, n_track, n_vlos, j, φ1_centre]
 # and must be updated together with `summary_include_std` / `summary_include_occupancy`.
-defaults:
-  - base_summary_network
-
 type: fusion
 params:
   mask_backbone: null
@@ -34,8 +31,8 @@ params:
       num_blocks: 3
       num_heads: 4
       dropout: 0.1
+      embed_dim_per_head: 8
       params:
-        embed_dim_multiplier: 8
         time_axis: -1            # φ1 bin-centre is the last channel (the time coordinate)
         count_channel: 10        # n_track
         vlos_count_channel: 11   # n_vlos (v_los uses measured stars only -> empties sooner)
@@ -48,16 +45,14 @@ params:
       num_blocks: 5
       num_heads: 6
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 11
+      embed_dim_per_head: 11
     vterm_kms:
       type: time_series_transformer
       summary_dim: 32
       num_blocks: 3
       num_heads: 4
       dropout: 0.1
-      params:
-        embed_dim_multiplier: 8
+      embed_dim_per_head: 8
   head:
     width: 64
     depth: 4

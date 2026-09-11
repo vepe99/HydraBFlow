@@ -69,7 +69,7 @@ run_arm() {
   echo "=== [${ARM}] CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<cpu>} ==="
 
   echo "=== [${ARM} 1/3] TRAIN -> ${MODEL_DIR} ==="
-  uv run python scripts/train.py \
+  uv run python -m hydrabflow.pipeline.train \
     simulator=stream_agama_rnbody_huang model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing=stream_global_log10_sumstats augmentation=stream_global_sumstats \
     data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
@@ -78,7 +78,7 @@ run_arm() {
     hydra.run.dir="${MODEL_DIR}"
 
   echo "=== [${ARM} 2/3] EVALUATE on simulated ${N_TEST}-group test set -> ${EVAL_DIR} ==="
-  uv run python scripts/evaluate.py \
+  uv run python -m hydrabflow.pipeline.evaluate \
     simulator=stream_agama_rnbody_huang model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing=stream_global_log10_sumstats augmentation=stream_global_sumstats \
     eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \
@@ -86,7 +86,7 @@ run_arm() {
     hydra.run.dir="${EVAL_DIR}"
 
   echo "=== [${ARM} 3/3] EVALUATE REAL (Gaia Pal5/NGC3201/M68) -> ${REAL_DIR} ==="
-  uv run python scripts/evaluate_real.py \
+  uv run python -m hydrabflow.pipeline.evaluate \
     simulator=stream_agama_rnbody_huang model="${MODEL}" composition=global \
     adapter="${ADAPTER}" preprocessing=stream_real_global_log10 augmentation=stream_real_global_sumstats \
     data.real_data_path="${REAL}" \

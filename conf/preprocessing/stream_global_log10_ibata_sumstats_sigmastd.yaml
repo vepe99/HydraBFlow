@@ -7,9 +7,6 @@
 # identically on the observed 71 Msun/pc^2 at real-data eval (see the _sigmastd real variant).
 # Everything else is identical to stream_global_log10_ibata_sumstats. Pair with
 # adapter=stream_ibata_sumstats and augmentation=stream_global_ibata_grid (or _sumstats).
-defaults:
-  - base_preprocessing
-
 steps:
   - name: drop_nan
     keys:

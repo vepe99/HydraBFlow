@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 def test_root_config_composes(cfg):
     assert cfg.seed == 42
     assert cfg.simulator.name == "two_moons"  # shipped default: works out of the box
-    assert cfg.model.name == "default"
+    assert cfg.run_name == "set_transformer+flow_matching"
     assert cfg.model.summary_network.type == "set_transformer"
     assert cfg.model.inference_network.type == "flow_matching"
 
@@ -31,6 +31,15 @@ def test_adapter_derived_from_simulator(compose):
     filled = compose()
     assert list(filled.adapter.inference_variables) == ["theta1", "theta2"]
     assert list(filled.adapter.summary_variables) == ["x"]
+
+
+def test_unknown_key_is_rejected(compose):
+    """The typed schema is the only validation layer now that group YAMLs have no base node."""
+    import pytest
+    from hydra.errors import ConfigCompositionException
+
+    with pytest.raises(ConfigCompositionException):
+        compose(["training.no_such_knob=1"])
 
 
 def test_adapter_explicit_config_wins(compose):

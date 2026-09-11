@@ -3,9 +3,6 @@
 # (uniform, modest range) is left linear. drop_nan / mask_vcirc_radii / train_val_split are
 # unchanged — the ancillary observables (vterm_kms, sigma_z, rho_z) are npz-resident, so the
 # drop_nan keys=${adapter.summary_variables} indexing stays valid.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: drop_nan
     keys: ${adapter.summary_variables}

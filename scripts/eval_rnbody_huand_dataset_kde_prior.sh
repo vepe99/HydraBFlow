@@ -68,7 +68,7 @@ EVAL_DIR=${RUNS_DIR}/kdeprior/eval_sim_${N_TEST}
 REAL_DIR=${RUNS_DIR}/kdeprior/eval_real
 
 # echo "=== [1/3] TRAIN  -> ${MODEL_DIR} ==="
-# uv run python scripts/train.py \
+# uv run python -m hydrabflow.pipeline.train \
 #   simulator=stream_agama_rnbody_huang model=stream_fusion_model5 composition=global \
 #   adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
 #   data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
@@ -77,7 +77,7 @@ REAL_DIR=${RUNS_DIR}/kdeprior/eval_real
 #   hydra.run.dir="${MODEL_DIR}"
 
 echo "=== [2/3] EVALUATE on simulated ${N_TEST}-group multistream test set -> ${EVAL_DIR} ==="
-uv run python scripts/evaluate.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator=stream_agama_rnbody_huang model=stream_fusion_model5 composition=global \
   adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
   eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \
@@ -87,7 +87,7 @@ uv run python scripts/evaluate.py \
   hydra.run.dir="${EVAL_DIR}"
 
 echo "=== [3/3] EVALUATE REAL (Gaia Pal5/NGC3201/M68) -> ${REAL_DIR} ==="
-uv run python scripts/evaluate_real.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator=stream_agama_rnbody_huang model=stream_fusion_model5 composition=global \
   adapter=stream preprocessing=stream_real_global_log10 augmentation=stream_real_global \
   data.real_data_path="${REAL}" \

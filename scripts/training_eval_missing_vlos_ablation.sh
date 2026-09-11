@@ -60,7 +60,7 @@ for ARM in ${ARMS}; do
   REAL_DIR=${RUNS_DIR}/eval_real
 
   echo "=== [${ARM} 1/3] TRAIN  -> ${MODEL_DIR} ==="
-  uv run python scripts/train.py \
+  uv run python -m hydrabflow.pipeline.train \
     simulator=stream_agama_rnbody_huang model="${MODEL}" composition=global \
     adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
     augmentation.params.vlos_impute=zero \
@@ -70,7 +70,7 @@ for ARM in ${ARMS}; do
     hydra.run.dir="${MODEL_DIR}"
 
   echo "=== [${ARM} 2/3] EVALUATE on simulated ${N_TEST}-group test set -> ${EVAL_DIR} ==="
-  uv run python scripts/evaluate.py \
+  uv run python -m hydrabflow.pipeline.evaluate \
     simulator=stream_agama_rnbody_huang model="${MODEL}" composition=global \
     adapter=stream preprocessing=stream_global_log10 augmentation=stream_global \
     augmentation.params.vlos_impute=zero \
@@ -79,7 +79,7 @@ for ARM in ${ARMS}; do
     hydra.run.dir="${EVAL_DIR}"
 
   echo "=== [${ARM} 3/3] EVALUATE REAL (Gaia Pal5/NGC3201/M68) -> ${REAL_DIR} ==="
-  uv run python scripts/evaluate_real.py \
+  uv run python -m hydrabflow.pipeline.evaluate \
     simulator=stream_agama_rnbody_huang model="${MODEL}" composition=global \
     adapter=stream preprocessing=stream_real_global_log10 augmentation=stream_real_global \
     augmentation.params.vlos_impute=zero \

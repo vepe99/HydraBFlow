@@ -4,9 +4,6 @@
 # interpolation would KeyError. Pinning also guarantees any NaN rows are dropped consistently.
 # log10 keys include the free thick-disk params (Sigma_thick_Disk, r_thick_Disk). Pair with
 # adapter=stream_ibata_sumstats and augmentation=stream_global_ibata_sumstats.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: drop_nan
     keys:

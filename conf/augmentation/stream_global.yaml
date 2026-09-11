@@ -1,9 +1,6 @@
 # Gaia-like observation model for stream training batches (global level). Order matters:
 # coordinates -> window/subsample/compact -> photometry/errors -> v_los masking -> rotation
 # curve -> feature concatenations. Values ported from the reference agama train configs.
-defaults:
-  - base_augmentation
-
 steps:
   - convert_distance_to_parallax
   - observational_window

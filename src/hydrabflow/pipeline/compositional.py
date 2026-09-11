@@ -14,6 +14,14 @@ from typing import Callable, Container, Dict, Mapping
 import numpy as np
 
 
+def sample_kwargs(cfg) -> dict:
+    """``eval.sample_kwargs`` as a plain dict (forwarded to the compositional sampler)."""
+    from omegaconf import OmegaConf
+
+    kw = cfg.eval.sample_kwargs
+    return OmegaConf.to_container(kw, resolve=True) if OmegaConf.is_config(kw) else dict(kw)
+
+
 def composition_level(cfg) -> str:
     return str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
 
@@ -310,7 +318,7 @@ def condition_keys(cfg) -> list:
 
 def apply_augmentations_once(flat: Dict[str, np.ndarray], cfg, pipeline, seed: int):
     """Replay the configured augmentation chain once (fixed draw) on flattened rows."""
-    from hydrabflow.augmentation.registry import build_augmentations
+    from hydrabflow.registry import build_augmentations
 
     augmentations = build_augmentations(
         cfg.augmentation, np.random.default_rng(seed), context={"pipeline": pipeline}

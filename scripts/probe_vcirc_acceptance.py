@@ -19,7 +19,7 @@ import os
 import numpy as np
 
 import hydrabflow  # noqa: F401  (pins the JAX backend + triggers simulator discovery)
-from hydrabflow.simulators.registry import get_simulator
+from hydrabflow.registry import get_simulator
 from hydrabflow.simulators.stream_agama import _agama, _host_potential, _vcirc
 from hydrabflow.simulators.stream_common import sample_stream_prior
 
@@ -55,7 +55,7 @@ def main() -> None:
 
     from hydra import compose, initialize_config_dir
 
-    from hydrabflow.config.schema import register_configs
+    from hydrabflow.config import register_configs
 
     register_configs()  # register the structured-config schemas the defaults list references
     conf_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "conf")

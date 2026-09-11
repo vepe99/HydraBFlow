@@ -52,7 +52,7 @@ from typing import Dict
 
 import numpy as np
 
-from hydrabflow.augmentation.registry import register_augmentation
+from hydrabflow.registry import register_augmentation
 from hydrabflow.simulators.stream_common import OBS_R_KPC, OBS_SIGMA_VC
 
 _SIM_KEY = "sim_data_projected"
@@ -265,7 +265,7 @@ def _keep_first_k_random_jax(mask, k_per_row, key):
 
 
 @register_augmentation("convert_distance_to_parallax")
-def _convert_distance_to_parallax(params, rng):
+def _convert_distance_to_parallax(params, rng, context=None):
     key = _sim_key(params)
     jax, jnp = _jax()
 
@@ -281,7 +281,7 @@ def _convert_distance_to_parallax(params, rng):
 
 
 @register_augmentation("remove_los_velocity")
-def _remove_los_velocity(params, rng):
+def _remove_los_velocity(params, rng, context=None):
     key = _sim_key(params)
     jax, jnp = _jax()
 
@@ -302,7 +302,7 @@ def _remove_los_velocity(params, rng):
 
 
 @register_augmentation("observational_window")
-def _observational_window(params, rng):
+def _observational_window(params, rng, context=None):
     res = _resources(params)
     key = _sim_key(params)
     jax, jnp = _jax()
@@ -328,7 +328,7 @@ def _observational_window(params, rng):
 
 
 @register_augmentation("observed_n_stars")
-def _observed_n_stars(params, rng):
+def _observed_n_stars(params, rng, context=None):
     res = _resources(params)
     cell = _key_cell(rng)
     jax, jnp = _jax()
@@ -347,7 +347,7 @@ def _observed_n_stars(params, rng):
 
 
 @register_augmentation("compact_to_attended")
-def _compact_to_attended(params, rng):
+def _compact_to_attended(params, rng, context=None):
     key = _sim_key(params)
     max_particles = int(params.get("max_particles", 300))
     jax, jnp = _jax()
@@ -375,7 +375,7 @@ def _compact_to_attended(params, rng):
 
 
 @register_augmentation("sample_magnitudes")
-def _sample_magnitudes(params, rng):
+def _sample_magnitudes(params, rng, context=None):
     res = _resources(params)
     key = _sim_key(params)
     cell = _key_cell(rng)
@@ -411,7 +411,7 @@ def _sample_magnitudes(params, rng):
 
 
 @register_augmentation("sample_obs_error")
-def _sample_obs_error(params, rng):
+def _sample_obs_error(params, rng, context=None):
     res = _resources(params)
     cell = _key_cell(rng)
     jax, jnp = _jax()
@@ -435,7 +435,7 @@ def _sample_obs_error(params, rng):
 
 
 @register_augmentation("apply_obs_error")
-def _apply_obs_error(params, rng):
+def _apply_obs_error(params, rng, context=None):
     res = _resources(params)
     key = _sim_key(params)
     jax, jnp = _jax()
@@ -461,7 +461,7 @@ def _measured_vlos_stats(jnp, vlos, vlos_mask):
 
 
 @register_augmentation("mask_vlos")
-def _mask_vlos(params, rng):
+def _mask_vlos(params, rng, context=None):
     res = _resources(params)
     key = _sim_key(params)
     cell = _key_cell(rng)
@@ -502,7 +502,7 @@ def _mask_vlos(params, rng):
 
 
 @register_augmentation("override_vlos_error_with_real")
-def _override_vlos_error_with_real(params, rng):
+def _override_vlos_error_with_real(params, rng, context=None):
     """Real data only: where a member has a measured v_los, use the instrument's uncertainty."""
     jax, jnp = _jax()
 
@@ -521,7 +521,7 @@ def _override_vlos_error_with_real(params, rng):
 
 
 @register_augmentation("impute_vlos")
-def _impute_vlos(params, rng):
+def _impute_vlos(params, rng, context=None):
     """Re-apply the missing-v_los fill from the batch's existing ``vlos_mask`` (real data
     carries its own mask, and the shipped npz is pre-filled with the measured-star mean).
     ``vlos_impute: mean`` recomputes that mean — a value-preserving no-op on the shipped real
@@ -562,7 +562,7 @@ def _impute_vlos(params, rng):
 
 
 @register_augmentation("add_noise_to_vcirc")
-def _add_noise_to_vcirc(params, rng):
+def _add_noise_to_vcirc(params, rng, context=None):
     res = _resources(params)
     key = str(params.get("vcirc_key", "vcirc_kms"))
     cell = _key_cell(rng)
@@ -582,7 +582,7 @@ def _add_noise_to_vcirc(params, rng):
 
 
 @register_augmentation("log10_vcirc")
-def _log10_vcirc(params, rng):
+def _log10_vcirc(params, rng, context=None):
     key = str(params.get("vcirc_key", "vcirc_kms"))
     jax, jnp = _jax()
 
@@ -653,7 +653,7 @@ def _per_stream_standardize(params, rng, context):
 
 
 @register_augmentation("concatenate_sigma_errors")
-def _concatenate_sigma_errors(params, rng):
+def _concatenate_sigma_errors(params, rng, context=None):
     key = _sim_key(params)
     jax, jnp = _jax()
 
@@ -669,7 +669,7 @@ def _concatenate_sigma_errors(params, rng):
 
 
 @register_augmentation("concatenate_magnitudes")
-def _concatenate_magnitudes(params, rng):
+def _concatenate_magnitudes(params, rng, context=None):
     key = _sim_key(params)
     jax, jnp = _jax()
 
@@ -685,7 +685,7 @@ def _concatenate_magnitudes(params, rng):
 
 
 @register_augmentation("concatenate_vlos_mask")
-def _concatenate_vlos_mask(params, rng):
+def _concatenate_vlos_mask(params, rng, context=None):
     key = _sim_key(params)
     jax, jnp = _jax()
 
@@ -702,7 +702,7 @@ def _concatenate_vlos_mask(params, rng):
 
 
 @register_augmentation("concatenate_stream_index")
-def _concatenate_stream_index(params, rng):
+def _concatenate_stream_index(params, rng, context=None):
     key = _sim_key(params)
     jax, jnp = _jax()
 
@@ -731,7 +731,7 @@ def _concatenate_stream_index(params, rng):
 
 
 @register_augmentation("add_noise_to_vterm")
-def _add_noise_to_vterm(params, rng):
+def _add_noise_to_vterm(params, rng, context=None):
     from hydrabflow.simulators.stream_common import VTERM_SIGMA_KMS
 
     key = str(params.get("vterm_key", "vterm_kms"))
@@ -752,7 +752,7 @@ def _add_noise_to_vterm(params, rng):
 
 
 @register_augmentation("add_noise_to_sigma_z")
-def _add_noise_to_sigma_z(params, rng):
+def _add_noise_to_sigma_z(params, rng, context=None):
     from hydrabflow.simulators.stream_common import SIGMA_Z_ERR_MSUN_PC2
 
     key = str(params.get("sigma_z_key", "sigma_z"))
@@ -773,7 +773,7 @@ def _add_noise_to_sigma_z(params, rng):
 
 
 @register_augmentation("add_noise_to_rho_z")
-def _add_noise_to_rho_z(params, rng):
+def _add_noise_to_rho_z(params, rng, context=None):
     """Resample the vertical stellar-density profile at an assumed per-point RELATIVE uncertainty
     (rho(z) is a shape observable with a free normalization). Noise sigma = rel_err * |rho|."""
     from hydrabflow.simulators.stream_common import RHO_Z_REL_ERR
@@ -796,7 +796,7 @@ def _add_noise_to_rho_z(params, rng):
 
 
 @register_augmentation("log10_rho_z")
-def _log10_rho_z(params, rng):
+def _log10_rho_z(params, rng, context=None):
     """rho(z) spans orders of magnitude over z; feed its log10 to the network (as for vcirc).
     Runs AFTER add_noise_to_rho_z; the small chance of a negative noised value is clipped."""
     key = str(params.get("rho_z_key", "rho_z"))
@@ -820,7 +820,7 @@ def _log10_rho_z(params, rng):
 
 
 @register_augmentation("contaminate_members")
-def _contaminate_members(params, rng):
+def _contaminate_members(params, rng, context=None):
     """Replace a prior-drawn fraction of the selected members with interlopers.
 
     Real stream member catalogues are contaminated, and it is quantified for our streams. Ibata et al.

@@ -77,7 +77,7 @@ EVAL_DIR=${EVAL_DIR:-${RUNS_DIR}/eval_sim_${N_TEST}}
 REAL_DIR=${REAL_DIR:-${RUNS_DIR}/eval_real}
 
 echo "=== [1/3] TRAIN  -> ${MODEL_DIR} ==="
-uv run python scripts/train.py \
+uv run python -m hydrabflow.pipeline.train \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
@@ -86,7 +86,7 @@ uv run python scripts/train.py \
   hydra.run.dir="${MODEL_DIR}"
 
 echo "=== [2/3] EVALUATE sim ${N_TEST}-group multistream -> ${EVAL_DIR} ==="
-uv run python scripts/evaluate.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   eval=stream_compositional data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \
@@ -95,7 +95,7 @@ uv run python scripts/evaluate.py \
   hydra.run.dir="${EVAL_DIR}"
 
 echo "=== [3/3] EVALUATE REAL (Gaia Pal5/NGC3201/M68) -> ${REAL_DIR} ==="
-uv run python scripts/evaluate_real.py \
+uv run python -m hydrabflow.pipeline.evaluate \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${REAL_PREPROC}" augmentation="${REAL_AUG}" \
   data.real_data_path="${REAL}" \

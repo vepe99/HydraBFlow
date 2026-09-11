@@ -12,7 +12,7 @@ from typing import Dict, Iterable
 import numpy as np
 
 from hydrabflow.preprocessing.base import Dataset, PreprocessStep
-from hydrabflow.preprocessing.registry import register_step
+from hydrabflow.registry import register_step
 
 _EPS = 1e-8
 

@@ -46,7 +46,7 @@ from typing import Dict
 
 import numpy as np
 
-from hydrabflow.augmentation.registry import register_augmentation
+from hydrabflow.registry import register_augmentation
 from hydrabflow.augmentation.streams import _jax, _sim_key, _stream_ids_jax
 
 _FRAME_CACHE: Dict[str, "StreamFrames"] = {}
@@ -208,7 +208,7 @@ def _estimator_params(params) -> tuple[str, int, bool]:
 
 
 @register_augmentation("stream_summary_statistics")
-def _stream_summary_statistics(params, rng):
+def _stream_summary_statistics(params, rng, context=None):
     jax, jnp = _jax()
     obs_key = _sim_key(params)
     summary_key = str(params.get("summary_key", "sim_summary"))
@@ -336,7 +336,7 @@ _GRID_OBSERVABLES = ("phi2", "parallax", "mu_phi1", "mu_phi2", "vlos")
 
 
 @register_augmentation("stream_summary_grid")
-def _stream_summary_grid(params, rng):
+def _stream_summary_grid(params, rng, context=None):
     """Per-stream summary statistics laid out as a **φ1 time series** for a single
     ``TimeSeriesTransformer`` (``time_axis=-1``).
 

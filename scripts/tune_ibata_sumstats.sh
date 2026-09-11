@@ -49,11 +49,11 @@ LOG=${LOG:-${OUT_ROOT}/tune_ibata_sumstats.log}
 mkdir -p "${OUT_ROOT}"
 
 echo "=== [tune] CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<cpu>}  trials=${N_TRIALS} epochs=${N_EPOCHS} ===" | tee -a "${LOG}"
-uv run python scripts/tune.py \
+uv run python -m hydrabflow.pipeline.tune \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   tuning=stream_ibata_sumstats \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
   tuning.n_trials="${N_TRIALS}" tuning.n_epochs="${N_EPOCHS}" \
-  inference.batch_size="${INFER_BATCH}" inference.num_samples="${INFER_SAMPLES}" \
+  eval.batch_size="${INFER_BATCH}" eval.num_samples="${INFER_SAMPLES}" \
   augmentation.params.resources_dir="${RES}" 2>&1 | tee -a "${LOG}"

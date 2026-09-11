@@ -70,7 +70,7 @@ def main():
     from hydrabflow.pipeline.compositional import apply_augmentations_once, flatten_members
     from hydrabflow.pipeline.evaluate import _load_test_data
     from hydrabflow.pipeline.evaluate_real import _prepare_real_members
-    from hydrabflow.preprocessing.registry import build_pipeline
+    from hydrabflow.registry import build_pipeline
     from hydrabflow.utils.paths import PREPROCESSING_STATE
 
     def load_cfg(run):
@@ -133,7 +133,7 @@ def main():
             )
 
     try:
-        from hydrabflow.simulators.registry import get_simulator
+        from hydrabflow.registry import get_simulator
         streams = getattr(get_simulator(cs.simulator), "target_streams", None) or {}
         jname = {int(v): str(k) for k, v in streams.items()}
     except Exception:

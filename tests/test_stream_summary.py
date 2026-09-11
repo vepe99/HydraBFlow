@@ -34,9 +34,9 @@ def _params(**extra):
 
 
 def _build(name, params, seed=0):
-    from hydrabflow.augmentation.registry import _REGISTRY
+    from hydrabflow.registry import AUGMENTATIONS
 
-    return _REGISTRY[name](params, np.random.default_rng(seed))
+    return AUGMENTATIONS.get(name)(params, np.random.default_rng(seed), {})
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -258,8 +258,8 @@ def test_out_of_range_stars_are_excluded_not_clipped():
 def _masked_tst(summary_dim=8, min_count=3):
     from omegaconf import OmegaConf
 
-    from hydrabflow.config.schema import SummaryNetworkConfig
-    from hydrabflow.networks.factory import build_summary_network
+    from hydrabflow.config import SummaryNetworkConfig
+    from hydrabflow.registry import build_summary_network
 
     cfg = OmegaConf.merge(
         OmegaConf.structured(SummaryNetworkConfig),
@@ -367,8 +367,8 @@ def test_masked_tst_serialization_round_trip():
 def test_mlp_backbone_forward():
     from omegaconf import OmegaConf
 
-    from hydrabflow.config.schema import SummaryNetworkConfig
-    from hydrabflow.networks.factory import build_summary_network
+    from hydrabflow.config import SummaryNetworkConfig
+    from hydrabflow.registry import build_summary_network
 
     cfg = OmegaConf.merge(
         OmegaConf.structured(SummaryNetworkConfig),
@@ -385,8 +385,8 @@ def test_feature_transformer_backbone_forward():
     feature tokens and runs a TimeSeriesTransformer, returning (n, summary_dim)."""
     from omegaconf import OmegaConf
 
-    from hydrabflow.config.schema import SummaryNetworkConfig
-    from hydrabflow.networks.factory import build_summary_network
+    from hydrabflow.config import SummaryNetworkConfig
+    from hydrabflow.registry import build_summary_network
 
     cfg = OmegaConf.merge(
         OmegaConf.structured(SummaryNetworkConfig),
@@ -441,7 +441,7 @@ def test_compose_summaries_only_and_drop_retained(compose):
 
 def test_compose_masked_grid_model_and_build(compose):
     """The masked-grid preset composes and its fusion network builds/runs on the 14-channel grid."""
-    from hydrabflow.networks.factory import build_summary_network
+    from hydrabflow.registry import build_summary_network
 
     cfg = compose(
         [
@@ -580,7 +580,7 @@ def test_compose_v2_presets(compose):
 def test_v2_simulator_frees_the_intended_parameters(compose):
     """v2 drops the rotation-curve rejection prior and promotes the previously-pinned halo/bulge
     knobs and the stripping age to inferred parameters."""
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     sim = get_simulator(compose(["simulator=stream_agama_rnbody_ibata_m200c_v2"]).simulator)
     assert sim._vcirc_rejection is None

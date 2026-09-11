@@ -3,9 +3,6 @@
 # operates in log10 space regardless of data source. Real observations have no global-parameter
 # truth columns, so the step itself is a no-op transform here (nothing to log10); its only job on
 # this preset is to make the reparametrized keys discoverable.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: attach_observed_vcirc
   - name: mask_vcirc_radii

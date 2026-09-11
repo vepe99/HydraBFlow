@@ -11,7 +11,7 @@ DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_rnbody_huang_hydrabflow}
 SEED=${SEED:-2026}
 
 # 1) training set
-uv run python scripts/simulate.py \
+uv run python -m hydrabflow.pipeline.simulate \
   simulator=stream_agama_rnbody_huang \
   composition=global \
   data.data_dir="${DATA_DIR}" \
@@ -20,7 +20,7 @@ uv run python scripts/simulate.py \
   seed="${SEED}"
 
 # 2) multistream test set
-uv run python scripts/simulate_multistream.py \
+uv run python -m hydrabflow.pipeline.simulate_multistream \
   simulator=stream_agama_rnbody_huang \
   composition=global \
   data.data_dir="${DATA_DIR}" \

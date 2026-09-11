@@ -1,9 +1,6 @@
-# Two Moons benchmark (bimodal posterior). Forward model:
-# src/hydrabflow/simulators/two_moons.py. Observable `x` has shape (n, n_obs, 2).
-# Pair with `adapter=two_moons` so the parameter names / observable key are wired correctly.
-defaults:
-  - base_simulator
-
+# Two Moons benchmark (bimodal posterior). Forward model: src/hydrabflow/simulators/two_moons.py.
+# Observable `x` has shape (n, n_obs, 2). The simulator class declares its own parameter names and
+# observable keys, so the adapter needs no wiring. Copy this file for your own forward model.
 name: two_moons
 params:
   prior_low: -1.0       # uniform prior bounds for theta1, theta2

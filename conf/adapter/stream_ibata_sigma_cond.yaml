@@ -4,9 +4,6 @@
 # rank-3 grids cannot be concatenated into inference_conditions. inference_conditions is set
 # explicitly here (so sigma_z + the derived context key j are both included). Pair with
 # model=stream_fusion_ibata_sigma_cond.
-defaults:
-  - base_adapter
-
 inference_variables: []
 summary_variables:
   - sim_data_projected

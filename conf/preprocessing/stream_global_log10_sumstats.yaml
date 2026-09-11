@@ -4,9 +4,6 @@
 # and does NOT exist in the stored npz — so ${adapter.summary_variables} would KeyError here.
 # Pinning to [sim_data_projected, vcirc_kms] also guarantees rnbody NaN rows are dropped
 # (independent of which observables the network is fed), matching the baseline drop.
-defaults:
-  - base_preprocessing
-
 steps:
   - name: drop_nan
     keys:

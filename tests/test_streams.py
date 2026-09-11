@@ -36,7 +36,7 @@ def test_stream_config_composes(compose):
 
 
 def test_simulator_declares_hierarchy(compose):
-    from hydrabflow.simulators.registry import get_simulator
+    from hydrabflow.registry import get_simulator
 
     cfg = compose(STREAM_OVERRIDES, fill=False)
     sim = get_simulator(cfg.simulator)
@@ -380,11 +380,11 @@ def test_attach_observed_sigma_z_tiles_scalar():
 
 
 def test_registries_contain_stream_components():
-    import hydrabflow.augmentation  # noqa: F401  (discovery)
-    import hydrabflow.preprocessing  # noqa: F401
-    from hydrabflow.augmentation.registry import available_augmentations
-    from hydrabflow.preprocessing.registry import available_steps
-    from hydrabflow.simulators.registry import available_simulators
+    from hydrabflow.registry import AUGMENTATIONS, SIMULATORS, STEPS
+
+    available_simulators = lambda: SIMULATORS.discover().items  # noqa: E731
+    available_steps = lambda: STEPS.discover().items  # noqa: E731
+    available_augmentations = lambda: AUGMENTATIONS.discover().items  # noqa: E731
 
     assert "stream_agama" in available_simulators()
     for step in (
