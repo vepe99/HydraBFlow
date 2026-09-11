@@ -119,10 +119,73 @@ augmentation:
 | `dist_pc` | the source's distance; the RT models are at 140 pc |
 | `av` | foreground extinction, mag |
 | `sed_sigma_jy` | fixed per-bin SED σ. Default `null` = a wavelength-binned log-normal calibrated from five real disks' error bars (`assets/protoplan/seddata_*.txt`); supply this and those files are not read at all |
+| `sed_frac_cal_err` | fractional calibration error added in quadrature to that drawn floor: `σ = sqrt((frac·flux)² + floor²)`. Default `0.0` = the floor alone, which is an *absolute* error bar in Jy with no flux dependence — across a population spanning fourteen decades that gives a median training SED of S/N 67, cleaner than any real photometry. `0.04` puts the median at S/N 25 and the p10–p90 at 3.4–43, bracketing hvtauc (2.3% → 43) and oph163131 (4.7% → 21) |
+| `jwst_psf_gaussian_fwhm_arcsec` | replace the stpsf NIRSpec PSF with a circular Gaussian of this FWHM, arcsec. Default `null` keeps stpsf. Also removes the `$STPSF_PATH` dependency. See §3.1 for why you might want to |
 
 To point a run at a real disk's measured setup: put its beam in `alma_beams`, its per-band RMS in
 `alma_noises_jy_beam`, its JWST σ in `jwst_noise_mjy_sr`, its distance in `dist_pc`, and set
 `randomize_alma_setup: false`.
+
+### 3.1 The JWST PSF, and why a Gaussian is a real option
+
+The stpsf NIRSpec IFU kernel carries the hexagonal-aperture diffraction structure — the four-lobed
+cross visible all over `plot_population.py`'s JWST gallery — and that structure is fixed on the
+**detector**, while `apply_rotation` spins the source through 0–360°. So in training the spike
+pattern always sits at the same angle relative to the array while the disk rotates against it: an
+absolute orientation reference that exists only in the training set, because a real JWST
+observation has its own V3 position angle. It is the same class of error as convolving before
+rotating (fixed in `__call__`) — the physics is right, and a training-only landmark is left in the
+kernel.
+
+`jwst_psf_gaussian_fwhm_arcsec` removes it. The trade is the halo, and it is not small:
+
+| | stpsf kernel | Gaussian, FWHM 0.16″ |
+|---|---|---|
+| core FWHM (half-max) | 0.1605″ | 0.16″ |
+| second-moment FWHM | **0.527″** | 0.16″ |
+| r(EE=50 / 80 / 90%) | 0.109 / 0.234 / 0.429″ | 0.068 / 0.123 / 0.157″ |
+
+On the 0.1″ observed grid over a 3.1″ field, 20% of the stpsf flux sits beyond r = 0.23″ and 10%
+beyond r = 0.43″ — a third of the field. Dropping it raises the peak of a bright compact source by
+**1.3–1.6×**. Use **0.16″**, the measured core width, not the 0.151″ textbook diffraction limit
+(1.22 λ/D at 3.9 µm on 6.5 m): matching what the old runs actually convolved with is what makes the
+comparison controlled. The other way out — randomizing the PSF orientation along with the source —
+needs one kernel per rotation group, i.e. the ALMA beam-group machinery again, and is not
+implemented.
+
+`experiment=protoplan_gausspsf` sets this and `sed_frac_cal_err` together, on top of
+`protoplan_newbeam`.
+
+#### Measured, 2026-09-11: the swap made both disks *more* out-of-distribution
+
+`gausspsf_all17` (2000 epochs) was scored against `newbeam_all17` with `check_summary_range` on the
+full 49811-row population, both disks, all branches. Read the NN-distance ratio (the real disk's
+distance to its nearest training row, over the population's own typical nearest-neighbour spacing)
+rather than the percentile, which saturates near 100 and compresses the range that matters:
+
+| | branch | gausspsf | newbeam | |
+|---|---|---|---|---|
+| hvtauc | all bands | ×2.89 (p99.99) | ×2.42 (p99.93) | worse |
+| | jwst_input | ×4.36 | ×4.30 | ~same |
+| oph163131 | all bands | ×2.71 (p99.98) | ×2.21 (p99.86) | worse |
+| | **jwst_input** | **×3.58 (p99.91)** | **×1.67 (p84.62)** | **much worse** |
+
+oph163131's JWST branch was comfortably *inside* the population under the stpsf PSF (p84.6) and is
+badly outside it with the Gaussian (p99.9). That branch is the one the knob changes, so this is close
+to a direct measurement: **the halo carries real structure.** A real JWST observation has those wings
+whether the training set does or not, so removing them makes the training population less like the
+data, not more. The spike-orientation argument above is sound in principle and simply does not
+dominate — the ×1.3–1.6 peak change was the bigger effect all along, and should have been read as
+evidence against the swap rather than as an acceptable cost.
+
+**Do not use `jwst_psf_gaussian_fwhm_arcsec` to chase an OOD verdict.** It stays in the code (default
+`null`, so nothing changes unless asked) for the cases it was really useful for: running without
+`$STPSF_PATH`, and any test that wants a PSF with no orientation structure.
+
+One thing this does *not* separate: `protoplan_gausspsf` turns both changes on at once, so strictly
+the result indicts the *pair*. `sed_input` barely moved (hvtauc ×1.84 vs ×1.42, oph163131 ×2.01 vs
+×2.05) while the JWST branch moved a lot, which points at the PSF — but a `sed_frac_cal_err`-only run
+is what would settle it, and has not been done.
 
 **Changing the noise means changing the asinh knees too.** `simulator.params.asinh_sigma_jwst` and
 `asinh_sigma_alma` are where the adapter's image compression turns over from linear to logarithmic
@@ -333,7 +396,8 @@ one per space, each writing to `plots/<disk>/`:
 
 | notebook | question | needs |
 |---|---|---|
-| `check_sed_range.py` | is the SED reachable? | nothing but `assets/protoplan/` — CPU, no pickle |
+| `check_sed_range.py` | is the SED reachable, band by band? | nothing but `assets/protoplan/` — CPU, no pickle |
+| `check_sed_corner.py` | is it reachable *jointly*, i.e. are the **colours** right? | GPU, the real-disk pickle |
 | `check_obs_range.py` | is the *amplitude* in range? | GPU, `$STPSF_PATH`, the real-disk pickle |
 | `check_shape_range.py` | is the *morphology* reachable? | GPU, `$STPSF_PATH`, the real-disk pickle |
 
@@ -341,7 +405,20 @@ one per space, each writing to `plots/<disk>/`:
 uv run marimo edit notebooks/prior_predictive_checks/check_sed_range.py
 # or headless, on a short pass:
 OBS_N_ROWS=4096 uv run python notebooks/prior_predictive_checks/check_obs_range.py
+# the joint version, and the plain gallery of what the population looks like:
+uv run python notebooks/prior_predictive_checks/check_sed_corner.py 4000 experiment=protoplan_gausspsf
+CHECK_DISK=hvtauc uv run python notebooks/prior_predictive_checks/plot_population.py 200
 ```
+
+**Per-band and joint are different questions.** A disk can sit at the 50th percentile in every
+band and still be nowhere near the population, because the bands are strongly correlated and it is
+the *colours* that carry the shape of the SED. `check_sed_corner.py` is the joint version — a
+corner plot over nine representative bands plus the Mahalanobis distance in log-flux space,
+referenced against the empirical distribution of the training rows' own distances. Both targets
+pass it: hvtauc `d² = 6.3` (59th percentile), oph163131 `d² = 10.7` (81st), against a training
+median of 5.3. oph163131's only tension is the mid/far-IR — 24 µm at the 8.5th percentile, 70 µm at
+the 5.4th — it is colder than the typical training disk, consistent with being more edge-on. **The
+SED is not the channel these disks fall out of.**
 
 `_realdisk.py` beside them holds everything shared: the per-disk `DISKS` registry, `build_real_batch`
 (the only place that reads a real observation), and the scoring toolkit (rank-normal scores,

@@ -168,6 +168,30 @@ are configured -- either one fixed measured setup (`randomize_alma_setup: false`
 marginalise over (`true`, with the `*_range` knobs; there is no separate minor-axis range, since
 minor = `axis_ratio * major`). Requires `stpsf` reference data via `$STPSF_PATH`.
 
+Two knobs exist to *remove* a known misspecification, both defaulting to the old behaviour so
+earlier runs stay reproducible; `experiment=protoplan_gausspsf` turns both on. **The PSF one was
+tested and rejected -- see the measured result below; do not reach for it to fix an OOD verdict.**
+`jwst_psf_gaussian_fwhm_arcsec` swaps the stpsf kernel for a circular Gaussian, because the stpsf
+diffraction spikes are fixed on the *detector* while `apply_rotation` spins the source -- a
+training-only absolute orientation reference. Use 0.16" (the stpsf kernel's measured core FWHM),
+not the 0.151" diffraction limit; what is lost is the halo (second-moment FWHM 0.527", 20% of the
+flux beyond r=0.23"), which raises a compact source's peak by 1.3-1.6x. `sed_frac_cal_err` makes
+the SED sigma `sqrt((frac*flux)^2 + floor^2)`: the drawn floor alone is an *absolute* Jy error bar
+fitted to five bright disks, so it gave a median training SED of S/N 67 -- cleaner than real
+photometry -- while 4% of bins sat at S/N < 1. `0.04` puts the median at 25, bracketing hvtauc
+(S/N 43) and oph163131 (21). The S/N < 1 tail is left alone on purpose: those are genuine
+non-detections below a real noise floor.
+
+**Measured 2026-09-11, and it is a negative result.** `gausspsf_all17` scored against
+`newbeam_all17` (`check_summary_range`, full population, both disks) puts *both* disks further out
+than before: global NN ratio 2.89 vs 2.42 (hvtauc) and 2.71 vs 2.21 (oph163131). The decisive block
+is oph163131's `jwst_input`, p84.62 (x1.67) -> p99.91 (x3.58) -- inside the population under stpsf,
+badly outside under the Gaussian. The halo carries real structure the data has regardless of our
+training set, and the spike-orientation argument does not dominate it. Confounded with
+`sed_frac_cal_err` (the experiment sets both), but `sed_input` barely moved while JWST moved a lot,
+so the PSF is the likely culprit; a `sed_frac_cal_err`-only run would settle it. See
+docs/protoplanetary_disk.md 3.1.
+
 **`px_arcsec_mod` must match the image cache's grid.** The cached image variants all cover the same
 3" field and differ only in sampling, but the PSF/beam kernels are sized from `px_arcsec_mod` in
 `__init__`. A mismatch is a *silent beam error*, not a shape error -- `preprocess` therefore checks
@@ -241,6 +265,17 @@ is therefore not an extinction problem, and no amount of A_V sampling will move 
 `test_extinction_is_negligible_at_alma_wavelengths_over_any_av`. Every consumer of `av` must handle
 both a scalar and a range (`parse_av` / `av_ref` / `extinction_correction`); a scalar-only assumption
 fails silently by broadcasting or loudly on `np.isnan(tuple)`.
+
+`check_sed_corner` asks the SED question *jointly* rather than band by band -- a corner plot over
+nine bands plus the Mahalanobis distance in log-flux space -- because the bands are correlated
+enough that per-band percentiles miss a wrong colour. Both targets pass (hvtauc d2 6.3 = 59th pct,
+oph163131 10.7 = 81st, training median 5.3), so the **SED is not the OOD channel**; oph163131's only
+tension is 24/70 um at the 8.5th/5.4th percentile, i.e. colder than typical. `plot_population` is
+the eyeball version -- N random training rows through the training forward model, one PNG per band
+plus the SED, with `CHECK_DISK` adding the real disk outlined in cyan. Measured there: the training
+population already carries 8-14% centroid scatter at p90, and both real disks are *more* centred
+than the median training row -- so a position-jitter augmentation would add variance the data does
+not need.
 
 `check_summary_range` is the fourth check, in the network's own summary space; it needs a finished
 run, scores per instrument (a disk's absent band is its positive control), and caches the embeddings
