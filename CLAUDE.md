@@ -1151,6 +1151,68 @@ Every run saves:
   - **NOT done**: only M68 was run (user scoped it); Pal5/NGC3201, other parameters than q_halo, and
     the question of whether a per-q `t_hat` rescaling could restore the along-track density are open.
 
+- Session 2026-08-28 (trihedron remap at 1e6 particles, all three streams, q AND mass sweeps —
+  **the "beats spray everywhere" claim does NOT generalize**): the follow-up the previous entry
+  scoped. Same fixed Cautun potential, seed 2026, 1e6 particles per arm, noise-convolved with 120
+  pooled realizations. Artifacts + full tables in `data_local/trihedron_1e6/README.md`;
+  `summary.json` + `combined_error_vs_param.png` are the headline.
+  - **Script generalized** (`compare_trihedron_vs_spray.py`): `--param`/`--values` sweep ANY global
+    (was a hardcoded `Q_KEY`), per-stream output subdirs `<outdir>/<stream>/`, cache tags keyed by
+    parameter with the untouched fiducial tagged `fid` so it is SHARED between sweeps (saves one
+    N-body per stream), `halo_m200()` (bisection on `enclosedMass(r) = (4pi/3) 200 rho_crit r^3`,
+    H0=70.4 as in `_halo_params_m200c`) reporting M200/r200/c200 per value, `--noise-subsample`
+    (default 20000: tiling 1e6 particles x 120 realizations is ~6 GB, and the chain keeps only
+    `observed_n_stars` anyway), and a new **observable-space corner** per swept value (6 observables,
+    3 arms as 68/95% contours, Gaia members overplotted, measured-v_los stars only — `corner` was
+    already a dep). Runner `scripts/run_trihedron_1e6.sh`, collator `scripts/summarize_trihedron.py`.
+  - **BUG FOUND AND FIXED — `sky_projection` is all-or-nothing on NaN**: agama returns an ALL-NaN
+    projection if a SINGLE input row is non-finite. At 1e5 it never fired; at 1e6, two NaN stars out
+    of a million (routine for spray and for a dissolved progenitor) silently zeroed whole arms
+    (`in-window spray=0`, `track offset=nan`) — which reads as "this model produces nothing" rather
+    than "the projection failed". `project_xv` projects the finite subset and writes NaN back,
+    preserving the row indexing `per_star_error` needs. **Any other caller of `sky_projection` on
+    unfiltered particles has this bug.** All numbers below are post-fix.
+  - **q sweep** (median |d phi2 track| vs the N-body truth, remap / spray, deg): M68 0.323/0.558,
+    0.267/0.432, —, 0.123/0.397, 0.139/0.524, 0.066/0.380 (remap wins at ALL six, 2-6x — and
+    reproduces the 1e5 run to <=0.02 deg, so that result was NOT resolution-limited); **NGC3201**
+    0.697/0.422, 0.494/0.467, —, 0.045/0.749, 0.367/1.005, 1.159/1.464 (**loses on the oblate
+    side**); **Pal5** 0.096/0.057, 0.051/0.058, —, 0.016/0.087, 0.056/0.092, 0.308/0.097 (**loses at
+    both extremes**). So the previous session's headline held only for the one stream it was tested
+    on. The q-asymmetry direction is also stream-specific: Pal5 degrades on the PROLATE side, M68 and
+    NGC3201 on the oblate side.
+  - **Mass sweep** (`rho` x[0.5,0.7,1,1.4,2] = halo M200 2.84e11-1.44e12; NOTE this moves M200 AND
+    concentration together, c200 14.0->24.1, since `a` is held): the remap **loses almost everywhere**
+    — Pal5 5.1x/3.2x/—/1.7x/1.2x worse than spray, NGC3201 up to 6.5x, M68 2.2x/1.4x/—/0.8x/1.3x
+    (its one win). **Why: `t_hat` is frozen, so the remap cannot redistribute stars ALONG the track,
+    and a mass change is mostly an orbital-period rescaling — i.e. exactly that. A `q` change bends
+    the orbit sideways, which the stored perpendicular offsets do capture.** Spray's error is roughly
+    FLAT in both parameters (it re-derives release conditions per potential) while the remap is exact
+    at the fiducial and degrades away from it, so the remap only wins inside a window around the
+    fiducial.
+  - **Usable range** (beats spray AND < ~0.15 deg, the measurement-error-only realization scatter of
+    the 2026-07-29 runs): M68 q in [1.0,1.4]; Pal5 q in [0.85,1.2]; NGC3201 q in [1.0,1.05]; **mass:
+    none, on any stream**. Far too narrow for a prior of q in [0.7,1.4] x M200 in [0.5,2.5]e12 — a
+    single template cannot cover it. Tiled/local templates (one per prior cell) are the only route to
+    a training-set generator.
+  - **Along-track density, quantified** (phi1 edge/centre ratio over the q sweep): rnbody moves
+    2.07-4.85 (M68), 0.99-2.72 (NGC3201), 0.38-1.38 (Pal5) while the remap is pinned at 1.94-2.16 /
+    1.11-1.16 / 0.60-0.75 and spray is likewise flat. Any inference leaning on along-track density
+    (arm length; the edge/centre statistic this project uses for the wide-window streams) is biased
+    by EITHER surrogate.
+  - **Neither surrogate knows whether the progenitor survives.** At M200=2.84e11 the N-body says
+    NGC3201 is never stripped — `m_bound_final` = 1.92e5 = its full initial mass, all 1e6 particles
+    in a clump spanning 8.66-9.41 kpc at RA 142-164, dec -49..-44, i.e. OUTSIDE its window, so there
+    is no stream. Spray still puts 214,882 stars in the window and the remap 23,400. Spray's
+    blindness is already documented (it fabricates stripping over `t_end`); the remap inherits it
+    structurally by replaying the fiducial's already-stripped population. M68 shows it mildly at the
+    same mass (rnbody edge/centre 140 = barely-stripped clump).
+  - Cost unchanged and still overwhelming: ~8-15 min per potential for the N-body at 1e6 (32 agama
+    threads) vs milliseconds per potential for the remap after one template build. It is the accuracy
+    envelope, not the speed, that limits use.
+  - **NOT done**: no tiled-template test (the obvious next step); whether a per-value `t_hat`
+    rescaling could restore the along-track density is still open and is now clearly THE lever, since
+    it is the same defect behind both the mass-axis failure and the edge/centre pinning.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

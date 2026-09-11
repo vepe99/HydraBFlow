@@ -88,6 +88,62 @@ def robust_lim(*arrays, pad=0.15):
     return lo - m, hi + m
 
 
+def phi2_grid_figure(real, samples, lims, out, *, ncol=0, panel_w=2.4, panel_h=2.0, dpi=0,
+                     suptitle="", labels=None) -> None:
+    """One grid figure, one axis per sample, phi2 vs phi1 with the real members in grey behind.
+
+    ``samples`` is a list of ``project_sample`` dicts (``None`` for an empty realization) and
+    ``lims`` a dict with ``phi1``/``phi2`` ranges shared by every panel, so the samples are directly
+    comparable. ``labels`` optionally replaces the default ``#i n=...`` corner annotation.
+
+    Grid shape: ``ncol=0`` (default) picks a roughly square grid so a few hundred realizations stay
+    on one viewable canvas (500 samples -> 23x22 rather than 10x50).
+    """
+    n_samples = len(samples)
+    ncol = int(ncol) if ncol else max(1, int(np.ceil(np.sqrt(n_samples))))
+    nrow = int(np.ceil(n_samples / ncol))
+    # Panels are packed edge to edge (shared axes put tick labels only on the outer rows/columns),
+    # so nearly the whole canvas is scatter plot. dpi is stepped down for big grids to keep the PNG
+    # inside matplotlib's pixel limit and a sane file size.
+    dpi = int(dpi) if dpi else (150 if nrow * ncol <= 120 else 110)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(panel_w * ncol, panel_h * nrow), squeeze=False,
+                             sharex=True, sharey=True,
+                             gridspec_kw=dict(wspace=0.04, hspace=0.04))
+    for i in range(nrow * ncol):
+        ax = axes[i // ncol][i % ncol]
+        if i >= n_samples:
+            ax.axis("off")
+            continue
+        ax.scatter(real["phi1"], real["phi2"], s=1.5, c="0.65", lw=0)
+        s = samples[i]
+        if s is None:
+            ax.text(0.5, 0.5, "empty", transform=ax.transAxes, ha="center", va="center",
+                    fontsize=6, color="crimson")
+        else:
+            ax.scatter(s["phi1"], s["phi2"], s=1.5, c="tab:blue", lw=0)
+        ax.set_xlim(*lims["phi1"])
+        ax.set_ylim(*lims["phi2"])
+        ax.tick_params(labelsize=5)
+        note = (labels[i] if labels is not None
+                else f"#{i}" + (f" n={len(s['phi1'])}" if s is not None else ""))
+        ax.text(0.02, 0.94, note, transform=ax.transAxes, fontsize=5, va="top", color="0.25")
+    # Label the last axis that actually has content in each column (the final row may be
+    # partially filled), and the leftmost axis of every row.
+    for k in range(ncol):
+        last = nrow - 1 if (nrow - 1) * ncol + k < n_samples else nrow - 2
+        if last >= 0:
+            axes[last][k].set_xlabel("phi1 [deg]", fontsize=7)
+            axes[last][k].tick_params(labelbottom=True)
+    for k in range(nrow):
+        axes[k][0].set_ylabel("phi2 [deg]", fontsize=7)
+    fig.suptitle(suptitle, fontsize=11)
+    # NOT tight_layout: it recomputes spacing and would undo the edge-to-edge packing above.
+    fig.subplots_adjust(left=0.045, right=0.995, bottom=0.035, top=0.93, wspace=0.04, hspace=0.04)
+    fig.savefig(out, dpi=dpi)
+    plt.close(fig)
+    print(f"wrote {out}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sim", required=True, help="grouped multistream npz (N,S,P,6)")
@@ -180,56 +236,14 @@ def main() -> None:
     # ---------------------------------------------------------------------------------------- #
     # Figures 1..n_streams: ONE grid per stream, one axis per sample, phi2 only.
     # ---------------------------------------------------------------------------------------- #
-    # Grid shape: default to a roughly square grid so a few hundred realizations stay on one
-    # viewable canvas (500 samples -> 23x22 rather than 10x50), overridable with --grid-cols.
-    ncol = int(args.grid_cols) if args.grid_cols else max(1, int(np.ceil(np.sqrt(n_samples))))
-    nrow = int(np.ceil(n_samples / ncol))
-    # Panels are packed edge to edge (shared axes put tick labels only on the outer rows/columns),
-    # so nearly the whole canvas is scatter plot. dpi is stepped down for big grids to keep the PNG
-    # inside matplotlib's pixel limit and a sane file size.
-    dpi = int(args.dpi) if args.dpi else (150 if nrow * ncol <= 120 else 110)
     for j, real, samples, vmeas, lims in cols:
         name = NAMES.get(j, str(j))
-        fig, axes = plt.subplots(nrow, ncol,
-                                 figsize=(args.panel_w * ncol, args.panel_h * nrow), squeeze=False,
-                                 sharex=True, sharey=True,
-                                 gridspec_kw=dict(wspace=0.04, hspace=0.04))
-        for i in range(nrow * ncol):
-            ax = axes[i // ncol][i % ncol]
-            if i >= n_samples:
-                ax.axis("off")
-                continue
-            ax.scatter(real["phi1"], real["phi2"], s=1.5, c="0.65", lw=0)
-            s = samples[i]
-            if s is None:
-                ax.text(0.5, 0.5, "empty", transform=ax.transAxes, ha="center", va="center",
-                        fontsize=6, color="crimson")
-            else:
-                ax.scatter(s["phi1"], s["phi2"], s=1.5, c="tab:blue", lw=0)
-            ax.set_xlim(*lims["phi1"])
-            ax.set_ylim(*lims["phi2"])
-            ax.tick_params(labelsize=5)
-            ax.text(0.02, 0.94, f"#{i}" + (f" n={len(s['phi1'])}" if s is not None else ""),
-                    transform=ax.transAxes, fontsize=5, va="top", color="0.25")
-        # Label the last axis that actually has content in each column (the final row may be
-        # partially filled), and the leftmost axis of every row.
-        for k in range(ncol):
-            last = nrow - 1 if (nrow - 1) * ncol + k < n_samples else nrow - 2
-            if last >= 0:
-                axes[last][k].set_xlabel("phi1 [deg]", fontsize=7)
-                axes[last][k].tick_params(labelbottom=True)
-        for k in range(nrow):
-            axes[k][0].set_ylabel("phi2 [deg]", fontsize=7)
-        fig.suptitle(f"{name} — {n_samples} realizations in ONE fixed potential (Cautun+2020), "
+        phi2_grid_figure(
+            real, samples, lims, f"{args.out}_{name}_phi2.png",
+            ncol=args.grid_cols, panel_w=args.panel_w, panel_h=args.panel_h, dpi=args.dpi,
+            suptitle=f"{name} — {n_samples} realizations in ONE fixed potential (Cautun+2020), "
                      f"{kind}\nvarying per row: {varying_label}; grey = real Gaia members",
-                     fontsize=11)
-        # NOT tight_layout: it recomputes spacing and would undo the edge-to-edge packing above.
-        fig.subplots_adjust(left=0.045, right=0.995, bottom=0.035, top=0.93,
-                            wspace=0.04, hspace=0.04)
-        out = f"{args.out}_{name}_phi2.png"
-        fig.savefig(out, dpi=dpi)
-        plt.close(fig)
-        print(f"wrote {out}")
+        )
 
     # ---------------------------------------------------------------------------------------- #
     # Figure 2: all samples overlaid, one axis per (observable, stream)
