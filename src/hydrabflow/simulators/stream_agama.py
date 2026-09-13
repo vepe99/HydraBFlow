@@ -154,7 +154,8 @@ def _halo_shape_extras(p: Mapping[str, float]) -> dict:
     * ``p_TwoPowerTriaxial_halo`` — the intermediate axis ratio (``axisRatioY``), previously
       hardcoded to 1, i.e. the halo was forced axisymmetric.
     * ``tilt_TwoPowerTriaxial_halo`` — inclination [deg] of the halo's symmetry axis relative to the
-      disc, passed as agama's Euler ``orientation=(0, tilt, 0)``.
+      disc, passed as agama's Euler ``orientation=(0, radians(tilt), 0)`` (a rotation about the
+      Sun-centre x axis; agama takes radians).
 
     The triaxiality/tilt pair is the literature-supported direction for the *inner* halo: Nibauer &
     Bonaca (2025) infer axis ratios 1 : 0.75 : 0.70 with the major axis tilted 18-20 deg out of the
@@ -169,7 +170,11 @@ def _halo_shape_extras(p: Mapping[str, float]) -> dict:
     extras["axisRatioY"] = float(p.get("p_TwoPowerTriaxial_halo", 1.0))
     tilt = float(p.get("tilt_TwoPowerTriaxial_halo", 0.0))
     if tilt != 0.0:
-        extras["orientation"] = (0.0, tilt, 0.0)
+        # agama's Euler angles are in RADIANS (verified: orientation=(0, pi/2, 0) swaps the y and z
+        # densities exactly); the config declares the tilt in degrees, so convert here. The second
+        # Euler angle is a rotation about the x axis (the Sun-centre line), tipping the halo's
+        # minor axis out of the disc normal toward the direction of Galactic rotation.
+        extras["orientation"] = (0.0, float(np.radians(tilt)), 0.0)
     return extras
 
 
@@ -517,6 +522,42 @@ def _spray_stream(
     return xv
 
 
+
+def window_subsample(
+    projected: np.ndarray,
+    j: np.ndarray,
+    windows: Mapping[int, Mapping[str, float]],
+    max_particles: int,
+    pad_value: float,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Keep only the stars inside each row's stream observation window, at most ``max_particles``
+    per row (a uniform random subset when there are more), and pad the rest with ``pad_value``.
+
+    ``projected`` is ``(n, P, 6)`` ICRS (ra, dec, ...); ``j`` the ``(n,)`` stream indices;
+    ``windows`` maps a stream index to ``{ra_min, ra_max, dec_min, dec_max}`` — the SAME table the
+    ``observational_window`` augmentation applies at training time, so the stored subset is exactly
+    what that step would have attended to, and the padding (a finite sentinel outside every window)
+    is what it masks out. Rows with any non-finite star (a failed simulation) are returned as a full
+    NaN row so ``drop_nan`` still removes them. Output ``(n, max_particles, 6)`` float32.
+    """
+    n = projected.shape[0]
+    out = np.full((n, int(max_particles), 6), float(pad_value), dtype=np.float32)
+    for i in range(n):
+        row = projected[i]
+        if not np.isfinite(row).all():
+            out[i] = np.nan
+            continue
+        w = windows[int(j[i])]
+        ra, dec = row[:, 0], row[:, 1]
+        keep = np.flatnonzero(
+            (ra >= w["ra_min"]) & (ra <= w["ra_max"]) & (dec >= w["dec_min"]) & (dec <= w["dec_max"])
+        )
+        if len(keep) > max_particles:
+            keep = np.sort(rng.choice(keep, size=int(max_particles), replace=False))
+        out[i, : len(keep)] = row[keep]
+    return out
+
 def _vcirc(pot_host, obs_r: np.ndarray) -> np.ndarray:
     """Model circular velocity [km/s] at the observed radii; NaN where v^2 < 0."""
     points = np.column_stack((obs_r, np.zeros_like(obs_r), np.zeros_like(obs_r)))
@@ -672,6 +713,29 @@ class AgamaStreamSimulator(BaseSimulator):
         return int(self.params.get("n_particles", 1000))
 
     @property
+    def _store_window_subsample(self) -> dict | None:
+        """``params.store_window_subsample`` -> ``{max_particles, pad_value, windows}`` with the
+        window table keyed by stream index, or ``None`` (store the full cloud, the default)."""
+        cfg = self.params.get("store_window_subsample")
+        if cfg is None:
+            return None
+        cfg = self._as_dict(cfg)
+        table = self._as_dict(cfg["observational_window"])
+        names = self.target_streams
+        missing = set(names) - set(map(str, table))
+        if missing:
+            raise KeyError(f"store_window_subsample.observational_window lacks streams {missing}")
+        windows = {
+            idx: {k: float(self._as_dict(table[name])[k]) for k in ("ra_min", "ra_max", "dec_min", "dec_max")}
+            for name, idx in names.items()
+        }
+        pad = float(cfg.get("pad_value", -999.0))
+        for w in windows.values():
+            if w["ra_min"] <= pad <= w["ra_max"] or w["dec_min"] <= pad <= w["dec_max"]:
+                raise ValueError("store_window_subsample.pad_value must lie outside every window")
+        return {"max_particles": int(cfg["max_particles"]), "pad_value": pad, "windows": windows}
+
+    @property
     def _n_workers(self) -> int:
         return int(self.params.get("n_workers", 8))
 
@@ -680,16 +744,43 @@ class AgamaStreamSimulator(BaseSimulator):
         """Split radius for the extended (Zhou u Huang) rotation-curve grid."""
         return float(self.params.get("obs_r_split_kpc", float(OBS_R_KPC.max())))
 
+    def _custom_rotation_curve(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """``obs_r_grid: custom`` -> the (radii, observed v_c, 1-sigma) table given VERBATIM in the
+        config as ``obs_r_kpc`` / ``obs_vc_kms`` / ``obs_sigma_vc``. All three are required and
+        must align, so a table typo cannot silently produce a mis-registered observable."""
+        try:
+            r = np.asarray(self.params["obs_r_kpc"], dtype=float)
+            vc = np.asarray(self.params["obs_vc_kms"], dtype=float)
+            sig = np.asarray(self.params["obs_sigma_vc"], dtype=float)
+        except KeyError as exc:
+            raise KeyError(
+                "obs_r_grid=custom needs obs_r_kpc, obs_vc_kms and obs_sigma_vc lists in "
+                "simulator.params"
+            ) from exc
+        if not (r.ndim == 1 and r.shape == vc.shape == sig.shape and len(r) > 0):
+            raise ValueError(
+                f"obs_r_grid=custom: obs_r_kpc/obs_vc_kms/obs_sigma_vc must be equal-length 1-D "
+                f"lists, got {r.shape}/{vc.shape}/{sig.shape}"
+            )
+        if np.any(np.diff(r) <= 0):
+            raise ValueError("obs_r_grid=custom: obs_r_kpc must be strictly increasing")
+        return r, vc, sig
+
     @property
     def obs_r_kpc(self) -> np.ndarray:
         """Radii the model rotation curve is evaluated on (also the ``vcirc_kms`` grid).
 
         ``obs_r_grid: extended`` -> Zhou below ``obs_r_split_kpc`` u Huang beyond (50 radii,
-        the single source of truth being ``stream_common.extended_rotation_curve``); an
-        explicit ``obs_r_kpc`` list overrides; otherwise the Zhou grid.
+        the single source of truth being ``stream_common.extended_rotation_curve``);
+        ``obs_r_grid: custom`` -> the explicit ``obs_r_kpc`` table (with ``obs_vc_kms`` and
+        ``obs_sigma_vc``, all required); otherwise an explicit ``obs_r_kpc`` list overrides
+        the Zhou grid.
         """
-        if str(self.params.get("obs_r_grid", "")) == "extended":
+        grid = str(self.params.get("obs_r_grid", "") or "")
+        if grid == "extended":
             return extended_rotation_curve(self._obs_r_split)[0]
+        if grid == "custom":
+            return self._custom_rotation_curve()[0]
         return np.asarray(self.params.get("obs_r_kpc", OBS_R_KPC), dtype=float)
 
     @property
@@ -702,8 +793,11 @@ class AgamaStreamSimulator(BaseSimulator):
         ``obs_sigma_vc`` list overrides; otherwise the Zhou grid. Mirrors :meth:`obs_r_kpc` so the
         two stay aligned and the simulator remains the single source of truth for the vcirc grid.
         """
-        if str(self.params.get("obs_r_grid", "")) == "extended":
+        grid = str(self.params.get("obs_r_grid", "") or "")
+        if grid == "extended":
             return extended_rotation_curve(self._obs_r_split)[2]
+        if grid == "custom":
+            return self._custom_rotation_curve()[2]
         return np.asarray(self.params.get("obs_sigma_vc", OBS_SIGMA_VC), dtype=float)
 
     @property
@@ -712,8 +806,11 @@ class AgamaStreamSimulator(BaseSimulator):
         ``attach_observed_vcirc`` supplies to real-data evaluation (simulated data carry their own
         model curve). ``obs_r_grid: extended`` -> Zhou below the split u Huang beyond; otherwise
         the Zhou grid. Mirrors :meth:`obs_r_kpc` / :meth:`obs_sigma_vc`."""
-        if str(self.params.get("obs_r_grid", "")) == "extended":
+        grid = str(self.params.get("obs_r_grid", "") or "")
+        if grid == "extended":
             return extended_rotation_curve(self._obs_r_split)[1]
+        if grid == "custom":
+            return self._custom_rotation_curve()[1]
         return np.asarray(self.params.get("obs_vc_kms", OBS_VC_KMS), dtype=float)
 
     # ------------------------------------------------------------------------------------- #
@@ -1011,11 +1108,22 @@ class AgamaStreamSimulator(BaseSimulator):
         frames = np.asarray([r[5] for r in results], dtype=float)  # (n, 5)
         varies_solar = any(k in params for k in ("R0_Sun", "U_Sun", "V_Sun", "W_Sun"))
 
-        out = {
-            "sim_data_carthesian": xv,
-            "sim_data_projected": sky_projection(xv, frames if varies_solar else None),
-            "vcirc_kms": vcirc,
-        }
+        projected = sky_projection(xv, frames if varies_solar else None)
+        sub = self._store_window_subsample
+        if sub is None:
+            out = {"sim_data_carthesian": xv, "sim_data_projected": projected, "vcirc_kms": vcirc}
+        else:
+            # Store only the in-window stars (capped, float32, sentinel-padded) and drop the
+            # Cartesian copy: at 1e4 particles the full cloud is ~720 KB/row while the training
+            # observation model keeps ~200 in-window stars — see `store_window_subsample` in the
+            # config for the rationale and the window table (== the augmentation's).
+            j = np.asarray(params["j"], dtype=float).reshape(n, -1)[:, 0]
+            out = {
+                "sim_data_projected": window_subsample(
+                    projected, j, sub["windows"], sub["max_particles"], sub["pad_value"], rng
+                ),
+                "vcirc_kms": vcirc,
+            }
         # Ibata ancillary observables (only present when requested): vterm_kms (n, n_l, 1),
         # sigma_z (n, 1), rho_z (n, n_z, 1). Each is a deterministic function of the shared
         # potential; the noisy "observed" counterparts are added later by the augmentation chain.
@@ -1071,12 +1179,12 @@ class AgamaStreamSimulator(BaseSimulator):
         sims = self.simulate(flat, rng)
 
         out = dict(draws)
-        out["sim_data_carthesian"] = sims["sim_data_carthesian"].reshape(
-            n, m, self._n_particles, 6
-        )
-        out["sim_data_projected"] = sims["sim_data_projected"].reshape(
-            n, m, self._n_particles, 6
-        )
+        if "sim_data_carthesian" in sims:
+            out["sim_data_carthesian"] = sims["sim_data_carthesian"].reshape(
+                n, m, self._n_particles, 6
+            )
+        # The stored particle count is n_particles, or the cap under `store_window_subsample`.
+        out["sim_data_projected"] = sims["sim_data_projected"].reshape(n, m, -1, 6)
         # Identical for the m streams of a dataset (shared potential): keep one per dataset.
         out["vcirc_kms"] = sims["vcirc_kms"].reshape(n, m, -1, 1)[:, 0]
         # Ibata ancillary observables also depend only on the shared potential -> one per dataset.

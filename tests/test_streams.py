@@ -521,3 +521,83 @@ def test_stream_noerr_and_nolos_variants_compose(compose):
     assert "remove_los_velocity" in real_nolos_steps
     assert "concatenate_sigma_errors" not in real_nolos_steps
     assert "concatenate_vlos_mask" not in real_nolos_steps
+
+
+def test_custom_rotation_curve_grid_is_the_config_table(compose):
+    """`obs_r_grid: custom` makes the config table the vcirc grid (v4 config), the fill helper
+    propagates it to the training nodes, and the three lists must be present and aligned."""
+    from hydrabflow.pipeline.adapter import fill_stream_grid_from_simulator
+    from hydrabflow.registry import get_simulator
+    from hydrabflow.simulators.stream_agama import AgamaStreamSimulator
+
+    cfg = compose(
+        [
+            "simulator=stream_agama_rnbody_ibata_m200c_v4",
+            "augmentation=stream_global_ibata_grid_v2",
+            "preprocessing=stream_global_log10_ibata_sumstats",
+        ],
+        fill=False,
+    )
+    sim = get_simulator(cfg.simulator)
+    assert len(sim.obs_r_kpc) == 19 and sim.obs_r_kpc[0] == 6.6 and sim.obs_r_kpc[-1] == 25.53
+    assert sim.obs_vc_kms[2] == 237.2 and sim.obs_sigma_vc[-1] == 16.86
+    fill_stream_grid_from_simulator(cfg)
+    assert list(cfg.augmentation.params.obs_r_kpc) == [float(x) for x in sim.obs_r_kpc]
+    assert list(cfg.augmentation.params.obs_sigma_vc) == [float(x) for x in sim.obs_sigma_vc]
+    mask = [st for st in cfg.preprocessing.steps if st.get("name") == "mask_vcirc_radii"][0]
+    assert len(mask.radii) == 19
+
+    params = dict(cfg.simulator.params)
+    params.pop("obs_sigma_vc")
+    with pytest.raises(KeyError):
+        _ = AgamaStreamSimulator(params).obs_r_kpc
+    params = dict(cfg.simulator.params)
+    params["obs_vc_kms"] = list(params["obs_vc_kms"])[:5]
+    with pytest.raises(ValueError):
+        _ = AgamaStreamSimulator(params).obs_r_kpc
+
+
+def test_window_subsample_keeps_in_window_stars_and_pads():
+    from hydrabflow.simulators.stream_agama import window_subsample
+
+    rng = np.random.default_rng(0)
+    windows = {0: dict(ra_min=10.0, ra_max=20.0, dec_min=-5.0, dec_max=5.0)}
+    proj = np.zeros((3, 50, 6))
+    proj[:, :, 0] = rng.uniform(0, 30, size=(3, 50))
+    proj[:, :, 1] = rng.uniform(-10, 10, size=(3, 50))
+    proj[:, :, 2:] = rng.normal(size=(3, 50, 4))
+    proj[2, 7, 3] = np.nan  # a failed row
+    inside = (proj[..., 0] >= 10) & (proj[..., 0] <= 20) & (np.abs(proj[..., 1]) <= 5)
+    j = np.zeros(3)
+
+    out = window_subsample(proj, j, windows, max_particles=100, pad_value=-999.0, rng=rng)
+    assert out.shape == (3, 100, 6) and out.dtype == np.float32
+    for i in range(2):
+        k = inside[i].sum()
+        assert np.allclose(out[i, :k], proj[i, inside[i]].astype(np.float32))
+        assert np.all(out[i, k:] == -999.0)
+    assert np.isnan(out[2]).all()
+
+    cap = 3
+    out = window_subsample(proj[:2], j[:2], windows, max_particles=cap, pad_value=-999.0, rng=rng)
+    assert out.shape == (2, cap, 6)
+    for i in range(2):
+        rows = {tuple(np.round(r, 5)) for r in proj[i, inside[i]].astype(np.float32)}
+        assert all(tuple(np.round(r, 5)) in rows for r in out[i])
+
+
+def test_v4_store_window_matches_augmentation_window(compose):
+    """The simulator-side storage window must be the augmentation's observation window."""
+    from omegaconf import OmegaConf
+    from hydrabflow.registry import get_simulator
+
+    cfg = compose(
+        ["simulator=stream_agama_rnbody_ibata_m200c_v4", "augmentation=stream_global_ibata_grid_v2"],
+        fill=False,
+    )
+    sim_tab = OmegaConf.to_container(cfg.simulator.params.store_window_subsample.observational_window)
+    aug_tab = OmegaConf.to_container(cfg.augmentation.params.observational_window)
+    assert sim_tab == aug_tab
+    sub = get_simulator(cfg.simulator)._store_window_subsample
+    assert sub["max_particles"] == 2000 and sub["pad_value"] == -999.0
+    assert set(sub["windows"]) == {0, 1, 2} and sub["windows"][1]["ra_max"] == 140.0

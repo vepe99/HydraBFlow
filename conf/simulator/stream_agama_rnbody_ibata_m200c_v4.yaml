@@ -1,0 +1,78 @@
+# v4 = v3 at 10^4 particles per stream, with the NGC3201 progenitor prior re-centred on what the
+# 2026-09-12 probes measured (all in the v3 dataset's `probes/`, 1000 NGC3201-only rows each,
+# 10^4 particles, t_end U[2,5], same seed):
+#
+#   * n_particles 1000 -> 10000. At 10^3 particles NGC3201 had a median 19 in-window stars against
+#     195 real members and its simulated width was UNDER-estimated by ~20 % (sparse sampling sees only
+#     the dense core). The same bias applies to Pal5 and M68, so the whole set moves to 10^4.
+#   * NGC3201 m_progenitor U[1.93e5, 5.61e5] -> U[1.0e5, 3.5e5] Msun. The simulated stream is ~2x too
+#     wide on-sky at the v3 masses (real std_phi2 0.87 deg at the 0.1th percentile of the prior
+#     predictive). Radius (30 -> 15 pc) does not move the width; t_end sets survival only; mass does:
+#     pinned at 1e5 the median width falls 2.05 -> 1.69 deg and 14 % of rows are as thin as the real
+#     stream (was 3 %). The old ceiling 5.61e5 is the B&H18 "initial mass", which includes the mass
+#     shed by stellar evolution in the first Gyr; the restricted N-body has no stellar evolution, so
+#     the dynamical mass at -t_end is roughly half that. The 1e5 floor is BELOW the B&H18 present-day
+#     mass 1.6e5 — those rows end lighter than the real cluster; accepted knowingly because the
+#     on-sky width is what the network sees and no other progenitor knob reaches it.
+#   * NGC3201 t_end U[2, 10] -> U[2, 5] Gyr: survival 18 % at t_end >= 5 vs 78 % below, and the
+#     width grows with age away from the observed one. Pal5 and M68 keep U[2, 10] (M68's cold-stream
+#     lever was a LONG age, 2026-07-16). Per-stream ranges are fine: the local standardizer is per
+#     stream and the key set is identical across streams.
+#   * Rotation-curve observable on a NEW grid: Ou et al. 2024 (MNRAS 528, 693; Gaia DR3 + APOGEE;
+#     table supplied by the user 2026-09-12, copy in
+#     `assets/rotation_curve_custom_v4.csv`): `obs_r_grid: custom` replaces the inherited Zhou u
+#     Huang union (50 radii, 0.2-50 kpc) with these 19 radii, 6.6-25.5 kpc. `vcirc_kms` is stored
+#     `(n, 19, 1)`; `obs_vc_kms` is what `attach_observed_vcirc` feeds the network on real data and
+#     `obs_sigma_vc` is the per-bin sigma `add_noise_to_vcirc` uses in training (both injected by
+#     `fill_stream_grid_from_simulator`, so the augmentation/preprocessing presets need no edit).
+#     `mask_vcirc_radii r_min=5.5` keeps all 19 bins. NOTE this is a different observable from every
+#     earlier dataset: models trained on v3/v2 data cannot be evaluated on v4 data or vice versa.
+#   * STORAGE: `store_window_subsample` (new, 2026-09-12). The simulation still runs at 10^4
+#     particles, but `sim_data_projected` keeps only the stars inside the stream's RA/Dec observation
+#     window — up to 2000 per row (a uniform random subset beyond that), float32, padded with the
+#     finite sentinel -999 which lies outside every window so the training-time `observational_window`
+#     step masks it — and `sim_data_carthesian` is not stored. Why: 10^5 rows x 10^4 particles is
+#     ~72 GB, more than this box's strict commit limit allows to assemble or to load for training,
+#     while the observation model keeps only in-window stars and then subsamples each stream to its
+#     real member count (129/195/297); 2000 is 7-15x that, and the 10^4-particle in-window medians
+#     were ~8300/2200/4700. Stored size ~48 KB/row (~5 GB per 10^5 rows). Failed rows stay all-NaN so
+#     `drop_nan` still removes them. The window table MUST equal the augmentation's
+#     `observational_window` (conf/augmentation/stream_global.yaml) — a test enforces it.
+#     Anything that reads `sim_data_projected` raw must apply the window (or drop the sentinel) first.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v3
+
+name: stream_agama_rnbody
+params:
+  n_particles: 10000
+  store_window_subsample:
+    max_particles: 2000
+    pad_value: -999.0
+    observational_window:          # == conf/augmentation/stream_global.yaml params.observational_window
+      Pal5:
+        ra_min: 220.98008280733634
+        ra_max: 250.0
+        dec_min: -13.0
+        dec_max: 10.0
+      NGC3201:
+        ra_min: 42.29847920913508
+        ra_max: 140.0
+        dec_min: -47.79545565626234
+        dec_max: 20.812029301121846
+      M68:
+        ra_min: 189.73694638139526
+        ra_max: 280.0
+        dec_min: -47.32109546202406
+        dec_max: 70.0
+  obs_r_grid: custom
+  obs_r_kpc:    [6.60, 7.78, 8.21, 9.41, 10.43, 11.43, 12.43, 13.41, 14.40, 15.42, 16.44, 17.45, 18.48, 19.45, 20.41, 21.28, 22.01, 23.41, 25.53]
+  obs_vc_kms:   [236.43, 239.82, 237.20, 233.16, 234.61, 232.00, 232.80, 229.43, 224.20, 221.68, 219.74, 215.42, 212.79, 203.57, 195.44, 196.68, 187.96, 188.32, 175.07]
+  obs_sigma_vc: [2.69, 3.53, 6.31, 2.99, 4.39, 3.01, 4.54, 4.70, 3.22, 2.56, 4.87, 5.03, 8.38, 5.66, 5.75, 6.49, 9.18, 11.89, 16.86]
+  priors_local:
+    NGC3201:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.0e5, 3.5e5]
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 5.0]

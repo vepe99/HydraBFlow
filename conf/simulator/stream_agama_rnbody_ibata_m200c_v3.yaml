@@ -1,0 +1,84 @@
+# v3 = v2 minus the tilted halo, minus the rotation-curve rejection cut, with the minimal prior
+# edits from the 2026-09-12 literature review (docs/priors_literature.md):
+#
+#   * tilt_TwoPowerTriaxial_halo -> identity 0. The single Euler angle rotates about the Sun-centre
+#     axis only and cannot represent the published tilted-halo solutions (pitch+yaw); at 20 deg it
+#     moves NGC3201's track by ~0.3 deg (outputs/tilt_check/), so it is not a marginalizable
+#     nuisance either. p (in-plane axis ratio) is pinned to 1 as well: the halo is axisymmetric,
+#     as in Palau & Miralda-Escude 2023, Ibata+24 and Bovy+16; free it only if the axisymmetric fit
+#     leaves an azimuthal residual.
+#   * vcirc_rejection: null (inherited from v2, restated). The rotation curve is already an
+#     observable with its own noise model; the cut double-counted it, truncated the shape prior in a
+#     data-dependent way, and made the analytic compositional prior score valid only inside the
+#     accepted region.
+#   * gamma U[-2, 1.5] -> U[0, 1.5]: a negative inner slope (central density hole) has no support
+#     in any measurement or simulation; the 1.5 cap keeps r_h = r200 / [c (2 - gamma)] finite.
+#   * Sigma_Disk U[1e7, 3e9] -> U[3e8, 1.6e9] Msun/kpc^2: with r_Disk ~ 2.6 the old ceiling was a
+#     1.3e11 disc, twice the Galaxy's stellar mass; the new range is 1.3e10 - 6.8e10, covering
+#     Palau & Miralda-Escude's heavy 6.1e10 disc and Ibata+24's light 4.2e10.
+#   * log10 M200 (HALO ONLY, inside its own r200) U[11.699, 12.398] -> U[11.6, 12.4]: the halo-only
+#     convention sits ~10 % below the 1.0-1.2e12 total-mass consensus; 0.4e12 covers the low
+#     outliers (Bird+22, Eadie & Juric 19) once baryons are removed.
+#   * R0_Sun N(8.178, 0.026) -> N(8.23, 0.06): spans GRAVITY 2019 (8.178) and the aberration-
+#     corrected GRAVITY 2021 value (8.275), which disagree by 3 sigma.
+#   * V_Sun stays N(12.24, 2.05) (Schonrich+10), exactly Palau & Miralda-Escude 2023 Table 1, who
+#     also take R_sun and (U,V,W) as free parameters with these Gaussian priors and z_sun fixed. What
+#     pins the Sun's TOTAL azimuthal speed in their fit is not the prior but a LIKELIHOOD term: the
+#     Sgr A* proper motion mu_l = -(Theta0 + V_sun)/R_sun = -6.379 +- 0.026 mas/yr (their eq. 12;
+#     Reid & Brunthaler 2004), which drives their posterior to Theta0 ~ 231, Theta0 + V ~ 245,
+#     V ~ 13.6 +- 1.5 km/s. The equivalent here is an ancillary scalar observable (like sigma_z):
+#     per row mu_l = -v_phi,sun / (4.74047 R0) with the 2020 value -6.411 +- 0.008 (Reid &
+#     Brunthaler 2020) as the real datum. Not implemented yet (small code change); until then the
+#     prior alone encodes the low-V solution.
+#
+# Unchanged from v2: ln c' N(2.56, 0.272); q U[0.5, 1.5]; alpha U[0.5, 2];
+# beta = 3; r_Disk N(2.6, 0.5); z_Disk N(0.3, 0.05); bulge N(9.93e10, 1e10); U/W_Sun; solar
+# frame marginalized; corrected B&H18 progenitor MASSES; t_end U[2, 10] Gyr; contamination off.
+#
+# Progenitor scale radius (2026-09-12, user decision): a_progenitor = 30 pc, FIXED for all three
+# streams, as in Ibata et al. 2024 ("Charting the Galactic acceleration field II", the STREAMFINDER
+# Atlas global mass model), which adopts a single Plummer scale length for every progenitor.
+# Motivation from the v3 pilot (333 groups, freed a in [3, 12] pc for NGC3201/M68): 12.8 % of the
+# stream simulations failed to NaN, and the failures were confined to COMPACT progenitors — for
+# a < 5 pc and t_end >= 5 Gyr, 88 % (NGC3201) / 94 % (M68) of rows hit the per-update orbit step
+# cap (the inner Plummer orbital period ~ sqrt(a^3/m) becomes tiny while the update interval
+# t_end/12 grows), versus 0-2 % for a >= 5 pc and t_end < 5 Gyr. Pal5 (a in [10, 35]) never failed.
+# A fixed 30 pc removes the pathological corner without shortening t_end.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v2
+
+name: stream_agama_rnbody
+params:
+  vcirc_rejection: null
+  priors_global:
+    tilt_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [0.0]
+    p_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.0]
+    gamma_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [0.0, 1.5]
+    Sigma_Disk:
+      type: uniform
+      prior_parameters: [3.0e8, 1.6e9]
+    log10_M200_TwoPowerTriaxial_halo:
+      type: uniform
+      prior_parameters: [11.6, 12.4]      # halo-only M200 in [0.4, 2.5]e12 Msun
+    R0_Sun:
+      type: normal
+      prior_parameters: [8.23, 0.06]
+  priors_local:
+    Pal5:
+      a_progenitor:
+        type: identity
+        prior_parameters: [30.0]           # pc; Ibata+2024 single Plummer scale length
+    NGC3201:
+      a_progenitor:
+        type: identity
+        prior_parameters: [30.0]
+    M68:
+      a_progenitor:
+        type: identity
+        prior_parameters: [30.0]

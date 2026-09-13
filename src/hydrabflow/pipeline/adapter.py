@@ -77,7 +77,8 @@ def fill_stream_grid_from_simulator(cfg) -> None:
     """Align the training-time rotation-curve grid with the simulator's ``vcirc_kms`` grid.
 
     The rotation-curve observable can live on a non-default radial grid (the extended Zhou u Huang
-    union grid, ``simulator.params.obs_r_grid: extended``). Three config nodes hardcode the default
+    union grid, ``simulator.params.obs_r_grid: extended``, or an explicit table,
+    ``obs_r_grid: custom`` with ``obs_r_kpc``/``obs_vc_kms``/``obs_sigma_vc``). Three config nodes hardcode the default
     Zhou grid and would otherwise mismatch it: the ``mask_vcirc_radii`` preprocessing step, the
     ``attach_observed_vcirc`` step (real data) and the ``add_noise_to_vcirc`` augmentation's per-bin
     sigma. When the simulator exposes a non-default grid, inject *its* radii / sigma / observed
@@ -87,7 +88,7 @@ def fill_stream_grid_from_simulator(cfg) -> None:
     from hydrabflow.registry import get_simulator
 
     params = getattr(cfg.simulator, "params", None)
-    if str(getattr(params, "obs_r_grid", "") or "") != "extended":
+    if str(getattr(params, "obs_r_grid", "") or "") not in ("extended", "custom"):
         return
     try:
         simulator = get_simulator(cfg.simulator)

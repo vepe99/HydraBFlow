@@ -1256,3 +1256,194 @@ Knowledge graph at `graphify-out/`.
   maskedvlos/local) build with the fusion nets + compositional patch. Not done: no GPU training rerun
   of a stream model on the merged code (the architectures are unchanged, so old checkpoints remain
   loadable only if their configs are re-expressed with `embed_dim_per_head`).
+
+- Session 2026-09-12 (galpy `StreamTrack.from_particles` as a smooth track+covariance summary —
+  feasibility on the REAL Gaia members + sim rows; nothing adopted yet): galpy 1.12 (not a project
+  dep; run with `uv run --with galpy`; do NOT import it in the same process as JAX — static-TLS
+  clash aborts with `pthread_create failed`, so the observation model is dumped from a separate
+  process). Scripts + figures + `report.json` in `outputs/streamtrack_feasibility/`. Method needs
+  full 6D Galactocentric phase space per star and a densely sampled progenitor orbit ("ruler"; tp =
+  closest-point time on it, offsets smoothed in Cartesian and added back), fits ONE arm at a time
+  and its tp grid always reaches tp=0 (extrapolates to the progenitor even with no stars there —
+  mask to the phi1 support). Real data therefore needs: an assumed potential+progenitor orbit (used
+  galpy Cautun20; median sky residual to members Pal5 0.3 / NGC3201 0.8 / M68 1.4 deg, max 7 deg),
+  imputed distances (Gaia parallaxes useless; sky-closest point on the ruler vs constant distance
+  changes the track by 0.03 deg for Pal5 but 0.1-0.2 deg / 0.1-0.3 mas/yr / 2-5 km/s for
+  NGC3201/M68), and a v_los policy: galpy has NO missing-data support (`numpy.cov` over all six
+  columns, no weights). Stars without v_los need NOT be dropped for the sky+pm track (impute v_los,
+  the phi2/pm track is unaffected at the 0.01-0.07 deg level on sim truth), but the v_los track and
+  every v_los covariance entry of that fit are then the assumption (sim: 2-40 km/s error, sigma
+  2.3 -> 0.3 km/s); v_los must come from a separate measured-only fit (Pal5 25+44 stars OK,
+  NGC3201 37 marginal, M68 29 -> galpy falls back to linear interpolation below 5 valid bins).
+  Gotchas: default `ntp=max(21,sqrt N)` leaves 6/21 empty bins per Pal5 arm and empty bins are
+  ZERO-filled in the covariance smoother (same bias as our 2026-07-28 summary fix) — use
+  ntp ~ N/8; wrong-wrap imputation assigned 18 M68 stars to a 0.5 Gyr "trailing" arm (restrict
+  the ruler window per stream); rows whose true potential is far from the ruler kink (galpy
+  warns; ~half the M68/NGC3201 prior rows), so sim and real must use the SAME fixed ruler to be
+  the same estimator. The covariance is the 6D Cartesian scatter per tp bin mapped by a Jacobian
+  at the mean: along-track spread leaks into phi2/pm when the track is inclined, sig_phi2 changed
+  up to 2x between true and imputed 6D while the mean moved <0.15 deg — not a drop-in for the
+  per-bin std. Verdict: a smoother mean track for Pal5 (and NGC3201 with care), not for M68 with
+  the Cautun ruler, and not for the covariance.
+- Session 2026-09-12 (prior review for halo-shape inference — `docs/priors_literature.md`): three
+  web literature sweeps (stream-inference priors, cosmological mass/concentration/shape priors,
+  baryonic + solar-frame priors) diffed against the `_v2` prior table. Findings: the halo priors are
+  supported (uniform density q in [0.5,1.5], log-uniform M200, McMillan's ln c ~ N(2.56,0.272)
+  which ≡ c200≈10 and is right for an UNcontracted profile mimicking the contracted MW); no stream
+  paper uses a simulation shape prior and doing so (c/a≈0.72±0.12) would exclude half the
+  observational literature (0.56–1.40). Four changes recommended: gamma U[0,1.7] (negative gamma
+  has no support); thin-disc Sigma U[1e7,3e9] Msun/kpc² admits a 1.3e11 disc — parameterize by mass
+  U[1.5e10,7e10] and RESTORE the thick disc (its absence is why 3e9 was needed for v_term);
+  v_phi,sun should be pinned by Sgr A* (4.74047×6.411×R0 = 248.5±0.8 km/s at 8.178) instead of
+  v_c(R0)+V_pec(12.24±2.05) computed in each row's potential, which imposes the low-V_sun solution;
+  R0 N(8.23,0.06) to span GRAVITY 2019 vs 2021 (3σ apart). Minor: widen tilt to [0,45]°, add a
+  marginalized gas factor N(1,0.25), widen log10 M200 low edge to 11.6. Conventions to state: our
+  M200 is the HALO ONLY inside its own r200 (baryons add 4–17 %, measured on 6 rows); q,p are density
+  axis ratios ((1−q_rho)≈3(1−q_Phi)). Nothing changed in configs yet.
+- Session 2026-09-12 (halo tilt: units BUG fixed + stream-position sensitivity): agama's
+  `orientation` Euler angles are RADIANS (verified: (0, pi/2, 0) swaps the y/z densities exactly);
+  `_halo_shape_extras` passed the config's degree-valued `tilt_TwoPowerTriaxial_halo` straight
+  through, so the v2 prior U[0,30] "deg" was U[0,30] rad = a near-random orientation of the minor
+  axis in the y-z plane. Fixed (`np.radians`), test `test_halo_tilt_is_declared_in_degrees` (90 deg
+  swaps y<->z; 20 deg puts the density minimum 20 deg from z). No dataset had been generated with
+  v2, so nothing stored/trained is affected. Geometry: the second Euler angle rotates about the x
+  (Sun-centre) axis, tipping the minor axis toward the direction of rotation while the halo x axis
+  stays on the Sun-centre line — it cannot represent Nibauer & Bonaca's major-axis-toward-the-Sun
+  solution (needs pitch+yaw). **Stream sensitivity** (spray 1e4, v2 fiducial potential with q=0.8,
+  p=0.9, same seed; `outputs/tilt_check/`): median |dphi2| of the binned track vs tilt 0 —
+  Pal5 0.015 deg (20 deg) / 0.027 (45 deg); **NGC3201 0.27 / 0.68 deg** (+0.15/0.19 mas/yr mu_phi1,
+  larger than the q 0.8->1.0 effect of 0.18 deg, and it shifts phi2 UP at phi1<0, toward the real
+  members' +1 deg offset seen 2026-07-29); M68 0.04 / 0.09 deg (q dominates: spherical = 0.89 deg).
+  The old bug (20 rad ~ 66 deg effective) gave 0.07 / 0.68 / 0.21 deg. So a tilt about the
+  Sun-centre axis is a real, NGC3201-identifiable degree of freedom at 20 deg, not a nuisance.
+- Session 2026-09-12 (v3 prior config): `conf/simulator/stream_agama_rnbody_ibata_m200c_v3.yaml`
+  (inherits v2) = the "minimal changes" prior to investigate next: tilt identity 0 (no tilted
+  halo), `vcirc_rejection: null` (no rotation-curve cut), gamma U[0,1.5], Sigma_Disk U[3e8,1.6e9],
+  log10 M200 (halo-only) U[11.6,12.4], R0_Sun N(8.23,0.06), V_Sun N(12,5) (code-free fallback;
+  the Sgr A*-pinned v_phi,sun is still a deferred code change). 10 inferred globals (gamma, q, p,
+  alpha, log10 M200, ln c', r/z/Sigma_Disk, rho_Bulge); solar frame marginalized; locals from
+  `_prog` + t_end U[2,10]. Composes; 2000-draw prior sanity OK. Generate with
+  `SIM=stream_agama_rnbody_ibata_m200c_v3 DATA_DIR=data_jarvis/data_agama_rnbody_ibata_m200c_v3_hydrabflow
+  scripts/create_ibata_rnbody_m200c_v2_dataset.sh`. Not generated/trained.
+- Session 2026-09-12 (v3 pilot recovered; NaN diagnosis; a_progenitor pinned to 30 pc): the
+  previous session's 333-group v3 pilot had crashed twice with `MemoryError` — NOT our workers'
+  RAM: the box runs `vm.overcommit_memory=2` (strict) and other users' jobs held Committed_AS at
+  the 532 GB CommitLimit while 900 GB sat physically free, so every new allocation failed with
+  Errno 12. Killed the hung 128-worker tree (~24 GB of commit charge; `pkill -f` with the dataset
+  name matches your own shell — kill by PID list instead) and reran at `n_workers=64`, which fit
+  in the ~10 GB headroom. Check `grep Committed_AS /proc/meminfo` against CommitLimit before any
+  large joblib launch. **NaN diagnosis** on that pilot (12.8 % of member sims, 35 % of groups):
+  confined to NGC3201/M68 with COMPACT progenitors — a<5 pc & t_end>=5 Gyr failed 88 %/94 %, a>=5
+  & t<5 failed 0-2 %, Pal5 (a in [10,35]) never; the failure is the per-update orbit step cap
+  (steps/update ~ (t_end/12)/P_inner, P_inner ~ sqrt(a^3/m)). User decision: **a_progenitor =
+  30 pc fixed for all three streams** (Ibata+2024, "Charting the Galactic acceleration field II",
+  single Plummer scale length), written into `stream_agama_rnbody_ibata_m200c_v3.yaml`. Regenerated
+  pilot: **0/999 NaN**, 6x faster (7.7 vs 1.3 stream-sims/s at 64 workers); survival Pal5/NGC3201/
+  M68 = 21/41/38 % overall, 34/79/85 % at t_end<5 vs 14/18/13 % at t_end>=5. The a-free pilot is
+  archived under the dataset's `superseded_a_free/`. Capping t_end at 5 Gyr was NOT needed for
+  the NaNs; it remains a physics choice (survival). **Coverage check** (`scripts/ppc_summary_coverage.py`
+  from the previous session, on the 333 set → `outputs/v3_prior_coverage/`): every real
+  (stream, statistic, phi1-bin) cell inside the sims' central 99 % — the observed streams are NOT
+  out of distribution under v3 — but one-sided: NGC3201 std_phi2 at the 4-19th pct in ALL bins
+  (real thinner than sims), M68 std_phi2 77-98th (real wider), Pal5 centred. **10k flat training
+  set generated** (`training_data_10000.npz`, 730 MB, seed 2026, user kept t_end U[2,10]): 0 NaN,
+  survival Pal5/NGC3201/M68 21/40/36 % (t<5: 35/75/79 %; t>=5: 12/18/10 %). Launch needed a
+  headroom watchdog (`logs/run_full_10k.sh`: polls Committed_AS, sizes n_workers ~5/GiB cap 64,
+  resumes chunks on crash) — the box was pinned at the CommitLimit; the user's idle vscode-server
+  (~85 GB VSZ; keeps running after the window closes) was what freed it. Ran at 40 workers, 36 min.
+  PPCs in `<dataset>/ppc/full/`: v_term obs points inside the prior 5-95 % band 42 %, Sigma_z
+  prior median 64.8 (obs 71+/-6, 15 % of rows within 1 sigma); noise-convolved cold-stream table
+  P(sim<real) Pal5 0.20-0.50, NGC3201 phi2 0.08 / mu_phi1 0.12 (sims too WIDE/hot), M68 0.76-0.78
+  (sims too cold, as before). **NGC3201 width diagnosis** (noise-convolved per-bin std_phi2 over
+  the 3273 NGC3201 training rows, `scratchpad/ngc_width_drivers.py`): real 0.87 deg sits at the
+  2nd pct of the prior predictive; width is driven by t_end (Spearman +0.53; median 1.6 deg at
+  2-4 Gyr -> 4.8 at 8-10) and survival (thin 19 % if the progenitor survives vs 2 % if dissolved),
+  NOT by any global (|rho|<=0.11) — so it is a local-nuisance mismatch, not a halo-bias mechanism.
+  Only 48 % of NGC3201 rows have >=20 in-window stars (median 19 vs 195 real) at 1000 particles.
+  **Probes** (`<dataset>/probes/`, 1000 NGC3201-only rows via `~simulator.params.target_streams.
+  {Pal5,M68}` + `priors_local.NGC3201.t_end.prior_parameters=[2,5]`; note a plain
+  `target_streams={NGC3201: 1}` override MERGES, it does not replace): t_end U[2,5] lifts survival
+  40 -> 78 % (95/83/57 % at 2-3/3-4/4-5 Gyr), 0 NaN, but width barely moves (median 1.72, real at
+  3rd pct). At **1e4 particles** (`ngc3201_tend25_1e4`, 23 min/64 workers, 720 MB) the resolution
+  problem disappears (median in-window = 195 = real, 80 % usable) while the width gets WORSE:
+  median 2.05 deg, 3 % as thin as real, real at the 0.1 pct — sparse 1e3-particle sims sampled only
+  the dense core and UNDER-estimated the sim width. Conclusion: the simulated NGC3201 is
+  intrinsically ~2.3x too wide at every t_end in [2,5]; t_end is the survival lever only; the width
+  lever must be the fixed 30 pc progenitor radius / mass (not probed yet) or missing physics.
+  **Radius probe** (`ngc3201_tend25_1e4_a15`: same seed/t_end/1e4 particles, a_progenitor 15 pc;
+  52 min, 2.3x slower than 30 pc): the radius is NOT the width lever — median std_phi2 2.05 -> 1.86
+  deg (real 0.87), thin 3.0 -> 4.7 %, real at the 1.2 pct; survival unchanged (77 %); the compact
+  cluster strips LESS (median in-window 195 -> 102). Stream width is set by the tidal radius
+  (~ M^{1/3}), not by the Plummer scale — the untested lever is `m_progenitor` (U[1.93e5,5.61e5],
+  B&H18 present-day 1.6e5) and/or missing physics. **Mass probe** (`ngc3201_tend25_1e4_m1e5`:
+  a=30 pc, t_end U[2,5], 1e4 particles, seed 2026, `m_progenitor` pinned identity 1.0e5 Msun via
+  `priors_local.NGC3201.m_progenitor.type=identity`; 13.5 min): mass IS a lever, but a partial one —
+  median std_phi2 2.05 -> **1.69 deg** (real 0.87), thin (<=1.08) 3.0 -> **14 %**, real at the 2.0 pct
+  (was 0.1); per t_end bin 1.68/1.56/1.88 deg, thin 7/21/14 %. Survival drops 78 -> 66 % (86/68/44 %
+  at 2-3/3-4/4-5 Gyr; the lighter cluster dissolves) while the in-window count stays at the real 195
+  median and >=100-star rows RISE to 80 %. M^{1/3} scaling from the prior median 3.8e5 predicts ~1.3
+  deg, so the response is weaker than tidal-radius scaling and the factor ~2 is not closed by any
+  progenitor knob: radius no, t_end no, mass ~1/3 of the way. Remaining suspects are missing physics
+  (or a real-member selection thinner than the true stream).
+- Session 2026-09-12 (v4 = v3 at 1e4 particles + NGC3201 progenitor re-centred; 333 test set):
+  `conf/simulator/stream_agama_rnbody_ibata_m200c_v4.yaml` (inherits v3): `n_particles: 10000`
+  (1e3 under-sampled the stream and UNDER-estimated sim widths), NGC3201 `m_progenitor U[1.0e5,
+  3.5e5]` (floor below the B&H18 present-day 1.6e5, accepted knowingly; ceiling halved because the
+  B&H18 M_Ini includes stellar-evolution mass loss the N-body lacks), NGC3201 `t_end U[2,5]`
+  (survival); Pal5/M68 keep U[2,10]. Dataset dir `data_jarvis/data_agama_rnbody_ibata_m200c_v4_
+  hydrabflow/`. **Test set** `test_multistream_333.npz` (seed 7, 64 workers, 8 min, 720 MB): 0 NaN;
+  survival Pal5/NGC3201/M68 20/70/44 %. **Coverage** (`outputs/v4_prior_coverage/`): all cells inside
+  the central 99 %; 3 NGC3201 cells outside 95 % (std_phi2 bin 1 at 1.5 pct; bin-0 med/std vlos at
+  99). Resolution effect confirmed for M68: its real dispersions move from the 77-98th pct (v3, 1e3)
+  to the 65-80th (all four quantities; noise-convolved P(sim<real) 0.67-0.82), so half of the "M68
+  too cold" verdict was 1e3-particle under-sampling. Pal5 unchanged and centred (P 0.14-0.55).
+  NGC3201 std_phi2 is NOT fixed by the mass change at the prior level: real at the 2-17th pct per
+  bin (v3: 4-19), noise-convolved sim median 1.93 deg vs real 0.87, P=0.02 — the probe's 1.69 deg was
+  at m pinned to 1e5, the prior median ~2.2e5 gives back most of it. Decision: proceed anyway (no
+  progenitor knob closes it; it is a local-nuisance mismatch, |rho| with globals <= 0.11). **10k
+  training set launched** via `logs/run_full_10k.sh` (headroom watchdog, seed 2026, chunk 1000,
+  ~6 h at 64 workers) — **then STOPPED by the user** (killed at row ~50, chunks removed) for two
+  changes, and the first v4 test set / coverage run archived under the dataset's
+  `superseded_zhou_huang_grid_fullstore/` (+ `outputs/v4_prior_coverage_zhou_huang_grid_fullstore/`).
+- Session 2026-09-12 (v4 final: Ou+2024 rotation-curve grid, in-window storage cap, 1e5 rows):
+  - **`obs_r_grid: custom`** (new in `stream_agama`): the vcirc observable is evaluated on an
+    explicit config table `obs_r_kpc`/`obs_vc_kms`/`obs_sigma_vc` (all three required, equal length,
+    increasing radii — `_custom_rotation_curve` validates). v4 uses the **Ou et al. 2024** (MNRAS
+    528, 693; Gaia DR3 + APOGEE) curve supplied by the user: 19 radii 6.6-25.5 kpc, copy in
+    `assets/rotation_curve_custom_v4.csv`; `vcirc_kms` is `(n, 19, 1)`. `fill_stream_grid_from_
+    simulator` now triggers for `custom` as well as `extended`, so `mask_vcirc_radii` (r_min 5.5
+    keeps all 19), `add_noise_to_vcirc` sigma and `attach_observed_vcirc` follow the simulator with
+    no preset edits. Models trained on v2/v3 data are NOT evaluable on v4 data (different observable).
+  - **`store_window_subsample`** (new in `stream_agama.simulate`, helper `window_subsample`): the
+    simulation runs at `n_particles` (1e4) but `sim_data_projected` keeps only the stars inside the
+    row's stream RA/Dec window (table duplicated in the simulator yaml, test-enforced == the
+    augmentation's `observational_window`), at most `max_particles` (2000; uniform random subset
+    beyond), float32, padded with the finite sentinel `pad_value=-999` (outside every window, so the
+    training `observational_window` step masks it; `convert_distance_to_parallax` runs first and
+    maps it to -0.001, harmless). `sim_data_carthesian` is not stored. Failed rows stay all-NaN so
+    `drop_nan` still drops them. Verified: the full `stream_global_ibata_grid_v2` chain on capped
+    sims attends exactly min(stored, real count) stars, no sentinel attended. Motivation: 1e5 x 1e4
+    rows = ~72 GB (720 KB/row) — un-assemblable and un-trainable under this box's ~10 GB commit
+    headroom (BayesFlow's offline fit holds the whole set in RAM), while the observation model keeps
+    ~200 stars/row anyway. Stored size ~48 KB/row (~5 GB per 1e5). **Anything reading
+    `sim_data_projected` raw must apply the window / drop the -999 sentinel first** (the PPC scripts
+    go through `augment_sim`, which does). `sample_compositional` reshapes with the stored count.
+  - Tests: `test_custom_rotation_curve_grid_is_the_config_table`, `test_window_subsample_keeps_in_
+    window_stars_and_pads`, `test_v4_store_window_matches_augmentation_window` (tests/test_streams.py).
+  - **Launched** `logs/run_v4_full.sh` (two-stage headroom watchdog): 333-group test set (seed 7)
+    then **`training_data_100000.npz`** (seed 2026, chunk 1000). New test set: 38 min at 35 workers,
+    0 NaN, **48 MB** (720 MB with full storage), survival 20/70/44 %, stored in-window stars capped
+    (2000) in 61/9/51 % of Pal5/NGC3201/M68 rows, NGC3201 median 535. **Coverage on it**
+    (`outputs/v4_prior_coverage/`) reproduces the full-storage set to the percent: all cells inside
+    99 %, NGC3201 std_phi2 bin 1 at 1.5 pct + bin-0 std mu_phi1/vlos at 97-98 pct; noise-convolved
+    cold table Pal5 P 0.09-0.54, NGC3201 phi2 0.01 (sim 1.92 vs 0.87 deg), M68 0.69-0.80 — so the
+    storage cap changes nothing the network sees. **Worker sizing**: the watchdog first got 35
+    workers (headroom 10 GB) → ETA ~56 h; the user's idle vscode-server held ~80 GiB of commit
+    (four helper processes 33/18/13/11 GiB) — killed after the user closed VS Code, headroom → 20
+    GiB; relaunched (resume from chunk 1) at 64, then 85 (formula), then **forced 100 workers**
+    (`MIN_WORKERS=MAX_WORKERS=100`, ~26 GiB reserved, ~9 GiB margin) per user. Each relaunch costs
+    only the chunk in flight. Other users hold 388 + 210 GiB of the 508 GiB limit
+    (`vm.overcommit_ratio=50` on a 1 TB box — an admin could raise it). Next: coverage check on the new test set, joint MMD vs
+    the training set, GPU train (`model=stream_fusion_ibata_grid_masked adapter=... augmentation=
+    stream_global_ibata_grid_v2 preprocessing=stream_global_log10_ibata_sumstats composition=global`),
+    real eval.

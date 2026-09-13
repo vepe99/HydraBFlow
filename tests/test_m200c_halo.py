@@ -466,3 +466,33 @@ def test_solar_params_are_marginalized_not_inferred(compose):
         arr = np.asarray(drawn[name]).ravel()
         assert arr.mean() == pytest.approx(mu, abs=4.0 * sd / np.sqrt(len(arr)))
         assert arr.std() == pytest.approx(sd, rel=0.1)
+
+
+@pytest.mark.parametrize("tilt_deg", [90.0, 20.0])
+def test_halo_tilt_is_declared_in_degrees(tilt_deg):
+    """The config declares the tilt in degrees; agama's Euler angles are radians. A 90 deg tilt
+    about the x axis must swap the y and z densities exactly, and a 20 deg tilt must tip the minor
+    axis by 20 deg (not 20 rad ~ 1146 deg)."""
+    from hydrabflow.simulators.stream_agama import _agama, _halo_shape_extras
+
+    agama = _agama()
+    base = dict(type="Spheroid", densityNorm=1e7, scaleRadius=20.0, gamma=1.0, beta=3.0,
+                axisRatioZ=0.6)
+    p0 = {"q_TwoPowerTriaxial_halo": 0.6}
+    pt = dict(p0, tilt_TwoPowerTriaxial_halo=tilt_deg)
+    pot0 = agama.Potential(**base, **_halo_shape_extras(p0))
+    pott = agama.Potential(**base, **_halo_shape_extras(pt))
+    r = 10.0
+    if tilt_deg == 90.0:
+        d0 = pot0.density([[r, 0, 0], [0, r, 0], [0, 0, r]])
+        dt = pott.density([[r, 0, 0], [0, r, 0], [0, 0, r]])
+        assert dt[0] == pytest.approx(d0[0], rel=1e-9)   # x axis untouched
+        assert dt[1] == pytest.approx(d0[2], rel=1e-9)   # y <-> z swapped
+        assert dt[2] == pytest.approx(d0[1], rel=1e-9)
+    else:
+        th = np.radians(np.arange(0.0, 180.0, 1.0))
+        pts = np.stack([np.zeros_like(th), np.sin(th), np.cos(th)], 1) * r
+        dens = pott.density(pts)
+        # the minor axis (density minimum in the y-z plane) sits tilt_deg from the z axis
+        ang = np.degrees(th[dens.argmin()])
+        assert min(abs(ang - tilt_deg), abs(180.0 - ang - tilt_deg)) <= 1.0
