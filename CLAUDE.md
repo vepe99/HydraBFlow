@@ -1443,7 +1443,32 @@ Knowledge graph at `graphify-out/`.
     GiB; relaunched (resume from chunk 1) at 64, then 85 (formula), then **forced 100 workers**
     (`MIN_WORKERS=MAX_WORKERS=100`, ~26 GiB reserved, ~9 GiB margin) per user. Each relaunch costs
     only the chunk in flight. Other users hold 388 + 210 GiB of the 508 GiB limit
-    (`vm.overcommit_ratio=50` on a 1 TB box — an admin could raise it). Next: coverage check on the new test set, joint MMD vs
+    (`vm.overcommit_ratio=50` on a 1 TB box — an admin could raise it). **Completed 2026-09-14 10:56**:
+  `training_data_100000.npz` (4.6 GB; `sim_data_projected` (1e5,2000,6) float32, `vcirc_kms` (1e5,19,1)),
+  **2 NaN rows** (0.002 %), streams 33469/33181/33348, stored in-window stars median 2000/480/1288
+  (capped in 67/8/45 %), survival 21/73/37 %. Wall ~22 h of which ~12 h was waiting on commit headroom:
+  crashed twice (12:06 and 21:56 on 09-13, both `_ArrayMemoryError` in a worker/parent when OTHER users'
+  processes filled the limit — 09-13 evening a third user's fresh vscode-server took ~100 GiB within 15
+  min); the watchdog resumed from the saved chunks each time (63 → 91 → 100). Ran at 35/64/85/100/40/65/
+  70/100 workers across restarts; ~14 min per 1000-row chunk at 100, ~19 at 65.
+  **Coverage on the training set** (3000-group triplet subsample of the flat file, one row per stream;
+  `outputs/v4_prior_coverage_trainingset/`): summary-track cells (PPC estimator) all inside the central
+  99 %, NGC3201 std_phi2 bin 1 at 1.6 pct + bin-0 vlos at 98-99 — identical to the 333 test set.
+  **NEW binned check** `scripts/ppc_summary_grid_coverage.py` (`.../binned/`): rebuilds the exact
+  14-channel `sim_summary` grid the network ingests (training chain up to `stream_summary_grid` for
+  sims, the real preset's grid step for Gaia; MAD scale, min_count 3, cells with real occupancy <3
+  skipped, sim cells <3 treated as missing like the masked backbone). All ten STATISTIC channels are
+  inside (Pal5 97 % / NGC3201 89 % / M68 93 % of cells inside 95 %; every exception is an occupancy
+  cell). **The OCCUPANCY channels are out of distribution**: the real per-bin counts are flat by
+  construction (equal-count quantile edges: 13/19/30 stars per bin) while the sims put 1-8 stars in
+  the central bins and pile up at the ends — real n_track sits at the 97-100th pct in bins 1-8 for
+  NGC3201 and M68, 91-99 for Pal5; n_vlos likewise. Only ~96/92/84 of the ~129/195/297 attended sim
+  stars land inside the real members' phi1 span (26/53/72 % out of range): the simulated streams are
+  far longer along phi1 than the real member footprint (the 2026-07-29 edge/centre finding, now in
+  the network's input). Consequence: a `masked_time_series_transformer` model trained on v4 reads the
+  real occupancy vector as an extreme input — either drop occupancy as a FEATURE (keep it for masking
+  only), or accept the extrapolation knowingly. Statistic-channel coverage is conditional on sim bins
+  with >=3 stars. **Repeated on a 30 000-group subsample (90 000 rows, `outputs/v4_prior_coverage_trainingset_30k/`): every number reproduces the 3000-group run to within a percentile** (track: NGC3201 std_phi2 bin 1 at 1.2 pct; binned: 97/89/93 % inside 95 %, same occupancy cells out), so the verdict is not sample-noise. Not acted on. Next: coverage check on the new test set, joint MMD vs
     the training set, GPU train (`model=stream_fusion_ibata_grid_masked adapter=... augmentation=
     stream_global_ibata_grid_v2 preprocessing=stream_global_log10_ibata_sumstats composition=global`),
     real eval.
