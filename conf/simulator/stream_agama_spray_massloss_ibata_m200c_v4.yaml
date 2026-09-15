@@ -1,0 +1,54 @@
+# PARTICLE-SPRAY twin of the v4 restricted-N-body dataset — a controlled A/B on the forward model.
+#
+# Inherits stream_agama_rnbody_ibata_m200c_v4 wholesale (same potential + priors: Ibata single
+# stellar disk + gas disks + truncated m200_c halo, gamma U[0,1.5], Sigma_Disk U[3e8,1.6e9],
+# marginalized Solar frame, no rotation-curve rejection; Ou+2024 19-radius vcirc grid; 10^4
+# particles; in-window storage cap 2000 stars/row with the -999 sentinel; 30 pc progenitors;
+# NGC3201 m U[1e5,3.5e5] / t_end U[2,5], Pal5 & M68 t_end U[2,10]) and swaps ONLY the forward model:
+# `name: stream_agama` selects the particle-spray class (Chen, Gnedin & Li 2024 release recipe —
+# `spray_method: chen` is already inherited) instead of the restricted-N-body subclass.
+#
+# Mass loss, as in stream_agama_spray_massloss_ibata_m200c_v2: the v4 `m_progenitor` priors are
+# INITIAL masses (at t = -t_end), so a fixed-mass spray would hold the cluster at its formation mass
+# for the whole run (inflating the Jacobi radius, the Chen escape speed and the Plummer well).
+# `mass_loss: linear` declines it to the measured present-day mass (Baumgardt & Hilker 2018,
+# identity = fixed constant, not inferred). Draws whose initial mass is at or below the final mass
+# (possible for NGC3201, whose v4 floor 1e5 is below the B&H18 1.93e5 — see the v4 yaml) degenerate
+# continuously to the fixed-mass spray (`_mass_track`). Fixed-mass spray instead:
+# `simulator.params.mass_loss=null`.
+#
+# Read the comparison with these in mind: spray has no `m_bound_final` (it fabricates stripping over
+# `t_end` regardless of survivability), `a_progenitor` does not enter the release ICs but DOES set the
+# scale radius of the moving Plummer potential the stars feel (pot_total = host + progenitor), and the rnbody-only
+# knobs (`n_updates`, `traj_per_update`, `accuracy`, `agama_num_threads`) are inert here.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v4
+
+name: stream_agama            # particle spray (the base class), not the restricted-N-body subclass
+params:
+  spray_method: chen          # Chen, Gnedin & Li (2024) release model (inherited; restated)
+  mass_loss: linear           # linear | exponential ; null = fixed mass (spray default)
+  # Per user (2026-09-15): the halo transition sharpness and the bulge amplitude are NOT varied here
+  # but pinned to their pre-v2 constants (alpha = 1.0, the old hardcoded value; rho_Bulge = 9.93e10 =
+  # the mean of v2's 10 % prior), so the inferred global set is 8-dimensional (gamma, q, log10 M200,
+  # ln c', r/z/Sigma_Disk) instead of the rnbody v4's 10 (which also inferred alpha and rho_Bulge).
+  priors_global:
+    alpha_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.0]
+    rho_Bulge:
+      type: identity
+      prior_parameters: [9.93e10]
+  priors_local:
+    Pal5:
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.34e4]   # B&H18 present-day bound mass
+    NGC3201:
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.93e5]   # B&H18
+    M68:
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.28e5]   # B&H18

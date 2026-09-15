@@ -1584,3 +1584,25 @@ Knowledge graph at `graphify-out/`.
     `MODEL=stream_fusion_2modal_mlp N_EPOCHS=300 RUNS_DIR=outputs/v4_2modal/mlp bash
     scripts/train_v4_2modal.sh`. When comparing, remember the transformer arm had 1000 epochs.
   - Figures published as an artifact gallery (all 12 plots + the per-parameter table).
+- Session 2026-09-15 (particle-spray twin of the v4 rnbody dataset — generating): per user, the v4
+  simulations rerun with the PARTICLE-SPRAY forward model to compare against the restricted-N-body
+  set. `conf/simulator/stream_agama_spray_massloss_ibata_m200c_v4.yaml` inherits
+  `stream_agama_rnbody_ibata_m200c_v4` wholesale (same potential/priors/Ou+2024 grid/1e4 particles/
+  in-window storage cap/seeds) and changes: `name: stream_agama` (Chen+2024 spray, inherited
+  `spray_method: chen`), `mass_loss: linear` down to the B&H18 present-day masses (identity
+  `m_progenitor_final` 1.34e4/1.93e5/1.28e5 — the v4 `m_progenitor` priors are INITIAL masses, so a
+  fixed-mass spray would be inconsistent; draws below the final mass degenerate to fixed mass), and —
+  user decision — **`alpha_TwoPowerTriaxial_halo` and `rho_Bulge` pinned** (identity 1.0 / 9.93e10,
+  their pre-v2 constants), so the inferred global set is 7 + the 6 locals (rnbody v4 inferred 9
+  globals). NOTE this means the two datasets differ in the prior as well as the forward model; for a
+  pure forward-model A/B un-pin them (`type: uniform`/`normal` as in v4). Pilot (24 rows): 0 NaN,
+  ~100 s/row/worker (the time-dependent Plummer `scale` modifier makes mass-loss spray slower than
+  the 2026-07-29 fixed-mass Cautun spray), in-window storage capped at 2000 in nearly every row
+  (spray keeps far more stars in-window than rnbody did: 2000/480/1288 medians there). Launched
+  `data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_hydrabflow/logs/run_spray_v4_full.sh`
+  (333 test set seed 7, then 1e5 training seed 2026; same headroom watchdog; log `spray_v4_full.log`).
+  **Environment gotcha (cost ~30 min)**: a bare `uv run` recreated `.venv` on Python 3.12 (the old
+  venv was 3.11, below `requires-python`) and agama failed to rebuild because uv's cached sdist kept a
+  stale 3.11 `Makefile.local`; fixed with `uv cache clean agama && uv sync --frozen`. The venv is now
+  3.12 with bayesflow 2.0.13 (the committed lock — the "2.0.12 pin" note in Stack is stale). Launch
+  stages with `.venv/bin/python -m hydrabflow.pipeline.<stage>`, not `uv run`.
