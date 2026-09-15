@@ -173,6 +173,14 @@ def build_summary_network(cfg, summary_variables: Iterable[str] | None = None) -
     return bf.networks.FusionNetwork(backbones, head=head)
 
 
-def build_inference_network(cfg) -> Any:
-    """Return the inference (posterior) network selected by ``cfg.type``."""
-    return INFERENCE_NETWORKS.get(cfg.type)(cfg)
+def build_inference_network(cfg, model_cfg=None) -> Any:
+    """Return the inference (posterior) network selected by ``cfg.type``.
+
+    A builder flagged ``needs_model_cfg = True`` (``grouped_diffusion``, which reads the summary
+    network's per-backbone widths to know where its condition groups start and end) also receives
+    the enclosing ``cfg.model``.
+    """
+    builder = INFERENCE_NETWORKS.get(cfg.type)
+    if getattr(builder, "needs_model_cfg", False):
+        return builder(cfg, model_cfg)
+    return builder(cfg)

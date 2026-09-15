@@ -28,6 +28,11 @@ def _lists(cfg) -> tuple[List[str], List[str], List[str], List[str]]:
     )
 
 
+#: ``adapter.inference_conditions: [none]`` -- an explicit "no conditions at all", as opposed to an
+#: empty list, which asks `fill_adapter_from_simulator` to derive them from the simulator.
+NO_CONDITIONS = "none"
+
+
 def composition_level(cfg) -> str:
     """``cfg.composition.level`` as a plain string (``none`` when the block is absent)."""
     return str(getattr(getattr(cfg, "composition", None), "level", "none") or "none")
@@ -46,7 +51,16 @@ def fill_adapter_from_simulator(cfg) -> None:
     from hydrabflow.registry import get_simulator
 
     inference, summary, conditions, _ = _lists(cfg.adapter)
-    needs_inference, needs_summary, needs_conditions = not inference, not summary, not conditions
+    # An empty list means "derive it"; `[none]` means "genuinely none" -- the two-modality stream
+    # adapter needs that, because its only would-be condition (the stream index j) is already a
+    # channel of the sim_summary observable and must not become a condition group of its own.
+    if conditions == [NO_CONDITIONS]:
+        cfg.adapter.inference_conditions = []
+        conditions, needs_conditions_explicitly_none = [], True
+    else:
+        needs_conditions_explicitly_none = False
+    needs_inference, needs_summary = not inference, not summary
+    needs_conditions = not conditions and not needs_conditions_explicitly_none
     if not (needs_inference or needs_summary or needs_conditions):
         return
     try:

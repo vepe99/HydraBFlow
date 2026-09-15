@@ -1,0 +1,19 @@
+# stream_fusion_2modal with both summary backbones swapped for plain MLPs — the architecture
+# ablation. Inference network, modality dropout and group widths are identical, so a difference in
+# the metrics is attributable to the summary architecture alone.
+defaults:
+  - override summary_network: stream_fusion_2modal_mlp
+  - override inference_network: grouped_diffusion
+  - _self_
+
+name: stream_fusion_2modal_mlp
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20
+  params:
+    missing_modality_prob: 0.25
+    subnet: diffusion_transformer
+    dt_width: 128
+    dt_num_layers: 4
+    dt_num_heads: 4

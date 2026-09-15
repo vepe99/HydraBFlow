@@ -40,7 +40,7 @@ def build_workflow(cfg, run_dir: str | None = None) -> Any:
         summary_network=build_summary_network(
             cfg.model.summary_network, cfg.adapter.summary_variables
         ),
-        inference_network=build_inference_network(cfg.model.inference_network),
+        inference_network=build_inference_network(cfg.model.inference_network, cfg.model),
         standardize=list(OmegaConf.to_container(cfg.training.standardize, resolve=True)),
         initial_learning_rate=float(cfg.training.learning_rate),
     )

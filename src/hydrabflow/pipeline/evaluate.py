@@ -32,6 +32,8 @@ from hydrabflow.pipeline.adapter import composition_level, select_adapter_keys
 from hydrabflow.pipeline.compositional import (
     apply_augmentations_once,
     build_prior_score,
+    apply_mask_plan,
+    apply_observed_groups,
     condition_keys,
     flatten_members,
     group_members,
@@ -56,6 +58,9 @@ def _load_model(cfg):
         )
     workflow = build_workflow(cfg)
     workflow.approximator = artifacts.load_approximator(cfg.model_dir)
+    # Applies to every ordinary `sample` call below, whichever path runs; the compositional mask
+    # plan sets its own per-item mask and takes precedence where both are configured.
+    apply_observed_groups(workflow, cfg)
     return workflow
 
 
@@ -150,7 +155,12 @@ def _evaluate_compositional_global(cfg):
         seed=int(cfg.seed),
     )
 
-    log.info("Compositional (global) sampling: %d datasets x %d members", n, m)
+    # Mask the group-level observables out of the per-member items and carry them in their own
+    # item, so each likelihood enters the compositional product exactly once (no-op unless
+    # eval.member_groups is set).
+    conditions = apply_mask_plan(workflow, cfg, conditions, m)
+    n_items = np.asarray(next(iter(conditions.values()))).shape[1]
+    log.info("Compositional (global) sampling: %d datasets x %d items", n, n_items)
     posterior = workflow.compositional_sample(
         num_samples=int(cfg.eval.num_samples),
         conditions=conditions,

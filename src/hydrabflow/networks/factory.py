@@ -72,14 +72,17 @@ def _deep_set(cfg) -> Any:
 
 @register_summary_network("mlp")
 def _mlp(cfg) -> Any:
-    """A plain MLP backbone for *already-summarised* rank-2 ``(batch, features)`` inputs — e.g. a
-    hand-crafted per-stream summary-statistics vector fed to a fusion backbone. Not permutation
-    invariant; use ``set_transformer``/``deep_set`` for point clouds. Returns ``(batch, summary_dim)``."""
+    """A plain MLP backbone for *already-summarised* inputs — e.g. a hand-crafted per-stream
+    summary-statistics vector, or a short (bins, channels) grid, fed to a fusion backbone. Rank-3
+    inputs are flattened, so this is a drop-in alternative to ``time_series_transformer`` on the same
+    observable (the flatten is a no-op on rank-2 input). Not permutation invariant; use
+    ``set_transformer``/``deep_set`` for point clouds. Returns ``(batch, summary_dim)``."""
     import bayesflow as bf
     import keras
 
     return keras.Sequential(
         [
+            keras.layers.Flatten(),
             bf.networks.MLP(widths=[int(cfg.mlp_width)] * int(cfg.mlp_depth),
                             dropout=float(cfg.dropout)),
             keras.layers.Dense(units=int(cfg.summary_dim)),

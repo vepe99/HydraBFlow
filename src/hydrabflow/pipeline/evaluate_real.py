@@ -34,6 +34,8 @@ import numpy as np
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline.compositional import (
     apply_augmentations_once,
+    apply_mask_plan,
+    apply_observed_groups,
     build_prior_score,
     composition_level,
     condition_keys,
@@ -68,6 +70,7 @@ def run_real_evaluation(cfg):
     # ------------------------------ single-level (template default) ----------------------- #
     workflow = build_workflow(cfg)
     workflow.approximator = artifacts.load_approximator(cfg.model_dir)
+    apply_observed_groups(workflow, cfg)
     pipeline = build_pipeline(cfg.preprocessing)
     pipeline.load(os.path.join(cfg.model_dir, PREPROCESSING_STATE))
 
@@ -130,6 +133,7 @@ def _prepare_real_members(cfg):
 def _evaluate_real_compositional(cfg, level: str, run_dir: str):
     workflow = build_workflow(cfg)
     workflow.approximator = artifacts.load_approximator(cfg.model_dir)
+    apply_observed_groups(workflow, cfg)
     pipeline = build_pipeline(cfg.preprocessing)
     pipeline.load(os.path.join(cfg.model_dir, PREPROCESSING_STATE))
 
@@ -156,6 +160,7 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
             param_order=list(cfg.adapter.inference_variables),
             seed=int(cfg.seed),
         )
+        conditions = apply_mask_plan(workflow, cfg, conditions, m)
         log.info("Compositional (global) sampling on the observed group of %d members", m)
         posterior = workflow.compositional_sample(
             num_samples=int(cfg.eval.num_samples),

@@ -1,0 +1,25 @@
+# Compositional evaluation with de-duplicated group-level observables.
+#
+# Without the masking every compositional item is (stream_j, curve) -- flatten_members copies the
+# group-level rotation curve into all m members -- so
+#   p(θ|Y) ∝ p(θ)^(1-m) Π_j p(θ|stream_j, curve)  ∝  p(θ) L_s1 L_s2 L_s3 L_curve^m
+# counts the curve m times and narrows the posterior by up to sqrt(m) in the directions it
+# constrains. `member_groups` masks it out of the members; `extra_items` carries it once.
+#
+# Requires model.inference_network.type=grouped_diffusion TRAINED with missing_modality_prob > 0:
+# the masked conditioning sets have to be genuine posteriors, not extrapolations.
+defaults:
+  - stream_compositional
+  - _self_
+
+member_groups: [sim_summary]    # each of the m member items: stream only
+extra_items:
+  - [vcirc_kms]                 # one further item: rotation curve only
+sample_kwargs:
+  method: two_step_adaptive
+  steps: adaptive
+  compositional_bridge_d1: 0.166667
+  # Item mini-batching subsamples items with take_along_axis on the conditions only, so the mask
+  # rows would stop lining up with their items. `compositional_score` forces it off while a plan
+  # is active; pinning it here makes that explicit (the default is max(0.1*n, 2) = 2 of 4).
+  mini_batch_size: 4

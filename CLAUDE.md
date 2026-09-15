@@ -1472,3 +1472,115 @@ Knowledge graph at `graphify-out/`.
     the training set, GPU train (`model=stream_fusion_ibata_grid_masked adapter=... augmentation=
     stream_global_ibata_grid_v2 preprocessing=stream_global_log10_ibata_sumstats composition=global`),
     real eval.
+
+- Session 2026-09-13 (modality masking ported from protoplan; the compositional rotation-curve
+  over-counting): the referee's point is a **real bug, confirmed in code**.
+  `flatten_members` (`pipeline/compositional.py:285`) copies every *group-level* observable into all
+  `m` members, so each compositional item is `(stream_j, vcirc, ...)` and BayesFlow's identity
+  `p(θ|Y) ∝ p(θ)^(1-n) Π_j p(θ|y_j)` (`diffusion_model._compositional_score_direct`) raises the
+  whole potential-derived likelihood to the power `m` — **not only vcirc**; `vterm_kms` and
+  `sigma_z` are copied the same way. Conjugate-Gaussian illustration: precision goes from
+  `1 + m/s² + 1/c²` to `1 + m/s² + m/c²`, i.e. 15–42% too narrow as the curve gets more informative,
+  bounded by `√m` (73% at m=3), zero where the curve is uninformative (q_halo). **Already visible in
+  every generation's own numbers**: compositional calibration error is consistently 2.5–3× the base
+  (0.029/0.048, 0.020/0.041, 0.022/0.053, 0.016/0.042) while compositional RMSE is *better* — more
+  accurate + less calibrated = too narrow. That table is the cheapest referee figure.
+  - **Fix = modality masking**, ported from `protoplan_sbi`'s `GroupedFlowMatching` with the base
+    class swapped: `networks/grouped_diffusion.py::GroupedDiffusionModel` (compositional sampling
+    lives only on `DiffusionModel`). Group-coherent condition dropout during training
+    (`missing_modality_prob`, `random_mask(keep_one=True)`), plus **per-compositional-item masks**,
+    which protoplan did not need. Evaluate `m+1` items — m stream-only + 1 curve-only — so each
+    likelihood enters once. Exact, not approximate: streams and curve are conditionally independent
+    given θ. `score` is the single sampling-time hook (`velocity` and the compositional score both
+    delegate to it); `compute_metrics` does the training dropout.
+  - **bayesflow upgraded in place** to the git rev protoplan uses (`c4c0a59`, 2.0.13) — PyPI 2.0.12
+    has no `utils/masks.py`, no `DiffusionTransformer`, no `observed_condition_mask` plumbing.
+    `requires-python` narrowed to `>=3.12,<3.14` (bayesflow's own floor). `_bf_patches.py` is STILL
+    needed: the compositional summary-outputs reshape bug is unfixed upstream at that rev. Full
+    suite green (170) after the upgrade.
+  - **Two bayesflow gotchas found and handled**: (1) `_repeat_mask_kwargs_over_items` broadcasts one
+    per-*row* mask to every item, so a per-item mask needs the rank-3 `(batch, items, width)` layout
+    and its own flattening — overridden in `GroupedDiffusionModel`. (2) `_inverse_compositional`
+    defaults `mini_batch_size = max(0.1*n, 2)`, i.e. **2 of 3 items** in every run to date; it
+    subsamples items with `take_along_axis` on the conditions alone, so a plan's mask rows would
+    stop matching their items. `compositional_score` forces it off while a plan is active.
+  - **Config quartet (2 modalities, ancillary dropped per user)**: `adapter/stream_2modal`
+    (`summary_variables=[sim_summary, vcirc_kms]`, `inference_conditions: [none]`),
+    `model/summary_network/stream_fusion_2modal` (`head: null` — REQUIRED; a fusion head mixes the
+    branches so a slice is not a modality), `model/stream_fusion_2modal`
+    (`inference_network=grouped_diffusion`, `subnet: diffusion_transformer`,
+    `missing_modality_prob: 0.25`), `eval/stream_compositional_masked` (`member_groups`,
+    `extra_items`). Group widths are read off the fusion backbones' `summary_dim`
+    (`build_inference_network(cfg, model_cfg)` + a `needs_model_cfg` flag), so a tuning trial that
+    searches `summary_dim` stays correct with nothing restated.
+  - **`j` is not a modality** (user decision): it is already channel −2 of the grid `sim_summary`,
+    so it must not be a condition group. That needed a new `inference_conditions: [none]` sentinel
+    (`adapter.NO_CONDITIONS`) — an empty list means "derive from the simulator", and there was no
+    way to say "genuinely none" — plus `j` in `adapter.drop` so the stream-frame augmentations can
+    still index by it before the adapter prunes it.
+  - **Also wired**: `eval.observed_groups` masks ordinary (non-compositional) `sample` calls, which
+    is the "one stream only" / "curve only" regime — applied in `_load_model`, so every eval path
+    picks it up.
+  - Verified end-to-end on CPU (64 flat rows + 8 groups, m200c simulator): train → masked
+    compositional evaluate (log confirms "4 items = 3 members observing [sim_summary] + 1 item
+    observing [vcirc_kms]") → curve-only evaluate. 22 new tests in `tests/test_grouped_diffusion.py`
+    incl. the conjugate-Gaussian √m illustration; full suite 170 green, ruff clean.
+  - **v4 does NOT reject on the rotation curve** (user, same session): the `vcirc_rejection` prior
+    is off there, so the curve enters the posterior through exactly one likelihood factor and
+    nothing else. The de-duplicated factorisation is then clean with no "the curve is also in the
+    prior" asterisk — the opposite of the rejection-prior generations (2026-07-07 onward), where
+    the truncation was an additional, separate use of the same data. Two knock-ons: `vcirc_rejection`
+    is config-driven (absent = no-op), so no code change; and the 2026-07-10 finding that the jax
+    full-covariance KDE prior score is unusable was diagnosed as a consequence of the *rejection-
+    truncated* prior's near-degenerate covariance (condition number ~280, eigenvalues 0.004-0.006,
+    "the rejection prior pinning r_Disk/z_Disk/a") — that diagnosis does not automatically carry
+    over to an untruncated v4 prior, so re-check before reusing the diagonal-only conclusion.
+  - **agama broke and was repaired**: `uv sync` rebuilt it against a GSL that lived in uv's temp
+    build dir (`ImportError: libgsl.so.27`), and its own GSL download then failed. Rebuilt against
+    the conda GSL 2.8 with an rpath; recipe recorded in `pyproject.toml` under `[tool.uv]`. Note
+    `pytest.importorskip("agama")` turns this into skipped tests, not failures — a green suite does
+    not prove agama works.
+  - **Not done**: no v4 training run (dataset still in the making); `tuning/` has no
+    `grouped_diffusion` search space yet; `misspecification.py` summaries are still computed with
+    every modality observed.
+
+- Session 2026-09-15 (v4 trained with the 2-modality masked model; MLP ablation prepared, not run):
+  first training on the v4 dataset (`data_jarvis/data_agama_rnbody_ibata_m200c_v4_hydrabflow`,
+  10^5 flat rows + `test_multistream_333.npz`, Ou+2024 19-radius `vcirc_kms`), using the gridded
+  per-stream summary statistics (`stream_global_ibata_grid_v2`) and last session's
+  `grouped_diffusion` modality masking. Runner `scripts/train_v4_2modal.sh` (train -> sim eval ->
+  real eval, autocvd, `eval.batch_size=8` pinned). Run: `outputs/v4_2modal/default/`.
+  - **Occupancy channels are a validity signal, not an observable** (user decision, mid-run): the
+    first launch was stopped because the counts reached the network as features. `MaskedTimeSeries
+    Transformer` now zeroes `n_track`/`n_vlos` right after they build the validity mask (the prep is
+    factored into `_prepare`), so the network learns WHICH phi1 bins are real but never trains on a
+    member count — which reflects the progenitor draw, not anything the Gaia catalogue measures.
+    Regression test `test_masked_tst_never_sees_count_values` (counts 8/5 vs 400/91 -> identical
+    summaries). Alternative rejected: `summary_include_occupancy: false` reinstates the 2026-07-28
+    bias (an empty bin's substituted 0 IS the on-track phi2 value).
+  - **Training**: 1000 epochs, batch 1024, ~1h35m on one GPU, `missing_modality_prob=0.3`.
+    convergence.json clean (no NaN, final/best val_loss 1.07, best weights restored).
+  - **Sim eval (333 groups)**: the mask plan is in the log — `4 items = 3 members observing
+    [sim_summary] + 1 item observing [vcirc_kms]`. base RMSE **0.837** / calib **0.015**;
+    compositional RMSE **0.810** / calib **0.048**. **The de-duplication did NOT fix the pooled
+    calibration**: it is still ~3x the base, and it is concentrated — gamma 0.106, alpha 0.106,
+    q 0.085 vs <=0.039 for every other parameter, i.e. the halo-SHAPE directions only. So the
+    sqrt(m) over-counting was not the whole story; open question for the next session.
+  - **Real Gaia**: q_halo **1.02** [0.76, 1.26] — between the raw-particle models' prolate ~1.3 and
+    the summary-statistic models' oblate ~0.78; gamma 0.79, log10 M200 11.78, Sigma_Disk 1.24e9,
+    r/z_Disk 3.12/0.301 kpc, rho_Bulge 9.9e10. `ln_cvprime` sits exactly on its prior mean 2.56 =
+    prior-dominated. MMD 3.15 vs null 2.32, p_strat 0 — still flagged, but per-member Mahalanobis
+    percentiles are **86 / 87 / 89** (Pal5/NGC3201/M68), far milder and far more EVEN than the
+    98-100th of every earlier generation; M68 is no longer the outlier.
+  - **GPU-memory gotcha**: the compositional stage OOM'd at the default `eval.batch_size=30` — 4
+    items x 30 groups x 1000 samples asked for a single 24.18 GiB allocation in the adaptive
+    stochastic integrator (`utils/oom.py` backoff is wired into train/tune, NOT evaluate). 8 works.
+  - **MLP ablation (built + tested, never ran — no free GPU)**: `mlp` backbone now flattens rank-3
+    input (no-op on rank-2), so it is a drop-in for `time_series_transformer` on both observables;
+    new `masked_mlp` (subclass of the masked TST, shares `_prepare`) keeps the identical occupancy
+    handling so the arm differs ONLY in architecture. Configs
+    `model[/summary_network]/stream_fusion_2modal_mlp` (3x256, same summary_dim 32/62 so the
+    compositional group widths are unchanged). Run with
+    `MODEL=stream_fusion_2modal_mlp N_EPOCHS=300 RUNS_DIR=outputs/v4_2modal/mlp bash
+    scripts/train_v4_2modal.sh`. When comparing, remember the transformer arm had 1000 epochs.
+  - Figures published as an artifact gallery (all 12 plots + the per-parameter table).

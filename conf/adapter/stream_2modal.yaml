@@ -1,0 +1,24 @@
+# Two-modality stream adapter: the gridded per-stream summary statistics and the rotation curve,
+# nothing else. Ancillary observables (vterm_kms, rho_z, sigma_z) are left out -- the adapter drops
+# any dataset key it does not list, so the ibata augmentation/preprocessing presets can still be
+# used unchanged.
+#
+# `inference_conditions` is deliberately `[none]`: the stream index j is not a modality, it is already
+# a channel of sim_summary (the grid layout carries it at -2), so it must not be its own condition
+# group -- a mask plan would otherwise have to decide whether "curve only" still knows which stream
+# it is looking at. The compositional eval falls back to the raw `j` array for the member count.
+#
+# Pair with model=stream_fusion_2modal, eval=stream_compositional_masked, composition=global.
+inference_variables: []
+summary_variables:
+  - sim_summary
+  - vcirc_kms
+inference_conditions: [none]   # explicit "none", not "derive": see the note above
+drop:
+  # Kept in the batch (adapter_keys includes `drop`) so the per-batch augmentations can read them,
+  # then dropped before the network sees anything: sim_data_projected is what builds sim_summary,
+  # and j is what the stream-frame augmentations index by -- and it is already a channel of
+  # sim_summary, so it must not reach the network a second time as a condition.
+  - sim_data_projected
+  - j
+attention_mask_key: attention_mask

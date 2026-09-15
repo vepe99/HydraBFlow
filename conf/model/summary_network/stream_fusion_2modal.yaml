@@ -1,0 +1,37 @@
+# Two-backbone fusion: the φ1-gridded per-stream summary statistics and the rotation curve.
+#
+# `head: null` is REQUIRED by grouped_diffusion, not a style choice: with a head the fused output is
+# an MLP over the concatenated branch embeddings, which mixes them, and zeroing a slice of a mixed
+# vector is not dropping a modality. Without one the summary output is the raw concatenation in
+# sorted(backbones) order -- sim_summary then vcirc_kms -- which is exactly the group layout
+# `_fusion_group_sizes` reads off this file.
+type: fusion
+params:
+  mask_backbone: null          # no particle/set backbone, so no attention mask to route
+  head: null                   # see above -- do not add one
+  backbones:
+    sim_summary:
+      # Occupancy-aware: stream_global_ibata_grid_v2 exports the 14-channel layout with per-bin
+      # n_track / n_vlos, and a stock TimeSeriesTransformer pools over under-populated bins (a
+      # substituted 0 reads as an on-track, zero-dispersion measurement). Channel contract copied
+      # from stream_fusion_ibata_grid_masked.yaml; keep min_count == augmentation summary_min_count.
+      type: masked_time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      embed_dim_per_head: 8
+      params:
+        time_axis: -1          # last channel of sim_summary is the φ1 bin-centre (the time coord)
+        count_channel: 10        # n_track
+        vlos_count_channel: 11   # n_vlos
+        stat_channels: [0, 1, 2, 3, 4, 5, 6, 7]
+        vlos_stat_channels: [8, 9]
+        min_count: 3
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      embed_dim_per_head: 11

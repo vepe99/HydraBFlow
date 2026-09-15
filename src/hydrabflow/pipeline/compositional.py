@@ -8,10 +8,13 @@ evaluation flattens the member axis, augments once, and regroups before sampling
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Callable, Container, Dict, Mapping
 
 import numpy as np
+
+log = logging.getLogger(__name__)
 
 
 def sample_kwargs(cfg) -> dict:
@@ -326,3 +329,68 @@ def apply_augmentations_once(flat: Dict[str, np.ndarray], cfg, pipeline, seed: i
     for aug in augmentations:
         flat = aug(flat)
     return {k: np.asarray(v) for k, v in flat.items()}
+
+
+def apply_observed_groups(workflow, cfg) -> None:
+    """Restrict ordinary ``sample()`` calls to the condition groups in ``eval.observed_groups``.
+
+    ``[sim_summary]`` gives p(theta | one stream) and ``[vcirc_kms]`` p(theta | rotation curve),
+    out of the same trained network -- the point of training with ``missing_modality_prob``.
+    Empty (the default) leaves every modality observed. A no-op on a network that cannot mask, so
+    the ordinary single-level path stays usable with a stock ``diffusion`` model.
+    """
+    groups = list(getattr(cfg.eval, "observed_groups", None) or [])
+    net = workflow.approximator.inference_network
+    if not groups:
+        return
+    if not hasattr(net, "set_observed_groups"):
+        raise TypeError(
+            "eval.observed_groups needs an inference network that can mask condition groups "
+            f"(model.inference_network.type=grouped_diffusion); got {type(net).__name__}."
+        )
+    net.set_observed_groups(groups)
+
+
+def apply_mask_plan(workflow, cfg, conditions: Dict[str, np.ndarray], m: int):
+    """De-duplicate group-level observables across compositional items, if configured.
+
+    ``flatten_members`` copies every group-level observable (the rotation curve) into all ``m``
+    members, so the compositional identity
+    ``p(theta|Y) ∝ p(theta)^(1-n) prod_j p(theta|y_j)`` multiplies its likelihood in ``m`` times
+    instead of once -- narrowing the posterior by up to ``sqrt(m)`` exactly along the directions
+    that observable constrains.
+
+    ``eval.member_groups`` + ``eval.extra_items`` fix that by masking condition groups per item::
+
+        member_groups: [sim_summary]   # each of the m members: stream only, curve masked
+        extra_items: [[vcirc_kms]]     # one more item: curve only, streams masked
+
+    The extra items are appended as copies of member 0 -- a group-level observable is identical in
+    every member, and the rest of that row is masked out anyway.
+
+    Returns the (possibly extended) conditions. A no-op unless ``eval.member_groups`` is set, and
+    it requires an inference network that can mask (``grouped_diffusion``).
+    """
+    member_groups = list(getattr(cfg.eval, "member_groups", None) or [])
+    if not member_groups:
+        return conditions
+    extra_items = [list(g) for g in (getattr(cfg.eval, "extra_items", None) or [])]
+    net = workflow.approximator.inference_network
+    if not hasattr(net, "set_item_mask_plan"):
+        raise TypeError(
+            "eval.member_groups needs an inference network that can mask condition groups "
+            f"(model.inference_network.type=grouped_diffusion); got {type(net).__name__}."
+        )
+    plan = [list(member_groups)] * m + extra_items
+    net.set_item_mask_plan(plan)
+    log.info(
+        "Compositional mask plan: %d items = %d members observing %s + %s",
+        len(plan), m, member_groups,
+        " + ".join(f"1 item observing {g}" for g in extra_items) or "no extra items",
+    )
+    if not extra_items:
+        return conditions
+    return {
+        key: np.concatenate([arr] + [arr[:, :1] for _ in extra_items], axis=1)
+        for key, arr in ((k, np.asarray(v)) for k, v in conditions.items())
+    }

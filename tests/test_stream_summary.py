@@ -307,6 +307,68 @@ def test_masked_tst_ignores_empty_bin_content():
     assert np.max(np.abs(out_a - out_b)) < 1e-5 * max(np.max(np.abs(out_a)), 1.0)
 
 
+def _masked_mlp(summary_dim=8, min_count=3):
+    from omegaconf import OmegaConf
+
+    from hydrabflow.config import SummaryNetworkConfig
+    from hydrabflow.registry import build_summary_network
+
+    cfg = OmegaConf.merge(
+        OmegaConf.structured(SummaryNetworkConfig),
+        {
+            "type": "masked_mlp",
+            "summary_dim": summary_dim,
+            "mlp_depth": 2,
+            "mlp_width": 16,
+            "params": {
+                "count_channel": 10,
+                "vlos_count_channel": 11,
+                "stat_channels": [0, 1, 2, 3, 4, 5, 6, 7],
+                "vlos_stat_channels": [8, 9],
+                "min_count": min_count,
+            },
+        },
+    )
+    return build_summary_network(cfg)
+
+
+def test_masked_mlp_shares_the_occupancy_prep():
+    """The MLP ablation arm must hide exactly what the transformer arm hides: the statistics of
+    under-populated bins, and the count magnitudes themselves."""
+    net = _masked_mlp()
+    x = _grid_batch()
+    out = np.asarray(net(x))
+    assert out.shape == (x.shape[0], 8)
+
+    junk_a, junk_b = x.copy(), x.copy()
+    for arr, junk in ((junk_a, 1.0e4), (junk_b, -7.0e3)):
+        arr[:, 7:, 10] = 0.0  # bins 7..9 under-populated
+        arr[:, 7:, 11] = 0.0
+        arr[:, 7:, 0:10] = junk
+    np.testing.assert_allclose(np.asarray(net(junk_a)), np.asarray(net(junk_b)), atol=1e-5)
+
+    counts_a, counts_b = x.copy(), x.copy()
+    counts_a[..., 10], counts_a[..., 11] = 8.0, 5.0
+    counts_b[..., 10], counts_b[..., 11] = 400.0, 91.0
+    np.testing.assert_allclose(np.asarray(net(counts_a)), np.asarray(net(counts_b)), atol=1e-6)
+
+
+def test_masked_tst_never_sees_count_values():
+    """The occupancy channels are a validity signal, not an observable: once they have decided
+    which bins are valid, their magnitudes must not reach the transformer. Otherwise the network
+    trains on a simulated bin's member count, which reflects the progenitor draw rather than
+    anything the real catalogue measures."""
+    net = _masked_tst(min_count=3)
+    x = _grid_batch()
+    net(x)  # build
+
+    a, b = x.copy(), x.copy()
+    a[..., 10], a[..., 11] = 8.0, 5.0        # both well above min_count ...
+    b[..., 10], b[..., 11] = 400.0, 91.0     # ... so the validity masks are identical
+    out_a, out_b = np.asarray(net(a)), np.asarray(net(b))
+    np.testing.assert_allclose(out_a, out_b, atol=1e-6)
+
+
 def test_masked_tst_padding_equals_true_subset():
     """The property BayesFlow's own nets do NOT have: padding a K-bin grid out with empty bins and
     masking them gives the same summary as feeding only the populated bins.

@@ -163,6 +163,16 @@ class EvalConfig:
     prior_kde_max_points: int = 4096
     prior_kde_bandwidth: float = 0.0
     prior_kde_impl: str = "diagonal"  # diagonal (closed form) | jax (full covariance)
+    # Compositional condition masking (composition=global, inference_network=grouped_diffusion).
+    # `member_groups` = condition groups observed on each of the m member items; `extra_items` =
+    # one further item per entry, listing the groups it observes. Masking the group-level
+    # observables (the rotation curve) out of the members and giving them their own item is what
+    # keeps each likelihood in the compositional product exactly once. Empty = stock behaviour.
+    # Condition groups observed by ordinary (non-compositional) `sample` calls -- [sim_summary]
+    # for one stream alone, [vcirc_kms] for the rotation curve alone. Empty = everything observed.
+    observed_groups: List[str] = field(default_factory=list)
+    member_groups: List[str] = field(default_factory=list)
+    extra_items: List[List[str]] = field(default_factory=list)
 
 
 @dataclass

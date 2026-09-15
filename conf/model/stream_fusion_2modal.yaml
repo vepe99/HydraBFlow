@@ -1,0 +1,25 @@
+# Two-modality masked model: streams + rotation curve, trained with modality dropout so the same
+# network is a valid posterior for {stream only}, {curve only} and {both}. That is what makes the
+# de-duplicated compositional factorisation (eval=stream_compositional_masked) legitimate.
+#
+# `missing_modality_prob` is per group, per sample, with keep_one -- a row never has every modality
+# dropped, so no training sample degenerates to the prior.
+defaults:
+  - override summary_network: stream_fusion_2modal
+  - override inference_network: grouped_diffusion
+  - _self_
+
+name: stream_fusion_2modal
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20
+  params:
+    missing_modality_prob: 0.25
+    # The only subnet that consumes the mask natively (each condition scalar is its own token and
+    # masked tokens are excluded from attention). With time_mlp the mask degrades to zeroing the
+    # dropped group's columns, which works but is a weaker "absent".
+    subnet: diffusion_transformer
+    dt_width: 128
+    dt_num_layers: 4
+    dt_num_heads: 4

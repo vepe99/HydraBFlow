@@ -1,0 +1,10 @@
+# DiffusionModel with modality-coherent condition dropout (networks/grouped_diffusion.py).
+# Group widths are read off the fusion summary network's backbones, so nothing is restated here
+# and a tuning trial that searches summary_dim stays correct for free.
+type: grouped_diffusion
+mlp_depth: 4
+mlp_width: 128
+time_embedding_dim: 32
+params:
+  missing_modality_prob: 0.25   # 0.0 -> behaves exactly like `diffusion`
+  subnet: diffusion_transformer  # or time_mlp

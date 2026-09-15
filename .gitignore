@@ -35,3 +35,10 @@ dist/
 
 # Reference projects (embedded git repo, not part of this project)
 references/
+
+# Protoplanetary-disk project: real measurements + generated outputs (not part of this repo)
+notebooks/**/plots/
+assets/protoplan/
+
+# Run logs (the runner scripts in here are tracked, their output is not)
+logs/*.log
