@@ -74,11 +74,32 @@ def real_members(real_path: str) -> dict[int, np.ndarray]:
     return {int(j): sp[i][am[i, 0].astype(bool)] for i, j in enumerate(js)}
 
 
-def rotation_curve_ppc(vc: np.ndarray, out_dir: str, r_min: float) -> dict:
+def custom_grid(dataset: str) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+    """The dataset's own ``obs_r_grid: custom`` table, from the ``<stem>.hydra`` config snapshot
+    the simulate stage writes next to the npz (v4 onwards: Ou et al. 2024, 19 radii)."""
+    import yaml
+
+    cfg = os.path.splitext(dataset)[0] + ".hydra/config.yaml"
+    if not os.path.exists(cfg):
+        return None
+    params = yaml.safe_load(open(cfg)).get("simulator", {}).get("params", {})
+    if params.get("obs_r_grid") != "custom":
+        return None
+    return tuple(np.asarray(params[k], float)
+                 for k in ("obs_r_kpc", "obs_vc_kms", "obs_sigma_vc"))
+
+
+def rotation_curve_ppc(vc: np.ndarray, out_dir: str, r_min: float,
+                       custom: tuple[np.ndarray, ...] | None = None) -> dict:
     # Pick the observed reference to match the dataset's vcirc grid: the Zhou (34-radii) grid, or
     # the extended Zhou u Huang union grid when vcirc was generated with obs_r_grid=extended.
     n_r = vc.shape[1]
-    if n_r == len(OBS_R_KPC):
+    if custom is not None:
+        r, vc_ref, sig = custom
+        split = None
+        if len(r) != n_r:
+            raise ValueError(f"vcirc has {n_r} radii, custom grid has {len(r)} - grid mismatch")
+    elif n_r == len(OBS_R_KPC):
         r, vc_ref, sig = OBS_R_KPC, OBS_VC_KMS, OBS_SIGMA_VC
         split = None
     else:
@@ -94,7 +115,7 @@ def rotation_curve_ppc(vc: np.ndarray, out_dir: str, r_min: float) -> dict:
     ax.plot(r, pct[2], color="C0", lw=2, label="prior median")
     if split is None:
         ax.errorbar(r, vc_ref, yerr=sig, fmt="o", ms=3, color="k", capsize=2, lw=1,
-                    label="Zhou+23 observed")
+                    label="observed" if custom is not None else "Zhou+23 observed")
     else:
         lo = r <= split
         ax.errorbar(r[lo], vc_ref[lo], yerr=sig[lo], fmt="o", ms=3, color="k", capsize=2, lw=1,
@@ -216,7 +237,8 @@ def main() -> None:
     summary = {
         "dataset": args.dataset,
         "n_rows": int(vc.shape[0]),
-        "rotation_curve": rotation_curve_ppc(vc, args.out_dir, args.r_min_kpc),
+        "rotation_curve": rotation_curve_ppc(vc, args.out_dir, args.r_min_kpc,
+                                            custom_grid(args.dataset)),
         "streams": stream_ppc(chunk, args.out_dir, args.real, args.sky_tol_deg, args.pm_tol_masyr),
     }
     with open(os.path.join(args.out_dir, "ppc_summary.json"), "w") as f:

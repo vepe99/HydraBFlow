@@ -1,0 +1,68 @@
+# The v4 spray model with the LOCAL (progenitor) priors of Palau & Miralda-Escude (2023,
+# MNRAS 524, 2124) — the paper this project's legacy progenitor table originally came from.
+#
+# Globals, potential, observables, storage and the forward model are the v4 spray config
+# unchanged; ONLY the per-stream progenitor inputs move back to that paper's values:
+#
+#   * mass + Plummer radius = their Table 2 (fixed, "of negligible impact for our modeling
+#     purpose"): Pal5 4.3e3 / 8.43 pc [Sollima & Baumgardt 2017], NGC3201 6.47e4 / 4.9 pc
+#     [S&B17], M68 5.7e4 / 6.4 pc [Lane et al. 2010].
+#   * stripping age = the integration times of their Section 4: 4 Gyr for Palomar 5, 1.5 Gyr
+#     for NGC 3201 and M68 (they integrate backwards and keep the stars stripped over that
+#     window).
+#   * phase space (r, vr, mu_alpha*, mu_delta) = their Table 1 Gaussians — these are ALREADY
+#     the values inherited from conf/simulator/stream_agama.yaml (verified term by term
+#     against the paper), so they are not restated here.
+#
+# `mass_loss: null` (fixed-mass spray): Palau holds the cluster mass fixed. The inherited
+# `linear` track would be a no-op anyway — every mass above is BELOW its B&H18 present-day
+# `m_progenitor_final`, and `_mass_track` degenerates to fixed mass when initial <= final.
+#
+# THREE THINGS TO KNOW BEFORE READING A DATASET FROM THIS CONFIG:
+#   1. These masses are the ones the 2026-07-28 audit identified as PRESENT-DAY (Pal5's is the
+#      bound remnant only) or luminous masses used as INITIAL masses at t = -t_end, and Pal5's
+#      8.43 pc is a King core radius used as a Plummer scale radius. That is deliberate here —
+#      the point of this config is to reproduce the paper's inputs, not to correct them.
+#   2. t_end = 1.5 Gyr strips very little. In the restricted N-body model it makes NGC3201 and
+#      M68 unobservable (2026-07-29: 3 and 24 in-window stars against 195/297 real members).
+#      Particle spray fabricates stripping uniformly over t_end so it still produces arms
+#      (2026-07-05 PPC: real-locus reach 93% NGC3201 / 56% M68), but M68 is marginal — check
+#      the pilot's in-window counts before letting the full run proceed.
+#   3. t_end and m_progenitor become `identity` = fixed constants, so the inferred local set
+#      drops to [vr, r, mu_ra_cosdec, mu_dec] (as in the paper, which fits phase space only).
+defaults:
+  - stream_agama_spray_massloss_ibata_m200c_v4
+
+params:
+  mass_loss: null
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: identity
+        prior_parameters: [4.3e3]
+      a_progenitor:
+        type: identity
+        prior_parameters: [8.43]
+      t_end:
+        type: identity
+        prior_parameters: [4.0]
+    NGC3201:
+      m_progenitor:
+        type: identity
+        prior_parameters: [6.47e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [4.9]
+      t_end:
+        type: identity
+        prior_parameters: [1.5]
+    M68:
+      m_progenitor:
+        type: identity
+        prior_parameters: [5.7e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [6.4]
+      t_end:
+        type: identity
+        prior_parameters: [1.5]
