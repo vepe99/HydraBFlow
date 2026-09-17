@@ -1,0 +1,6 @@
+# Rotation-curve-only chain: the stream steps would KeyError on the dropped sim_data_projected.
+defaults:
+  - stream_global
+steps:
+  - add_noise_to_vcirc
+  - log10_vcirc

@@ -85,6 +85,14 @@ def run_training(cfg):
     # 6. Persist the best weights seen, the model, and the loss history/curve/convergence report.
     artifacts.restore_best_weights(workflow, run_dir)
     artifacts.save_approximator(workflow, run_dir)
+    # Standalone summary-net weights (a keras Layer, so get_weights/set_weights, not save_weights),
+    # for freezing it inside another approximator later: `net.set_weights(list(np.load(f).values()))`.
+    summary_net = getattr(workflow.approximator, "summary_network", None)
+    if summary_net is not None:
+        np.savez(
+            os.path.join(run_dir, "summary_network_weights.npz"),
+            *[np.asarray(w) for w in summary_net.get_weights()],
+        )
     artifacts.save_history(history, run_dir)
 
     log.info("Training complete. Artifacts in %s", run_dir)

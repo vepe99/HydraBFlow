@@ -1606,3 +1606,138 @@ Knowledge graph at `graphify-out/`.
   stale 3.11 `Makefile.local`; fixed with `uv cache clean agama && uv sync --frozen`. The venv is now
   3.12 with bayesflow 2.0.13 (the committed lock — the "2.0.12 pin" note in Stack is stale). Launch
   stages with `.venv/bin/python -m hydrabflow.pipeline.<stage>`, not `uv run`.
+
+- Session 2026-09-16 (information-maximising single-modality summary nets, `imm_summarynet`): two
+  CouplingFlow posteriors on the Palau spray v4 set (`data_jarvis/data_agama_spray_massloss_ibata_
+  m200c_v4_palau_hydrabflow`), each conditioned on ONE modality with no modality dropout, so the
+  summary net is forced to extract all it can — to be frozen later inside the 2-modality score model.
+  New registry entry `coupling_flow` (`networks/factory.py`, `bf.networks.CouplingFlow`, config
+  `inference_network/coupling_flow.yaml`). Arms: `model=imm_vcirc` (`time_series_transformer`,
+  adapter `stream_vcirc_only`, aug `stream_global_vcirc_only` = add_noise_to_vcirc + log10_vcirc)
+  and `model=imm_streams` (`masked_time_series_transformer`, adapter `stream_streams_only`, aug
+  `stream_global_sumstats_only` = grid_v2 minus the potential-observable steps); both summary_dim 32.
+  Runner `scripts/train_imm_summarynet.sh` (ARM=vcirc|streams; train → sim eval), outputs
+  `outputs/imm_summarynet/{vcirc,streams}/`. Infra: `build_workflow` falls back to `BasicWorkflow`
+  when the inference net is not a `DiffusionModel` (bf's CompositionalWorkflow rejects anything else;
+  training is identical and composition=global still derives the global inference variables);
+  `evaluate` at composition=global skips the compositional stage when the workflow has no
+  `compositional_sample` (base_* metrics only); `train` saves `summary_network_weights.npz`
+  (summary nets are keras Layers — `get_weights`/`set_weights`, no `save_weights`). Gotchas: a
+  single-key adapter with `attention_mask_key` routes the STAR-level mask (n_stars) into the gridded
+  net (K bins) → shape error, so the streams adapter drops `attention_mask` instead; the compositional
+  evaluate reads m off the raw `j` array, so every single-modality adapter must keep `j` in `drop`.
+  Both arms smoke-tested (1 epoch on the 1e5 set + eval); ~100-110 s/epoch at batch 512 on a shared
+  card during the smoke (compile-inclusive first epoch — recheck on the real run). Per user, launched
+  via `outputs/imm_summarynet/launch_when_free.sh` (autocvd waits for a FREE GPU, arms staggered by
+  240 s); logs `outputs/imm_summarynet/{vcirc,streams}.log`. Not committed.
+
+- Session 2026-09-16 (legacy 1e6 agama set re-gridded onto the Ou+2024 curve + v4_2modal_legacy
+  MLP training): the reference-project spray set `data/streams/data_agama/training_data_local_
+  1000000.npz` (1e6 rows, 1000 particles, base `stream_agama` priors, NO `vcirc_kms` — the old
+  project kept the curve as a separate array) copied to `data/data_jarvis/data_agama_spray_legacy_
+  ou24_hydrabflow/` with `vcirc_kms (1e6,19,1)` RECOMPUTED with AGAMA on the Ou et al. 2024 grid
+  (`_host_potential(pot_cfg=None)` IS the legacy potential: the stored bulge columns equal
+  `BULGE_PARAMS`). New `scripts/recompute_vcirc_grid.py` (reuses `extend_vcirc_huang.recompute_vcirc`,
+  radii read from a simulator yaml) + `conf/simulator/stream_agama_ou24.yaml` (base priors +
+  `obs_r_grid: custom` v4 table, so `fill_stream_grid_from_simulator` propagates 19 radii/sigma/obs).
+  1e6 rows: 32 nice'd workers, ~13 min + 24 GB write, 0 NaN curves; test set = the merged
+  `data_agama_hydrabflow/simulation_multistream_333.npz` re-gridded 34->19 (`test_multistream_333.npz`;
+  interpolated old curve agrees to 0.07 %). Dataset-median curve is ~11 % off the observed one
+  (broad legacy prior, expected). No ancillary observables stored (user). Blocker for the v4 stack:
+  `stream_global_log10_ibata_sumstats` pins `drop_nan.keys` to `vterm_kms` -> new preset
+  `stream_global_log10_sumstats_2modal` (sim_data_projected + vcirc_kms only).
+  `train_v4_2modal.sh` gained `PY`/`AUTOCVD` overrides (use `.venv/bin/python`, not `uv run`).
+  **Launched** `outputs/v4_2modal_legacy/` (launch.sh -> run.log): `model=stream_fusion_2modal_mlp`
+  (MLP summary nets, per user), `simulator=stream_agama_ou24`, 300 epochs, batch 1024, GPU 6. Box
+  note: `vm.overcommit_memory` is now 0 (heuristic), so the 24 GB set loads without the 2026-09
+  commit-headroom dance.
+  **NaN at epoch 1 (batch 113) — root cause + fix**: `log10_vcirc` was a bare `jnp.log10`; the
+  legacy halo prior reaches v_c ~ 40 km/s at 25 kpc where the Ou sigma is 17 km/s, so
+  `add_noise_to_vcirc` drives ~11 rows per 1e6 negative -> NaN loss -> TerminateOnNaN (the runner
+  then wasted a GPU evaluating the dead model; kill by PID list — `pkill -f <pattern>` matched the
+  calling shell). Fix in `augmentation/streams.py`: `log10(max(v, vcirc_floor_kms=1.0))`; test
+  `test_log10_vcirc_floors_negative_noisy_bins`. Verified the whole train chain on a 20k slice
+  (forced near-zero curves) produces only finite outputs; `drop_nan` removes 5.7 % of the legacy
+  rows (NaN particles). Failed attempt archived under `outputs/v4_2modal_legacy/failed_nan_attempt/`.
+  **Results (relaunch, GPU 6, 300 epochs ~3.5 h, ~40 s/epoch; `outputs/v4_2modal_legacy/{train,
+  eval_sim_333,eval_real}`)**: convergence clean (final/best val_loss 1.07, best ~1.30). Sim eval
+  (333 groups, 7 legacy globals): base RMSE 0.711 / calib 0.013; compositional (3 streams + 1 curve
+  item) RMSE 0.705 / calib **0.063** — pooled calibration again ~5x the base and again concentrated
+  in the halo (rho 0.111, a 0.085, q 0.072, gamma 0.066) while the disk stays calibrated (r/z_Disk
+  0.016/0.018): same pattern as the v4 rnbody run, so it is not specific to that dataset or to the
+  transformer nets. Per-stream recovery: gamma/a/Sigma_Disk r~0.8, rho/r_Disk ~0.5, q 0.30 (near
+  prior), z_Disk ~0. Real Gaia global: q_halo **1.02 [0.74, 1.27]**, gamma 0.34 [-0.74, 1.17],
+  a 7.5 kpc, rho 5.2e7, Sigma_Disk 1.14e9, r_Disk 3.32, z_Disk 0.298. MMD 2.83 (null 95 % 2.75),
+  p_plain 0.04 / p_strat 0.025 — the mildest flag of any generation; Mahalanobis pct Pal5 73 /
+  NGC3201 95 / M68 73 (NGC3201, not M68, is the outlier here).
+  **Why q_halo is unconstrained (diagnosed on these posteriors)**: per stream the q posterior std
+  equals the prior std (0.288/0.289/0.272 vs 0.289 for Pal5/NGC3201/M68), the pooled one is 0.232
+  and its median sits at ~1.0 whatever the truth (bias +0.29 / -0.29 for oblate / prolate truths) —
+  shrinkage to the prior mean, i.e. an uninformative summary, NOT a degeneracy: within-posterior
+  |corr(q, other)| < 0.1 and 230/299 test groups are halo-dominated inside 20 kpc. Consistent with
+  the 2026-09-12 sensitivity numbers (q 0.8->1.0 moves the phi2 track 0.015/0.18/0.89 deg for
+  Pal5/NGC3201/M68 vs ~0.1 deg realization scatter): only M68 carries a detectable q signal. The
+  pooled halo-only miscalibration follows: three near-prior factors divided by the prior squared.
+- Session 2026-09-16 (particle-SetTransformer twin of v4_2modal_legacy — running): same data/epochs
+  with the raw star cloud as the stream modality. New presets: `adapter/stream_2modal_particles`
+  (`[sim_data_projected, vcirc_kms]`, `j` dropped — it is channel 14 of the particles), `model[/
+  summary_network]/stream_fusion_2modal_particles` (`masked_set_transformer` with the model5_maskedvlos
+  hyperparameters + the 2modal vcirc TST, summary_dims 32/62 kept, `mask_backbone: sim_data_projected`,
+  `head: null`), `eval/stream_compositional_masked_particles` (`member_groups: [sim_data_projected]`);
+  augmentation = plain `stream_global`/`stream_real_global` with `vlos_impute=zero`; real preproc
+  `stream_real_global_log10`. `train_v4_2modal.sh` gained `EXTRA` (extra Hydra overrides for all 3
+  stages). CPU smoke (600 rows/6 groups) passes with the plan "3 members observing
+  [sim_data_projected] + 1 item observing [vcirc_kms]". **Batch 1024 OOMs** on a 40 GB card (one
+  15.6 GiB attention buffer) and `run_with_oom_backoff` did NOT rescue it — every retry down to 16
+  died within a minute with the same error (the failed attempt's device memory stays pinned inside
+  the same process; the backoff needs a fresh approximator/`jax` state to be useful). Measured on a
+  20k slice: batch 512 peaks at 13.3 GB, ~0.1 s/step. Launched at 512:
+  `outputs/v4_2modal_legacy_particles/` (launch.sh -> run.log; failed attempt in `failed_oom_b1024/`),
+  ~150 s/epoch -> ~12.5 h for 300 epochs. Epochs 1-2 val_loss 1.85 -> 1.58 (MLP arm: 1.89 -> 1.63).
+  **Results (`outputs/v4_2modal_legacy_particles/{train,eval_sim_333,eval_real}`, 300 epochs 12.5 h,
+  best val_loss 1.03, convergence clean, final/best 1.04)**: sim base RMSE **0.480** / calib **0.008**
+  (MLP-sumstats arm 0.711 / 0.013); compositional RMSE **0.453** / calib 0.057. **The stars DO carry
+  q_halo**: per-stream q RMSE 0.138 (sumstats 0.888), pooled 0.084 with posterior std 0.026 and
+  corr(median, truth) 0.96 — so the 2026-09-16 "q signal below the noise floor" ranking was wrong:
+  the information is in the star cloud and the binned summary statistics discard it (the 10-bin
+  medians/dispersions in a frame fitted to the REAL members). Pooled calibration is again ~7x base
+  and again halo-shape-only (rho 0.092, gamma 0.099, a 0.093; q itself 0.028, disk 0.02) — same
+  pattern in a third architecture. **Real Gaia**: q_halo **1.47 [1.43, 1.49]** RAILS at the prior
+  edge 1.5 (per stream Pal5 1.45, NGC3201 1.49, M68 1.32 [1.01, 1.46]) — the raw-particle prolate
+  result of every earlier generation, now sharper; gamma 0.61, per-stream gamma DISAGREE (Pal5 1.03,
+  NGC3201 -0.22, M68 1.52); a 6.4 kpc, rho 6.3e7, Sigma_Disk 8.9e8, r/z_Disk 3.36/0.30. MMD 2.90
+  (null95 2.70), p 0.015, all three members at the 100th Mahalanobis pct (sumstats arm: 73/95/73).
+  Representation summary on the SAME data: sumstats-MLP q 1.02 ± 0.26 (uninformative), particles
+  1.47 railing + all members OOD ⇒ the particle model is more informative in-sim but extrapolates on
+  the real streams (the recurring finding, now with a matched-dataset control).
+- Session 2026-09-17 (why trial_1 of `stream_ibata_grid_m200c_median_study` recovers q_halo, and the
+  2modal ablation): the rejection prior is NOT the reason — in the cut 3e5 m200c set the q marginal
+  is flat (mean 1.007, std 0.288 vs 1.0/0.289 uniform), |corr(q, other globals)| <= 0.08, and a
+  gradient-boosted regressor predicting q from the potential-only observables (log vcirc, vterm,
+  sigma_z) reaches the same normalized RMSE with and without the cut (0.85 cut / 0.88 uncut v4;
+  vcirc alone 0.97/0.99). trial_1 gets q 0.388 base / 0.240 pooled (normalized by prior std; per
+  stream 0.46/0.35/0.48 Pal5/NGC3201/M68, corr(median,truth) 0.88/0.94/0.88 — NGC3201 is the best
+  carrier). **Ablation** `outputs/ablation_2modal_m200c_3e5/test/` (`model=stream_fusion_2modal`,
+  grid_v2 masked TST + curve TST, no v_term/sigma_z, grouped diffusion with dropout 0.3, SAME 3e5
+  data / 400 epochs / batch 1024): q collapses to **0.89 base / 0.79 pooled** (Pal5/NGC3201 corr
+  0.23, M68 0.65); every other parameter within ~0.1 of trial_1. Real Gaia q 0.93 [0.68,1.23] =
+  prior-like (trial_1: 0.56 [0.54,0.60], but all members at the 99.7-100th MMD pct there, so that
+  tightness is extrapolation). Conclusion: the q information is lost in the INPUT STACK, not the
+  dataset — one or more of (a) dropping the ancillary observables, (b) the grid_v2 estimator
+  (out-of-range stars excluded, MAD, occupancy zeroed), (c) grouped-diffusion modality dropout. The
+  old grid (`stream_global_ibata_grid`, 12/7 ch) + `stream_fusion_ibata_grid` + ancillary keeps q.
+  Not split further yet: next run = `model=stream_fusion_ibata_grid adapter=stream_ibata_sumstats`
+  with `augmentation=stream_global_ibata_grid_v2` on the same set (isolates the grid estimator).
+- Session 2026-09-17 (TimeSeriesTransformer twins of the two MLP 2-modal runs): `model=stream_fusion_2modal`
+  (masked TST over the gridded summary statistics + TST over the Ou+2024 curve), everything else identical to
+  the MLP references. `outputs/v4_2modal_palau_tst/` (palau spray 1e5, 1000 ep; real MMD 3.24 p=0, members at
+  the 92/95/96th pct) and `outputs/v4_2modal_legacy_tst/` (legacy spray 1e6, 300 ep, ~29 s/epoch). **Legacy
+  three-arm comparison on the SAME data** (sumstats-MLP / sumstats-TST / particles-SetTransformer): sim base
+  RMSE 0.711 / 0.711 / 0.480, calib 0.013 / 0.013 / 0.008; compositional RMSE 0.705 / 0.701 / 0.453, calib
+  0.063 / 0.060 / 0.057. Per-parameter the two summary-statistic arms agree to <0.01 RMSE everywhere and both
+  leave q at prior width (q RMSE 0.89 vs 0.14 for particles) — **the architecture over the binned summaries
+  is irrelevant; the information loss is in the summary statistics themselves.** Real Gaia: MLP q 1.02
+  [0.74,1.27], TST 0.98 [0.72,1.27] (per stream 0.96/0.99/1.03), particles 1.47 railing; every other global
+  agrees between the two sumstats arms to ~1 %. TST MMD 2.78 p_strat 0.01, members 72/92/78 (MLP 73/95/73;
+  particles 100/100/100). Halo-only pooled miscalibration (rho/gamma/a ~0.1, disk 0.02) reproduced in all
+  three, as before.

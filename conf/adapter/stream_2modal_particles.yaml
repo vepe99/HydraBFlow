@@ -1,0 +1,13 @@
+# stream_2modal with the raw star cloud in place of the gridded summary statistics: the
+# particle-level `sim_data_projected` (15-channel stream_global layout, attention-masked) and the
+# rotation curve are the two modalities. `j` is channel 14 of the particles (concatenate_stream_index)
+# so, as in stream_2modal, it is not a condition group; it stays in the batch for the augmentations
+# and is dropped before the network.
+inference_variables: []
+summary_variables:
+  - sim_data_projected
+  - vcirc_kms
+inference_conditions: [none]
+drop:
+  - j
+attention_mask_key: attention_mask

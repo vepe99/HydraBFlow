@@ -1,0 +1,7 @@
+# stream_compositional_masked for the raw-particle adapter (stream_2modal_particles): the member
+# items observe the star cloud instead of sim_summary.
+defaults:
+  - stream_compositional_masked
+  - _self_
+
+member_groups: [sim_data_projected]

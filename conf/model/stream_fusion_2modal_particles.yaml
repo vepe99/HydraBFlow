@@ -1,0 +1,18 @@
+# stream_fusion_2modal with the raw-particle SetTransformer stream backbone
+# (summary_network/stream_fusion_2modal_particles). Inference network identical to the other arms.
+defaults:
+  - override summary_network: stream_fusion_2modal_particles
+  - override inference_network: grouped_diffusion
+  - _self_
+
+name: stream_fusion_2modal_particles
+inference_network:
+  mlp_depth: 2
+  mlp_width: 48
+  time_embedding_dim: 20
+  params:
+    missing_modality_prob: 0.25
+    subnet: diffusion_transformer
+    dt_width: 128
+    dt_num_layers: 4
+    dt_num_heads: 4

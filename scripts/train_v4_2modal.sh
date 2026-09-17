@@ -21,7 +21,7 @@ if [ "${GPU}" = "cpu" ]; then
   export JAX_PLATFORMS=cpu
 else
   if [ "${GPU}" = "auto" ]; then
-    eval "$(uv run autocvd -n 1)"
+    eval "$(${AUTOCVD:-uv run autocvd} -n 1)"
   else
     export CUDA_VISIBLE_DEVICES="${GPU}"
   fi
@@ -47,6 +47,7 @@ PREPROC=${PREPROC:-stream_global_log10_ibata_sumstats}
 REAL_PREPROC=${REAL_PREPROC:-stream_real_global_ibata_sumstats}
 EVAL=${EVAL:-stream_compositional_masked}
 DROP_PROB=${DROP_PROB:-0.3}   # per-group, per-sample modality dropout during training
+EXTRA=${EXTRA:-}             # extra Hydra overrides applied to all three stages (space-separated)
 
 RUNS_DIR=${RUNS_DIR:-outputs/v4_2modal/default}
 MODEL_DIR=${MODEL_DIR:-${RUNS_DIR}/train}
@@ -54,31 +55,31 @@ EVAL_DIR=${EVAL_DIR:-${RUNS_DIR}/eval_sim_${N_TEST}}
 REAL_DIR=${REAL_DIR:-${RUNS_DIR}/eval_real}
 
 echo "=== [1/3] TRAIN  -> ${MODEL_DIR} ==="
-uv run python -m hydrabflow.pipeline.train \
+${PY:-uv run python} -m hydrabflow.pipeline.train \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   model.inference_network.params.missing_modality_prob="${DROP_PROB}" \
   data.data_dir="${DATA_DIR}" data.n_simulations="${N_TRAIN}" \
   training.n_epochs="${N_EPOCHS}" training.batch_size="${BATCH_SIZE}" seed="${SEED}" \
   augmentation.params.resources_dir="${RES}" \
-  hydra.run.dir="${MODEL_DIR}"
+  hydra.run.dir="${MODEL_DIR}" ${EXTRA}
 
 echo "=== [2/3] EVALUATE sim ${N_TEST}-group multistream -> ${EVAL_DIR} ==="
-uv run python -m hydrabflow.pipeline.evaluate \
+${PY:-uv run python} -m hydrabflow.pipeline.evaluate \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${PREPROC}" augmentation="${AUG}" \
   eval="${EVAL}" eval.batch_size=8 data.data_dir="${DATA_DIR}" data.n_simulations="${N_TEST}" \
   eval.test_dataset_name=test_multistream_${N_TEST}.npz \
   model_dir="${MODEL_DIR}" augmentation.params.resources_dir="${RES}" \
-  hydra.run.dir="${EVAL_DIR}"
+  hydra.run.dir="${EVAL_DIR}" ${EXTRA}
 
 echo "=== [3/3] EVALUATE REAL (Gaia Pal5/NGC3201/M68) -> ${REAL_DIR} ==="
-uv run python -m hydrabflow.pipeline.evaluate \
+${PY:-uv run python} -m hydrabflow.pipeline.evaluate \
   simulator="${SIM}" model="${MODEL}" composition=global \
   adapter="${ADAPTER}" preprocessing="${REAL_PREPROC}" augmentation="${REAL_AUG}" \
   eval="${EVAL}" eval.batch_size=8 data.real_data_path="${REAL}" \
   model_dir="${MODEL_DIR}" augmentation.params.resources_dir="${RES}" \
   eval.misspecification_reference="${EVAL_DIR}" \
-  hydra.run.dir="${REAL_DIR}"
+  hydra.run.dir="${REAL_DIR}" ${EXTRA}
 
 echo "=== DONE. Outputs under ${RUNS_DIR} ==="

@@ -1,0 +1,13 @@
+# MLP twin of imm_streams (the sim_summary backbone of stream_fusion_2modal_mlp), summary_dim 32.
+# Same occupancy-channel contract as the masked TST; keep min_count == augmentation summary_min_count.
+type: masked_mlp
+summary_dim: 32
+mlp_depth: 3
+mlp_width: 256
+dropout: 0.1
+params:
+  count_channel: 10
+  vlos_count_channel: 11
+  stat_channels: [0, 1, 2, 3, 4, 5, 6, 7]
+  vlos_stat_channels: [8, 9]
+  min_count: 3

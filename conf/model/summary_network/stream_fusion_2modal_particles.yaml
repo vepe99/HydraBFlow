@@ -1,0 +1,28 @@
+# Particle arm of the two-modality model: a missingness-aware SetTransformer over the raw stars
+# (masked_set_transformer, model5_maskedvlos hyperparameters; pair with
+# augmentation.params.vlos_impute=zero) + the rotation-curve TimeSeriesTransformer of
+# stream_fusion_2modal. Same summary_dims (32 / 62) so the grouped_diffusion group widths match the
+# summary-statistics arms. head: null is REQUIRED (see stream_fusion_2modal.yaml).
+type: fusion
+params:
+  mask_backbone: sim_data_projected
+  head: null
+  backbones:
+    sim_data_projected:
+      type: masked_set_transformer
+      summary_dim: 32
+      num_blocks: 4
+      num_heads: 3
+      dropout: 0.1
+      embed_dim_per_head: 14
+      params:
+        value_channels: [5]
+        sigma_channels: [11]
+        mask_channel: 13
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      embed_dim_per_head: 11

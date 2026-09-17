@@ -1,0 +1,9 @@
+# Affine coupling flow (bf.networks.CouplingFlow): exact likelihood, cheap training. No compositional
+# sampling -- evaluate at composition=global reports base_* metrics only.
+type: coupling_flow
+mlp_depth: 4
+mlp_width: 128
+dropout: 0.05
+params:
+  depth: 6
+  transform: affine

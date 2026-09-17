@@ -1,0 +1,11 @@
+# Gridded per-stream summary statistics only (see stream_2modal.yaml for the drop/j rationale).
+# Pair with augmentation=stream_global_sumstats_only, model=imm_streams.
+inference_variables: []
+summary_variables: [sim_summary]
+inference_conditions: [none]
+drop:
+  - sim_data_projected
+  - j
+  # The star-level attention mask (n_stars) is consumed by compact_to_attended/stream_summary_grid;
+  # it must NOT be routed to the gridded summary net (K_phi1 bins), so no attention_mask_key here.
+  - attention_mask

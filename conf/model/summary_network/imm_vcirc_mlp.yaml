@@ -1,0 +1,6 @@
+# MLP twin of imm_vcirc (the vcirc_kms backbone of stream_fusion_2modal_mlp), summary_dim 32.
+type: mlp
+summary_dim: 32
+mlp_depth: 3
+mlp_width: 256
+dropout: 0.1

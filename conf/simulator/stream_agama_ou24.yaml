@@ -1,0 +1,19 @@
+# Legacy AGAMA spray simulator (stream_agama priors, Fardal spray, fixed beta=3, no rejection
+# prior) with the rotation-curve observable on the Ou et al. 2024 grid (MNRAS 528, 693; 19 radii
+# 6.6-25.5 kpc; table == assets/rotation_curve_custom_v4.csv == the v4 rnbody config).
+#
+# Purpose: train/evaluate the v4 two-modality stack on the legacy 1e6-row set
+# data/streams/data_agama/training_data_local_1000000.npz, whose parameter columns match the base
+# stream_agama priors and whose vcirc_kms was RECOMPUTED on this grid by
+# scripts/recompute_vcirc_grid.py (the curve is a deterministic function of the stored globals).
+# `obs_r_grid: custom` makes fill_stream_grid_from_simulator inject these radii / sigma / observed
+# curve into mask_vcirc_radii, add_noise_to_vcirc and attach_observed_vcirc.
+defaults:
+  - stream_agama
+
+name: stream_agama
+params:
+  obs_r_grid: custom
+  obs_r_kpc:    [6.60, 7.78, 8.21, 9.41, 10.43, 11.43, 12.43, 13.41, 14.40, 15.42, 16.44, 17.45, 18.48, 19.45, 20.41, 21.28, 22.01, 23.41, 25.53]
+  obs_vc_kms:   [236.43, 239.82, 237.20, 233.16, 234.61, 232.00, 232.80, 229.43, 224.20, 221.68, 219.74, 215.42, 212.79, 203.57, 195.44, 196.68, 187.96, 188.32, 175.07]
+  obs_sigma_vc: [2.69, 3.53, 6.31, 2.99, 4.39, 3.01, 4.54, 4.70, 3.22, 2.56, 4.87, 5.03, 8.38, 5.66, 5.75, 6.49, 9.18, 11.89, 16.86]

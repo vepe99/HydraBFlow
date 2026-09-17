@@ -586,9 +586,15 @@ def _log10_vcirc(params, rng, context=None):
     key = str(params.get("vcirc_key", "vcirc_kms"))
     jax, jnp = _jax()
 
+    # Floor at 1 km/s: `add_noise_to_vcirc` is Gaussian, so a model curve with v_c ~ 40 km/s
+    # (legacy broad halo prior at 25 kpc, sigma 17 km/s) goes negative ~1e-5 of the time -> NaN -> a
+    # NaN loss that TerminateOnNaN turns into a dead run. A finite floor is harmless: no observed
+    # or physical curve is anywhere near it.
+    floor = float(params.get("vcirc_floor_kms", 1.0))
+
     @jax.jit
     def _run(vcirc):
-        return jnp.log10(vcirc)
+        return jnp.log10(jnp.maximum(vcirc, floor))
 
     def aug(batch):
         batch[key] = _run(jnp.asarray(batch[key]))

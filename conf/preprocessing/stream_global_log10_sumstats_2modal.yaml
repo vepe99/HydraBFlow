@@ -1,0 +1,24 @@
+# stream_global_log10_ibata_sumstats for datasets WITHOUT the Ibata ancillary observables (the
+# legacy 1e6 agama set re-gridded onto the Ou+2024 curve): drop_nan is pinned to the two npz-resident
+# observables the 2-modality adapter uses (sim_summary is batch-only; vterm_kms does not exist here).
+# The log10 step already tolerates absent keys, so the thick-disk entries are harmless.
+defaults:
+  - stream_global_log10_ibata_sumstats
+  - _self_
+
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk

@@ -27,7 +27,14 @@ def build_workflow(cfg, run_dir: str | None = None) -> Any:
     import bayesflow as bf
     from omegaconf import OmegaConf
 
-    if composition_level(cfg) == "none":
+    inference_network = build_inference_network(cfg.model.inference_network, cfg.model)
+    # CompositionalWorkflow accepts only a DiffusionModel. Any other net at composition=global
+    # (e.g. coupling_flow, used to train standalone summary nets) trains identically under
+    # BasicWorkflow; the adapter derivation still selects the level's parameters, and evaluate
+    # skips the compositional stage when `compositional_sample` is absent.
+    if composition_level(cfg) == "none" or not isinstance(
+        inference_network, bf.networks.DiffusionModel
+    ):
         workflow_cls = bf.BasicWorkflow
     else:
         from hydrabflow.pipeline._bf_patches import apply_bayesflow_patches
@@ -40,7 +47,7 @@ def build_workflow(cfg, run_dir: str | None = None) -> Any:
         summary_network=build_summary_network(
             cfg.model.summary_network, cfg.adapter.summary_variables
         ),
-        inference_network=build_inference_network(cfg.model.inference_network, cfg.model),
+        inference_network=inference_network,
         standardize=list(OmegaConf.to_container(cfg.training.standardize, resolve=True)),
         initial_learning_rate=float(cfg.training.learning_rate),
     )

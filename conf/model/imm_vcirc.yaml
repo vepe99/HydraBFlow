@@ -1,0 +1,8 @@
+# Single-modality (vcirc) coupling-flow posterior: trains an information-maximising summary net
+# (saved as summary_network_weights.npz) to be frozen inside a score-matching model later.
+defaults:
+  - override summary_network: imm_vcirc
+  - override inference_network: coupling_flow
+  - _self_
+
+name: imm_summarynet_vcirc

@@ -148,6 +148,15 @@ def _evaluate_compositional_global(cfg):
     )
 
     # --- compositional: pool members of each group with the simulator's prior score ---
+    if not hasattr(workflow, "compositional_sample"):
+        log.info(
+            "Workflow has no compositional_sample (inference net is not a DiffusionModel): "
+            "skipping the compositional stage, base_* metrics only."
+        )
+        artifacts.write_report(
+            cfg, run_dir, cfg.model_dir, "Evaluation report (composition=global, base only)"
+        )
+        return {"base": base_posterior}
     grouped = group_members(flat, n, m)
     conditions = {k: grouped[k] for k in condition_keys(cfg) if k in grouped}
     prior_score = build_prior_score(

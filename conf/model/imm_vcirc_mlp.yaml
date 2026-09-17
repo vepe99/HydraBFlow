@@ -1,0 +1,8 @@
+# MLP variant of imm_vcirc: single-modality coupling-flow posterior whose summary net
+# (saved as summary_network_weights.npz) is frozen inside a score-matching model later.
+defaults:
+  - override summary_network: imm_vcirc_mlp
+  - override inference_network: coupling_flow
+  - _self_
+
+name: imm_summarynet_vcirc_mlp

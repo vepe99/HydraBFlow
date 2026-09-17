@@ -601,3 +601,13 @@ def test_v4_store_window_matches_augmentation_window(compose):
     sub = get_simulator(cfg.simulator)._store_window_subsample
     assert sub["max_particles"] == 2000 and sub["pad_value"] == -999.0
     assert set(sub["windows"]) == {0, 1, 2} and sub["windows"][1]["ra_max"] == 140.0
+
+
+def test_log10_vcirc_floors_negative_noisy_bins():
+    """A noisy rotation-curve bin that went negative must not become NaN (it killed a 1e6-row run)."""
+    import numpy as np
+    from hydrabflow.registry import AUGMENTATIONS
+
+    aug = AUGMENTATIONS.get("log10_vcirc")({}, np.random.default_rng(0), {})
+    out = np.asarray(aug({"vcirc_kms": np.array([[[-5.0], [200.0]]])})["vcirc_kms"])
+    assert np.isfinite(out).all() and np.isclose(out[0, 1, 0], np.log10(200.0))

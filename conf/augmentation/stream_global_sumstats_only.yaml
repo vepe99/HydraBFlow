@@ -1,0 +1,19 @@
+# stream_global_ibata_grid_v2 minus the potential-observable steps (they KeyError when the adapter
+# drops vcirc_kms / vterm_kms / sigma_z). Summary layout + params unchanged.
+defaults:
+  - stream_global_ibata_grid_v2
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - stream_summary_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

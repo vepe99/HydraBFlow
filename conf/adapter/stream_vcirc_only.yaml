@@ -1,0 +1,7 @@
+# Rotation curve only. Pair with augmentation=stream_global_vcirc_only, model=imm_vcirc.
+# j is kept in the batch (adapter_keys includes `drop`) because the compositional evaluate reads
+# the member count off the raw j array, then dropped before the network.
+inference_variables: []
+summary_variables: [vcirc_kms]
+inference_conditions: [none]
+drop: [j]

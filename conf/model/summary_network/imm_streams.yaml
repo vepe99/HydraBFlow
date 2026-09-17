@@ -1,0 +1,15 @@
+# sim_summary backbone of stream_fusion_2modal, standalone. Channel contract of the 14-channel
+# stream_summary_grid layout; keep min_count == augmentation summary_min_count.
+type: masked_time_series_transformer
+summary_dim: 32
+num_blocks: 3
+num_heads: 4
+dropout: 0.1
+embed_dim_per_head: 8
+params:
+  time_axis: -1
+  count_channel: 10
+  vlos_count_channel: 11
+  stat_channels: [0, 1, 2, 3, 4, 5, 6, 7]
+  vlos_stat_channels: [8, 9]
+  min_count: 3

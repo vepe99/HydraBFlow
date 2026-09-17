@@ -161,6 +161,8 @@ def main() -> None:
                          "grid from the sample count")
     ap.add_argument("--panel-w", type=float, default=2.4, help="per-panel width [inches]")
     ap.add_argument("--panel-h", type=float, default=2.0, help="per-panel height [inches]")
+    ap.add_argument("--label", default="in ONE fixed potential (Cautun+2020)",
+                    help="what the rows are, for the figure titles")
     ap.add_argument("--dpi", type=int, default=0,
                     help="figure dpi; 0 (default) = 150, stepped to 110 for grids above 120 panels")
     args = ap.parse_args()
@@ -241,7 +243,7 @@ def main() -> None:
         phi2_grid_figure(
             real, samples, lims, f"{args.out}_{name}_phi2.png",
             ncol=args.grid_cols, panel_w=args.panel_w, panel_h=args.panel_h, dpi=args.dpi,
-            suptitle=f"{name} — {n_samples} realizations in ONE fixed potential (Cautun+2020), "
+            suptitle=f"{name} — {n_samples} realizations {args.label}, "
                      f"{kind}\nvarying per row: {varying_label}; grey = real Gaia members",
         )
 
@@ -283,7 +285,7 @@ def main() -> None:
                 ax.set_xlabel("phi1 [deg]", fontsize=10)
     axes2[0][0].legend(fontsize=6, markerscale=2, ncol=2, loc="best")
     fig2.suptitle(f"All {n_samples} realizations overlaid (varying: {varying_label}) — "
-                  f"fixed Cautun+2020 potential, "
+                  f"{args.label}, "
                   f"{kind}; black = real Gaia members", fontsize=13)
     fig2.tight_layout(rect=(0, 0, 1, 0.97))
     fig2.savefig(f"{args.out}_overlay.png", dpi=130)

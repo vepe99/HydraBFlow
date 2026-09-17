@@ -1,0 +1,9 @@
+# stream_fusion_2modal (grouped_diffusion, modality dropout, 2 modalities) with the OLD grid summary
+# estimator. Pair with augmentation=stream_global_ibata_grid / stream_real_global_ibata_grid,
+# adapter=stream_2modal, eval=stream_compositional_masked.
+defaults:
+  - stream_fusion_2modal
+  - override summary_network: stream_fusion_2modal_oldgrid
+  - _self_
+
+name: stream_fusion_2modal_oldgrid

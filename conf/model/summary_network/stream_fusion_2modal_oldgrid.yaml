@@ -1,0 +1,25 @@
+# stream_fusion_2modal with the sim_summary backbone swapped for a plain TimeSeriesTransformer over
+# the OLD phi1 grid (augmentation=stream_global_ibata_grid: out-of-range stars clipped into the end
+# bins, every bin kept however sparse, sample std, no occupancy channels; 12-channel layout).
+# Ablation of the v2 estimator alone -- grouped_diffusion, head: null and the curve branch unchanged.
+type: fusion
+params:
+  mask_backbone: null
+  head: null                   # required by grouped_diffusion (see stream_fusion_2modal.yaml)
+  backbones:
+    sim_summary:
+      type: time_series_transformer
+      summary_dim: 32
+      num_blocks: 3
+      num_heads: 4
+      dropout: 0.1
+      embed_dim_per_head: 8
+      params:
+        time_axis: -1          # last channel of sim_summary is the phi1 bin-centre
+    vcirc_kms:
+      type: time_series_transformer
+      summary_dim: 62
+      num_blocks: 5
+      num_heads: 6
+      dropout: 0.1
+      embed_dim_per_head: 11

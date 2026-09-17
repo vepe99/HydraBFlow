@@ -70,6 +70,43 @@ def _deep_set(cfg) -> Any:
     return bf.networks.DeepSet(summary_dim=int(cfg.summary_dim), dropout=float(cfg.dropout))
 
 
+def _as_summary_network(inner):
+    """Wrap a plain keras layer/model as a BayesFlow ``SummaryNetwork``.
+
+    Inside a ``FusionNetwork`` a bare ``keras.Sequential`` is fine (it is only *called*), but as the
+    ONLY summary network BayesFlow calls ``compute_metrics(x, stage=...)`` on it, which a keras
+    Model does not accept. The wrapper supplies the SummaryNetwork contract and stays serializable.
+    """
+    from bayesflow.networks.summary.summary_network import SummaryNetwork
+    from bayesflow.utils.serialization import deserialize, serializable, serialize
+
+    @serializable("hydrabflow.networks")
+    class WrappedSummaryNetwork(SummaryNetwork):
+        def __init__(self, inner, **kwargs):
+            super().__init__(**kwargs)
+            self.inner = inner
+
+        def build(self, input_shape):
+            if not self.inner.built:
+                self.inner.build(input_shape)
+            self.built = True
+
+        def compute_output_shape(self, input_shape):
+            return self.inner.compute_output_shape(input_shape)
+
+        def call(self, x, training: bool = False, **kwargs):
+            return self.inner(x, training=training)
+
+        def get_config(self) -> dict:
+            return {**super().get_config(), **serialize({"inner": self.inner})}
+
+        @classmethod
+        def from_config(cls, config, custom_objects=None):
+            return cls(**deserialize(config, custom_objects=custom_objects))
+
+    return WrappedSummaryNetwork(inner)
+
+
 @register_summary_network("mlp")
 def _mlp(cfg) -> Any:
     """A plain MLP backbone for *already-summarised* inputs — e.g. a hand-crafted per-stream
@@ -80,13 +117,15 @@ def _mlp(cfg) -> Any:
     import bayesflow as bf
     import keras
 
-    return keras.Sequential(
-        [
-            keras.layers.Flatten(),
-            bf.networks.MLP(widths=[int(cfg.mlp_width)] * int(cfg.mlp_depth),
-                            dropout=float(cfg.dropout)),
-            keras.layers.Dense(units=int(cfg.summary_dim)),
-        ]
+    return _as_summary_network(
+        keras.Sequential(
+            [
+                keras.layers.Flatten(),
+                bf.networks.MLP(widths=[int(cfg.mlp_width)] * int(cfg.mlp_depth),
+                                dropout=float(cfg.dropout)),
+                keras.layers.Dense(units=int(cfg.summary_dim)),
+            ]
+        )
     )
 
 
@@ -99,15 +138,17 @@ def _feature_transformer(cfg) -> Any:
     import keras
 
     blocks = int(cfg.num_blocks)
-    return keras.Sequential(
-        [
-            keras.layers.Reshape((-1, 1)),
-            bf.networks.TimeSeriesTransformer(
-                summary_dim=int(cfg.summary_dim),
-                embed_dims=(_embed_dim(cfg),) * blocks,
-                num_heads=(int(cfg.num_heads),) * blocks,
-            ),
-        ]
+    return _as_summary_network(
+        keras.Sequential(
+            [
+                keras.layers.Reshape((-1, 1)),
+                bf.networks.TimeSeriesTransformer(
+                    summary_dim=int(cfg.summary_dim),
+                    embed_dims=(_embed_dim(cfg),) * blocks,
+                    num_heads=(int(cfg.num_heads),) * blocks,
+                ),
+            ]
+        )
     )
 
 
@@ -131,5 +172,21 @@ def _diffusion(cfg) -> Any:
         subnet_kwargs={
             "widths": [int(cfg.mlp_width)] * int(cfg.mlp_depth),
             "time_embedding_dim": int(cfg.time_embedding_dim),
+        },
+    )
+
+
+@register_inference_network("coupling_flow")
+def _coupling_flow(cfg) -> Any:
+    """Affine coupling flow (exact likelihood). ``params.depth`` / ``params.transform`` optional."""
+    import bayesflow as bf
+
+    p = cfg.params or {}
+    return bf.networks.CouplingFlow(
+        depth=int(p.get("depth", 6)),
+        transform=str(p.get("transform", "affine")),
+        subnet_kwargs={
+            "widths": [int(cfg.mlp_width)] * int(cfg.mlp_depth),
+            "dropout": float(cfg.dropout),
         },
     )

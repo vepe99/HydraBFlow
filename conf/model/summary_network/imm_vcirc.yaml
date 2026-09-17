@@ -1,0 +1,8 @@
+# Rotation-curve backbone of stream_fusion_2modal, standalone (single summary variable -> the type
+# IS the network, no fusion wrapper). summary_dim 32 so it can be frozen into a 2-modality model.
+type: time_series_transformer
+summary_dim: 32
+num_blocks: 5
+num_heads: 6
+dropout: 0.1
+embed_dim_per_head: 11
