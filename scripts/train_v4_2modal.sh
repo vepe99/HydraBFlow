@@ -22,6 +22,7 @@ if [ "${GPU}" = "cpu" ]; then
 else
   if [ "${GPU}" = "auto" ]; then
     eval "$(${AUTOCVD:-uv run autocvd} -n 1)"
+    export CUDA_VISIBLE_DEVICES   # autocvd prints a plain assignment; unexported, the Python-side autocvd waits again
   else
     export CUDA_VISIBLE_DEVICES="${GPU}"
   fi

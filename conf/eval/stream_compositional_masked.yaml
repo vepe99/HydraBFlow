@@ -19,7 +19,6 @@ sample_kwargs:
   method: two_step_adaptive
   steps: adaptive
   compositional_bridge_d1: 0.166667
-  # Item mini-batching subsamples items with take_along_axis on the conditions only, so the mask
-  # rows would stop lining up with their items. `compositional_score` forces it off while a plan
-  # is active; pinning it here makes that explicit (the default is max(0.1*n, 2) = 2 of 4).
-  mini_batch_size: 4
+  # No mini_batch_size: bayesflow 2.0.13 forces it to num_items on JAX ("jax does not support
+  # mini-batching"), and GroupedDiffusionModel.compositional_score disables it while a mask plan is
+  # active anyway, so every item enters every step.

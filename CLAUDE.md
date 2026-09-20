@@ -1741,3 +1741,58 @@ Knowledge graph at `graphify-out/`.
   agrees between the two sumstats arms to ~1 %. TST MMD 2.78 p_strat 0.01, members 72/92/78 (MLP 73/95/73;
   particles 100/100/100). Halo-only pooled miscalibration (rho/gamma/a ~0.1, disk 0.02) reproduced in all
   three, as before.
+- Session 2026-09-18 (compositional_bridge_d1 sweep on the oldgrid model + v4 palau oldgrid run):
+  `scripts/sweep_bridge_d1.py` (Hydra app via `make_cli`; compositional stage ONLY, model loaded
+  once, `D1_VALUES` env var, `d1_<v>/compositional_*` + `sweep_summary.json`, resumable). Swept
+  d1 in {0.05,0.1,0.15,1/6,0.2,0.25,0.333} on `outputs/v4_2modal_legacy_oldgrid` (table +
+  verdict in its `sweep_d1/README.md`). **No d1 calibrates the pooled posterior**: the bridge is
+  one scalar damping while the miscalibration is direction-specific — d1=0.05 makes the halo
+  rho/gamma/a near-perfect (0.009/0.016/0.011) but the disk r/z under-confident (0.19/0.21);
+  raising d1 does the reverse. Mean optimum flat at 0.15–1/6 (0.0627/0.0625), so the default 1/6
+  stays and the existing `eval_real` IS the best-calibrated real run (not re-run). `mini_batch_size`
+  removed from `conf/eval/stream_compositional_masked.yaml`: bayesflow 2.0.13 forces it to
+  num_items on JAX ("jax does not support mini-batching") and the mask plan disabled it anyway —
+  a pure no-op. **Runner bug fixed** (`train_v4_2modal.sh`): `eval "$(autocvd -n 1)"` sets an
+  UNexported shell variable, so `utils/backend.py`'s own autocvd call waited "indefinitely" for a
+  free GPU whenever none was — added `export CUDA_VISIBLE_DEVICES` (or pass `-e`). Note
+  `autocvd -l` (least-used) to share a card. **v4 palau + oldgrid** (`outputs/v4_2modal_palau_oldgrid`,
+  = palau_tst but `augmentation=stream_global_ibata_grid`, `model=stream_fusion_2modal_oldgrid`,
+  1000 ep, 1.48 h): sim base RMSE 0.593/calib 0.017, compositional **0.568/0.029** (palau_tst
+  grid_v2: 0.738/0.012 and 0.725/0.043) — the old grid is more informative on every parameter AND
+  the pooled calibration is the best of any 2-modal run (3x below the legacy oldgrid's 0.0625, so
+  the halo-only pooled miscalibration is dataset/prior-dependent, worst on the broad legacy prior).
+  Real Gaia: q_halo **1.28 [1.19,1.38]** (per stream 1.35/1.26/1.32, coherent; grid_v2 gave a
+  prior-like 1.04 [0.75,1.29]), gamma 0.98, log10 M200 11.7, ln c' 2.47, Sigma/r/z_Disk 9.14/0.49/
+  -0.52 (log10). MMD 2.72, p_strat 0.015, members 99.4/98.4/100th pct (grid_v2: 92/95/96).
+  Uncommitted.
+- Session 2026-09-18 (Optuna study on the 2-modal oldgrid model, palau v4 set — RUNNING): per user,
+  `conf/tuning/stream_2modal_oldgrid.yaml` (study `stream_2modal_oldgrid_study`; both TST backbones:
+  summary_dim/num_blocks/num_heads/embed_dim_per_head/dropout; DiffusionTransformer subnet:
+  dt_width{64..256}/dt_num_layers/dt_num_heads{2,4,8}/dt_time_embedding_dim/dt_dropout), 1000
+  epochs/trial, 50 trials, **missing_modality_prob pinned 0.5**, objectives = base RMSE + calib on
+  the val split (`eval.batch_size=256 num_samples=500`: at 32 the 12k-row val scoring alone took ~70
+  min/trial, now ~20). One worker on GPU 6: `scripts/tune_2modal_oldgrid.sh` (~1.5 h train + 20 min
+  score per trial ⇒ ~4 days). Companion **`scripts/tune_post_eval.sh`** polls the trials dir and,
+  for every finished trial, runs the full `evaluate` twice — pooled compositional on the 333 test set
+  (`trial_XXXX/eval_sim_333/`) and real Gaia (`trial_XXXX/eval_real/`: corner, MMD, pairs) —
+  re-expressing the sampled hyperparameters from the new per-trial `params.json` (dumped by
+  `tune.py`) as Hydra overrides; the shared preprocessing state is symlinked into each trial dir.
+  Study + trials under `data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_palau_hydrabflow/tuning/
+  stream_2modal_oldgrid_study/`; logs `outputs/tuning_2modal_oldgrid/{worker,post_eval}.log`.
+  **Bug fixed (affected every earlier tuning study)**: the inline `tuning.search_space` in
+  `conf/config.yaml` dict-MERGED into any selected `tuning=` preset, so the Ibata studies silently
+  also searched `training.learning_rate` + unused top-level `summary_network.*`/`mlp_*` fields.
+  Moved it to `conf/tuning/default.yaml` (`- tuning: default`): a group file is replaced wholesale.
+  `params.json` of the smoke trial is what exposed it. Also: `scripts/corner_modalities.py` (real
+  Gaia: per-stream with curve masked via `eval.observed_groups=[sim_summary]`, curve-only, and the
+  compositional pooling; palau oldgrid: q from the streams 1.22-1.36, curve-only q ≈ prior, pooled
+  1.28; Sigma_Disk is the modality tension — streams at the 1.5e9 ceiling vs curve 1.25e9).
+  Shell gotcha (bit three times): `pkill -f`/`pgrep -f <pattern>` match the calling `bash -c`
+  itself → exit 144; anchor the pattern (`^\.venv/bin/python -m ...`) or kill by PID.
+  Follow-ups same session: the watcher's overrides must be `++path=value` (struct mode rejects the
+  undeclared `dt_time_embedding_dim`/`dt_dropout`; `tune.py` adds them with `force_add`) — first
+  2 h of watcher polls failed on that, fixed and restarted. `scripts/tuning_pareto.py <study_dir>
+  --out outputs/tuning_2modal_oldgrid` collates the Optuna journal + per-trial eval_sim_333 /
+  eval_real results into `trials.csv` and plots `pareto_val.png` (Optuna objectives, front
+  highlighted), `pareto_compositional.png`, `real_q_vs_calib.png`; re-run any time. Trials 0/1:
+  val RMSE 0.616/0.604, calib 0.006, ~2 h each.

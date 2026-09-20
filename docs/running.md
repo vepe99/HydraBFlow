@@ -155,7 +155,7 @@ uv run hydrabflow-tune          # multi-objective: RMSE + calibration error
 ```
 
 The study lives in `tuning.storage_dir` as a concurrency-safe log, so running the command N times
-in parallel extends one study. Search space: `tuning.search_space` in `conf/config.yaml`.
+in parallel extends one study. Search space: `tuning.search_space` in `conf/tuning/default.yaml` (a preset under `conf/tuning/` replaces it wholesale).
 
 ## GPU / CPU
 

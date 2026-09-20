@@ -1,0 +1,22 @@
+# stream_2modal_oldgrid, but every trial is SCORED ON THE 333-GROUP TEST SET: after training, the
+# objective runs `evaluate` (base per-member + masked compositional, eval_sim/) and then the real
+# Gaia `evaluate` (eval_real/: corner, MMD, pairs) before the next trial. Objectives = base RMSE +
+# calibration means from eval_sim/base_metrics.json. Runner: scripts/tune_2modal_oldgrid.sh with
+# TUNING=tuningtest_2modal_oldgrid (its CLI overrides — simulator/model/adapter/... — are forwarded
+# to both evaluate calls; the lists below are applied on top, then the trial's ++params).
+defaults:
+  - stream_2modal_oldgrid
+study_name: tuningtest_2modal_oldgrid_study
+test_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=8
+  - eval.num_samples=1000
+  - data.n_simulations=333
+  - eval.test_dataset_name=test_multistream_333.npz
+real_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=8
+  - eval.num_samples=1000
+  - preprocessing=stream_real_global_ibata_sumstats
+  - augmentation=stream_real_global_ibata_grid
+  - data.real_data_path=assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

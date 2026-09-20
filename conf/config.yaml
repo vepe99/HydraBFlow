@@ -20,7 +20,7 @@ defaults:
   - adapter: null               # e.g. adapter=stream
   - composition: null           # composition=global | local (default: single-level)
   - eval: null                  # e.g. eval=stream_compositional
-  - tuning: null                # e.g. tuning=stream
+  - tuning: default             # search space only; e.g. tuning=stream
 
 seed: 42
 
@@ -116,13 +116,8 @@ tuning:
   n_trials: 50
   n_epochs: 10                    # short budget per trial
   directions: [minimize, minimize]
-  search_space:
-    model.summary_network.summary_dim: {type: int, low: 16, high: 64}
-    model.summary_network.num_heads: {type: int, low: 2, high: 8}
-    model.summary_network.embed_dim_per_head: {type: int, low: 8, high: 32, step: 8}
-    model.inference_network.mlp_depth: {type: int, low: 2, high: 8}
-    model.inference_network.mlp_width: {type: int, low: 32, high: 256, step: 16}
-    training.learning_rate: {type: float, low: 1e-4, high: 1e-3, log: true}
+  # search_space lives in conf/tuning/default.yaml: a group file is REPLACED by a selected preset,
+  # whereas a dict here would silently dict-MERGE into every preset's search space.
 
 # The only output-path setting in this file: train, evaluate and tune all write here, so there is no
 # per-block `output_dir`. Every launch gets its own timestamped dir and Hydra writes the resolved

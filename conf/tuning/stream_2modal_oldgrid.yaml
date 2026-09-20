@@ -1,0 +1,47 @@
+# Optuna search space for the two-modality oldgrid model (model=stream_fusion_2modal_oldgrid,
+# adapter=stream_2modal, augmentation=stream_global_ibata_grid): the two TimeSeriesTransformer
+# summary backbones and the DiffusionTransformer subnet of grouped_diffusion. Objectives = base
+# (per-member) RMSE + calibration on the val split; the pooled compositional + real-Gaia evaluation of
+# every finished trial is produced alongside by scripts/tune_post_eval.sh. missing_modality_prob is
+# NOT searched (pinned by the runner). Attention widths stay divisible by the head count through
+# embed_dim_per_head; dt_width choices are all multiples of 8 = every dt_num_heads choice.
+study_name: stream_2modal_oldgrid_study
+storage_dir: ${data.data_dir}/tuning
+n_trials: 50
+n_epochs: 1000
+directions: [minimize, minimize]
+
+search_space:
+  # --- sim_summary backbone (gridded per-stream summary statistics, plain TST) ---
+  model.summary_network.params.backbones.sim_summary.summary_dim:
+    { type: int, low: 16, high: 64, step: 2 }
+  model.summary_network.params.backbones.sim_summary.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.sim_summary.num_heads:
+    { type: int, low: 2, high: 8 }
+  model.summary_network.params.backbones.sim_summary.embed_dim_per_head:
+    { type: int, low: 4, high: 16 }
+  model.summary_network.params.backbones.sim_summary.dropout:
+    { type: float, low: 0.0, high: 0.3, step: 0.05 }
+  # --- vcirc_kms backbone (Ou+2024 rotation curve, 19 radii) ---
+  model.summary_network.params.backbones.vcirc_kms.summary_dim:
+    { type: int, low: 32, high: 96, step: 2 }
+  model.summary_network.params.backbones.vcirc_kms.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.vcirc_kms.num_heads:
+    { type: int, low: 2, high: 8 }
+  model.summary_network.params.backbones.vcirc_kms.embed_dim_per_head:
+    { type: int, low: 4, high: 16 }
+  model.summary_network.params.backbones.vcirc_kms.dropout:
+    { type: float, low: 0.0, high: 0.3, step: 0.05 }
+  # --- grouped_diffusion: DiffusionTransformer subnet ---
+  model.inference_network.params.dt_width:
+    { type: categorical, choices: [64, 128, 192, 256] }
+  model.inference_network.params.dt_num_layers:
+    { type: int, low: 2, high: 6 }
+  model.inference_network.params.dt_num_heads:
+    { type: categorical, choices: [2, 4, 8] }
+  model.inference_network.params.dt_time_embedding_dim:
+    { type: int, low: 16, high: 64, step: 4 }
+  model.inference_network.params.dt_dropout:
+    { type: float, low: 0.0, high: 0.2, step: 0.05 }

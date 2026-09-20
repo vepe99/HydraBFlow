@@ -3,7 +3,8 @@
 A multi-objective study (RMSE + calibration error by default; a single ``tuning.directions`` entry
 gives a single-objective RMSE study). The dataset is loaded and preprocessed once; each trial
 overlays its sampled hyperparameters on a copy of the config, trains a fresh workflow for
-``tuning.n_epochs``, and scores the validation split.
+``tuning.n_epochs``, and scores the validation split — or, with ``tuning.test_eval_overrides``, runs
+the ``evaluate`` stage on a test set (and optionally real data) and scores that.
 
 Concurrency: the study is a ``JournalStorage`` over one append-safe ``.log``, so launching the same
 command N times (same ``study_name`` + ``storage_dir``) runs trials of one shared study.
@@ -19,6 +20,8 @@ import copy
 import json
 import logging
 import os
+import subprocess
+import sys
 
 import numpy as np
 
@@ -73,13 +76,14 @@ def _save_shared_preprocessing(pipeline, artifacts_dir: str) -> str:
     return path
 
 
-def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations):
+def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations, pipeline=None):
     import keras
     import optuna
-    from bayesflow.diagnostics import metrics as bf_metrics
     from omegaconf import OmegaConf
 
     cfg = copy.deepcopy(base_cfg)
+    if cfg.tuning.test_eval_overrides is not None and not bool(cfg.tuning.save_artifacts):
+        raise ValueError("tuning.test_eval_overrides needs tuning.save_artifacts=true")
     for path, spec in base_cfg.tuning.search_space.items():
         OmegaConf.update(cfg, path, _suggest(trial, path, spec), force_add=True)
 
@@ -96,7 +100,7 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
             epochs=int(cfg.tuning.n_epochs),
             batch_size=int(batch_size),
             augmentations=augmentations or None,
-            verbose=0,
+            verbose=int(cfg.training.verbose),
             callbacks=[keras.callbacks.TerminateOnNaN()],
         )
 
@@ -112,6 +116,39 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
         raise
     artifacts.restore_best_weights(workflow, trial_dir)
 
+    if bool(cfg.tuning.save_artifacts):
+        artifacts.save_approximator(workflow, trial_dir)
+        artifacts.save_history(history, trial_dir)
+        # Sampled hyperparameters as dotted config paths: `evaluate` re-expresses this trial with
+        # `++path=value` overrides (below, and scripts/tune_post_eval.sh).
+        with open(os.path.join(trial_dir, "params.json"), "w") as f:
+            json.dump(dict(trial.params), f, indent=2)
+        trial.set_user_attr("artifact_dir", trial_dir)
+
+    if cfg.tuning.test_eval_overrides is not None:
+        pipeline.save(os.path.join(trial_dir, PREPROCESSING_STATE))  # evaluate loads it from model_dir
+        rmse_mean, cal_mean = _score_on_test_set(cfg, trial, trial_dir)
+    else:
+        rmse_mean, cal_mean = _score_on_val(cfg, workflow, val_data, param_names, trial_dir)
+
+    # A trial that diverged from the start has no finite best weights, so its RMSE is NaN. Return a
+    # finite worst case instead, so the trial completes and the sampler learns to avoid that region.
+    if not np.isfinite(rmse_mean):
+        log.warning("Trial %d: non-finite RMSE (training diverged); penalizing.", trial.number)
+        rmse_mean = _NAN_PENALTY_RMSE
+    if not np.isfinite(cal_mean):
+        cal_mean = 1.0
+    trial.set_user_attr("rmse", rmse_mean)
+    trial.set_user_attr("calibration_error", cal_mean)
+
+    if len(base_cfg.tuning.directions) == 1:
+        return rmse_mean
+    return rmse_mean, cal_mean
+
+
+def _score_on_val(cfg, workflow, val_data, param_names, trial_dir):
+    from bayesflow.diagnostics import metrics as bf_metrics
+
     # The sampling step can OOM too (batch_size * num_samples rows through the integrator).
     posterior = run_with_oom_backoff(
         lambda batch_size: workflow.sample(
@@ -126,28 +163,52 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
         estimates=posterior, targets=val_data, variable_keys=param_names)["values"]))
     cal_mean = float(np.mean(bf_metrics.calibration_error(
         estimates=posterior, targets=val_data, variable_keys=param_names)["values"]))
-
-    # A trial that diverged from the start has no finite best weights, so its RMSE is NaN. Return a
-    # finite worst case instead, so the trial completes and the sampler learns to avoid that region.
-    if not np.isfinite(rmse_mean):
-        log.warning("Trial %d: non-finite RMSE (training diverged); penalizing.", trial.number)
-        rmse_mean = _NAN_PENALTY_RMSE
-    if not np.isfinite(cal_mean):
-        cal_mean = 1.0
-
     # The val split carries ground truth, so the evaluate stage's diagnostics apply here too.
     if bool(cfg.tuning.save_artifacts):
-        artifacts.save_approximator(workflow, trial_dir)
-        artifacts.save_history(history, trial_dir)
         artifacts.save_posterior(posterior, trial_dir)
         artifacts.run_diagnostics(cfg, posterior, val_data, param_names, trial_dir)
-        trial.set_user_attr("artifact_dir", trial_dir)
-        trial.set_user_attr("rmse", rmse_mean)
-        trial.set_user_attr("calibration_error", cal_mean)
-
-    if len(base_cfg.tuning.directions) == 1:
-        return rmse_mean
     return rmse_mean, cal_mean
+
+
+def _cli_overrides() -> list[str]:
+    """This process's Hydra task overrides, minus the output dir (each evaluate gets its own)."""
+    from hydra.core.hydra_config import HydraConfig
+
+    try:
+        task = list(HydraConfig.get().overrides.task)
+    except ValueError:  # not running under Hydra (unit tests)
+        task = []
+    return [o for o in task if not o.lstrip("+").startswith("hydra.")]
+
+
+def _evaluate_subprocess(cfg, trial, trial_dir, extra, out_dir) -> None:
+    cmd = [sys.executable, "-m", "hydrabflow.pipeline.evaluate", *_cli_overrides(), *extra,
+           *(f"++{k}={v}" for k, v in trial.params.items()),
+           f"model_dir={trial_dir}", f"hydra.run.dir={out_dir}"]
+    log.info("Trial %d: %s", trial.number, " ".join(cmd))
+    subprocess.run(cmd, check=True)
+
+
+def _score_on_test_set(cfg, trial, trial_dir):
+    """Objectives from the `evaluate` stage on the test set (+ optional real-data evaluate)."""
+    sim_dir = os.path.join(trial_dir, "eval_sim")
+    _evaluate_subprocess(cfg, trial, trial_dir, list(cfg.tuning.test_eval_overrides), sim_dir)
+    if cfg.tuning.real_eval_overrides is not None:
+        _evaluate_subprocess(
+            cfg, trial, trial_dir,
+            [*cfg.tuning.real_eval_overrides, f"eval.misspecification_reference={sim_dir}"],
+            os.path.join(trial_dir, "eval_real"),
+        )
+    # composition=global writes base_metrics.json (per-member); composition=none metrics.json
+    for name in ("base_metrics.json", "metrics.json"):
+        path = os.path.join(sim_dir, name)
+        if os.path.exists(path):
+            break
+    else:
+        raise FileNotFoundError(f"no metrics.json in {sim_dir}")
+    with open(path) as f:
+        m = json.load(f)
+    return float(m["rmse"]["mean"]), float(m["calibration_error"]["mean"])
 
 
 def run_tuning(cfg):
@@ -195,7 +256,8 @@ def run_tuning(cfg):
     # catch=(Exception,): a trial that raises is marked FAIL and the worker moves on, instead of the
     # exception propagating out of optimize() and killing the whole process.
     study.optimize(
-        lambda trial: _objective(trial, cfg, train_data, val_data, param_names, augmentations),
+        lambda trial: _objective(trial, cfg, train_data, val_data, param_names, augmentations,
+                                 pipeline),
         n_trials=int(cfg.tuning.n_trials),
         catch=(Exception,),
     )

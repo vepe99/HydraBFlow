@@ -186,6 +186,12 @@ class TuningConfig:
     directions: List[str] = field(default_factory=lambda: ["minimize", "minimize"])
     # dotted config path -> {type: int|float|categorical, low, high, step, log, choices}
     search_space: Dict[str, Any] = field(default_factory=dict)
+    # Score trials on a TEST SET instead of the val split: after training, each trial runs the
+    # `evaluate` stage as a subprocess (this CLI's overrides + these + the trial's params +
+    # model_dir=<trial>) into <trial>/eval_sim and reads its (base_)metrics.json for the objectives.
+    test_eval_overrides: Optional[List[str]] = None
+    # If also set, a second `evaluate` (real data) runs into <trial>/eval_real before the next trial.
+    real_eval_overrides: Optional[List[str]] = None
 
 
 @dataclass
