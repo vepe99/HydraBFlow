@@ -32,8 +32,8 @@ PRIOR = dict(log10_M200_halo=("u", 11.6, 12.4), c200_halo=("u", 8.0, 20.0), q_rh
              m_disk=("u", 3.0e10, 7.0e10), h_R_disk=("n", 2.6, 0.5), h_z_disk=("n", 0.3, 0.05))
 LOCAL = {  # observed present-day phase space (prior means), mid-prior initial mass, t_end = 4 Gyr
     "Pal5": dict(ra=229.022, dec=-0.112, vr=-58.6, r=20.6, mu_ra_cosdec=-2.736, mu_dec=-2.646, m_progenitor=4.2e4, m_progenitor_final=1.34e4, a_progenitor=30.0, t_end=4.0),
-    "NGC3201": dict(ra=154.403, dec=-46.412, vr=494.34, r=4.9, mu_ra_cosdec=8.324, mu_dec=-1.991, m_progenitor=2.25e5, m_progenitor_final=1.93e5, a_progenitor=30.0, t_end=4.0),
-    "M68": dict(ra=189.867, dec=-26.744, vr=-92.99, r=10.3, mu_ra_cosdec=-2.752, mu_dec=1.762, m_progenitor=3.4e5, m_progenitor_final=1.28e5, a_progenitor=30.0, t_end=4.0),
+    "NGC3201": dict(ra=154.403, dec=-46.412, vr=495.38, r=4.737, mu_ra_cosdec=8.348, mu_dec=-1.958, m_progenitor=2.25e5, m_progenitor_final=1.93e5, a_progenitor=30.0, t_end=4.0),
+    "M68": dict(ra=189.867, dec=-26.744, vr=-93.11, r=10.404, mu_ra_cosdec=-2.739, mu_dec=1.779, m_progenitor=3.4e5, m_progenitor_final=1.28e5, a_progenitor=30.0, t_end=4.0),
 }
 OBS = ["phi2", "mu_phi1", "mu_phi2", "v_los"]; UNITS = ["deg", "mas/yr", "mas/yr", "km/s"]
 

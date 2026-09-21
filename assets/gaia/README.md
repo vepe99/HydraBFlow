@@ -21,6 +21,9 @@ generated datasets under the `data/` symlink (which is machine-local shared stor
 | `gaia_DR3_erorr_6D.txt` | 612 B | same: Gaia DR3 6D measurement error vs magnitude |
 | `gaia_observed_streams_6Dwitherrors_cutNGC3201.npz` | 242 K | **current** real observations — PPC `--real` default + `data.real_data_path` for `evaluate_real` (Pal5/NGC3201/M68, NGC3201 window cut) |
 | `gaia_observed_streams_6Dwitherrors.npz` | 242 K | prior variant (pre-NGC3201-cut); kept for provenance |
+| `gaia_observed_streams_6Dwitherrors_cutNGC3201_desi.npz` | 236 K | 2026-09-21: same STREAMFINDER members, v_los augmented with DESI DR1 MWS (`desi_dr1.mws` via NOIRLab Data Lab TAP, 2" match, `rvs_warn=0`, lowest error wins): Pal5 69->77, NGC3201 37->48, M68 29->47 |
+| `gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau.npz` | 236 K | as above, but the M68 arm = Palau & Miralda-Escude 2025 Gaia DR3 selection (Zenodo 17020518 `stream.csv`, 287 of 291 stars inside the M68 window: 195 main component + 92 envelope; 32 v_los incl. 30 DESI) |
+| `gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz` | 236 K | **recommended (2026-09-21)**: as above with the M68 ENVELOPE removed (main component only, 195 stars, 16 v_los). Prior-predictive checks: the spray forward model reproduces this M68 arm's per-bin dispersions but not the envelope's |
 | `gaia_observed_streams.npz` | 169 K | older variant; kept for provenance |
 | `Pal5_track.npz`, `NGC3201_track.npz`, `M68_track.npz` | ~490 K | reference stream sky tracks; **not read by current repo code** — kept for plotting/provenance |
 

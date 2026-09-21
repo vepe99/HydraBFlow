@@ -38,6 +38,11 @@ params:
       type: uniform
       prior_parameters: [1.0e7, 1.5e9]
 
+  # Present-day phase-space priors (2026-09-21 update): NGC3201 and M68 use the Gaia-EDR3-era catalogues —
+  # distances Baumgardt & Vasiliev 2021 (MNRAS 505, 5957), proper motions Vasiliev & Baumgardt 2021 (MNRAS 505,
+  # 5978; errors include the ~0.02-0.025 mas/yr Gaia systematic floor), radial velocities Baumgardt GC database v4
+  # (https://people.smp.uq.edu.au/HolgerBaumgardt/globular/). Pal5 deliberately KEEPS its older prior (RR Lyrae
+  # distance 20.6 +/- 0.2 kpc, Price-Whelan+2019) — BV21 give 21.94 +/- 0.52 from un-extinction-corrected moduli.
   priors_local:
     Pal5:
       m_progenitor:
@@ -85,16 +90,16 @@ params:
         prior_parameters: [-46.412]
       vr:
         type: normal
-        prior_parameters: [494.34, 0.14]
+        prior_parameters: [495.38, 0.06]   # Baumgardt GC database v4 (03/2023); was [494.34, 0.14]
       r:
         type: normal
-        prior_parameters: [4.9, 0.11]
+        prior_parameters: [4.737, 0.043]   # Baumgardt & Vasiliev 2021, Tab. 2; was [4.9, 0.11]
       mu_ra_cosdec:
         type: normal
-        prior_parameters: [8.324, 0.044]
+        prior_parameters: [8.348, 0.022]   # Vasiliev & Baumgardt 2021 (incl. Gaia systematics); was [8.324, 0.044]
       mu_dec:
         type: normal
-        prior_parameters: [-1.991, 0.044]
+        prior_parameters: [-1.958, 0.022]   # Vasiliev & Baumgardt 2021 (incl. Gaia systematics); was [-1.991, 0.044]
     M68:
       m_progenitor:
         type: identity
@@ -113,13 +118,13 @@ params:
         prior_parameters: [-26.744]
       vr:
         type: normal
-        prior_parameters: [-92.99, 0.22]
+        prior_parameters: [-93.11, 0.18]   # Baumgardt GC database v4 (03/2023); was [-92.99, 0.22]
       r:
         type: normal
-        prior_parameters: [10.3, 0.52]
+        prior_parameters: [10.404, 0.10]   # Baumgardt & Vasiliev 2021, Tab. 2; was [10.3, 0.52]
       mu_ra_cosdec:
         type: normal
-        prior_parameters: [-2.752, 0.054]
+        prior_parameters: [-2.739, 0.024]   # Vasiliev & Baumgardt 2021 (incl. Gaia systematics); was [-2.752, 0.054]
       mu_dec:
         type: normal
-        prior_parameters: [1.762, 0.053]
+        prior_parameters: [1.779, 0.024]   # Vasiliev & Baumgardt 2021 (incl. Gaia systematics); was [1.762, 0.053]

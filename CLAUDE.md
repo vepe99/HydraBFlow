@@ -1874,3 +1874,52 @@ Knowledge graph at `graphify-out/`.
       cf. 2026-07-29) and adds an NGC3201 proper-motion track offset. Pal 5 is well covered in
       every representation and every family. Training the two arms (commands printed by the
       script; `RUNS_DIR=outputs/gala_mw22_2modal/{sumstats,particles}`) is the next step, not run.
+- Session 2026-09-21 (fixed-potential observation-space checks, updated progenitor priors, updated
+  Gaia member set, 1000-draw prior-predictive checks on binned medians/dispersions, 10^3-particle set):
+  - **Fixed-potential realizations** (50 rows, 10^4 particles, seed 2026; only the progenitors' present-
+    day phase space varies): `conf/simulator/stream_gala_spray_mw22_fixed.yaml` (MW2022 fiducial, gala
+    spray; `data_local/gala_mw22_fixed/`), then the agama Cautun+2020 pair (spray + rnbody,
+    `data_local/cautun_fixed_newpriors/{spray,rnbody}/`). Verdict identical in both Galaxies and both
+    stripping models: Pal5 reproduced (but spray too cold), NGC3201 phi2 -1.2 deg / mu_phi1 +1.7-2.8
+    mas/yr (2.5-3 sigma of the realization scatter; rnbody halves it), M68 phi2 bows +1.5-2 deg mid-
+    stream and v_los ~12 km/s low (3 sigma), both wide streams overflow the window. **Trihedron remap**
+    (`scripts/trihedron_fixed_mw22.py`: agama copy of the gala MW2022 potential, v_c to 4e-8) is a
+    39 ms/row drop-in for progenitor phase-space perturbations: row-for-row |remap - spray| is 5-12 %
+    of the realization scatter for Pal5/M68, 16-56 % for NGC3201. **M68's realization scatter was the
+    distance**: sigma_d 0.52 kpc (5 %) at a 110 deg lever arm gives 2.6 of the 3.1 deg phi2 scatter.
+  - **Progenitor phase-space priors updated** (`conf/simulator/stream_agama.yaml`, also the standalone
+    `stream_gala_spray_mw22.yaml`): NGC3201 d 4.737+/-0.043, vr 495.38+/-0.06, pm (8.348,-1.958)+/-0.022;
+    M68 d 10.404+/-0.10, vr -93.11+/-0.18, pm (-2.739,1.779)+/-0.024 — Baumgardt & Vasiliev 2021 (MNRAS
+    505, 5957) / Vasiliev & Baumgardt 2021 (505, 5978, incl. Gaia systematics) / Baumgardt GC database
+    v4. **Pal5 deliberately kept** (RR Lyrae 20.6+/-0.2, Price-Whelan+2019; BV21's 21.94+/-0.52 comes
+    from un-extinction-corrected moduli, and every 2025-26 stream paper still adopts 20.6). All old
+    values are in the yaml comments. Tightening M68 halves its band and turns the bow into a 2.6-4 sigma
+    tension per bin. No stored dataset uses the new priors except the ones below.
+  - **Real member set updated** (`assets/gaia/*_desi*.npz`, see its README): our real npz IS the Ibata+2024
+    STREAMFINDER atlas (Table 3 rows Pal-5 129/69, Gjoll 607/40 pre-cut, Fjorm 297/29). DESI DR1 MWS
+    RVs added via Data Lab TAP (Kuzma 2022 added nothing: its 38 matches already carry the same RVs;
+    Gaia-vs-DESI scatter 8 km/s with +5.7/-4.8 km/s offsets for NGC3201/M68). **Recommended set =
+    `..._desi_m68palau_main.npz`**: M68 = Palau & Miralda-Escude 2025 main component (195 stars), the
+    92-star envelope dropped. Palau, Wang, Han+2026 (arXiv:2608.15334, 96 DESI-RV stars, NOT released)
+    and PM25 (arXiv:2508.21408, 291 GDR3 stars on Zenodo 17020518) both find the stream wider than any
+    N-body with ~half the stars in an envelope.
+  - **Prior-predictive checks on binned statistics** (`scripts/ppc_median_tracks_prior.py --stat
+    median|std|std_mad`; equal-count phi1 bins of the real members, K=8, v_los K=3; chi2 vs the real
+    SE, P(sim<real) per bin, Spearman of chi2 with every drawn parameter, joint per-group chi2).
+    1000 groups of `stream_agama_spray_massloss_ibata_m200c_v4` (`data_local/m200c_v4_spray_prior_1000/`,
+    74 min at 48 workers) and the 10^3-particle twin (`..._p1e3/`, 10 min): **the m200_c prior covers
+    all three median tracks** (real inside the 16-84 % band in every bin; best draws within ~1 star-
+    sigma everywhere; heavy disk / higher M200 preferred by NGC3201+M68, q oblate by NGC3201, nothing
+    by Pal5), the fixed-Galaxy tensions were the fixed Galaxies. **Widths**: Pal5 covered; NGC3201 sims
+    too WIDE in every phi2 bin (P(sim<real) 0.01-0.16, as 2026-09-12); M68 too cold with the STREAM-
+    FINDER or full-Palau members (P 0.92-0.98) but **reproduced with the main component only** (P 0.3-
+    0.8 every bin) — the "cold M68" is an envelope problem. **10^3 vs 10^4 particles: every binned and
+    particle-level number agrees to ~0.02**, but 41 % of NGC3201 / 18 % of M68 rows store fewer in-window
+    stars than the real count at 10^3. Particle level (`ppc_particle_coverage.py`): Pal5 in-distribution
+    (MMD pct 63-65), NGC3201 100 and M68 92-93 driven by the phi1 footprint (sims pile up at the
+    progenitor end), not width.
+  - **Generating**: `data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow/` (v4 spray
+    config at `n_particles=1000`, new priors): `test_multistream_333.npz` done (seed 7, 48 MB);
+    `training_data_100000.npz` running at 100 workers (~13 rows/s, ETA ~2 h; watchdog launcher
+    `logs/run_spray_v4_p1e3_full.sh`, ~100 MB commit per worker). The 10^4 spray v4 set was never
+    completed (2/100 chunks).

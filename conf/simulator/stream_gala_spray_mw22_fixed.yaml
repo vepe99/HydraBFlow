@@ -1,0 +1,32 @@
+# gala particle-spray streams in the MilkyWayPotential2022 FIDUCIAL Galaxy, held FIXED.
+#
+# Diagnostic twin of stream_agama_rnbody_cautun_fixed for the gala/MW2022 family: every global is an
+# `identity` constant at the MW2022 value (Hunt+2022 / gala `MilkyWayPotential2022`: spherical NFW
+# halo M200 9.6e11 = log10 11.98, c200 13.3, i.e. q_rho = 1; MN3 disk 4.7717e10 / 2.6 / 0.3 kpc;
+# bulge + nucleus as in the parent config), and the progenitor mass / Plummer radius / stripping age
+# are pinned too (mid-prior INITIAL mass as in scripts/sensitivity_potential_params.py, 30 pc, 4 Gyr),
+# so the ONLY variation between rows is the present-day phase-space coordinates of each progenitor
+# within their measurement errors. n rows = n realizations of the three streams in ONE Galaxy, which
+# is the measurement-error-only yardstick used to compare against the Gaia members.
+defaults:
+  - stream_gala_spray_mw22
+
+name: stream_gala
+params:
+  priors_global:
+    log10_M200_halo: {type: identity, prior_parameters: [11.98]}
+    c200_halo:       {type: identity, prior_parameters: [13.3]}
+    q_rho_halo:      {type: identity, prior_parameters: [1.0]}
+    m_disk:          {type: identity, prior_parameters: [4.7717e10]}
+    h_R_disk:        {type: identity, prior_parameters: [2.6]}
+    h_z_disk:        {type: identity, prior_parameters: [0.3]}
+  priors_local:
+    Pal5:
+      m_progenitor: {type: identity, prior_parameters: [4.2e4]}
+      t_end:        {type: identity, prior_parameters: [4.0]}
+    NGC3201:
+      m_progenitor: {type: identity, prior_parameters: [2.25e5]}
+      t_end:        {type: identity, prior_parameters: [4.0]}
+    M68:
+      m_progenitor: {type: identity, prior_parameters: [3.4e5]}
+      t_end:        {type: identity, prior_parameters: [4.0]}
