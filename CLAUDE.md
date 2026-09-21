@@ -1796,3 +1796,81 @@ Knowledge graph at `graphify-out/`.
   eval_real results into `trials.csv` and plots `pareto_val.png` (Optuna objectives, front
   highlighted), `pareto_compositional.png`, `real_q_vs_calib.png`; re-run any time. Trials 0/1:
   val RMSE 0.616/0.604, calib 0.006, ~2 h each.
+
+- Session 2026-09-20 (gala particle-spray twin in a MilkyWayPotential2022-style Galaxy —
+  `stream_gala`, 10^4 x 10^4-star dataset + prior-predictive coverage in three representations):
+  a controlled twin of the v4 spray set on a different forward-model stack, asked for as "q in the
+  potential, prior flat in the derived density q". **Physics** (derivation in-session): flattening
+  the potential Phi(sqrt(R^2+z^2/c^2)) maps to a density axis ratio by the l=2 quadrupole match
+  `(1-q_rho)/(1-q_Phi) = (f''+2f'/r-6f/r^2)/(f''-2f/r^2)`, f=v_c^2 (=(5-gamma)/(3-gamma) for a
+  power law, the classic 3 at gamma=2); for NFW it runs 2.0 (r<<r_s) -> 2.3 (r_s) -> 4 (10 r_s),
+  so the factor-3 rule over-converts by 20-40 % at 5-30 kpc. The potential-flattened NFW has
+  NEGATIVE density on the pole for c_Phi < 0.888 (q_rho < 0.78), but only at z > 36 kpc (c=0.75)
+  — accepted by the user, recorded per row (`halo_rho_neg_r_kpc_derived`).
+  - **gala 1.11.0 added as a dependency** (`uv add gala`; agama unaffected; coexists with JAX in
+    one process in both import orders, still imported worker-only). `NFWPotential.from_M200_c`
+    uses astropy's default Planck18 rho_crit (127.05 Msun/kpc^3; MW2022 halo == M200 9.6e11,
+    c200 13.3) and returns a spherical halo, so `stream_gala` redoes its algebra in numpy and
+    builds `NFWPotential(m, r_s, c=c_phi)`.
+  - **`src/hydrabflow/simulators/stream_gala.py`** (`@register_simulator("stream_gala")`,
+    subclass of `AgamaStreamSimulator`, overrides ONLY `_row_jobs`): MW2022 family = fixed
+    Hernquist bulge/nucleus + free MN3 exponential disk (`m_disk`, `h_R_disk`, `h_z_disk`) + NFW
+    from (`log10_M200_halo`, `c200_halo`); **`q_rho_halo` ~ U[0.5,1.5] is inferred and c_Phi is
+    derived per row** by brentq on the analytic flattened-NFW Laplacian at `q_ref_r_kpc=15`
+    (stored `c_phi_halo_derived`, `m_nfw_halo_derived`, `r_s_halo_derived`); Chen+2024 spray via
+    gala `ChenStreamDF` + `MockStreamGenerator` with a Plummer progenitor (30 pc) and linear mass
+    loss through gala's time-varying `prog_mass` (index 0 = past, length n_steps+1); astropy default
+    Galactocentric frame both ways (solar frame NOT varied, unlike v4). Generic-diagnostics
+    refactor: the worker's slot 3 is now a `{name_derived: value}` dict (`_m200c_derived` for the
+    agama m200_c halo) that `simulate` stores `(n,1)` and `sample_compositional` regroups per
+    potential for every `*_derived` key.
+  - **gala gotchas (cost ~1 h)**: (1) gala releases `2*(n_steps+1)*n_particles_per_release`
+    stars -> `n_steps: 4999` for 1e4 (class checks the identity). (2) gala's default dop853
+    steps ALL particles in ONE shared adaptive call per time step (mockstream.pyx), so one star
+    through the Plummer core collapses the step -> `Integration failed with code -4` in ~15-40 %
+    of 1e4-star NGC3201/M68 rows, the stock MilkyWayPotential2022 included, independent of
+    tolerances/seed/progenitor potential. **Default `integrator: leapfrog`** (dt = t_end/n_steps
+    ~0.4-2 Myr): 0 failures in 48+24+999+... rows, agrees with dop853 to 6 pc median / 40 pc 90th
+    pct per particle after 4 Gyr (<0.06 deg on the in-window track), and is faster (~15 s/row vs
+    ~30). (3) the Chen DF release radius N(1.6,0.35) r_j has no floor -> ~2e-6 NaN stars; the
+    worker re-draws up to 0.1 % of them from the finite ones.
+  - Configs: `conf/simulator/stream_gala_spray_mw22.yaml` (standalone; 6 inferred globals in
+    prior order, identity bulge/nucleus, v4 spray_massloss locals verbatim, v4 window cap/Ou+2024
+    grid); `conf/preprocessing/stream_global_log10_gala_2modal.yaml` +
+    `stream_real_global_log10_gala.yaml` (log10 on the three disk params). Adapters/augmentations/
+    models are the 2-modality presets unchanged. Tests `tests/test_stream_gala.py` (11) + the
+    registry test; full suite green; ruff clean on the new files.
+  - **Dataset** `data_jarvis/data_gala_spray_mw22_hydrabflow/`: pilot (24 rows: 0 NaN, 21 s wall
+    at 24 workers, 473 MB parent RSS, in-window medians 2000/1988/2000 capped 100/50/83 %),
+    `test_multistream_333.npz` (seed 7, 48 workers, ~4 min, 48 MB), `training_data_10000.npz`
+    (seed 2026, 48 workers, 52 min, 484 MB: 0 NaN rows, streams 3308/3272/3420, in-window medians
+    2000 capped 100/60/70 %, c_phi in [0.739, 1.22], 3267 rows with a negative outer-halo density) via `scripts/create_gala_mw22_dataset.sh` (pilot ->
+    test -> train -> PPCs -> prints the two `train_v4_2modal.sh` commands; PILOT_ONLY=1 stops
+    after the pilot). Half the rows carry the negative outer-halo density (min radius 36 kpc).
+  - **New `scripts/ppc_particle_coverage.py`** = the raw-PARTICLE-representation twin of
+    `ppc_summary_grid_coverage.py`: sims through the training observation model, real members
+    through their preset, both in the real-fitted stream frame; per-observable quantile envelopes,
+    2-D overlays, and an RBF-MMD coverage rank (real-vs-sim MMD^2 vs the sim-vs-sim null; 100 =
+    real farther from every sim than sims from each other) for all / sky / pm / vlos / parallax.
+  - **Prior-predictive coverage on the 333 set (`<dataset>/ppc/`)** — the "are we still
+    misspecified?" answer, prior-level, before any training:
+    * Summary GRID (network input, 14 ch): Pal5 97 % of cells inside the central 95 %, NGC3201
+      84 %, M68 78 % (v4 rnbody: 97/89/93). Same signatures as v4 — NGC3201 occupancy channels at
+      98-100th pct in bins 1-8 (real footprint shorter than the sims), M68 every dispersion
+      channel (std_phi2/mu_phi2/vlos) at 97-100 (sims too cold: noise-convolved std_phi2 0.67 vs
+      1.38 deg real, P(sim<real)=1.00) — PLUS a new one: **NGC3201 med_mu_phi1 at the 92-100th
+      pct in 9/10 bins** (the whole simulated mu_phi1 track runs below the real one by ~3-5 mas/yr
+      at d=4.9 kpc, ~100 km/s — a potential/orbit effect, not the solar frame). Track PPC
+      (estimator) 98/89/89 % inside 95 %.
+    * PARTICLES (MMD rank all/sky/pm/vlos): Pal5 **52/30/41/70** — indistinguishable from the sims
+      (as the agama v4 rnbody 51/39/42/70 and spray 56/41/43/76 baselines run with the SAME
+      script). NGC3201 **100/69/100/100** (rnbody baseline 100/86/96/93, spray 100/93/100/98):
+      OOD in every family; in gala the mismatch is pm+vlos (the mu_phi1 offset above) while the
+      sky is the least discrepant. M68 **100/100/100/32** vs rnbody **78/65/76/37** and spray
+      99/97/99/28: the rnbody v4 set is the ONLY family where M68's star cloud is not OOD (its
+      restricted-N-body heating gives the width; both spray sets are too cold on sky+pm).
+    * Verdict: the gala/MW2022 potential family does not remove the misspecification; it
+      reproduces the two known ones (NGC3201 footprint/occupancy, M68 too cold — spray-intrinsic,
+      cf. 2026-07-29) and adds an NGC3201 proper-motion track offset. Pal 5 is well covered in
+      every representation and every family. Training the two arms (commands printed by the
+      script; `RUNS_DIR=outputs/gala_mw22_2modal/{sumstats,particles}`) is the next step, not run.

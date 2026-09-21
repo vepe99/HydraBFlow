@@ -1,0 +1,206 @@
+# gala particle-spray streams (Chen, Gnedin & Li 2024 DF) in a MilkyWayPotential2022-style Galaxy —
+# a forward-model twin of the v4 AGAMA spray set with a different potential family and, crucially,
+# a halo whose flattening lives in the POTENTIAL (gala's NFWPotential `c`), while the prior is on the
+# DENSITY axis ratio so the inferred q stays comparable to every AGAMA generation.
+#
+# Potential (gala.potential, `units=galactic`):
+#   * bulge   HernquistPotential m=5e9 Msun, c=1 kpc                    FIXED (MW2022)
+#   * nucleus HernquistPotential m=1.8142e9, c=0.0688867 kpc            FIXED (MW2022)
+#   * disk    MN3ExponentialDiskPotential(m_disk, h_R_disk, h_z_disk)   FREE (MW2022: 4.7717e10, 2.6, 0.3;
+#             positive_density=True, sech^2 vertical profile — gala's defaults, as MW2022 uses them)
+#   * halo    NFWPotential from (M200, c200) with gala's from_M200_c algebra (R200 from 200 rho_crit,
+#             Planck18 rho_crit = 127.05 Msun/kpc^3 = astropy's default cosmology, as gala), flattened
+#             in the potential by c_phi. MW2022's spherical halo == M200 9.6e11 (log10 11.98), c200 13.3.
+#
+# Halo shape: `q_rho_halo` ~ U[0.5, 1.5] is the DENSITY axis ratio of the isodensity surface through
+# (r=q_ref_r_kpc, z=0); each row's potential flattening c_phi is derived by inverting the analytic
+# Poisson map of the flattened NFW for that row's r_s (stored as `c_phi_halo_derived`; the map is
+# nearly linear, q_rho ~ 1 + 2.3 (c_phi - 1) at r_s ~ 15 kpc, so c_phi spans ~[0.755, 1.205]).
+# CAVEAT (accepted 2026-09-20): a potential-flattened NFW has NEGATIVE density on the pole for
+# c_phi < ~0.89 (q_rho < ~0.78), but only at z > ~36 kpc (c_phi 0.75, r_s 15.6) — outside the 5-30 kpc
+# region these streams probe. `halo_rho_neg_r_kpc_derived` records that radius per row (inf if the
+# density is positive everywhere). Rows at the oblate end carry an unphysical outer halo, knowingly.
+#
+# Stream: gala ChenStreamDF + MockStreamGenerator with a moving Plummer progenitor potential
+# (a_progenitor = 30 pc, as v3/v4), progenitor orbit integrated back t_end from its observed
+# present-day ICRS position (astropy default Galactocentric frame — the solar frame is NOT varied
+# here, unlike v4's marginalized R0/U/V/W). Linear mass loss from `m_progenitor` (initial) to the
+# B&H18 present-day `m_progenitor_final` via gala's time-varying prog_mass. gala releases
+# 2 * (n_steps + 1) * n_particles_per_release stars (lead + trail, one per step), so n_steps = 4999
+# gives exactly n_particles = 10000 (checked by the class).
+#
+# Locals: the v4 spray_massloss set verbatim (stream_agama_spray_massloss_ibata_m200c_v4 chain).
+# Observables: `sim_data_projected` with the v4 in-window storage cap (2000 stars/row, -999 sentinel;
+# window table == conf/augmentation/stream_global.yaml, test-enforced) and `vcirc_kms` (n, 19, 1)
+# on the Ou et al. 2024 grid (== stream_agama_ou24 / v4). No ancillary observables, no rejection prior.
+# Cost: ~29 s/row single-threaded at 1e4 stars x 5000 steps (measured 2026-09-20), ~140 MB RSS/worker.
+name: stream_gala
+params:
+  n_particles: 10000
+  n_steps: 4999                 # 2 * (n_steps + 1) * n_particles_per_release == n_particles
+  n_particles_per_release: 1
+  n_workers: 48
+  mass_loss: linear             # linear | exponential | null (fixed mass)
+  integrator: leapfrog          # leapfrog (fixed step, robust) | dopri853 (gala default; ~15-40 % of
+                                #   1e4-star rows fail with "code -4" — one particle collapses the SHARED step)
+  q_ref_r_kpc: 15.0             # radius where q_rho_halo is the density axis ratio
+  c_phi_bracket: [0.6, 1.6]     # brentq bracket for the q_rho -> c_phi inversion
+  rho_c_msun_kpc3: null         # null -> Planck18 (gala's from_M200_c default cosmology)
+  target_streams:
+    Pal5: 0
+    NGC3201: 1
+    M68: 2
+
+  # Order = inferred order = adapter order. Bulge/nucleus identity = fixed constants (not inferred).
+  priors_global:
+    log10_M200_halo:
+      type: uniform
+      prior_parameters: [11.6, 12.4]      # halo-only M200 at 200 rho_crit; MW2022 = 11.98
+    c200_halo:
+      type: uniform
+      prior_parameters: [8.0, 20.0]       # MW2022 = 13.3
+    q_rho_halo:
+      type: uniform
+      prior_parameters: [0.5, 1.5]        # DENSITY axis ratio at q_ref_r_kpc; c_phi derived
+    m_disk:
+      type: uniform
+      prior_parameters: [3.0e10, 7.0e10]  # MW2022 = 4.7717e10
+    h_R_disk:
+      type: normal
+      prior_parameters: [2.6, 0.5]        # kpc; as v4 r_Disk
+    h_z_disk:
+      type: normal
+      prior_parameters: [0.3, 0.05]       # kpc (sech^2 scale height); as v4 z_Disk
+    m_bulge:
+      type: identity
+      prior_parameters: [5.0e9]
+    c_bulge:
+      type: identity
+      prior_parameters: [1.0]
+    m_nucleus:
+      type: identity
+      prior_parameters: [1.8142e9]
+    c_nucleus:
+      type: identity
+      prior_parameters: [0.0688867]
+
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.34e4, 7.0e4]   # B&H18 present-day -> Dehnen+2004 initial
+      a_progenitor:
+        type: identity
+        prior_parameters: [30.0]            # pc, Plummer scale (Ibata+2024)
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 10.0]       # Gyr
+      ra:
+        type: identity
+        prior_parameters: [229.022]
+      dec:
+        type: identity
+        prior_parameters: [-0.112]
+      vr:
+        type: normal
+        prior_parameters: [-58.6, 0.21]
+      r:
+        type: normal
+        prior_parameters: [20.6, 0.2]
+      mu_ra_cosdec:
+        type: normal
+        prior_parameters: [-2.736, 0.064]
+      mu_dec:
+        type: normal
+        prior_parameters: [-2.646, 0.064]
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.34e4]          # B&H18 present-day bound mass
+    NGC3201:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.0e5, 3.5e5]    # v4 re-centred prior (see the v4 yaml header)
+      a_progenitor:
+        type: identity
+        prior_parameters: [30.0]
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 5.0]
+      ra:
+        type: identity
+        prior_parameters: [154.403]
+      dec:
+        type: identity
+        prior_parameters: [-46.412]
+      vr:
+        type: normal
+        prior_parameters: [494.34, 0.14]
+      r:
+        type: normal
+        prior_parameters: [4.9, 0.11]
+      mu_ra_cosdec:
+        type: normal
+        prior_parameters: [8.324, 0.044]
+      mu_dec:
+        type: normal
+        prior_parameters: [-1.991, 0.044]
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.93e5]
+    M68:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.28e5, 5.46e5]  # B&H18 present-day -> M_Ini
+      a_progenitor:
+        type: identity
+        prior_parameters: [30.0]
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 10.0]
+      ra:
+        type: identity
+        prior_parameters: [189.867]
+      dec:
+        type: identity
+        prior_parameters: [-26.744]
+      vr:
+        type: normal
+        prior_parameters: [-92.99, 0.22]
+      r:
+        type: normal
+        prior_parameters: [10.3, 0.52]
+      mu_ra_cosdec:
+        type: normal
+        prior_parameters: [-2.752, 0.054]
+      mu_dec:
+        type: normal
+        prior_parameters: [1.762, 0.053]
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.28e5]
+
+  store_window_subsample:
+    max_particles: 2000
+    pad_value: -999.0
+    observational_window:          # == conf/augmentation/stream_global.yaml params.observational_window
+      Pal5:
+        ra_min: 220.98008280733634
+        ra_max: 250.0
+        dec_min: -13.0
+        dec_max: 10.0
+      NGC3201:
+        ra_min: 42.29847920913508
+        ra_max: 140.0
+        dec_min: -47.79545565626234
+        dec_max: 20.812029301121846
+      M68:
+        ra_min: 189.73694638139526
+        ra_max: 280.0
+        dec_min: -47.32109546202406
+        dec_max: 70.0
+
+  # Ou et al. 2024 rotation curve (MNRAS 528, 693) == assets/rotation_curve_custom_v4.csv == v4.
+  obs_r_grid: custom
+  obs_r_kpc:    [6.60, 7.78, 8.21, 9.41, 10.43, 11.43, 12.43, 13.41, 14.40, 15.42, 16.44, 17.45, 18.48, 19.45, 20.41, 21.28, 22.01, 23.41, 25.53]
+  obs_vc_kms:   [236.43, 239.82, 237.20, 233.16, 234.61, 232.00, 232.80, 229.43, 224.20, 221.68, 219.74, 215.42, 212.79, 203.57, 195.44, 196.68, 187.96, 188.32, 175.07]
+  obs_sigma_vc: [2.69, 3.53, 6.31, 2.99, 4.39, 3.01, 4.54, 4.70, 3.22, 2.56, 4.87, 5.03, 8.38, 5.66, 5.75, 6.49, 9.18, 11.89, 16.86]

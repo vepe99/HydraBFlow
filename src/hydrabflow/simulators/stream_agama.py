@@ -685,11 +685,21 @@ def _simulate_one(
     # When the halo is parameterized by (M200, c_v'), also return the (densityNorm, scaleRadius)
     # actually handed to AGAMA for this row, so they can be stored in the dataset for traceability
     # (they are NOT inferred — the identity-prior rho/a stay fixed constants). None otherwise.
-    halo_derived = None
-    if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) == "m200_c":
-        h = _halo_params_m200c(agama, p, pot_cfg)
-        halo_derived = (float(h["densityNorm"]), float(h["scaleRadius"]))
+    halo_derived = _m200c_derived(agama, p, pot_cfg)
     return xv, _vcirc(pot_host, obs_r), anc, halo_derived, None, frame
+
+
+def _m200c_derived(agama, p: Mapping[str, float], pot_cfg: Mapping | None) -> Dict[str, float] | None:
+    """Per-row potential-level diagnostics for the ``m200_c`` halo: the ``(densityNorm,
+    scaleRadius)`` AGAMA actually received, under the ``*_derived`` names ``simulate`` stores.
+    ``None`` for the ``rho_a`` parameterization (nothing to derive)."""
+    if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) != "m200_c":
+        return None
+    h = _halo_params_m200c(agama, p, pot_cfg)
+    return {
+        "rho_TwoPowerTriaxial_halo_derived": float(h["densityNorm"]),
+        "a_TwoPowerTriaxial_halo_derived": float(h["scaleRadius"]),
+    }
 
 
 @register_simulator("stream_agama")
@@ -1056,9 +1066,12 @@ class AgamaStreamSimulator(BaseSimulator):
 
     def _row_jobs(self, rows, seeds):
         """One joblib ``delayed`` call per row. The forward-model seam: subclasses swap the
-        worker here (``stream_agama_rnbody``) while reusing ``simulate``'s dispatch + output
-        assembly. Every worker must return the same 5-tuple
-        ``(xv, vcirc, ancillary_dict, halo_derived_or_None, m_bound_or_None)``."""
+        worker here (``stream_agama_rnbody``, ``stream_gala``) while reusing ``simulate``'s
+        dispatch + output assembly. Every worker must return the same 6-tuple
+        ``(xv, vcirc, ancillary_dict, derived_or_None, m_bound_or_None, frame)`` where ``derived``
+        is a ``{name: float}`` dict of potential-level diagnostics whose names end in ``_derived``
+        (stored ``(n, 1)`` per row, one per group in ``sample_compositional``) and ``frame`` is the
+        solar frame used for the projection (NaNs when the astropy default frame is used)."""
         from joblib import delayed
 
         spray_method = str(self.params.get("spray_method", "fardal"))
@@ -1127,13 +1140,14 @@ class AgamaStreamSimulator(BaseSimulator):
         # Ibata ancillary observables (only present when requested): vterm_kms (n, n_l, 1),
         # sigma_z (n, 1), rho_z (n, n_z, 1). Each is a deterministic function of the shared
         # potential; the noisy "observed" counterparts are added later by the augmentation chain.
-        # (M200, c_v') halo: store the per-row densityNorm / scaleRadius AGAMA received. These are
-        # derived diagnostics (not inferred); the identity rho/a params stay fixed constants.
-        halo_list = [r[3] for r in results]
-        if halo_list[0] is not None:
-            derived = np.asarray(halo_list, dtype=float)  # (n, 2): [densityNorm, scaleRadius]
-            out["rho_TwoPowerTriaxial_halo_derived"] = derived[:, 0:1]
-            out["a_TwoPowerTriaxial_halo_derived"] = derived[:, 1:2]
+        # Potential-level per-row diagnostics reported by the worker as a `{name_derived: value}`
+        # dict (e.g. the densityNorm / scaleRadius AGAMA received for an (M200, c_v') halo, or the
+        # potential flattening the gala simulator derived from q_rho). Derived, NOT inferred: the
+        # adapter drops them; identity params stay fixed constants alongside.
+        derived_list = [r[3] for r in results]
+        if derived_list[0]:
+            for key in derived_list[0]:
+                out[key] = np.asarray([d[key] for d in derived_list], dtype=float).reshape(n, 1)
         # Restricted N-body only: the present-day bound mass of the remnant. ``m_progenitor`` is the
         # mass at t = -t_end, so this is the quantity that should match the observed cluster mass —
         # a diagnostic (and a potential constraint), never an inferred parameter, so the adapter
@@ -1193,9 +1207,10 @@ class AgamaStreamSimulator(BaseSimulator):
                 out[key] = sims[key].reshape(n, m, -1, 1)[:, 0]
         if "sigma_z" in sims:  # (n*m, 1) -> (n, 1)
             out["sigma_z"] = sims["sigma_z"].reshape(n, m, 1)[:, 0]
-        # Derived (M200, c_v') halo params depend only on the shared potential -> one per group.
-        for key in ("rho_TwoPowerTriaxial_halo_derived", "a_TwoPowerTriaxial_halo_derived"):
-            if key in sims:  # (n*m, 1) -> (n, 1)
+        # `*_derived` diagnostics are potential-level by convention (see `_row_jobs`) -> one per
+        # group, like the rotation curve.
+        for key in sims:
+            if key.endswith("_derived"):  # (n*m, 1) -> (n, 1)
                 out[key] = sims[key].reshape(n, m, 1)[:, 0]
         # The bound remnant mass belongs to each stream's own progenitor, so it stays per-member
         # (n, m, 1) like the locals — unlike everything above, which is a property of the shared

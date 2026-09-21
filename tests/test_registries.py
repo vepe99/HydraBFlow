@@ -13,7 +13,7 @@ def test_shipped_components_are_registered():
     for registry in (SIMULATORS, STEPS, AUGMENTATIONS):
         registry.discover()  # normally triggered lazily by the first .get()
 
-    assert {"two_moons", "multimodal"} <= set(SIMULATORS.items)
+    assert {"two_moons", "multimodal", "stream_agama", "stream_gala"} <= set(SIMULATORS.items)
     assert {"drop_nan", "train_val_split", "standardize"} <= set(STEPS.items)
     assert "gaussian_noise" in AUGMENTATIONS.items
 

@@ -34,9 +34,8 @@ from hydrabflow.simulators.stream_agama import (
     AgamaStreamSimulator,
     _agama,
     _ancillary_observables,
-    _halo_params_m200c,
+    _m200c_derived,
     _host_potential,
-    _resolve_pot_cfg,
     _solar_frame,
     _vcirc,
 )
@@ -268,10 +267,7 @@ def _simulate_one_rnbody(
     frame = _solar_frame(agama, pot_host, p)
     vcirc = _vcirc(pot_host, obs_r)
     anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary, r0=frame[0])
-    halo_derived = None
-    if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) == "m200_c":
-        h = _halo_params_m200c(agama, p, pot_cfg)
-        halo_derived = (float(h["densityNorm"]), float(h["scaleRadius"]))
+    halo_derived = _m200c_derived(agama, p, pot_cfg)
 
     try:
         l0, b0, pml0, pmb0 = agama.transformCelestialCoords(

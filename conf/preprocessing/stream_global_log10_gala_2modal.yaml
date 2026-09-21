@@ -1,0 +1,19 @@
+# Training preprocessing for the gala MW2022 spray set (simulator=stream_gala_spray_mw22) with the
+# 2-modality adapters: drop_nan pinned to the two npz-resident observables (sim_summary is batch-only),
+# the Ou+2024 mask (r_min 5.5 keeps all 19 bins), and log10 on the three positive disk parameters.
+# `log10_M200_halo` is already a log quantity; q_rho/c200 stay linear. prior_score_from_spec applies
+# the ln10 Jacobian to exactly these keys (log10_keys_from_pipeline).
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - m_disk
+      - h_R_disk
+      - h_z_disk

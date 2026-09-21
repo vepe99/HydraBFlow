@@ -1,0 +1,13 @@
+# Real-data twin of stream_global_log10_gala_2modal (as stream_real_global_log10 for the AGAMA
+# names): attach the observed Ou+2024 curve, same radius mask, and declare the log10_transform step
+# so `log10_keys_from_pipeline` reports the gala keys to `prior_score_from_spec` — a no-op transform
+# on real data (no truth columns), present only to make the reparametrized keys discoverable.
+steps:
+  - name: attach_observed_vcirc
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: log10_transform
+    keys:
+      - m_disk
+      - h_R_disk
+      - h_z_disk

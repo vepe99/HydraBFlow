@@ -76,6 +76,33 @@ Pairings that must match: a `stream_global*` augmentation with the corresponding
 `stream_real_global*` one for real data; the fusion `params.backbones` keys with
 `adapter.summary_variables`; `j` first in `inference_conditions` (the member count is read from it).
 
+## gala forward model (`stream_gala`)
+
+`simulator=stream_gala_spray_mw22` is a particle-spray twin built on **gala** instead of AGAMA
+(`src/hydrabflow/simulators/stream_gala.py`, subclassing `AgamaStreamSimulator` and swapping only
+the row worker). Potential = the `MilkyWayPotential2022` family: fixed Hernquist bulge + nucleus,
+free `MN3ExponentialDiskPotential` (`m_disk`, `h_R_disk`, `h_z_disk`) and an NFW halo built from
+(`log10_M200_halo`, `c200_halo`) with gala's `from_M200_c` algebra (Planck18 ρ_crit) and
+**flattening in the potential** (`NFWPotential(c=c_phi)`). The prior is on the **density** axis
+ratio `q_rho_halo` at `q_ref_r_kpc` (15 kpc); `c_phi` is derived per row by inverting the
+analytic Poisson map (`c_phi_halo_derived`; the potential-flattened NFW has negative density on
+the pole for `c_phi < ~0.89`, only at z > ~36 kpc — `halo_rho_neg_r_kpc_derived` records where).
+Stream = gala `ChenStreamDF` + `MockStreamGenerator` with a Plummer progenitor and linear mass
+loss via a time-varying `prog_mass`; gala releases `2 (n_steps + 1)` stars, so `n_steps = 4999`
+for 10^4 particles (checked). Integrator defaults to **leapfrog**: gala steps all particles in one
+shared adaptive dop853 call, and a single star through the 30 pc Plummer core collapses the step
+("Integration failed with code -4") in ~15-40 % of 1e4-star rows — leapfrog never fails and agrees
+with dop853 to 6 pc median per particle after 4 Gyr. Frame = astropy's default `Galactocentric`
+(the solar frame is not varied). gala is imported only inside the loky worker. Cost ~15 s/row.
+
+Presets: `preprocessing=stream_global_log10_gala_2modal` / `stream_real_global_log10_gala`
+(log10 on the disk parameters); adapters/augmentations/models are the 2-modality ones unchanged.
+`scripts/create_gala_mw22_dataset.sh` = pilot + 333-group test set + 10^4 flat set + the
+prior-predictive coverage checks in the track, grid and **raw-particle**
+(`scripts/ppc_particle_coverage.py`: quantile envelopes, 2-D overlays, kernel-MMD rank per
+observable subset) representations, then prints the two training commands. Dataset dir
+`data_jarvis/data_gala_spray_mw22_hydrabflow/`.
+
 ## Resources
 
 Gaia member/error tables and the observed stream `.npz` live in `assets/gaia/` (see its README).
