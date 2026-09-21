@@ -4,7 +4,7 @@
 # width cut) and the recommended real member set. Thin wrapper over train_v4_2modal.sh — every
 # variable can still be overridden from the environment (MODEL=, N_EPOCHS=, RUNS_DIR=, EXTRA=, ...).
 export SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4}
-export DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow}
+export DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow}
 export AUG=${AUG:-stream_global_v5}
 export REAL_AUG=${REAL_AUG:-stream_real_global_v5}
 export REAL=${REAL:-assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz}
