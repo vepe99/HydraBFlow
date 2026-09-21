@@ -14,10 +14,16 @@ disks read off gala's MN3, two Hernquist spheroids, spherical NFW); its circular
 against gala before use. Sky projection = the astropy default frame, as in stream_gala.
 """
 from __future__ import annotations
-import argparse, json, os, sys, time, warnings
-os.environ.setdefault("HYDRABFLOW_NUM_GPUS", "0"); os.environ.setdefault("JAX_PLATFORMS", "cpu")
+import argparse
+import json
+import os
+import sys
+import time
+import warnings
+os.environ.setdefault("HYDRABFLOW_NUM_GPUS", "0")
+os.environ.setdefault("JAX_PLATFORMS", "cpu")
 warnings.simplefilter("ignore")
-import numpy as np
+import numpy as np  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from trihedron import build_template, remap  # noqa: E402
 
@@ -43,7 +49,8 @@ def gala_fiducial(cfg_name):
 
 def agama_potential(agama, glob, rho_c):
     """AGAMA copy of stream_gala._build_potential (spherical halo only: q_rho=1 here)."""
-    import astropy.units as u, gala.potential as gp
+    import astropy.units as u
+    import gala.potential as gp
     from gala.units import galactic
     from hydrabflow.simulators.stream_gala import nfw_m_rs_from_m200_c
     assert abs(glob["q_rho_halo"] - 1.0) < 1e-12, "agama twin implemented for a spherical halo only"
@@ -61,7 +68,8 @@ def agama_potential(agama, glob, rho_c):
 
 
 def posvel_from_icrs(row):
-    import astropy.coordinates as coord, astropy.units as u
+    import astropy.coordinates as coord
+    import astropy.units as u
     c = coord.SkyCoord(ra=row["ra"] * u.deg, dec=row["dec"] * u.deg, distance=row["r"] * u.kpc,
                        pm_ra_cosdec=row["mu_ra_cosdec"] * u.mas / u.yr, pm_dec=row["mu_dec"] * u.mas / u.yr,
                        radial_velocity=row["vr"] * u.km / u.s, frame="icrs").transform_to(coord.Galactocentric())
@@ -72,7 +80,8 @@ def posvel_from_icrs(row):
 def project_xv(xv):
     """sky_projection is all-or-nothing on NaN rows (2026-08-28 bug): project the finite subset."""
     from hydrabflow.simulators.stream_common import sky_projection
-    out = np.full_like(xv, np.nan); ok = np.isfinite(xv).all(1)
+    out = np.full_like(xv, np.nan)
+    ok = np.isfinite(xv).all(1)
     if ok.any():
         out[ok] = sky_projection(xv[ok][None])[0]
     return out
@@ -83,25 +92,31 @@ def main():
     ap.add_argument("--spray", required=True, help="fixed-potential spray npz whose stored draws are reused")
     ap.add_argument("--out", required=True, help="output npz (grouped layout, raw Galactocentric->ICRS, no window cap)")
     ap.add_argument("--simulator", default="stream_gala_spray_mw22_fixed")
-    ap.add_argument("--T-myr", type=float, default=200.0); ap.add_argument("--n-knots", type=int, default=2001)
+    ap.add_argument("--T-myr", type=float, default=200.0)
+    ap.add_argument("--n-knots", type=int, default=2001)
     ap.add_argument("--seed", type=int, default=2026)
     args = ap.parse_args()
     import agama
     from hydrabflow.simulators.stream_gala import _simulate_one_gala, RHO_CRIT_PLANCK18_MSUN_KPC3, _build_potential
     agama.setUnits(length=1, velocity=1, mass=1)
-    tu = agama.getUnits()["time"]; time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
+    tu = agama.getUnits()["time"]
+    time_unit_gyr = float(getattr(tu, "value", tu)) / 1e3
     T = args.T_myr * 1e-3 / time_unit_gyr
 
     glob, loc, opts, n_particles = gala_fiducial(args.simulator)
     opts["rho_c"] = RHO_CRIT_PLANCK18_MSUN_KPC3
     pot = agama_potential(agama, glob, opts["rho_c"])
     # --- check the agama twin against gala on the rotation curve ---------------------------------
-    import astropy.units as u, gala.potential as gp
+    import astropy.units as u
+    import gala.potential as gp
     from gala.units import galactic
     gpot, _ = _build_potential(gp, u, galactic, glob, opts)
-    r = np.array([1, 2, 4, 8.178, 12, 20, 30, 50.0]); q = np.zeros((3, len(r))); q[0] = r
+    r = np.array([1, 2, 4, 8.178, 12, 20, 30, 50.0])
+    q = np.zeros((3, len(r)))
+    q[0] = r
     vg = gpot.circular_velocity(q * u.kpc).to(u.km / u.s).value
-    xyz = np.column_stack([r, 0 * r, 0 * r]); f = pot.force(xyz)
+    xyz = np.column_stack([r, 0 * r, 0 * r])
+    f = pot.force(xyz)
     va = np.sqrt(-r * f[:, 0])
     dev = np.abs(va / vg - 1).max()
     print(f"agama twin vs gala v_circ: max |frac dev| = {dev:.2e} over r={r.tolist()} kpc")
@@ -114,7 +129,9 @@ def main():
     report = {"T_myr": args.T_myr, "n_knots": args.n_knots, "vcirc_max_frac_dev": float(dev), "streams": {}}
     obs_r = np.array([8.178])
     for col in range(n_streams):
-        nm = NAMES[int(j[0, col])]; row = dict(glob); row.update(loc[nm])
+        nm = NAMES[int(j[0, col])]
+        row = dict(glob)
+        row.update(loc[nm])
         t0 = time.time()
         xv_fid, _, _, _, _, _ = _simulate_one_gala(row, n_particles, obs_r, args.seed, opts)
         t_spray = time.time() - t0
@@ -122,10 +139,12 @@ def main():
         t0 = time.time()
         tpl = build_template(agama, pot, pv_fid, xv_fid, T, args.n_knots)
         t_tpl = time.time() - t0
-        rt = remap(agama, pot, pv_fid, tpl); rt_err = float(np.nanmax(np.abs(rt - xv_fid)))
+        rt = remap(agama, pot, pv_fid, tpl)
+        rt_err = float(np.nanmax(np.abs(rt - xv_fid)))
         t0 = time.time()
         for i in range(n_rows):
-            rr = dict(row); rr.update({k: float(d[k][i, col, 0]) for k in ("vr", "r", "mu_ra_cosdec", "mu_dec")})
+            rr = dict(row)
+            rr.update({k: float(d[k][i, col, 0]) for k in ("vr", "r", "mu_ra_cosdec", "mu_dec")})
             out[i, col] = project_xv(remap(agama, pot, posvel_from_icrs(rr), tpl))
         t_remap = (time.time() - t0) / n_rows
         diag = {k: (float(v) if np.isscalar(v) else v) for k, v in tpl.diagnostics.items()}
@@ -136,7 +155,8 @@ def main():
               f"ambiguous {diag.get('ambiguous_frac', float('nan')):.3f}")
     arrays = {"sim_data_projected": out, "j": d["j"]}
     for k in LOCAL_KEYS:
-        if k in d.files: arrays[k] = d[k]
+        if k in d.files:
+            arrays[k] = d[k]
     np.savez_compressed(args.out, **arrays)
     json.dump(report, open(os.path.splitext(args.out)[0] + "_report.json", "w"), indent=1, default=str)
     print("wrote", args.out)

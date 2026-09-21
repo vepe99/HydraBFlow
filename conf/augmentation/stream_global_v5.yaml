@@ -1,0 +1,68 @@
+# v5 observation model (2026-09-21) = stream_global_ibata_grid_v2 + the four updates that follow from
+# the new real member set `assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz`
+# (STREAMFINDER Pal5/NGC3201 with DESI DR1 radial velocities; M68 = Palau & Miralda-Escude 2025 MAIN
+# component, envelope removed). Pair with `stream_real_global_v5` for the real data.
+#
+#  1. counts: observed_n_stars 129/195/195 and min_star_with_vlos 77/48/16 (were 129/195/297, 69/37/29);
+#     M68 has 16 velocities -> summary_vlos_bins 2 (was 3; 3 bins of <=5 stars are below min_count).
+#  2. v_los errors: `sample_vlos_error_empirical` draws sigma_vlos from the real measured members'
+#     (G, sigma) pairs of the same stream (nearest in G), replacing the Gaia-RVS-only table value.
+#  3. v_los selection: `vlos_selection: magnitude` — which members get a velocity follows the logistic
+#     p(has_vlos | G) fitted on the real members (Pal5: 91 % of the brightest quartile, 3 % of the
+#     faintest), instead of a uniform random subset.
+#  4. `stream_track_width_cut`: M68 simulations keep only stars within 1.5 deg of the realization's OWN
+#     binned-median track (real-fitted frame) before the member subsample, mirroring Palau's
+#     main/envelope split (main |dphi2| <= 1.8, envelope >= 1.1 with 5th pct 1.6 in that frame). It is
+#     the stream's own track, not the observed one, so an offset orbit keeps its thin component.
+#     Pal5/NGC3201 are not cut.
+#
+# Training (dataset data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow, 10^3 particles):
+#   SIM=stream_agama_spray_massloss_ibata_m200c_v4 EXTRA="simulator.params.n_particles=1000" \
+#   DATA_DIR=data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow \
+#   AUG=stream_global_v5 REAL_AUG=stream_real_global_v5 \
+#   REAL=assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz \
+#   RUNS_DIR=outputs/v5_2modal/default bash scripts/train_v4_2modal.sh      (or scripts/train_v5_2modal.sh)
+defaults:
+  - stream_global_ibata_grid_v2
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - stream_track_width_cut         # (4) M68 main-component cut, before the member subsample
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members            # still disabled (contamination_max_frac 0.0)
+  - sample_magnitudes
+  - sample_obs_error
+  - sample_vlos_error_empirical    # (2) real (G, sigma_vlos) pairs instead of the Gaia table
+  - apply_obs_error
+  - mask_vlos                      # (3) magnitude-weighted selection (vlos_selection below)
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_summary_grid
+  - add_noise_to_vterm
+  - add_noise_to_sigma_z
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz
+
+  observed_n_stars:            # (1)
+    Pal5: 129
+    NGC3201: 195
+    M68: 195
+  min_star_with_vlos:          # (1)
+    Pal5: 77
+    NGC3201: 48
+    M68: 16
+  summary_vlos_bins: 2         # (1) M68's 16 velocities cannot fill 3 bins above min_count
+
+  vlos_selection: magnitude    # (3) random | magnitude
+  vlos_error_neighbours: 5     # (2) draw sigma from one of the k real stars nearest in G
+
+  track_width_cut:             # (4) half-width [deg] around each realization's own track; unlisted = uncut
+    M68: 1.5
+  track_width_bins: 10

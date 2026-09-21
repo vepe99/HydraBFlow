@@ -1,0 +1,7 @@
+# Real-data counterpart of stream_global_v5_nodisp: medians only (no per-bin std channels), matching
+# the training-side (n, K_phi1, 9) layout. Everything else as stream_real_global_v5.
+defaults:
+  - stream_real_global_v5
+
+params:
+  summary_include_std: false

@@ -9,16 +9,16 @@ itself did (``@partial(jit, static_argnums=(0,))`` on its class methods) and mea
 utilization here too (dispatch overhead was leaving the GPU idle between ops). The physical chain
 (order matters, see ``conf/augmentation/stream_*.yaml``):
 
-1.  ``convert_distance_to_parallax``  — distance [kpc] -> parallax [mas];
-2.  ``observational_window``          — per-stream RA/Dec box -> boolean ``attention_mask``;
-3.  ``observed_n_stars``              — subsample the mask to the observed member count;
-4.  ``compact_to_attended``           — attended particles first, slice to ``max_particles``;
-5.  ``sample_magnitudes``             — G magnitudes from a per-stream KDE of observed members;
-6.  ``sample_obs_error``              — Gaia DR3 uncertainties interpolated at those magnitudes;
-7.  ``apply_obs_error``               — perturb the observables with those uncertainties;
-8.  ``mask_vlos``                     — only a subset of members keeps line-of-sight velocity;
-9.  ``add_noise_to_vcirc``            — observed Vc(R) error bars on the model rotation curve;
-10. ``log10_vcirc``                   — rotation curve to log10;
+1.  ``convert_distance_to_parallax``  — distance [kpc] -> parallax [mas]
+2.  ``observational_window``          — per-stream RA/Dec box -> boolean ``attention_mask``
+3.  ``observed_n_stars``              — subsample the mask to the observed member count
+4.  ``compact_to_attended``           — attended particles first, slice to ``max_particles``
+5.  ``sample_magnitudes``             — G magnitudes from a per-stream KDE of observed members
+6.  ``sample_obs_error``              — Gaia DR3 uncertainties interpolated at those magnitudes
+7.  ``apply_obs_error``               — perturb the observables with those uncertainties
+8.  ``mask_vlos``                     — only a subset of members keeps line-of-sight velocity
+9.  ``add_noise_to_vcirc``            — observed Vc(R) error bars on the model rotation curve
+10. ``log10_vcirc``                   — rotation curve to log10
 11. ``per_stream_standardize``        — per-stream z-scoring of observations (fitted stats from
                                         the ``stream_observation_stats`` preprocessing step);
 12. ``concatenate_sigma_errors`` / ``concatenate_magnitudes`` / ``concatenate_vlos_mask`` /
@@ -32,14 +32,16 @@ from the files shipped in ``data/`` and cached at module level, alongside their 
 arrays and per-stream KDE objects (built once, reused every batch).
 
 **RNG.** Each augmentation gets its own independent ``numpy.random.Generator`` child from the
-registry (see ``augmentation/registry.py``); it is used once, at closure-build time, to seed a
+registry (see ``augmentation/registry.py``)
+it is used once, at closure-build time, to seed a
 ``jax.random.PRNGKey``, which is then split on every call (mirroring the reference project's
 ``_split_key`` idiom) via a one-element mutable cell so each batch draws fresh, reproducible
 randomness. The subkey is passed as a normal (traced) argument to each jitted function.
 
 **Compiled-function caching.** ``jax.jit`` recompiles when input shapes change. Every step in this
 chain sees a fixed shape per training run except ``sample_magnitudes``, whose particle count
-changes once (1000 -> ``max_particles`` after ``compact_to_attended``); its jitted function is
+changes once (1000 -> ``max_particles`` after ``compact_to_attended``)
+its jitted function is
 therefore cached per distinct particle count (mirrors the reference's own per-``n_particles``
 branch cache) rather than rebuilt every call.
 """
@@ -89,7 +91,8 @@ def _key_cell(rng) -> list:
     return [jax.random.PRNGKey(seed)]
 
 
-def _next_key(cell: list):
+def _next_key(cell:
+    list):
     jax, _ = _jax()
     cell[0], subkey = jax.random.split(cell[0])
     return subkey
@@ -97,11 +100,13 @@ def _next_key(cell: list):
 
 class StreamResources:
     """Gaia tables shared by several augmentations: member magnitudes (KDE per stream) and
-    DR3 measurement uncertainties per magnitude bin. Loaded once (NumPy/astropy/pandas); the
+    DR3 measurement uncertainties per magnitude bin. Loaded once (NumPy/astropy/pandas)
+    the
     JAX-side lookup arrays and per-stream KDE objects used every batch are built lazily and
     cached on first use (``jax_*`` / ``kde_streams`` attributes)."""
 
-    def __init__(self, params: dict) -> None:
+    def __init__(self, params:
+        dict) -> None:
         from astropy import units as u
         from astropy.io import ascii as astro_ascii
 
@@ -214,7 +219,8 @@ class StreamResources:
                 self._kde_cache[j] = gaussian_kde(jnp.asarray(mags)[None, :])
         return self._kde_cache
 
-    def kde_branches(self, n_particles: int):
+    def kde_branches(self, n_particles:
+        int):
         """``jax.lax.switch`` branch functions (one per stream) with ``n_particles`` baked in
         as a static Python int, cached per distinct ``n_particles`` seen so far."""
         if n_particles not in self._kde_branch_cache:
@@ -234,11 +240,113 @@ class StreamResources:
         return self._kde_branch_cache[n_particles]
 
 
-def _resources(params: dict) -> StreamResources:
+def _resources(params:
+    dict) -> StreamResources:
     key = json.dumps({k: v for k, v in params.items()}, sort_keys=True, default=str)
     if key not in _RESOURCE_CACHE:
         _RESOURCE_CACHE[key] = StreamResources(params)
     return _RESOURCE_CACHE[key]
+
+
+_REAL_VLOS_CACHE: Dict[str, "RealVlosModel"] = {}
+
+
+class RealVlosModel:
+    """Per-stream v_los observation model read off the REAL member npz (2026-09-21):
+
+    * ``has_vlos`` vs G  -> a logistic fit p(G) per stream (which members get a velocity is strongly
+      magnitude-dependent: Pal5 91 % of the brightest quartile vs 3 % of the faintest);
+    * (G, sigma_vlos) pairs of the measured members, sorted by G -> the empirical, heteroscedastic
+      error distribution (literature high-res spectroscopy at G 16-18, DESI at G 18-20.5), which the
+      Gaia DR3 error table cannot describe because Gaia RVS does not observe these stars.
+
+    Arrays are padded to a common length across streams so they can be indexed by ``j`` in JAX.
+    """
+
+    def __init__(self, params:
+        dict) -> None:
+        real_file = params.get(
+            "real_streams_file",
+            os.path.join(params.get("resources_dir", "assets/gaia"),
+                         "gaia_observed_streams_6Dwitherrors_cutNGC3201.npz"),
+        )
+        target = {str(k): int(v) for k, v in params["target_streams"].items()}
+        self.n_streams = max(target.values()) + 1
+        d = np.load(real_file)
+        am = np.asarray(d["attention_mask"])
+        am = am[:, 0, :] if am.ndim == 3 else am
+        vm = np.asarray(d["vlos_mask"])
+        vm = vm[:, 0, :] if vm.ndim == 3 else vm
+        mag = np.asarray(d["magnitudes"], dtype=float)
+        ve = np.asarray(d["vlos_error"], dtype=float)
+        jarr = np.asarray(d["j"]).reshape(-1).astype(int)
+
+        self.logit_coef = np.zeros((self.n_streams, 2))  # p(has_vlos | G) = sigmoid(a + b G)
+        g_sorted, s_sorted = [], []
+        for row in range(am.shape[0]):
+            j = int(jarr[row])
+            if j >= self.n_streams:
+                continue
+            mem = am[row].astype(bool)
+            g, y = mag[row][mem], (vm[row].astype(bool) & mem)[mem].astype(float)
+            self.logit_coef[j] = self._fit_logistic(g, y)
+            meas = y > 0
+            order = np.argsort(g[meas])
+            g_sorted.append(g[meas][order])
+            s_sorted.append(ve[row][mem][meas][order])
+        L = max((len(a) for a in g_sorted), default=1)
+        self.n_measured = np.array([len(a) for a in g_sorted] + [0] * (self.n_streams - len(g_sorted)))
+        self.g_meas = np.full((self.n_streams, L), np.nan)
+        self.sigma_meas = np.full((self.n_streams, L), np.nan)
+        for j, (g, sg) in enumerate(zip(g_sorted, s_sorted)):
+            self.g_meas[j, : len(g)] = g
+            self.sigma_meas[j, : len(g)] = sg
+            if len(g) < L:
+                # pad by repeating the faintest measured star (only reached via clipping)
+                self.g_meas[j, len(g):] = g[-1]
+                self.sigma_meas[j, len(g):] = sg[-1]
+        self._jax_cache: dict = {}
+
+    @staticmethod
+    def _fit_logistic(g, y, n_iter=50, ridge=1e-3):
+        """IRLS fit of y ~ sigmoid(a + b (G - <G>)); returns (a - b <G>, b). Falls back to a flat
+        fraction if one class is empty."""
+        if y.min() == y.max():
+            frac = float(np.clip(y.mean(), 1e-3, 1 - 1e-3))
+            return np.array([np.log(frac / (1 - frac)), 0.0])
+        g0 = g.mean()
+        X = np.column_stack([np.ones_like(g), g - g0])
+        w = np.zeros(2)
+        for _ in range(n_iter):
+            p = 1.0 / (1.0 + np.exp(-(X @ w)))
+            W = p * (1 - p) + 1e-9
+            H = X.T @ (X * W[:, None]) + ridge * np.eye(2)
+            grad = X.T @ (y - p) - ridge * w
+            step = np.linalg.solve(H, grad)
+            w = w + step
+            if np.abs(step).max() < 1e-8:
+                break
+        return np.array([w[0] - w[1] * g0, w[1]])
+
+    def jax_lookups(self):
+        if not self._jax_cache:
+            _, jnp = _jax()
+            self._jax_cache = {
+                "logit_coef": jnp.asarray(self.logit_coef),
+                "g_meas": jnp.asarray(self.g_meas),
+                "sigma_meas": jnp.asarray(self.sigma_meas),
+                "n_measured": jnp.asarray(self.n_measured),
+            }
+        return self._jax_cache
+
+
+def _real_vlos_model(params:
+    dict) -> RealVlosModel:
+    key = json.dumps({"real": params.get("real_streams_file"), "res": params.get("resources_dir"),
+                      "target": {str(k): int(v) for k, v in params["target_streams"].items()}}, sort_keys=True)
+    if key not in _REAL_VLOS_CACHE:
+        _REAL_VLOS_CACHE[key] = RealVlosModel(params)
+    return _REAL_VLOS_CACHE[key]
 
 
 def _stream_ids_jax(batch, key="j"):
@@ -257,6 +365,20 @@ def _keep_first_k_random_jax(mask, k_per_row, key):
     k = jnp.clip(k_per_row, 1, p)
     threshold = sorted_scores[jnp.arange(n), k - 1]
     return mask & (scores <= threshold[:, None])
+
+
+def _keep_top_k_weighted_jax(mask, k_per_row, log_weight, key):
+    """Sample exactly ``k`` True entries per row WITHOUT replacement with probability proportional
+    to ``exp(log_weight)`` (Gumbel-top-k). Unattended entries are never selected."""
+    jax, jnp = _jax()
+    mask = mask.astype(bool)
+    n, p = mask.shape
+    gumbel = -jnp.log(-jnp.log(jnp.clip(jax.random.uniform(key, shape=(n, p)), 1e-12, 1 - 1e-12)))
+    scores = jnp.where(mask, log_weight + gumbel, -jnp.inf)
+    sorted_desc = -jnp.sort(-scores, axis=1)
+    k = jnp.clip(k_per_row, 1, p)
+    threshold = sorted_desc[jnp.arange(n), k - 1]
+    return mask & (scores >= threshold[:, None]) & jnp.isfinite(scores)
 
 
 # ------------------------------------------------------------------------------------------- #
@@ -381,7 +503,8 @@ def _sample_magnitudes(params, rng, context=None):
     cell = _key_cell(rng)
     jit_cache: dict = {}
 
-    def _compiled(n_particles: int):
+    def _compiled(n_particles:
+        int):
         compiled = jit_cache.get(n_particles)
         if compiled is None:
             jax, _ = _jax()
@@ -468,10 +591,22 @@ def _mask_vlos(params, rng, context=None):
     jax, jnp = _jax()
     min_star_with_vlos = res.jax_lookups()["min_star_with_vlos"]
     impute = _vlos_impute(params)
+    # Which members get a velocity: `random` (historical) or `magnitude` — probability ∝ the
+    # logistic p(has_vlos | G) fitted per stream on the real members (RealVlosModel); the count
+    # per row is still exactly min_star_with_vlos[j].
+    selection = str(params.get("vlos_selection", "random"))
+    if selection not in ("random", "magnitude"):
+        raise ValueError(f"vlos_selection must be 'random' or 'magnitude', got {selection!r}")
+    logit_coef = _real_vlos_model(params).jax_lookups()["logit_coef"] if selection == "magnitude" else None
 
     @jax.jit
-    def _run(sim, sigma, mask, j, subkey):
-        vlos_mask = _keep_first_k_random_jax(mask, min_star_with_vlos[j], subkey)
+    def _run(sim, sigma, mask, j, subkey, mags):
+        if selection == "magnitude":
+            a, b = logit_coef[j][:, 0:1], logit_coef[j][:, 1:2]
+            log_w = jax.nn.log_sigmoid(a + b * mags)
+            vlos_mask = _keep_top_k_weighted_jax(mask, min_star_with_vlos[j], log_w, subkey)
+        else:
+            vlos_mask = _keep_first_k_random_jax(mask, min_star_with_vlos[j], subkey)
 
         vlos = sim[:, :, -1]
         if impute == "zero":
@@ -492,7 +627,8 @@ def _mask_vlos(params, rng, context=None):
         mask = jnp.asarray(batch["attention_mask"])[:, 0, :]
         j = _stream_ids_jax(batch)
 
-        sim, sigma, vlos_mask = _run(sim, sigma, mask, j, _next_key(cell))
+        mags = jnp.asarray(batch["magnitudes"]) if selection == "magnitude" else jnp.zeros(mask.shape)
+        sim, sigma, vlos_mask = _run(sim, sigma, mask, j, _next_key(cell), mags)
         batch[key] = sim
         batch["sigma_errors"] = sigma
         batch["vlos_mask"] = vlos_mask
@@ -501,10 +637,148 @@ def _mask_vlos(params, rng, context=None):
     return aug
 
 
+@register_augmentation("sample_vlos_error_empirical")
+def _sample_vlos_error_empirical(params, rng, context=None):
+    """Replace the v_los column of ``sigma_errors`` (and the corresponding noise draw in
+    ``obs_errors``) with a draw from the REAL measured members' (G, sigma_vlos) pairs of the same
+    stream: for each star, one of the ``vlos_error_neighbours`` real stars nearest in G, chosen at
+    random. Run after ``sample_obs_error`` and before ``apply_obs_error``. Rationale: the Gaia DR3
+    error table is Gaia-RVS-only, but the velocities in the member catalogue come from literature
+    spectroscopy and DESI at magnitudes Gaia RVS never reaches (2026-09-21)."""
+    model = _real_vlos_model(params)
+    cell = _key_cell(rng)
+    jax, jnp = _jax()
+    lk = model.jax_lookups()
+    g_meas, sigma_meas, n_meas = lk["g_meas"], lk["sigma_meas"], lk["n_measured"]
+    n_nb = int(params.get("vlos_error_neighbours", 5))
+    vlos_idx = -1  # error_keys end with v_los
+
+    @jax.jit
+    def _run(mags, j, subkey):
+        k1, k2 = jax.random.split(subkey)
+        g_j, s_j, n_j = g_meas[j], sigma_meas[j], n_meas[j]  # (rows, L), (rows,)
+
+        def one(gm, gj, sj, nj, key):
+            pos = jnp.searchsorted(gj, gm)  # (P,)
+            off = jax.random.randint(key, gm.shape, -(n_nb // 2), n_nb - n_nb // 2)
+            idx = jnp.clip(pos + off, 0, jnp.maximum(nj - 1, 0))
+            return sj[idx]
+
+        sigma_v = jax.vmap(one)(mags, g_j, s_j, n_j, jax.random.split(k1, mags.shape[0]))
+        noise_v = sigma_v * jax.random.normal(k2, sigma_v.shape)
+        return sigma_v, noise_v
+
+    def aug(batch):
+        sigma = jnp.asarray(batch["sigma_errors"])
+        obs = jnp.asarray(batch["obs_errors"])
+        sigma_v, noise_v = _run(jnp.asarray(batch["magnitudes"]), _stream_ids_jax(batch), _next_key(cell))
+        batch["sigma_errors"] = sigma.at[:, :, vlos_idx].set(sigma_v)
+        batch["obs_errors"] = obs.at[:, :, vlos_idx].set(noise_v)
+        return batch
+
+    return aug
+
+
+@register_augmentation("stream_track_width_cut")
+def _stream_track_width_cut(params, rng, context=None):
+    """Mirror a member-selection WIDTH cut on the simulations: for each stream listed in
+    ``params.track_width_cut`` ({name: half_width_deg}), drop stars farther than that from the
+    realization's OWN binned-median phi2 track (in the great-circle frame fitted to the real members),
+    touching ``attention_mask`` only. Streams not listed are untouched. Run after
+    ``observational_window`` and before ``observed_n_stars``, so the member subsample is drawn from
+    the thin component only.
+
+    The track is the realization's own (per-row quantile phi1 bins of its in-window stars, per-bin
+    median phi2, linear interpolation), NOT the real data's: the split separates a thin component
+    from its envelope wherever the stream happens to lie, which is what a main/envelope selection
+    does on the data, and does not penalise a realization whose orbit is offset from the observed one.
+
+    Motivation (2026-09-21): the recommended M68 member set is the MAIN component of Palau &
+    Miralda-Escude 2025 with their 92-star envelope removed; in the real-fitted frame the main
+    component lies within |dphi2| <= 1.8 deg of its track while the envelope starts at 1.1 deg
+    (5th percentile 1.6), so a 1.5 deg half-width reproduces their split. Training on all stripped
+    stars while evaluating on the thin component would bias every width statistic."""
+    from hydrabflow.augmentation.stream_summary import _np_fit_frame
+
+    key = _sim_key(params)
+    cuts = {str(k): float(v) for k, v in (params.get("track_width_cut") or {}).items()}
+    target = {str(k): int(v) for k, v in params["target_streams"].items()}
+    n_streams = max(target.values()) + 1
+    k_bins = int(params.get("track_width_bins", 10))
+    real_file = params.get(
+        "real_streams_file",
+        os.path.join(params.get("resources_dir", "assets/gaia"),
+                     "gaia_observed_streams_6Dwitherrors_cutNGC3201.npz"),
+    )
+    d = np.load(real_file)
+    sim = np.asarray(d["sim_data_projected"], dtype=float)
+    sim = sim[0] if sim.ndim == 4 else sim
+    am = np.asarray(d["attention_mask"])
+    am = am[:, 0, :] if am.ndim == 3 else am
+    jarr = np.asarray(d["j"]).reshape(-1).astype(int)
+    R = np.repeat(np.eye(3)[None], n_streams, axis=0)
+    half = np.full(n_streams, np.inf)
+    for name, w in cuts.items():
+        j = target[name]
+        row = int(np.flatnonzero(jarr == j)[0])
+        s_j = sim[row][am[row].astype(bool)]
+        R[j] = _np_fit_frame(s_j[:, 0], s_j[:, 1])
+        half[j] = w
+    jax, jnp = _jax()
+    R_j, half_j = jnp.asarray(R), jnp.asarray(half)
+    qs = jnp.linspace(0.0, 1.0, k_bins + 1)
+
+    def _own_track(phi1, phi2, mask):
+        """One row: per-bin median phi2 over the row's own phi1 quantile bins; NaN-free by
+        construction (every bin holds ~N/K attended stars), evaluated at every star's phi1."""
+        p1 = jnp.where(mask, phi1, jnp.nan)
+        edges = jnp.nanquantile(p1, qs)
+        mids = 0.5 * (edges[1:] + edges[:-1])
+        idx = jnp.clip(jnp.searchsorted(edges[1:-1], phi1, side="right"), 0, k_bins - 1)
+
+        def med(b):
+            return jnp.nanmedian(jnp.where(mask & (idx == b), phi2, jnp.nan))
+
+        track = jax.vmap(med)(jnp.arange(k_bins))
+        ok = jnp.isfinite(track)
+        track = jnp.where(ok, track, jnp.nanmedian(jnp.where(mask, phi2, jnp.nan)))
+        return jnp.interp(phi1, mids, track)
+
+    @jax.jit
+    def _run(sim, mask, j):
+        ra, dec = jnp.radians(sim[:, :, 0]), jnp.radians(sim[:, :, 1])
+        n = jnp.stack([jnp.cos(dec) * jnp.cos(ra), jnp.cos(dec) * jnp.sin(ra), jnp.sin(dec)], -1)
+        v = jnp.einsum("rpk,rmk->rpm", n, R_j[j])
+        phi1 = jnp.degrees(jnp.arctan2(v[..., 1], v[..., 0]))
+        phi2 = jnp.degrees(jnp.arcsin(jnp.clip(v[..., 2], -1, 1)))
+        trk = jax.vmap(_own_track)(phi1, phi2, mask)
+        keep = jnp.abs(phi2 - trk) <= half_j[j][:, None]
+        return mask & keep
+
+    def aug(batch):
+        if not cuts:
+            return batch
+        mask = jnp.asarray(batch["attention_mask"])[:, 0, :].astype(bool)
+        j = _stream_ids_jax(batch)
+        batch["attention_mask"] = _run(jnp.asarray(batch[key]), mask, j)[:, None, :]
+        return batch
+
+    return aug
+
+
 @register_augmentation("override_vlos_error_with_real")
 def _override_vlos_error_with_real(params, rng, context=None):
-    """Real data only: where a member has a measured v_los, use the instrument's uncertainty."""
+    """Real data only: where a member has a measured v_los, use the instrument's uncertainty
+    (``vlos_error`` from the real npz) in ``sigma_errors`` instead of the Gaia-table value.
+
+    Layouts (as ``evaluate_real._prepare_real_members`` emits them): ``vlos_mask`` ``(rows, 1, P)``
+    (or ``(rows, P)``), ``vlos_error`` ``(rows, P)`` (or with a trailing/middle singleton axis);
+    both are normalised to ``(rows, P)`` here."""
     jax, jnp = _jax()
+
+    def _flat(a, n_rows):
+        a = jnp.asarray(a)
+        return a.reshape(n_rows, -1)
 
     @jax.jit
     def _run(sigma, vlos_error, vlos_mask):
@@ -512,8 +786,9 @@ def _override_vlos_error_with_real(params, rng, context=None):
 
     def aug(batch):
         sigma = jnp.asarray(batch["sigma_errors"])
-        vlos_error = jnp.asarray(batch["vlos_error"])[..., 0]
-        vlos_mask = jnp.asarray(batch["vlos_mask"])[..., 0]
+        n_rows = sigma.shape[0]
+        vlos_error = _flat(batch["vlos_error"], n_rows)
+        vlos_mask = _flat(batch["vlos_mask"], n_rows).astype(bool)
         batch["sigma_errors"] = _run(sigma, vlos_error, vlos_mask)
         return batch
 
@@ -804,7 +1079,8 @@ def _add_noise_to_rho_z(params, rng, context=None):
 @register_augmentation("log10_rho_z")
 def _log10_rho_z(params, rng, context=None):
     """rho(z) spans orders of magnitude over z; feed its log10 to the network (as for vcirc).
-    Runs AFTER add_noise_to_rho_z; the small chance of a negative noised value is clipped."""
+    Runs AFTER add_noise_to_rho_z
+    the small chance of a negative noised value is clipped."""
     key = str(params.get("rho_z_key", "rho_z"))
     jax, jnp = _jax()
 
@@ -832,7 +1108,8 @@ def _contaminate_members(params, rng, context=None):
     Real stream member catalogues are contaminated, and it is quantified for our streams. Ibata et al.
     (2020) reject 1 of 5 spectroscopic Gjoll (NGC 3201) targets on radial velocity and find a
     metallicity spread ~30x the cluster's intrinsic sigma, stating plainly that not all of the
-    candidates were stripped from NGC 3201; modern Pal 5 samples still flag dozens of candidates as
+    candidates were stripped from NGC 3201
+    modern Pal 5 samples still flag dozens of candidates as
     deviating from the known kinematic/CMD trends. For M68 — where the simulated-vs-real dispersion
     gap is worst — there is no published width or velocity-dispersion measurement at all, so the
     target the forward model is being asked to match is itself unvalidated.
@@ -851,7 +1128,8 @@ def _contaminate_members(params, rng, context=None):
 
     Params (a no-op when ``contamination_max_frac`` is 0, the default, so the step is safe to leave in
     a chain): ``contamination_max_frac`` — upper end of the per-row Uniform[0, f] contaminated
-    fraction; ``contamination_inflate`` — dispersion inflation factor for the redrawn kinematics.
+    fraction
+    ``contamination_inflate`` — dispersion inflation factor for the redrawn kinematics.
 
     Runs after ``compact_to_attended`` and before ``sample_magnitudes`` so contaminants pick up
     magnitudes and Gaia uncertainties through exactly the same path as members (they are, after all,

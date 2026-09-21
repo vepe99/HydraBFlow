@@ -1,0 +1,18 @@
+# stream_fusion_2modal for the medians-only grid (stream_global_v5_nodisp: summary_include_std false).
+# Same backbones and sizes; only the masked backbone's channel contract changes to the 9-channel
+# layout [med_phi2, med_plx, med_mu_phi1, med_mu_phi2, med_vlos, n_track, n_vlos, j, phi1_centre].
+# `head: null` is REQUIRED by grouped_diffusion (see stream_fusion_2modal.yaml).
+defaults:
+  - stream_fusion_2modal
+  - _self_
+
+params:
+  backbones:
+    sim_summary:
+      params:
+        time_axis: -1
+        count_channel: 5         # n_track
+        vlos_count_channel: 6    # n_vlos
+        stat_channels: [0, 1, 2, 3]   # astrometric medians
+        vlos_stat_channels: [4]       # v_los median
+        min_count: 3

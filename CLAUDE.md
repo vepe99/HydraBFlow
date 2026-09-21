@@ -1923,3 +1923,45 @@ Knowledge graph at `graphify-out/`.
     `training_data_100000.npz` running at 100 workers (~13 rows/s, ETA ~2 h; watchdog launcher
     `logs/run_spray_v4_p1e3_full.sh`, ~100 MB commit per worker). The 10^4 spray v4 set was never
     completed (2/100 chunks).
+- Session 2026-09-21 (v5 observation model for the new member set; 10^3-particle spray v4 training
+  set; prior-predictive checks on the training set): follow-up to the same-day entry above.
+  - **v5 observation model** (`augmentation/streams.py`, presets `stream_global_v5` /
+    `stream_real_global_v5`, inheriting the grid_v2 pair): (1) counts 129/195/195 members and
+    77/48/16 v_los, test-enforced against the recommended npz; (2) `sample_vlos_error_empirical`
+    draws sigma_vlos from the real measured members' (G, sigma) pairs of the same stream (nearest in
+    G; new `RealVlosModel` cache) — the Gaia DR3 table is Gaia-RVS-only and these velocities are
+    literature/DESI at G 17-20.5 where RVS does not observe; (3) `mask_vlos` gained
+    `vlos_selection: magnitude` (Gumbel top-k with the per-stream logistic p(has_vlos|G); real data:
+    Pal5 91 % of the brightest quartile vs 3 % of the faintest); (4) `stream_track_width_cut`
+    removes stars farther than 1.5 deg from each realization's OWN binned-median phi2 track (M68 only)
+    — mirrors Palau's main/envelope split (main |dphi2|<=1.8, envelope >=1.1, 5th pct 1.6). A first
+    version cut around the REAL track and threw away 90 % of offset M68 realizations; the self-track
+    version removes 4-6 % uniformly in phi1. The real chain now includes
+    `override_vlos_error_with_real`, which had never been used and read the wrong axes for the
+    evaluate_real layout (fixed; measured members carry exactly their catalogue error).
+    `_nodisp` twins (`summary_include_std: false`, 9-channel grid) + `model=stream_fusion_2modal_nodisp`
+    (channel contract: medians 0-3/4, counts 5/6) for the dispersion ablation. Runners
+    `scripts/train_v5_2modal.sh` / `train_v5_2modal_nodisp.sh` (wrappers over train_v4_2modal.sh:
+    10^3 dataset, v5 presets, recommended real file, `n_particles=1000`; use `PY=.venv/bin/python
+    AUTOCVD=.venv/bin/autocvd`, `RES=assets/gaia` on a node without the `data/` symlink; N_EPOCHS /
+    BATCH_SIZE env). Tests `tests/test_obs_model_v5.py` (9); suite 197 green.
+  - **Effect of v5 on the 1000-draw prior check** (same draws, same real set): Pal5 v_los-sensitive
+    numbers improve (particle MMD pct 65->48; v_los dispersion P(sim<real) 0.11->0.18-0.29);
+    NGC3201 unchanged; M68 widths unchanged, but with 195 members / 16 velocities two of three v_los
+    bins are empty in most rows and 12 % of far-tip phi2 bins fall below min_count — a sample-size
+    effect of the real M68 set, not the cut.
+  - **Training set DONE**: `data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow/
+    training_data_100000.npz` (4.9 GB; 100 workers, 1 h 49 min for the flat stage; 230 NaN rows =
+    0.23 %; in-window stars median 606/208/274; 42 % of NGC3201 and 19 % of M68 rows hold fewer
+    stars than the real member count — the 10^3-particle cost) + `test_multistream_333.npz`. New
+    priors verified in the realized draws (NGC3201 r 4.737+/-0.043, M68 r 10.405+/-0.10, ...).
+  - **Prior-predictive checks on the training set** (`ppc/binned_v5/`, `ppc/rotation_curve/`;
+    `ppc_median_tracks_prior.py` now takes flat sets via `--max-groups`, new
+    `scripts/ppc_rotation_curve_prior.py`): 10 000 rows/stream reproduce the 1000-draw pilot to a
+    percent — all median tracks inside the prior band; Pal5 widths covered; NGC3201 sims too wide on
+    the sky in every bin (P(sim<real) 0.01-0.18); M68 main-component widths reproduced (P 0.4-0.9).
+    Rotation curve (all 1e5 rows vs Ou+2024): observed inside the 16-84 % band at every radius, prior
+    median 12 % low inside 13 kpc (P(sim<obs) ~0.8) and too flat outside (0.21 at 25.5 kpc); best row
+    chi2 10/19, 2 % of the prior below 2x dof; controlled by sigma_z (-0.63), Sigma_Disk (-0.47),
+    r_Disk, c, M200; q-blind (0.05). Only NGC3201's medians/widths carry a q signal (+0.24/+0.19,
+    oblate preferred). Training not yet launched (user runs the two scripts on the GPU node).

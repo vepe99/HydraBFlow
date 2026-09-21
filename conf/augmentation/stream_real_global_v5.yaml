@@ -1,0 +1,32 @@
+# Real-data counterpart of stream_global_v5 (the recommended 2026-09-21 member set). Same estimator
+# settings and phi1 grid as the training chain. Two differences from stream_real_global_ibata_grid_v2:
+#   * `override_vlos_error_with_real`: measured members carry their INSTRUMENT error (DESI ~1-4 km/s,
+#     literature 0.1-2.5 km/s) into sigma_errors, matching the training chain's empirical draws; the
+#     Gaia-table value is kept only for unmeasured stars until impute_vlos overwrites it.
+#   * summary_vlos_bins 2, as in training.
+# No window / width cut / subsample: the real M68 arm already IS the main component.
+defaults:
+  - stream_real_global_ibata_grid_v2
+
+steps:
+  - sample_obs_error
+  - override_vlos_error_with_real
+  - impute_vlos
+  - log10_vcirc
+  - stream_summary_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz
+  summary_vlos_bins: 2
+  observed_n_stars:
+    Pal5: 129
+    NGC3201: 195
+    M68: 195
+  min_star_with_vlos:
+    Pal5: 77
+    NGC3201: 48
+    M68: 16

@@ -1,0 +1,13 @@
+# stream_global_v5 WITHOUT the per-bin dispersion channels: `summary_include_std: false` drops every
+# std channel from the gridded summary, so batch["sim_summary"] is (n, K_phi1, 9) =
+#   [med_phi2, med_plx, med_mu_phi1, med_mu_phi2, med_vlos, n_track, n_vlos, j, phi1_centre]
+# instead of the 14-channel layout. Everything else (counts, width cut, v_los model, real file) is v5.
+# Pair with model=stream_fusion_2modal_nodisp (channel indices for the 9-channel layout) and
+# augmentation=stream_real_global_v5_nodisp on the real data. Ablation target: how much of the halo
+# information and of the real-data misspecification sits in the dispersions (the summary-vs-real
+# z-map localised the offenders in std_phi2 / the M68 dispersions).
+defaults:
+  - stream_global_v5
+
+params:
+  summary_include_std: false

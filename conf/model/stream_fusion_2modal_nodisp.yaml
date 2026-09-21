@@ -1,0 +1,9 @@
+# Two-modality masked model on the medians-only grid (no per-bin dispersions). Identical to
+# stream_fusion_2modal except the summary network's channel contract; see
+# conf/augmentation/stream_global_v5_nodisp.yaml for the ablation rationale.
+defaults:
+  - stream_fusion_2modal
+  - override summary_network: stream_fusion_2modal_nodisp
+  - _self_
+
+name: stream_fusion_2modal_nodisp
