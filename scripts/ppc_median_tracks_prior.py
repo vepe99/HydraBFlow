@@ -56,6 +56,8 @@ def main():
     ap.add_argument("--n-best", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-groups", type=int, default=0, help="flat sets: cap the pseudo-groups per stream (0 = all)")
+    ap.add_argument("--corner-bins", default="", help="e.g. '0,4,7': also draw a per-stream corner plot of the statistic "
+                    "at these phi1 bins for phi2/mu_phi1/mu_phi2 plus every v_los bin (sims = contours, real = red point)")
     ap.add_argument("--stat", choices=["median", "std", "std_mad"], default="median",
                     help="per-bin statistic: median track, plain std (ddof=1) or robust 1.4826*MAD scale")
     args = ap.parse_args()
@@ -208,6 +210,49 @@ def main():
             rep[f"chi2_{q}_min"] = float(chi2_q[q][order[0]])
             rep[f"frac_{q}_within_1_star_sigma"] = float((dq < 1)[valid].mean())
         report["streams"][nm] = rep
+        if args.corner_bins:
+            import corner as _corner
+
+            cb = [int(b) for b in args.corner_bins.split(",")]
+            cols, names, real_vals, real_err = [], [], [], []
+            for q, unit in QS:
+                bins = cb if q != "vlos" else list(range(T[q].shape[1]))
+                for b in bins:
+                    if b >= T[q].shape[1] or not np.isfinite(RT[q][b]):
+                        continue
+                    cols.append(T[q][:, b])
+                    names.append(f"{q}\nbin {b} [{unit}]")
+                    real_vals.append(RT[q][b])
+                    real_err.append(SE[q][b])
+            X = np.column_stack(cols)[valid]
+            # keep a statistic only if most rows have it (M68's v_los bins are empty in ~2/3 of
+            # the rows: requiring them would keep the few rows with many measured stars -> biased)
+            frac_ok = np.isfinite(X).mean(0)
+            keep_c = frac_ok >= 0.5
+            dropped = [names[k].replace("\n", " ") for k in range(len(names)) if not keep_c[k]]
+            X = X[:, keep_c]
+            names = [n_ for n_, k_ in zip(names, keep_c) if k_]
+            real_vals = [v_ for v_, k_ in zip(real_vals, keep_c) if k_]
+            real_err = [e_ for e_, k_ in zip(real_err, keep_c) if k_]
+            okrow = np.isfinite(X).all(1)
+            X = X[okrow]
+            rng_c = [(min(np.percentile(X[:, k], 0.5), real_vals[k]) - 0.05 * np.ptp(X[:, k]),
+                      max(np.percentile(X[:, k], 99.5), real_vals[k]) + 0.05 * np.ptp(X[:, k])) for k in range(X.shape[1])]
+            figc = _corner.corner(X, labels=names, range=rng_c, color="C0", plot_datapoints=False,
+                                  plot_density=False, fill_contours=True, levels=(0.68, 0.95),
+                                  smooth=1.0, bins=35, truths=real_vals, truth_color="C3",
+                                  label_kwargs={"fontsize": 8})
+            axc = np.array(figc.axes).reshape(len(names), len(names))
+            for k in range(len(names)):
+                axc[k, k].axvspan(real_vals[k] - real_err[k], real_vals[k] + real_err[k], color="C3", alpha=0.25)
+                for kk in range(k):
+                    axc[k, kk].errorbar(real_vals[kk], real_vals[k], xerr=real_err[kk], yerr=real_err[k],
+                                        fmt="o", color="C3", ms=4, capsize=2, zorder=6)
+            sub = f"; dropped (finite in <50 % of rows): {', '.join(dropped)}" if dropped else ""
+            figc.suptitle(f"{nm}: per-bin {tag} as observables — {len(X)} prior rows (68/95 %), "
+                          f"red = real Gaia ± SE{sub}", y=1.01, fontsize=12)
+            figc.savefig(os.path.join(args.out, f"corner_{tag}_{nm}.png"), dpi=100, bbox_inches="tight")
+            plt.close(figc)
         for k, (q, unit) in enumerate(QS):
             ax = axs[k, col]
             mid = MID[q]
