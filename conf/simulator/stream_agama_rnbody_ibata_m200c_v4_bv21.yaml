@@ -1,0 +1,56 @@
+# The v4 restricted-N-body simulator with the UPDATED progenitor phase-space priors (2026-09-21).
+#
+# Identical to `stream_agama_rnbody_ibata_m200c_v4` in every global — same Ibata single stellar disk
+# + gas disks + truncated m200_c halo, gamma U[0,1.5], Sigma_Disk U[3e8,1.6e9], free alpha and
+# rho_Bulge, marginalized solar frame, no rotation-curve rejection, Ou+2024 19-radius vcirc grid,
+# 10^4 particles, in-window storage cap of 2000 stars/row — and identical in the progenitor MASS,
+# RADIUS and STRIPPING-AGE priors. The only change is the observed present-day phase space of
+# NGC 3201 and M68, which the dataset in `data_agama_rnbody_ibata_m200c_v4_hydrabflow` predates:
+#
+#              old (that dataset)              new (Baumgardt & Vasiliev 2021 / Vasiliev &
+#                                              Baumgardt 2021, incl. Gaia systematics)
+#   NGC3201  d 4.902 +- 0.11   kpc             4.737 +- 0.043
+#            vr 494.3 +- 0.14  km/s            495.38 +- 0.06
+#            pm (8.324, -1.989) +- 0.044       (8.348, -1.958) +- 0.022
+#   M68      d 10.31 +- 0.53   kpc             10.404 +- 0.10
+#            vr -92.98 +- 0.22 km/s            -93.11 +- 0.18
+#            pm (-2.750, 1.764) +- 0.055       (-2.739, 1.779) +- 0.024
+#
+# Pal 5 is deliberately unchanged: BV21's 21.94 +- 0.52 kpc comes from un-extinction-corrected
+# distance moduli, and the 2025-26 stream literature still adopts the RR Lyrae 20.6 +- 0.2
+# (Price-Whelan et al. 2019).
+#
+# The values are RESTATED here rather than inherited so this dataset's provenance cannot drift if
+# `conf/simulator/stream_agama.yaml` is edited again; they are byte-identical to what that file
+# currently resolves to (verified against the spray p1e3 dataset's realized draws).
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v4
+
+params:
+  priors_local:
+    NGC3201:
+      vr:
+        type: normal
+        prior_parameters: [495.38, 0.06]
+      r:
+        type: normal
+        prior_parameters: [4.737, 0.043]
+      mu_ra_cosdec:
+        type: normal
+        prior_parameters: [8.348, 0.022]
+      mu_dec:
+        type: normal
+        prior_parameters: [-1.958, 0.022]
+    M68:
+      vr:
+        type: normal
+        prior_parameters: [-93.11, 0.18]
+      r:
+        type: normal
+        prior_parameters: [10.404, 0.1]
+      mu_ra_cosdec:
+        type: normal
+        prior_parameters: [-2.739, 0.024]
+      mu_dec:
+        type: normal
+        prior_parameters: [1.779, 0.024]
