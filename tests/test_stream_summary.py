@@ -284,8 +284,8 @@ def _masked_tst(summary_dim=8, min_count=3):
 def _grid_batch(n=4, k=10, seed=0):
     """A (n, K, 14) stream_summary_grid-shaped batch with every bin well populated."""
     x = np.random.default_rng(seed).normal(0.0, 1.0, (n, k, 14)).astype("float32")
-    x[..., 10] = 8.0  # n_track
-    x[..., 11] = 5.0  # n_vlos
+    x[..., 10] = 1.0  # n_track validity flag (summary_occupancy: valid -> +1 populated / -1 empty)
+    x[..., 11] = 1.0  # n_vlos validity flag
     x[..., 12] = 0.0  # j
     x[..., 13] = np.arange(k)  # φ1 bin centres
     return x
@@ -300,8 +300,8 @@ def test_masked_tst_ignores_empty_bin_content():
 
     a, b = x.copy(), x.copy()
     for arr, junk in ((a, 1.0e4), (b, -7.0e3)):
-        arr[:, 7:, 10] = 0.0  # bins 7..9 empty
-        arr[:, 7:, 11] = 0.0
+        arr[:, 7:, 10] = -1.0  # bins 7..9 empty
+        arr[:, 7:, 11] = -1.0
         arr[:, 7:, 0:10] = junk
     out_a, out_b = np.asarray(net(a)), np.asarray(net(b))
     assert np.max(np.abs(out_a - out_b)) < 1e-5 * max(np.max(np.abs(out_a)), 1.0)
@@ -342,14 +342,14 @@ def test_masked_mlp_shares_the_occupancy_prep():
 
     junk_a, junk_b = x.copy(), x.copy()
     for arr, junk in ((junk_a, 1.0e4), (junk_b, -7.0e3)):
-        arr[:, 7:, 10] = 0.0  # bins 7..9 under-populated
-        arr[:, 7:, 11] = 0.0
+        arr[:, 7:, 10] = -1.0  # bins 7..9 under-populated
+        arr[:, 7:, 11] = -1.0
         arr[:, 7:, 0:10] = junk
     np.testing.assert_allclose(np.asarray(net(junk_a)), np.asarray(net(junk_b)), atol=1e-5)
 
     counts_a, counts_b = x.copy(), x.copy()
-    counts_a[..., 10], counts_a[..., 11] = 8.0, 5.0
-    counts_b[..., 10], counts_b[..., 11] = 400.0, 91.0
+    counts_a[..., 10], counts_a[..., 11] = 1.0, 1.0
+    counts_b[..., 10], counts_b[..., 11] = 0.37, 2.9  # any non-negative value = the same validity
     np.testing.assert_allclose(np.asarray(net(counts_a)), np.asarray(net(counts_b)), atol=1e-6)
 
 
@@ -363,10 +363,61 @@ def test_masked_tst_never_sees_count_values():
     net(x)  # build
 
     a, b = x.copy(), x.copy()
-    a[..., 10], a[..., 11] = 8.0, 5.0        # both well above min_count ...
-    b[..., 10], b[..., 11] = 400.0, 91.0     # ... so the validity masks are identical
+    a[..., 10], a[..., 11] = 1.0, 1.0        # raw +1 flags ...
+    b[..., 10], b[..., 11] = 0.42, 2.7       # ... or their standardized images: same validity mask
     out_a, out_b = np.asarray(net(a)), np.asarray(net(b))
     np.testing.assert_allclose(out_a, out_b, atol=1e-6)
+
+
+def test_masked_tst_mask_survives_summary_standardization():
+    """The 2026-09-22 bug: BayesFlow standardizes ``summary_variables`` BEFORE the summary network,
+    so a ``count >= min_count`` test inside the network ran on z-scores and masked ~98 % of the bins.
+    With sign-encoded flags the mask must be identical on raw and on standardized input."""
+    net = _masked_tst()
+    x = _grid_batch(k=10, seed=3)
+    x[:, 6:, 10] = -1.0  # bins 6..9 under-populated
+    x[:, 8:, 11] = -1.0
+    net(x)
+    mean = x.reshape(-1, 14).mean(0)
+    std = x.reshape(-1, 14).std(0)
+    std[std == 0] = 1.0
+    z = ((x - mean) / std).astype("float32")
+    # the flag channels are now z-scores, but their sign still encodes validity
+    got_raw = np.asarray(net._valid(x, 10))[..., 0]
+    got_z = np.asarray(net._valid(z, 10))[..., 0]
+    np.testing.assert_array_equal(got_raw, got_z)
+    assert got_raw[:, :6].all() and not got_raw[:, 6:].any()
+    np.testing.assert_array_equal(np.asarray(net._valid(x, 11))[..., 0], np.asarray(net._valid(z, 11))[..., 0])
+
+
+def test_summary_grid_valid_encoding_is_sign_of_min_count():
+    """``summary_occupancy: valid`` writes +1/-1 = (count >= summary_min_count); the statistics and
+    every other channel are unchanged."""
+    counts = np.asarray(_build("stream_summary_grid", _params())(_toy_batch())["sim_summary"])
+    flags = np.asarray(_build("stream_summary_grid", _params(summary_occupancy="valid"))(_toy_batch())["sim_summary"])
+    assert set(np.unique(flags[..., 10])) <= {-1.0, 1.0} and set(np.unique(flags[..., 11])) <= {-1.0, 1.0}
+    np.testing.assert_array_equal(flags[..., 10], np.where(counts[..., 10] >= 3, 1.0, -1.0))
+    np.testing.assert_array_equal(flags[..., 11], np.where(counts[..., 11] >= 3, 1.0, -1.0))
+    np.testing.assert_allclose(flags[..., :10], counts[..., :10])
+    np.testing.assert_allclose(flags[..., 12:], counts[..., 12:])
+    with pytest.raises(ValueError, match="summary_occupancy"):
+        _build("stream_summary_grid", _params(summary_occupancy="flags"))
+
+
+def test_masked_backbone_refuses_count_encoding_under_standardization(compose):
+    """The guard behind the fix: a masked backbone + count-encoded occupancy + standardized summary
+    variables is exactly the silent configuration that trained on a zeroed grid."""
+    from hydrabflow.pipeline.adapter import check_masked_backbone_occupancy
+
+    base = ["simulator=stream_agama_rnbody_ibata_m200c_v2", "model=stream_fusion_ibata_grid_masked",
+            "augmentation=stream_global_ibata_grid_v2", "preprocessing=stream_global_log10_ibata_sumstats",
+            "composition=global"]
+    with pytest.raises(ValueError, match="summary_occupancy=valid"):
+        check_masked_backbone_occupancy(compose(base))
+    check_masked_backbone_occupancy(compose(base + ["augmentation.params.summary_occupancy=valid"]))
+    check_masked_backbone_occupancy(compose(base + ["training.standardize=[inference_variables]"]))
+    # a plain backbone reading counts as features is fine either way
+    check_masked_backbone_occupancy(compose(base + ["model=stream_fusion_2modal_oldgrid", "adapter=stream_2modal"]))
 
 
 def test_masked_tst_padding_equals_true_subset():
@@ -383,8 +434,8 @@ def test_masked_tst_padding_equals_true_subset():
     net(x)
 
     padded = x.copy()
-    padded[:, k_valid:, 10] = 0.0
-    padded[:, k_valid:, 11] = 0.0
+    padded[:, k_valid:, 10] = -1.0
+    padded[:, k_valid:, 11] = -1.0
     padded[:, k_valid:, 0:10] = 123.0
 
     got = np.asarray(net(padded))
@@ -398,8 +449,8 @@ def test_masked_tst_all_bins_empty_stays_finite():
     x = _grid_batch()
     net(x)
     empty = x.copy()
-    empty[..., 10] = 0.0
-    empty[..., 11] = 0.0
+    empty[..., 10] = -1.0
+    empty[..., 11] = -1.0
     assert np.isfinite(np.asarray(net(empty))).all()
 
 

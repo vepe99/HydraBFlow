@@ -7,8 +7,10 @@ and for φ2 a fabricated 0 *is* the on-track value, so an empty bin reads as a p
 zero-dispersion one. This wrapper consumes the occupancy channels the augmentation now exports and
 removes those bins from the summary:
 
-1. read the per-bin member counts from ``count_channel`` (astrometric tracks) and, when given,
-   ``vlos_count_channel`` (v_los uses measured stars only, so it empties out sooner);
+1. read the per-bin validity flags (``summary_occupancy: valid``, ±1) from ``count_channel``
+   (astrometric tracks) and, when given, ``vlos_count_channel`` (v_los uses measured stars only, so
+   it empties out sooner) — flags, not counts, because the approximator standardizes the grid
+   before this layer sees it and only the sign survives that;
 2. hard-zero the statistic channels of under-populated bins, so a substituted 0 never masquerades
    as data, **and hard-zero the occupancy channels themselves** — the counts are a validity signal,
    not an observable, so the network must not train on their magnitudes (a simulated bin's member
@@ -115,9 +117,18 @@ class MaskedTimeSeriesTransformer(SummaryNetwork):
         return (*seq[:-2], seq[-1])
 
     def _valid(self, x: Tensor, channel: int) -> Tensor:
-        """(batch, K, 1) float mask: 1 where the bin has at least ``min_count`` members."""
-        count = x[..., channel : channel + 1]
-        return ops.cast(count >= float(self.min_count), x.dtype)
+        """(batch, K, 1) float mask: 1 where the occupancy channel is non-negative.
+
+        The channel must carry the ``summary_occupancy: valid`` encoding (+1 valid / -1 invalid).
+        The approximator standardizes ``summary_variables`` BEFORE the summary network, and an
+        affine map with positive scale keeps the sign, so ``>= 0`` recovers the exact mask on raw
+        and on standardized input alike (a never-varying channel standardizes to 0 -> valid).
+        Thresholding the raw count at ``min_count`` here was the 2026-09-22 bug: on z-scored counts
+        it declared ~98 % of bins empty. ``min_count`` is kept only for serialized-config
+        compatibility; the threshold lives in the augmentation (``summary_min_count``).
+        """
+        flag = x[..., channel : channel + 1]
+        return ops.cast(flag >= 0.0, x.dtype)
 
     def _prepare(self, x: Tensor) -> tuple[Tensor, Tensor]:
         """Zero the statistics of under-populated bins and then the occupancy channels themselves.

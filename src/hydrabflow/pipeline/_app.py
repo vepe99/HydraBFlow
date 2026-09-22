@@ -9,7 +9,11 @@ from typing import Callable
 import hydra
 
 from hydrabflow.config import register_configs
-from hydrabflow.pipeline.adapter import fill_adapter_from_simulator, fill_stream_grid_from_simulator
+from hydrabflow.pipeline.adapter import (
+    check_masked_backbone_occupancy,
+    fill_adapter_from_simulator,
+    fill_stream_grid_from_simulator,
+)
 
 CONF_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "conf"))
 
@@ -22,6 +26,7 @@ def make_cli(run_fn: Callable) -> Callable[[], None]:
         # stream simulators, for the rotation-curve grid the training-time components must match).
         fill_adapter_from_simulator(cfg)
         fill_stream_grid_from_simulator(cfg)
+        check_masked_backbone_occupancy(cfg)
         run_fn(cfg)
 
     entry = hydra.main(version_base=None, config_path=CONF_DIR, config_name="config")(stage)

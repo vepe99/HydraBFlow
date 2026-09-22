@@ -1,6 +1,9 @@
-# stream_fusion_2modal with the sim_summary backbone swapped for a plain TimeSeriesTransformer over
-# the OLD phi1 grid (augmentation=stream_global_ibata_grid: out-of-range stars clipped into the end
-# bins, every bin kept however sparse, sample std, no occupancy channels; 12-channel layout).
+# stream_fusion_2modal with the sim_summary backbone swapped for a plain TimeSeriesTransformer (no bin
+# masking). "Old grid" = the shared estimator with `summary_scale: std` (augmentation=stream_global_ibata_grid,
+# or any grid preset + `augmentation.params.summary_scale=std`): out-of-range stars are still excluded and
+# bins below summary_min_count still read 0, but the 14-channel layout INCLUDING the n_track/n_vlos counts
+# reaches the network as features (verified on the v4_2modal_legacy_oldgrid weights: input width 21 =
+# 13 features + 8 time-embedding). No channel contract, so the same yaml serves the 9-channel `_nodisp` grid.
 # Ablation of the v2 estimator alone -- grouped_diffusion, head: null and the curve branch unchanged.
 type: fusion
 params:

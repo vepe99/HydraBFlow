@@ -189,3 +189,29 @@ def build_adapter(cfg) -> Any:
     if inference_conditions:
         adapter = adapter.concatenate(inference_conditions, into="inference_conditions")
     return adapter
+
+
+def check_masked_backbone_occupancy(cfg) -> None:
+    """Refuse the masked grid backbones with count-encoded occupancy under summary standardization.
+
+    ``masked_time_series_transformer`` / ``masked_mlp`` read bin validity off the occupancy channels
+    AFTER BayesFlow has standardized ``summary_variables``; only the sign-encoded
+    ``summary_occupancy: valid`` survives that. With ``counts`` the network silently masks ~98 % of
+    the bins (2026-09-22). Raising here is what keeps that from recurring.
+    """
+    if "summary_variables" not in list(cfg.training.get("standardize", [])):
+        return
+    sn = cfg.model.summary_network
+    types = [str(sn.get("type", ""))]
+    for spec in ((sn.get("params") or {}).get("backbones") or {}).values():
+        types.append(str(spec.get("type", "")) if hasattr(spec, "get") else str(spec))
+    if not any(t.startswith("masked_") and t != "masked_set_transformer" for t in types):
+        return
+    enc = str((cfg.augmentation.get("params") or {}).get("summary_occupancy", "counts")).lower()
+    if enc != "valid":
+        raise ValueError(
+            "masked_time_series_transformer/masked_mlp need `augmentation.params.summary_occupancy=valid` "
+            "when `training.standardize` includes summary_variables: the count encoding is z-scored "
+            "before the network and its `count >= min_count` mask collapses (see stream_summary."
+            "occupancy_encoding)."
+        )

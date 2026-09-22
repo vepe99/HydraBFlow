@@ -202,6 +202,26 @@ def _estimator_params(params) -> tuple[str, int, bool]:
     )
 
 
+def occupancy_encoding(params) -> str:
+    """``summary_occupancy``: how the per-bin occupancy channels are written.
+
+    * ``counts`` (default, the legacy layout): the raw member count per bin. Readable by the PPC
+      scripts and usable as a *feature* by a plain backbone — but NOT by the masked backbones when
+      ``training.standardize`` includes ``summary_variables``: BayesFlow standardizes the whole grid
+      before the summary network, so a ``count >= min_count`` test inside the network runs on
+      z-scores and declares almost every bin empty (measured 2026-09-22: 1.7 % of bins "valid"
+      against a true 94 %; the v5 ``default``/``nodisp`` runs and every earlier masked-backbone run
+      trained on an essentially zeroed stream grid).
+    * ``valid``: ``+1`` where the bin holds at least ``summary_min_count`` members, ``-1`` otherwise.
+      Standardization is affine with a positive scale, so the SIGN survives it and the masked
+      backbones recover the exact validity mask with ``>= 0``.
+    """
+    enc = str(params.get("summary_occupancy", "counts")).lower()
+    if enc not in ("counts", "valid"):
+        raise ValueError(f"summary_occupancy must be 'counts' or 'valid', got {enc!r}")
+    return enc
+
+
 # ------------------------------------------------------------------------------------------- #
 # Per-batch JAX augmentation
 # ------------------------------------------------------------------------------------------- #
@@ -370,6 +390,9 @@ def _stream_summary_grid(params, rng, context=None):
     ``[med_φ2, med_plx, med_μφ1, med_μφ2, med_vlos, n_track, n_vlos, j, φ1_centre]`` (9 channels).
     Default true. ``params.summary_include_occupancy: false`` drops the two occupancy channels,
     restoring the pre-fix layouts (12 / 7 channels) for comparison runs.
+    ``params.summary_occupancy: valid`` writes the occupancy channels as ±1 validity flags instead
+    of counts — REQUIRED with the masked backbones whenever ``summary_variables`` are standardized
+    (see :func:`occupancy_encoding`).
 
     Pair with a ``time_series_transformer`` summary backbone carrying ``params.time_axis: -1``.
     """
@@ -395,6 +418,7 @@ def _stream_summary_grid(params, rng, context=None):
 
     frames = _stream_frames(params, k_track, k_vlos, channels)
     scale, min_count, include_occupancy = _estimator_params(params)
+    encoding = occupancy_encoding(params)
     R_all = jnp.asarray(frames.R)  # (S, 3, 3)
     track_edges_all = jnp.asarray(frames.track_edges)  # (S, Kt+1)
     bins_t = jnp.arange(k_track)
@@ -468,6 +492,9 @@ def _stream_summary_grid(params, rng, context=None):
 
         # Per-bin occupancy: the channels the masked backbone reads to tell an empty bin from a
         # genuinely cold one (and that make the NaN -> 0 substitution below non-deceptive).
+        if encoding == "valid":  # sign-encoded validity: survives the approximator's standardization
+            n_track = jnp.where(n_track >= min_count, 1.0, -1.0)
+            n_vlos = jnp.where(n_vlos >= min_count, 1.0, -1.0)
         occ = [n_track[..., None], n_vlos[..., None]] if include_occupancy else []
 
         # j once (constant across a stream's bins) + φ1 bin-centre last (time_axis=-1)

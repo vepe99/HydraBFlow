@@ -1965,3 +1965,90 @@ Knowledge graph at `graphify-out/`.
     chi2 10/19, 2 % of the prior below 2x dof; controlled by sigma_z (-0.63), Sigma_Disk (-0.47),
     r_Disk, c, M200; q-blind (0.05). Only NGC3201's medians/widths carry a q signal (+0.24/+0.19,
     oblate preferred). Training not yet launched (user runs the two scripts on the GPU node).
+- Session 2026-09-21 (old-grid twins of the v5 runners + bin check on the new member set):
+  `scripts/train_v5_2modal_oldgrid.sh` / `train_v5_2modal_oldgrid_nodisp.sh` = the v5 arms with the
+  estimator of `outputs/v4_2modal_legacy_oldgrid` (`model=stream_fusion_2modal_oldgrid`, plain TST, and
+  `augmentation.params.summary_scale=std` via EXTRA — no new augmentation yamls; the override is
+  declared in grid_v2 so struct mode accepts it and it lands in every stage's .hydra config). Outputs
+  `outputs/v5_2modal/oldgrid{,_nodisp}`. **What "old grid" actually is in today's code** (measured, the
+  model yaml's comment was stale and is fixed): the shared estimator with sample std instead of MAD;
+  out-of-range stars are excluded and bins < min_count read 0 exactly as in v2; the 14-channel layout
+  INCLUDING n_track/n_vlos reaches the plain TST as features (legacy_oldgrid input width 21 = 13 + 8
+  Time2Vec). Truly dropping the counts is `augmentation.params.summary_include_occupancy=false`.
+  **Bin check** (`scripts/ppc_summary_grid_coverage.py`, new `--override`; `outputs/v5_oldgrid_coverage/`,
+  p1e3 333 test set, v5 chain, std scale, recommended real npz): the phi1 edges are equal-count quantiles
+  of `real_streams_file`, which v5 already points at the new members, so the track grid re-fits itself
+  (real 12-13 / 19-20 / 19-20 stars per bin, all >= min_count) — no bin move needed. Statistic channels
+  inside the central 95 %: Pal5 94 %, NGC3201 97 %, M68 94 % (M68 bin 0 med_mu_phi1 at 0 pct, std_mu_phi1/2
+  at 100 = progenitor-end pm mismatch). Two structural caveats, NOT bin positions: (1) `stream_summary_grid`
+  ignores `summary_vlos_bins` (v_los rides the 10-bin track grid), so with 16 M68 velocities only 2/10 real
+  bins reach min_count and sim medians are 0-1 per bin — the M68 v_los channels are ~always the substituted
+  0 on both sides; NGC3201 real 2-9 vs sim median 1-3 per bin (real has v_los cells the sims mostly lack).
+  A coarser v_los grid needs a code change (pool consecutive track bins). (2) occupancy stays OOD (real flat
+  at the 97-100th pct in bins 1-8 for NGC3201/M68) and the plain TST SEES it as a feature — the 2026-09-14
+  caveat applies in full to the oldgrid arm. Gotcha: `train_v4_2modal.sh` does not forward `$@` to the
+  Python stages, so `bash train_v5_*.sh --cfg job` silently starts a real run (killed by PID; dirs removed).
+- Session 2026-09-22 (why the v5 masked grid loses q_halo and the oldgrid Pal5 is prolate — BUG
+  found + fixed; chi2/ABC diagnostic): `outputs/v5_2modal/{default,nodisp}` (masked TST, grid_v2
+  MAD) leave q at prior width (per-stream base corr 0.22/0.54/0.17) while `oldgrid{,_nodisp}` (plain
+  TST, std scale, counts as features) recover it from EVERY stream alone (corr 0.90/0.90/0.94, Pal5
+  nRMSE 0.44). New `scripts/q_confusion_chi2.py` (30k training rows through the exact
+  `stream_summary_grid` chain + real chain; GBM q-predictability per channel subset, cell Spearman,
+  per-channel chi2 vs the REAL grid binned in true q, ABC k-NN posterior, occupancy by q tercile;
+  `outputs/v5_2modal/q_confusion/`). **Finding 1 — the occupancy counts carry NO q** (GBM nRMSE
+  1.03); q lives in the medians+dispersions (all-stats 0.52/0.62/0.47 for Pal5/NGC3201/M68), which
+  both grids share ⇒ the masked network was losing it. **ROOT CAUSE (verified on the trained
+  model)**: BayesFlow's approximator standardizes `summary_variables` BEFORE the summary network
+  (`Approximator._standardize_and_resolve`), so `MaskedTimeSeriesTransformer._valid`'s
+  `count >= min_count` ran on z-scored counts: only **1.7 % of track bins / 1.1 % of v_los bins**
+  passed (true 94 % / 48 %) — the network trained on an almost fully zeroed stream grid. This
+  invalidates the stream-modality conclusions of every masked-backbone run (v4 `default`
+  2026-09-15, the 2026-09-17 grid_v2 ablation "q is lost in the input stack", `imm_streams`,
+  `stream_fusion_ibata_grid_masked`, v5 default/nodisp/mlp). **Fix**: `summary_occupancy:
+  counts|valid` on the grid augmentation (`valid` = ±1 flags, sign survives the affine map; default
+  `counts` keeps the oldgrid checkpoints + PPC scripts byte-identical), wrapper thresholds `>= 0`,
+  `check_masked_backbone_occupancy` guard in `_app.py` raises for masked backbone + counts + summary
+  standardization; `train_v5_2modal.sh` `OCC=valid` default, oldgrid wrappers `OCC=counts`. Tests
+  updated/added (`test_masked_tst_mask_survives_summary_standardization`, valid-encoding, guard);
+  suite green. Relaunched the masked arm with the fix: `outputs/v5_2modal/default_occfix/`
+  (launch.sh -> run.log, waits on autocvd; the two 300k oldgrid runs on GPUs 5/7 are unaffected).
+  **Finding 2 — why oldgrid Pal5 is prolate (1.46 [1.40,1.49])**: it is extrapolation, not a
+  training-set preference: the 300 training rows closest to the real Pal5 grid have q 1.03
+  [0.72,1.35], P(q>1)=0.54 under every feature subset, and they are FAR (mean z² per cell 12-14;
+  medians alone 0.9, dispersions alone 26). The driver is `std_phi2`: the real Pal5 is wider than
+  most sims (60-95th pct in 8/10 bins) and in the training set prolate halos make Pal5 wider
+  (chi² vs real 95 → 42 from q 0.5 to 1.5; Spearman up to +0.25 in the central bins), plus
+  `std_vlos` (~15σ off at every q, std scale is outlier-inflated). NGC3201 is the mirror image:
+  real THINNER than the sims (std_phi2 at the 1-13th pct), oblate sims thinner (chi² 2.5 → 12) ⇒
+  oldgrid gives NGC3201 q 0.81 — so in the summary-statistics representation q is read off the
+  stream WIDTH, and the known width misspecification (Pal5 too wide / NGC3201 too thin vs sims,
+  2026-09-12/21) sets the real-data q per stream. M68 chi² is flat in q (its lever is
+  med/std_mu_phi1, Spearman 0.74/0.54). Not done: `default_occfix` results; whether the fixed
+  masked model reproduces the oldgrid's per-stream q; a MAD-scale rerun of the diagnostic
+  (`--scale mad`, cached grids per scale).
+  **SVD follow-up (same session, `scripts/svd_nearest_streams.py`, reads the q_confusion grid
+  cache; `--no-occupancy` = statistics only)**: per stream, z-scored cells → SVD → real stream
+  projected on the first 10 PCs (55-65 % of the variance; statistics-only 42-65 %) → 300 nearest
+  training rows. Nearest-row q is prior-like for every stream in both variants (Pal5 0.98/0.94,
+  NGC3201 0.97/0.95, M68 0.96/1.07; P(q>1) 0.43-0.57) — NO region of the training set near the real
+  streams is prolate. In the 10-PC statistics-only space the real **Pal5 is a typical sim**
+  (Mahalanobis at the 13th pct, nearest-row distance 3.5 = sim-to-sim 3.4), so the oldgrid q=1.46
+  comes from directions BEYOND PC10 (the width cells the chi² localized) that a 10-PC readout does
+  not see (linear q readout R² 0.05 on sims for Pal5). NGC3201 (97th pct, PC3 = std_phi2 with
+  corr(q) +0.49, real at the 6th pct ⇒ thin ⇒ oblate, linear readout 0.85) and M68 (99.8th pct,
+  PC3-5 = dispersions at the 0-1st pct) are OOD in dispersion directions. With occupancy included
+  those channels dominate PC3-PC10 and put NGC3201/M68 at the 100th pct (real flat counts).
+  **Particle-level SVD (same session, `scripts/svd_particles.py`)**: each realization -> normalized
+  phi1 x {phi2, plx, mu_phi1, mu_phi2, vlos} histograms (16x12, real-fitted frame, real-set edges);
+  SVD on ~4000 NOISE-FREE training rows per stream (all in-window stars, 1/d parallax), then the 333
+  test groups through the training chain up to mask_vlos and the real members through their preset
+  are projected on the first 10 PCs (66/43/56 % of variance). The observation model does NOT move
+  the test set off the noise-free cloud (median Mahalanobis noisy-test 2.4/3.0/2.0 vs noise-free rows
+  3.0/2.9/2.3). Real Pal5 and M68 sit at the CENTRE of both clouds (Mahalanobis 1.4, 0-3rd pct = more
+  typical than any sim, i.e. the smooth real density is what a noise-free average sim looks like);
+  real NGC3201 is at the 97.6-97.9th pct (PC3/4/9/10 = vlos + parallax + mu_phi2 directions). Nearest
+  rows' q: Pal5 0.98 (P(q>1) 0.47), NGC3201 0.85 (0.37), M68 1.12 (0.65) — prior-like, with the
+  same oblate lean for NGC3201 as the grid analysis; the first 10 particle PCs carry almost no q
+  (|corr| <= 0.3, linear readout R² 0.04/0.16/0.28). Gotcha fixed in the script: npz members are not
+  mmappable — indexing `np.load(npz, mmap_mode)["key"][i]` in a loop re-reads the whole 4.8 GB
+  array per row; load the slice once.

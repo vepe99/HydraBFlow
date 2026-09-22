@@ -39,7 +39,7 @@ STAT = ["med_phi2", "std_phi2", "med_plx", "std_plx", "med_mu_phi1", "std_mu_phi
 OCC = ["n_track", "n_vlos"]
 
 
-def compose_aug(simulator, aug_preset):
+def compose_aug(simulator, aug_preset, extra=()):
     from hydra import compose, initialize_config_dir
     from hydrabflow.config import register_configs
 
@@ -47,7 +47,7 @@ def compose_aug(simulator, aug_preset):
     conf_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "conf")
     with initialize_config_dir(config_dir=conf_dir, version_base=None):
         cfg = compose(config_name="config",
-                      overrides=[f"simulator={simulator}", f"augmentation={aug_preset}", "composition=global"])
+                      overrides=[f"simulator={simulator}", f"augmentation={aug_preset}", "composition=global", *extra])
     aug = OmegaConf.create(OmegaConf.to_container(cfg.augmentation, resolve=True))
     repo = os.path.dirname(conf_dir)
     res = str(aug.params.get("resources_dir", "data"))
@@ -84,11 +84,12 @@ def main():
     ap.add_argument("--real-aug", default="stream_real_global_ibata_grid_v2")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--title", default="")
+    ap.add_argument("--override", action="append", default=[], help="extra Hydra override(s), e.g. augmentation.params.summary_scale=std")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
     # --- simulated side: training chain up to the grid summary
-    aug = compose_aug(args.simulator, args.aug)
+    aug = compose_aug(args.simulator, args.aug, args.override)
     steps = [str(s) for s in aug.steps]
     steps = steps[: steps.index("stream_summary_grid") + 1]
     steps = [s for s in steps if s not in ("add_noise_to_vcirc", "log10_vcirc")]  # vcirc not carried here
@@ -103,7 +104,7 @@ def main():
     assert C == 14, f"expected the 14-channel grid layout, got {C}"
 
     # --- real side: the real preset's grid step on the Gaia members (same frame/edges/estimator)
-    raug = compose_aug(args.simulator, args.real_aug)
+    raug = compose_aug(args.simulator, args.real_aug, args.override)
     d = np.load(args.real)
     m = int(np.asarray(d["j"]).size); max_p = int(aug.params.get("max_particles", 300))
     rb = {}

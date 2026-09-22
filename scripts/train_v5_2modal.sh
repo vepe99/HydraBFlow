@@ -9,5 +9,10 @@ export AUG=${AUG:-stream_global_v5}
 export REAL_AUG=${REAL_AUG:-stream_real_global_v5}
 export REAL=${REAL:-assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201_desi_m68palau_main.npz}
 export RUNS_DIR=${RUNS_DIR:-outputs/v5_2modal/default}
-export EXTRA="simulator.params.n_particles=1000 ${EXTRA:-}"
+# Occupancy encoding of the summary grid: the masked backbones (the default MODEL) need the ±1
+# validity flags — with `counts` the in-network `count >= min_count` test ran on STANDARDIZED counts
+# and masked ~98 % of the bins (2026-09-22; the v5 default/nodisp runs trained on a zeroed stream
+# grid). The oldgrid wrappers, whose plain TST reads the counts as features, set OCC=counts.
+export OCC=${OCC:-valid}
+export EXTRA="simulator.params.n_particles=1000 augmentation.params.summary_occupancy=${OCC} ${EXTRA:-}"
 exec bash "$(dirname "$0")/train_v4_2modal.sh" "$@"

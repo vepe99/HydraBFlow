@@ -30,3 +30,4 @@ params:
   summary_scale: mad             # must match stream_global_ibata_grid_v2
   summary_min_count: 3
   summary_include_occupancy: true
+  summary_occupancy: counts        # counts | valid (±1 flags) — masked backbones REQUIRE valid (see stream_summary.occupancy_encoding)

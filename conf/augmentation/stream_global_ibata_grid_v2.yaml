@@ -61,6 +61,7 @@ params:
   summary_scale: mad             # robust per-bin dispersion (std | mad)
   summary_min_count: 3           # keep in step with the backbone's params.min_count
   summary_include_occupancy: true
+  summary_occupancy: counts        # counts | valid (±1 flags) — masked backbones REQUIRE valid (see stream_summary.occupancy_encoding)
 
   # OFF by default, per decision: the training set is generated and trained WITHOUT contamination.
   # The step stays in the chain because at 0.0 it is an exact no-op (verified by test), so switching
