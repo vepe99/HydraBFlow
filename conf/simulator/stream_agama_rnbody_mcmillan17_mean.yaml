@@ -1,0 +1,64 @@
+# `stream_agama_rnbody_mcmillan17` with EVERY local parameter pinned to its prior mean.
+#
+# A single deterministic realization of the three streams: the potential is already fixed (see the
+# parent's header for the McMillan (2017) transfer), and here the progenitor masses and the four
+# present-day phase-space coordinates are pinned too, so any number of rows would be identical up
+# to the Plummer particle draw. Intended to be run with data.n_simulations=1 (or 3 -> one row per
+# stream) and plotted with scripts/plot_mcmillan17_mean.py.
+#
+# Every value below is the mean of the corresponding prior in the parent / in stream_agama.yaml;
+# nothing new is introduced here.
+defaults:
+  - stream_agama_rnbody_mcmillan17
+
+name: stream_agama_rnbody
+params:
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.39e4]
+      vr:
+        type: identity
+        prior_parameters: [-58.6]
+      r:
+        type: identity
+        prior_parameters: [20.6]
+      mu_ra_cosdec:
+        type: identity
+        prior_parameters: [-2.736]
+      mu_dec:
+        type: identity
+        prior_parameters: [-2.646]
+    NGC3201:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.49e5]
+      vr:
+        type: identity
+        prior_parameters: [495.38]
+      r:
+        type: identity
+        prior_parameters: [4.737]
+      mu_ra_cosdec:
+        type: identity
+        prior_parameters: [8.348]
+      mu_dec:
+        type: identity
+        prior_parameters: [-1.958]
+    M68:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.23e5]
+      vr:
+        type: identity
+        prior_parameters: [-93.11]
+      r:
+        type: identity
+        prior_parameters: [10.404]
+      mu_ra_cosdec:
+        type: identity
+        prior_parameters: [-2.739]
+      mu_dec:
+        type: identity
+        prior_parameters: [1.779]

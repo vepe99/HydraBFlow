@@ -1,0 +1,134 @@
+# Restricted-N-body streams in the McMillan (2017) best-fit potential, held FIXED, with the
+# 2026-09-22 progenitor mass/radius priors.
+#
+# ---------------------------------------------------------------------------------------------
+# Potential: agama/data/McMillan17.ini, transferred EXACTLY (no fit needed).
+# ---------------------------------------------------------------------------------------------
+# Unlike Cautun+(2020) (whose adiabatically contracted halo is a tabulated Multipole and had to be
+# least-squares fitted onto our alpha-beta-gamma Spheroid, see stream_agama_rnbody_cautun_fixed.yaml),
+# every McMillan component is already a member of this project's own potential family, so each
+# number below is the ini's value verbatim:
+#
+#   component     McMillan17.ini                                  this config
+#   thin disk     Sigma 8.95679e8, Rd 2.49955, h  0.3             Sigma_Disk / r_Disk / z_Disk
+#   thick disk    Sigma 1.83444e8, Rd 3.02134, h  0.9             Sigma_thick_Disk / r_thick_Disk /
+#                                                                 dz_thick_Disk = 0.9 - 0.3 = 0.6
+#   HI gas        5.31319e7 / Rd 7   / h 0.085 / Rm  4            GAS_HI_PARAMS  (identical)
+#   H2 gas        2.17995e9 / Rd 1.5 / h 0.045 / Rm 12            GAS_H2_PARAMS  (identical)
+#   bulge         rho 9.8351e10, gamma 0, beta 1.8, Rs 0.075,     bulge_density_norm (the rest of
+#                 q 0.5, rcut 2.1                                 BULGE_PARAMS already matches)
+#   halo          rho 8.53702e6, gamma 1, beta 3, Rs 19.5725,     the five halo globals below
+#                 q 1, no outer cutoff                            (halo_r_t_kpc default = inf)
+#
+# Both stellar disks use agama's POSITIVE scaleHeight in the ini, i.e. the isothermal sech^2
+# vertical profile => `disk_vertical: isothermal` (the class default; the Ibata configs use
+# `exponential` instead). The gas disks keep the ini's negative (exponential) scale heights, which
+# is what GAS_HI/H2_PARAMS already encode. alpha / axisRatioY / tilt keep their class defaults
+# (1 / 1 / 0), matching the ini, which sets none of them.
+#
+# No rotation-curve rejection prior: the potential is a single fixed point, so the cut could only
+# accept every row or none.
+#
+# ---------------------------------------------------------------------------------------------
+# Progenitors (2026-09-22, user-supplied).
+# ---------------------------------------------------------------------------------------------
+# m_progenitor ~ Normal, in M_sun; a_progenitor a fixed Plummer scale radius in pc:
+#
+#   Pal5      m = (1.39 +/- 0.65) e4    a = 27.34 pc
+#   NGC3201   m = (1.49 +/- 0.09) e5    a =  4.75 pc
+#   M68       m = (1.23 +/- 0.12) e5    a =  5.91 pc
+#
+# t_end = 5.0 Gyr for all three streams (the base class ships 4.0 for Pal5 and stream_agama_rnbody
+# overrides NGC3201/M68 from 1.5 to 4.0; both are superseded here).
+#
+# The four present-day phase-space coordinates (vr, r, mu_ra_cosdec, mu_dec) keep their inherited
+# normal priors = the BV21/VB21 measurement errors; ra, dec stay identity. Drawing n rows therefore
+# gives n realizations of the three streams in one and the same Galaxy with one and the same
+# stripping history, differing only in the progenitors' measured 6D positions and the progenitor
+# masses. For the all-at-the-mean diagnostic run use the sibling config
+# `stream_agama_rnbody_mcmillan17_mean`, which pins every local parameter to its prior mean.
+defaults:
+  - stream_agama_rnbody
+
+name: stream_agama_rnbody
+params:
+  n_particles: 10000
+  vcirc_rejection: null        # fixed potential => a rejection cut is all-or-nothing (see above)
+
+  # --- McMillan (2017) potential configuration ------------------------------------------------
+  gas_disks: true              # fixed McMillan HI + H2 gas disks (== GAS_HI/H2_PARAMS)
+  thick_disk: true             # McMillan has a thin AND a thick stellar disk
+  disk_vertical: isothermal    # McMillan17.ini uses positive scaleHeight => sech^2
+  bulge_density_norm: 9.8351e10
+  # halo_r_t_kpc left at the class default (inf): McMillan's halo has no outer cutoff.
+
+  priors_global:
+    # Dark halo (McMillan17.ini [Potential halo], verbatim).
+    rho_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [8.53702e6]
+    a_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [19.5725]
+    gamma_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.0]
+    beta_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [3.0]
+    q_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.0]     # McMillan's halo is spherical
+    # Thin stellar disk.
+    Sigma_Disk:
+      type: identity
+      prior_parameters: [8.95679e8]
+    r_Disk:
+      type: identity
+      prior_parameters: [2.49955]
+    z_Disk:
+      type: identity
+      prior_parameters: [0.3]
+    # Thick stellar disk. dz_thick_Disk is the OFFSET: zd_thick = z_Disk + dz_thick_Disk = 0.9.
+    Sigma_thick_Disk:
+      type: identity
+      prior_parameters: [1.83444e8]
+    r_thick_Disk:
+      type: identity
+      prior_parameters: [3.02134]
+    dz_thick_Disk:
+      type: identity
+      prior_parameters: [0.6]
+
+  # --- Progenitor masses / radii / stripping age ----------------------------------------------
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: normal
+        prior_parameters: [1.39e4, 0.65e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [27.34]
+      t_end:
+        type: identity
+        prior_parameters: [5.0]
+    NGC3201:
+      m_progenitor:
+        type: normal
+        prior_parameters: [1.49e5, 0.09e5]
+      a_progenitor:
+        type: identity
+        prior_parameters: [4.75]
+      t_end:
+        type: identity
+        prior_parameters: [5.0]
+    M68:
+      m_progenitor:
+        type: normal
+        prior_parameters: [1.23e5, 0.12e5]
+      a_progenitor:
+        type: identity
+        prior_parameters: [5.91]
+      t_end:
+        type: identity
+        prior_parameters: [5.0]

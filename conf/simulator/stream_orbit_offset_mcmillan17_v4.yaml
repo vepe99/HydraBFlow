@@ -1,0 +1,123 @@
+# Streams generated as a progenitor ORBIT plus stored corrections DeltaTheta(phi1), over the v4
+# m200_c potential prior.
+#
+# Method: Ibata et al. (2024), "Charting the Galactic Acceleration Field II" (ApJ 967, 89;
+# arXiv:2311.17202) -- the paper this project already takes the STREAMFINDER phi1/phi2 frames and
+# the 30 pc progenitor radius from. Streams do not delineate their progenitor's orbit, so the orbit
+# is corrected by a smooth function of phi1, fitted independently per observable:
+#
+#   "the DeltaTheta(phi1) is then calculated independently for each observable Theta as a fourth
+#    order polynomial fit to the best fit stream minus the corresponding progenitor orbit."
+#
+# Here the correction is a degree-4 SPLINE, which is a strict generalization: with zero interior
+# knots it is exactly their quartic polynomial (pinned by a test against numpy.polyfit), and
+# interior knots let it bend where one quartic cannot. Forward model:
+# src/hydrabflow/simulators/stream_orbit_offset.py; fitting: simulators/orbit_offset.py.
+#
+# ---------------------------------------------------------------------------------------------
+# The template
+# ---------------------------------------------------------------------------------------------
+# Built by scripts/build_orbit_offset_template.py from
+#   data_local/mcmillan17_mean_tend_best/mcmillan17_mean.npz
+# = one restricted-N-body realization with every parameter at its prior mean, in the McMillan (2017)
+# potential held fixed, at t_end 2.5 / 3.5 / 3.5 Gyr (the stripping ages the 2026-09-22 scan
+# recommended). The SAME fiducial the trihedron template uses, so the two surrogates are directly
+# comparable.
+#
+# Per stream it stores, in the published Ibata+2024 Table 3 frame (baked in, so the simulator has no
+# dependency on scripts/):
+#   * 6 degree-4 correction splines   DeltaTheta(phi1) for ra, dec, distance modulus, mu_phi1,
+#                                     mu_phi2, v_los  (3 interior knots)
+#   * 6 degree-4 dispersion splines   fitted in log sigma, so the width is positive everywhere
+#   * the empirical phi1 density      as a quantile function, sampled by inverse CDF
+#
+# Self-test = rebuild the stream in its OWN potential and compare to the simulation it came from
+# (this model is lossy by construction, so there is no exactness anchor as there is for the
+# trihedron). Measured, Pal5 / NGC3201 / M68:
+#   median |track error| in phi2     0.004 / 0.027 / 0.015 deg   (Gaia errors are far larger)
+#   in mu_phi1, mu_phi2              <= 0.022 mas/yr;  in v_los <= 0.30 km/s;  parallax ~ 0
+#   phi2 width ratio sim/truth       0.861 / 0.928 / 1.018
+#   1-99 percentile range ratio      0.92 - 1.04 over every observable
+#   induced |d phi1|                 0.054 / 0.012 / 0.071 deg
+#   phi1 coverage                    1.0000 (the orbit reaches the whole stream)
+#
+# ---------------------------------------------------------------------------------------------
+# What this config can and cannot infer
+# ---------------------------------------------------------------------------------------------
+# FREE: every global potential parameter (they change the orbit, which is what gets re-integrated)
+# and the four present-day phase-space coordinates vr / r / mu_ra_cosdec / mu_dec, which keep the
+# inherited BV21/VB21 measurement-error normals. So
+# local_parameter_names == [vr, r, mu_ra_cosdec, mu_dec].
+#
+# PINNED, and it must stay that way: m_progenitor, a_progenitor and t_end set the stripping history,
+# which the template encodes as a fixed correction, width and along-track density. The model cannot
+# respond to them, so check_frozen_locals raises if a config frees one -- a freed one would enter
+# local_parameter_names and the network would be trained to infer a parameter the forward model
+# ignores.
+#
+# ---------------------------------------------------------------------------------------------
+# Caveats to carry into any result from this dataset
+# ---------------------------------------------------------------------------------------------
+# 1. The along-track DENSITY is frozen. Stars are drawn from the fiducial run's phi1 distribution;
+#    the potential moves the orbit, not the stars along it. This is the same structural limit that
+#    broke M68 for the trihedron surrogate, so read scripts/validate_surrogates_vs_nbody.py before
+#    trusting any result that leans on arm length or the phi1 edge/centre density ratio.
+# 2. Dispersions are sampled INDEPENDENTLY per observable, so correlations between them are absent.
+#    Measured cost: the phi2 width ratios above (0.86 for Pal5) -- phi2 is built out of the ra and
+#    dec residuals, whose correlation is exactly what independent sampling drops.
+# 3. The template's fiducial lies OUTSIDE this prior family. The fiducial is McMillan17 (thin +
+#    thick isothermal stellar disks, halo with no outer cutoff); the inherited v4 family is a single
+#    exponential disk with halo_r_t_kpc = 1000. Chosen for comparability with the existing v4/v5
+#    datasets and models, at the price that no row reproduces the fiducial exactly. Measured offset
+#    (from the trihedron template's report on the same fiducial): the fiducial halo corresponds to
+#    log10 M200 = 12.110, ln c' = 2.738, and v_circ differs from this prior's centre by a median
+#    9.4 % / max 10.6 % over 2-60 kpc.
+# 4. There is no progenitor and no stripping, so no m_bound_final and no potential-dependent
+#    progenitor survival.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v4
+
+name: stream_orbit_offset
+params:
+  orbit_offset_template: data_local/mcmillan17_mean_tend_best/orbit_offset_template.npz
+
+  # A row whose orbit cannot reach this fraction of the template's stream in phi1 is NaN'd whole
+  # (drop_nan then removes it). Below the threshold the stream is drawn from the reachable part,
+  # renormalized -- see orbit_offset.sample_stream for why holes are not an option.
+  max_phi1_miss_frac: 0.05
+
+  # n_particles (10^4), store_window_subsample, the Ou+2024 19-radius vcirc grid, the m200_c halo
+  # priors, the marginalized solar frame and vcirc_rejection: null are all inherited from v4.
+
+  priors_local:
+    # The stripping history frozen into the template. These MUST equal the fiducial run's values.
+    Pal5:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.39e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [27.34]
+      t_end:
+        type: identity
+        prior_parameters: [2.5]
+    NGC3201:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.49e5]
+      a_progenitor:
+        type: identity
+        prior_parameters: [4.75]
+      t_end:
+        type: identity
+        prior_parameters: [3.5]
+    M68:
+      m_progenitor:
+        type: identity
+        prior_parameters: [1.23e5]
+      a_progenitor:
+        type: identity
+        prior_parameters: [5.91]
+      t_end:
+        type: identity
+        prior_parameters: [3.5]
