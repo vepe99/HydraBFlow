@@ -1,0 +1,32 @@
+# `stream_global_palau23_dr3` + the EMPIRICAL per-star astrometric error model: instead of the Gaia
+# DR3 median-sigma-vs-G table, sigma_parallax / sigma_pmra / sigma_pmdec are drawn from the real
+# members' own (G, sigma) pairs, which `assets/gaia/gaia_observed_streams_palau23_dr3.npz` carries in
+# its `obs_error` array. This also supplies the scatter of sigma at fixed G, which a median relation
+# cannot. The v_los column stays with `sample_vlos_error_empirical`.
+defaults:
+  - stream_global_palau23_dr3
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - stream_track_width_cut
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - sample_obs_error_empirical     # <- the refinement
+  - sample_vlos_error_empirical
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_summary_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  obs_error_columns: [parallax, mu_ra, mu_dec]
+  obs_error_neighbours: 5

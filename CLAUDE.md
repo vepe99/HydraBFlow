@@ -2052,3 +2052,490 @@ Knowledge graph at `graphify-out/`.
   (|corr| <= 0.3, linear readout R² 0.04/0.16/0.28). Gotcha fixed in the script: npz members are not
   mmappable — indexing `np.load(npz, mmap_mode)["key"][i]` in a loop re-reads the whole 4.8 GB
   array per row; load the slice once.
+
+- Session 2026-09-22 (McMillan 2017 fixed-potential test with the new progenitor mass/radius priors):
+  new progenitor priors, per user — Pal5 m ~ N(1.39e4, 0.65e4) M_sun / a = 27.34 pc; NGC3201
+  N(1.49e5, 0.09e5) / 4.75 pc; M68 N(1.23e5, 0.12e5) / 5.91 pc (the sigma is in the same 1e4/1e5
+  units as the mantissa; NGC3201 was confirmed as 1.49e5, not the 1.49e4 first written).
+  - **`conf/simulator/stream_agama_rnbody_mcmillan17.yaml`**: McMillan (2017) best-fit potential held
+    FIXED + those priors + t_end = 5.0 Gyr for all three streams + `n_particles: 10000`,
+    `vcirc_rejection: null`. Unlike the Cautun config, **no fitting was needed** — every component of
+    `agama/data/McMillan17.ini` is already in this project's potential family, so the numbers transfer
+    verbatim (thin 8.95679e8/2.49955/0.3, thick 1.83444e8/3.02134 via `dz_thick_Disk=0.6`, bulge
+    amplitude 9.8351e10 into `bulge_density_norm`, halo rho 8.53702e6 / a 19.5725 / gamma 1 / beta 3 /
+    q 1 with `halo_r_t_kpc` left at the class default inf, and the ini's HI/H2 gas disks ARE
+    `GAS_HI/H2_PARAMS`). `disk_vertical: isothermal` (positive scaleHeight in the ini). **Verified**:
+    `_host_potential` reproduces `agama.Potential(McMillan17.ini)` v_circ over 0.5-100 kpc to a median
+    4.5e-5 / max 1.4e-4 fractional deviation (residual = the 4th-digit gas amplitudes).
+  - **`..._mcmillan17_mean.yaml`** pins every LOCAL parameter to its prior mean (masses above, plus the
+    BV21/VB21 phase-space means), so one group is a single deterministic realization.
+  - **Run** (`simulate_multistream data.n_simulations=1`, ~2.5 min at n_workers=3): 
+    `data_local/mcmillan17_mean/mcmillan17_mean.npz` (1,3,10000,6), 0 NaN, + `.hydra` snapshot.
+  - **`scripts/plot_mcmillan17_mean.py`** (new): `streams_sky.png` (RA/Dec + window box + real members
+    + the v5 observation-model realization), `streams_stream_frame.png` (phi2/parallax/mu_phi1/mu_phi2/
+    v_los vs phi1 in each stream's real-fitted great-circle frame; the v_los row shows MEASURED stars
+    only, since the imputed fill is not data), `progenitor_orbits.png` (x-y, R-z, r(t) over [-5,0] Gyr,
+    recomputed with the same rewind-then-forward agama integration the simulator uses, same potential
+    and solar frame), `streams_with_orbit.png` (the same five observables vs phi1 with the LAST
+    `--orbit-gyr` = 0.3 Gyr of that orbit PROJECTED into observation space via `sky_projection` —
+    astropy path, as the particles, since this config declares no solar prior — drawn as a CONTINUOUS
+    line (a `LineCollection` coloured by time, broken at each window exit by `contiguous_runs`, so a
+    segment is one crossing) wherever it crosses the stream's RA/Dec window; x limits pinned to the
+    stream so the orbit's excursions do not rescale the panel), `streams_icrs_with_orbit.png` (the same
+    figure in the CATALOGUE observables — alpha, delta, parallax, mu_alpha*, mu_delta, v_los — still
+    against phi1, so only the abscissa depends on the great-circle fit and every ordinate is a measured
+    quantity), `summary.json`. Overlay preset defaults to `stream_global_v5` to match the
+    recommended member npz.
+  - **Results**: all three progenitors **fully dissolve** (`m_bound_final = 0` for Pal5, NGC3201 AND
+    M68) — at 5 Gyr even the corrected 1.49e5/1.23e5 masses do not survive, extending the long-standing
+    "Pal 5 never survives" finding to the other two. In-window stars of 10^4: 7034/1101/3240 (real
+    members 129/195/195). Streams are far too long: phi1 extent 35.5 vs 31.8 deg (Pal5, the only
+    unclipped one), 109 vs 71 (NGC3201), 135 vs 91 (M68) — and the sky panels show all three wrapping
+    most of the sky, i.e. 5 Gyr in McMillan over-strips (consistent with the 2026-07-29 Cautun runs).
+    Orbits: peri/apo 6.90/16.30 (Pal5), 8.40/27.99 (NGC3201), 9.10/28.70 kpc (M68). In
+    `streams_with_orbit.png` the last 0.3 Gyr of orbit follows the simulated stars and the real members
+    closely in all five observables for all three streams (the tails observable today were released
+    along that passage). The first version of the figure drew the whole 5 Gyr: over that span each
+    progenitor completes ~15-25 radial periods and re-enters the window many times, so the panels were a
+    thicket of arcs far off the track — hence the 0.3 Gyr cut. NGC3201's progenitor sits OUTSIDE its own
+    RA/Dec window (phi1 ~ 68 deg), the 2026-07-05 observation, now visible directly.
+  - Not done: no multi-realization run (the priors' widths are unexplored — this was the all-at-the-mean
+    point check the user asked for), and the mass priors are plain `normal`, so a draw below ~0 is
+    possible for Pal5 at 2.1 sigma if the parent config is ever sampled rather than the `_mean` sibling.
+  - **Legacy-t_end variant** (same session, user-directed): the identical McMillan17 mean run with
+    `t_end` = 4.0 (Pal5) / **1.5** (NGC3201) / **1.5** Gyr (M68) — the pre-rnbody values from the base
+    `stream_agama.yaml` — via CLI overrides on `priors_local.<stream>.t_end.prior_parameters`, into
+    `data_local/mcmillan17_mean_tend_legacy/` (same seed 2026, same figures). **Result: 1.5 Gyr makes
+    NGC3201 and M68 unobservable in McMillan17 too.** Stored in-window stars of 10^4 collapse to **26**
+    (NGC3201) and **103** (M68) against 195 real members each, and both progenitors SURVIVE holding
+    ~99.5 % of their initial mass (`m_bound_final` 148315/149000 and 122274/123000) — at 1.5 Gyr the
+    restricted N-body model has barely stripped anything, so there is no stream to compare and their
+    track statistics are meaningless. This is the 2026-07-05 / 2026-07-29 t_end finding reproduced in a
+    THIRD potential (spray-era t_end=1.5 fabricated stripping uniformly and so never exposed it), i.e.
+    it is a property of the rnbody forward model, not of the Galaxy. **Pal5 at 4 Gyr is the clean
+    comparison and is BETTER than at 5 Gyr**: still fully dissolved (`m_bound_final` = 0), 8524 in-window
+    stars, phi1 extent **33.1 deg vs 31.8 real** (5 Gyr gave 35.5) — so if anything Pal5 wants a
+    stripping age slightly below 4 Gyr in this potential, while its non-survival is age-insensitive.
+  - **t_end = 3.0 Gyr for all three** (`data_local/mcmillan17_mean_tend3/`, same seed/potential/means):
+    the compromise between the two runs above, and the one that gives all three streams at once.
+    In-window stars of 10^4 / `m_bound_final` as a fraction of the initial mass / fraction of in-window
+    stars within 1 deg of the peak-density phi1 (= progenitor clump contamination) / in-window phi1 span:
+    | t_end | Pal5 | NGC3201 | M68 |
+    |---|---|---|---|
+    | 4/1.5/1.5 | 8524, 0 %, clump 15 %, 33.1 deg | 26, **99.5 %**, 8 %, 102 deg | 103, **99.4 %**, **61 %**, 85 deg |
+    | 3/3/3 | 9685, 0 %, clump 17 %, 33.5 deg | 400, 85.7 %, 5 %, 109 deg | 1099, 90.5 %, **45 %**, 133 deg |
+    | 5/5/5 | 7034, 0 %, clump 19 %, 35.5 deg | 1101, 0 %, 6 %, 109 deg | 3240, 0 %, 6 %, 135 deg |
+    (real members 129/195/195; real phi1 spans 31.8/70.9/91.2 deg.) Reading: **3 Gyr is the first age at
+    which NGC3201 and M68 produce a usable stream while their progenitors still EXIST** (86 %/90 % bound,
+    as the real clusters do) — at 1.5 Gyr there is no stream (26/103 stars) and at 5 Gyr there is no
+    cluster (both fully dissolved). The cost is progenitor contamination: **45 % of M68's in-window stars
+    are still inside 1 deg of the remnant** (61 % at 1.5 Gyr, 6 % at 5), so its observation-model
+    realization is dominated by cluster members rather than tail stars — visible as the vertical column
+    of red circles at phi1 ~ -62 in `streams_with_orbit.png`. NGC3201 is clean at every age (5-8 %).
+    Pal5 is insensitive: dissolved at all three ages, phi1 span 33.1/33.5/35.5 deg against 31.8 real, so
+    3-4 Gyr fits it and 5 Gyr is slightly long. The in-window phi1 span for NGC3201/M68 is
+    window-saturated (2026-07-29), so their "too long" numbers are not arm-length measurements — use the
+    edge/centre density ratio for that.
+  - **Stripping-age SCAN** (`scripts/scan_tend_metrics.py`, new; runs in `data_local/mcmillan17_scan/
+    t{2.0,2.5,3.5,4.0}/` plus the 3.0 and 5.0 runs above; `scan_metrics.json` + `scan_tend_metrics.png`).
+    Six ages x 3 streams, each a single mean-parameter realization in the fixed McMillan17 potential,
+    scored on three model-free statistics in the real-fitted frame with equal-count phi1 bins of the
+    REAL members: `track` = median over bins of |median phi2 sim - real| [deg]; `width` = median robust
+    (1.4826 MAD) phi2 dispersion as a RATIO sim/real (1 = right); `edge` = phi1 edge/centre number
+    density on the NOISELESS in-window particles. **Caveat on `edge`**: the bins are equal-count
+    quantiles of the real members, so the real ratio is 1.0 BY CONSTRUCTION — it is a reference, not a
+    measurement (the comparison "does the sim put the same share of stars in the outer quantile bins"
+    is still valid). Also reported: `n_win`, `bound` = m_bound_final/m_progenitor, `clump` = in-window
+    fraction within 1 deg of the remnant (large ⇒ the "stream" is cluster members and track/width
+    describe the progenitor).
+    | t_end | Pal5 track/width/edge | NGC3201 n_win,bound,width | M68 n_win,bound,clump,track |
+    |---|---|---|---|
+    | 2.0 | 0.32 / 0.69 / 0.25 | 26, 0.99, 0.82 | 168, 0.99, 0.48, 0.21 |
+    | 2.5 | 0.22 / 0.84 / **0.73** | 70, 0.98, 0.73 | 388, 0.97, 0.53, 0.34 |
+    | 3.0 | 0.25 / 0.63 / 1.35 | 400, 0.86, 1.34 | 1099, 0.90, 0.45, 0.17 |
+    | 3.5 | 0.22 / 0.70 / 2.33 | **1029, 0.60, 1.01** | **3371, 0.54, 0.17, 0.44** |
+    | 4.0 | 0.23 / **1.15** / 3.35 | 2039, 0.08, 1.63 | 5648, 0.00, 0.07, 0.49 |
+    | 5.0 | 0.23 / 2.00 / 6.52 | 1101, 0.00, 2.33 | 3240, 0.00, 0.06, 0.83 |
+    **Recommended t_end (revising the earlier "3 Gyr for all three"): Pal5 ~2.5-3, NGC3201 3.5,
+    M68 3.5 Gyr.** Reasoning: (a) Pal5's track is flat in t_end (0.22-0.32 everywhere) so it does not
+    discriminate; its width crosses 1 at ~3.8 Gyr while its edge/centre crosses 1 at ~2.75, i.e. NO age
+    satisfies both (short ages are too centrally concentrated AND too thin, long ages too edge-heavy AND
+    too wide) — minimising |ln| of both deviations puts the optimum at **2.5** (0.48), then 3.0 (0.76).
+    (b) NGC3201 and M68 are squeezed between two hard constraints: `n_win` >= the real member count
+    (195) needs t_end >= 3.0/2.5, and the progenitors must still EXIST (the real clusters do) which
+    needs t_end <= 3.5 — both dissolve by 4.0. Inside that window 3.5 is best on every free statistic:
+    NGC3201 width ratio **1.01** (vs 1.34 at 3.0) with track 0.40 (near its best 0.33), and M68 is the
+    first age whose tails are not remnant-dominated (clump 0.17 vs 0.45 at 3.0). M68's apparently
+    excellent track at 3.0 (0.17) is measuring the clump, not the tails, and must not be used.
+    (c) NGC3201's edge/centre is ~2.6-2.9 at EVERY age >= 2.5 — its over-extension is not a t_end
+    effect and no stripping age fixes it (cf. the 2026-07-29 spray scan, where the extent was likewise
+    flat in t_end). (d) M68 is too thin at every age (width 0.23-0.75) — the known cold-stream gap.
+    Caveats: ONE realization per age (so track/width are noisy for the sparse short-t_end cases), all
+    locals at their prior means, and a potential never fitted to these streams — this ranks ages, it is
+    not a fit. Note the recommendation nearly INVERTS the legacy config (Pal5 4.0, others 1.5).
+  - **Recommended combination run** (`data_local/mcmillan17_mean_tend_best/`): Pal5 2.5 / NGC3201 3.5 /
+    M68 3.5 Gyr, same seed/potential/means, all five figures + `summary.json`. Scores reproduce the
+    scan EXACTLY (Pal5 track 0.222 width 0.84 edge 0.73; NGC3201 n_win 1029 bound 0.60 width 1.01
+    track 0.401; M68 n_win 3371 bound 0.54 clump 0.17 track 0.441) — expected, since the three streams
+    are independent rows drawn from the same seed, and a useful check that t_end was the only change.
+    This is the best single mean-parameter realization the McMillan17 potential gives: all three
+    progenitors have a populated stream, NGC3201 and M68 still exist as clusters, NGC3201's width is
+    right to 1 %, and M68's tails are no longer remnant-dominated. Residuals that no t_end fixes and
+    that are therefore model/potential-level: NGC3201 edge/centre 2.73 (over-extended at every age),
+    M68 width 0.75 (too cold), Pal5 width 0.84 with edge/centre 0.73 (slightly thin AND slightly
+    centrally concentrated — its two statistics cannot be satisfied at once).
+  - **Same best run replotted against the ORIGINAL STREAMFINDER members** (`data_local/
+    mcmillan17_mean_tend_best_streamfinder/`, `--real assets/gaia/gaia_observed_streams_6Dwitherrors_
+    cutNGC3201.npz --aug-preset stream_global_ibata_grid_v2` — the preset MUST be swapped with the file,
+    since it carries the matching `observed_n_stars` 129/195/**297** and `real_streams_file`).
+    **M68 is the whole story**: against the 297-star STREAMFINDER arm the model's track error goes
+    0.44 -> **1.09 deg** and its width ratio 0.75 -> **0.33**, i.e. the simulated stream looks far too
+    cold and off-track — but against the Palau 2025 MAIN component (195 stars, the recommended file) the
+    same simulation is acceptable. This is the 2026-09-21 envelope finding reproduced from the model
+    side: what the forward model cannot make is the 92-star ENVELOPE, not the stream. Pal5 and NGC3201
+    are unchanged within noise (their members are identical between the two files; only M68 and the
+    v_los columns differ).
+  - **Metric noise floor measured** (10 observation-model draws of the SAME simulated stream, seeds
+    1-10): Pal5 track 0.228+/-0.035, width 0.71+/-0.14; NGC3201 track 0.447+/-**0.169**, width
+    1.42+/-**0.26** (range 1.01-1.91); M68 track 0.465+/-0.095, width 0.51+/-0.09. **So the single-seed
+    numbers in the t_end scan carry ~0.15-0.25 of scatter on `width` and up to ~0.17 deg on `track`
+    from the member subsample alone** — the NGC3201 "width ratio 1.01 at 3.5 Gyr" quoted above is the
+    LOW end of its own 1.01-1.91 range at one seed, not a 1 % match. `edge` (computed on all in-window
+    particles, not the 195-star subsample) is not affected. Corrected reading of the scan: the age
+    ORDERING survives (NGC3201/M68 still need 3.0-3.5 for the n_win/bound squeeze, Pal5 still has no
+    age satisfying width and edge together), but differences of <~0.2 in width between adjacent ages
+    are not significant, and any future comparison should average over >=10 augmentation seeds.
+  - **Published STREAMFINDER phi1/phi2 frames adopted** (`scripts/streamfinder_frame.py`, new; asset
+    `assets/gaia/stream_detected_streamfinder.ascii` = Ibata et al. (2024) Table 3, added by the user).
+    Columns (4)-(6) are, per the table's own note, "the zero-point in R.A. and position of the pole of
+    the coordinate system used to derive the phi_1 and phi_2 stream coordinates", so the frame needs NO
+    fit. Name map: **Pal5 = Pal-5, NGC3201 = Gjoll, M68 = Fjorm**.
+    | stream | alpha_0 | pole (alpha, delta) | n | n_v |
+    |---|---|---|---|---|
+    | Pal5 | 229.022 | (320.298, -54.042) | 129 | 69 |
+    | NGC3201 | 154.403 | (158.539, 43.545) | 607 | 40 |
+    | M68 | 189.867 | (103.086, 19.455) | 297 | 29 |
+    Construction: pole `p`; `x0` = the point of the great circle on the `alpha_0` meridian
+    (`x0 ~ p x m`, `m = (-sin a0, cos a0, 0)`, signed to RA = alpha_0 not alpha_0+180); `y0 = p x x0`;
+    `R = [x0, y0, p]`. Note `alpha_0` IS each progenitor's RA, but phi1 = 0 is the point of the great
+    CIRCLE at that RA, not the progenitor (they coincide only if the progenitor lies on the circle).
+    `plot_mcmillan17_mean.py` gained `--frame streamfinder|fit`, **default streamfinder**.
+  - **This corrects a real error in the earlier figures of this session.** `ppc_summary_statistics.
+    fit_frame` fits a great circle to whichever member set is loaded, so its pole, handedness AND
+    zero-point all move with the catalogue — absolute phi1/phi2 are not comparable with the literature.
+    Progenitor phi1 (deg), fitted vs published:
+    | stream | fitted (Palau main) | fitted (STREAMFINDER) | **published** |
+    |---|---|---|---|
+    | Pal5 | -1.7 | -1.7 | **-0.5** (phi2 -0.66) |
+    | NGC3201 | ~+68 | ~+68 | **0.0** (phi2 -0.03) |
+    | M68 | **-61.9** | **-68.4** | **-16.7** (phi2 -5.89) |
+    The user flagged M68 against Palau (2026), who put its progenitor near -24 deg; the published Fjorm
+    frame gives -16.7, in that ballpark, while our fitted frame gave -62/-68. The fitted frame was
+    extrapolating a great circle back over the ~23 deg gap between the cluster and the nearest
+    catalogued member. **A mid-session claim that the fitted -62 "matches -24 once re-referenced to the
+    near end of the stream" was WRONG and is retracted**: `assets/gaia/M68_track.npz` reaches within
+    **0.66 deg** of NGC 4590, so the real stream does extend to its progenitor — what starts 23 deg away
+    is our member CATALOGUE, not the stream.
+  - **M68/Fjorm is genuinely not a great-circle stream**, in any frame: the reference track has phi2 rms
+    **4.13 deg** in the published Fjorm frame (4.49 in the member-fitted one, 3.22 in a track-fitted
+    one) and the cluster sits at phi2 = -5.9 even in Ibata's own frame. So for M68 phi2 mixes along- and
+    across-track structure; it is not the clean width coordinate it is for Pal5 (members rms 0.83).
+  - **Open follow-up (NOT changed)**: `augmentation/stream_summary.py` still fits its own frame with
+    `fit_frame` on `real_streams_file`, so every `sim_summary` grid the networks have EVER trained on is
+    binned in a catalogue-fitted frame, not the published one — for M68 a frame with ~4.5 deg of
+    curvature whose zero-point moves when the member file changes. Sim and real go through the same
+    frame so past comparisons stay internally valid, but this is a candidate explanation for M68 being
+    the persistent per-stream outlier. Switching it would invalidate existing checkpoints.
+  - Regenerated `data_local/mcmillan17_mean_tend_best_streamfinder/` (all five figures) in the published
+    frames, against the original STREAMFINDER members. Pal5's progenitor now sits mid-stream at phi1 ~ 0
+    as it should; NGC3201's is at 0 with its members at -105..-34 (the known progenitor-outside-window
+    geometry); M68's at -16.7.
+  - **Palau & Miralda-Escude's M68 frame reproduced from their Appendix A2** (`palau_frame` /
+    `palau_m68_frame` / `mixed_frames` in `scripts/streamfinder_frame.py`; `plot_mcmillan17_mean.py
+    --frame palau`, `--palau-loss L1|L2`). Their printed R1/R2 matrices, transcribed from the PDF, are
+    **NOT usable**: R1 is orthonormal (det -1, consistent with eq. A3's unusual (sin phi1 cos phi2,
+    cos phi1 cos phi2, sin phi2) ordering) but its pole lies **34 deg** from the M68 members' own great
+    circle, giving phi2 spread over 31 deg — the numbers are garbled. Rebuilding R1 from the quoted
+    Euler angles (-1.324, -0.316, -3.440 rad) over all 288 axis-order / multiplication-order /
+    transpose / sign conventions gives at best std(phi2) = 1.43 deg but puts the progenitor at
+    phi1 = +79.5, so that fails too. **Their stated CONSTRUCTION, however, reproduces their numbers
+    exactly**: (1) pole minimising the SCATTER of phi2 (their L1 — the smallest eigenvector of the
+    CENTRED covariance of the member unit vectors, which leaves mean(phi2) free; their L2 = the
+    uncentred scatter matrix == `fit_frame`'s pole, giving mean phi2 ~ 0), then (2) azimuth chosen to
+    put "the closest extreme of the stream to the cluster at the origin". On the 287-star Palau
+    selection this gives progenitor **phi1 = -24.1, phi2 = -12.14**, pole (RA 92.1, Dec 11.8) — the
+    -24 the user quoted. The pole implied by their printed R1, with the sign of its first two entries
+    flipped, is (94.5, 13.7), 2.9 deg from ours, so the discrepancy really is transcription.
+    The frame is built ALWAYS from that canonical file (`PALAU_SELECTION`), never from whichever
+    overlay catalogue is plotted, so it cannot drift.
+    **L1 is degenerate for short streams** — run on Pal5's 30-deg member list it returns a pole nearly
+    in the stream's own plane (phi2 offset ~ -59 deg with small scatter), so `mixed_frames` applies it
+    to M68 only and keeps the published STREAMFINDER frames for Pal5/NGC3201.
+  - **Correction of a correction (I got this wrong twice).** Progenitor phi1 for M68: our fitted frame
+    -62/-68, published STREAMFINDER (Fjorm) -16.7, **Palau -24.1**. My first answer — that -62 becomes
+    ~-24 once the origin is moved to the stream extreme nearest the cluster — was RIGHT, and matches
+    Palau's own construction; the 23.6 deg cluster-to-nearest-member gap IS their -24. I then retracted
+    it on the grounds that `assets/gaia/M68_track.npz` reaches within 0.66 deg of NGC 4590 and so "the
+    stream extends to its progenitor". That retraction was wrong: that file is a dense 13817-point
+    curve spanning the whole observation window (RA 189.3-292.2, Dec -47.2 to 67.0) and is a model
+    track/orbit, NOT the detected member footprint — the README even notes it is unused by repo code.
+    The detected members of BOTH catalogues start ~23-24 deg from the cluster.
+  - Regenerated `data_local/mcmillan17_mean_tend_best_streamfinder/` with `--frame palau` (M68 in
+    Palau's frame, progenitor at -24; Pal5/NGC3201 in their published STREAMFINDER frames, progenitors
+    at -0.5/0.0).
+  - Regenerated `data_local/mcmillan17_mean_tend_best/` (the UPDATED member set:
+    `..._desi_m68palau_main.npz` + `stream_global_v5`) with the same `--frame palau`, so the two
+    directories now differ ONLY in the real catalogue and are directly comparable panel by panel.
+    In the common Palau frame the two M68 arms are: updated (195) phi1 [0.1, 93.7], phi2
+    [-14.04, -10.74], **std(phi2) 0.78**; STREAMFINDER (297) phi1 [-11.9, 95.8], phi2
+    [-14.85, -6.03], **std(phi2) 1.54** — the envelope is a factor 2 in width and adds a
+    ~12 deg tail at the progenitor end, which is exactly the population the forward model cannot
+    make (cf. the track/width numbers 0.44/0.75 vs 1.09/0.33 above).
+
+- Session 2026-09-22 (trihedron remap promoted to a real simulator; 10^4-stream dataset; observation-
+  space PPCs — **M68 is the stream the method cannot represent**): `scripts/trihedron.py` (session
+  2026-08-28) had implemented the Palau & Miralda-Escude (2023, App. D) Frenet-Serret remap but
+  nothing in the pipeline used it. Moved to `src/hydrabflow/simulators/trihedron.py` (`scripts/
+  trihedron.py` is now a re-export shim; the three dependent scripts all set `HYDRABFLOW_NUM_GPUS=0`
+  before importing it, so the package import underneath is safe) and wrapped in a registered
+  simulator.
+  - **`stream_trihedron`** (`simulators/stream_trihedron.py`) overrides ONLY `_row_jobs`, the
+    documented forward-model seam, so `simulate` / `sample_compositional` / `window_subsample` / the
+    ancillary + `*_derived` assembly / resumable chunking are all inherited. The worker rebuilds the
+    row's potential and solar frame, converts the progenitor's ICRS coordinates byte-identically to
+    `_simulate_one`, and calls `remap`. `_n_particles` comes from the TEMPLATE, not the config.
+    `m_bound_final` is deliberately `None` (the remap replays the fiducial's already-stripped
+    population, so a bound mass would be the fiducial's input dressed as a measurement).
+    **`_check_template_matches_priors`** raises unless `m_progenitor`/`a_progenitor`/`t_end` are
+    identity-pinned at the template's values — freeing one would put it in `local_parameter_names`
+    and train a network to infer a parameter the forward model ignores.
+  - **`scripts/build_trihedron_template.py`**: reads the fiducial npz + its own `.hydra` snapshot
+    (so the template is built in the potential the stars actually moved in, not in a config NAME
+    that may since have changed), builds one template per stream, and self-tests that remapping back
+    into the fiducial returns the original cloud. From `data_local/mcmillan17_mean_tend_best/`
+    (prior-mean rnbody realization in fixed McMillan17, t_end 2.5/3.5/3.5) at **T = +-0.6 Gyr,
+    6001 knots (0.2 Myr)**: `boundary_frac = 0.0000` for all three (the window contains the whole
+    stream), `ambiguous_frac` 0.0015/0.0059/0.0000, `|remap - fiducial|` <= 8.8e-8 kpc.
+  - **Config** `conf/simulator/stream_trihedron_mcmillan17_v4.yaml` inherits
+    `stream_agama_rnbody_ibata_m200c_v4` (user choice: comparability with the existing v4/v5 sets)
+    and pins the three frozen locals. 9 inferred globals, `local_parameter_names == [vr, r,
+    mu_ra_cosdec, mu_dec]`. **The anchor lies outside the prior family**: the fiducial is McMillan17
+    (thin+thick isothermal disks, halo r_t = inf) while v4 is one exponential disk with r_t = 1000,
+    so no row reproduces it. Quantified by the builder's inverse solve — the fiducial halo is
+    log10 M200 = 12.110, ln c' = 2.738 (McMillan Table 3, recovered to 0.004, which also validates
+    `_halo_params_m200c` in the inverse direction) and its v_c differs from the prior centre by a
+    median 9.4 % / max 10.6 % over 2-60 kpc.
+  - **Dataset** `data_jarvis/data_trihedron_mcmillan17_v4_hydrabflow/`: `test_multistream_333.npz`
+    (999 stream realizations, **10 s**) + `training_data_10000.npz` (487 MB, **~2 min**), both at 24
+    nice'd workers, 0 NaN rows. The v4 rnbody equivalents took ~38 min and ~22 h — a ~500x speed-up,
+    with the remaining time going to the rotation curve/ancillary observables and I/O, not streams.
+    Runner `scripts/create_trihedron_dataset.sh` (template -> pilot -> test -> train -> PPCs).
+  - **`scripts/ppc_observation_space.py`** (new; per user, "not the stream-dependent reference
+    frame", then "use the phi1-phi2 constructed by the streamfinder poles"). Every other ppc_*
+    script fits its frame to whichever member catalogue is loaded; this one uses the PUBLISHED
+    Ibata+2024 Table 3 poles via `streamfinder_frame.frames()` — an external ruler that moves with
+    neither the catalogue nor the simulation — with `--frame icrs|palau|fit` as alternatives. Four
+    views: model-free RBF-MMD coverage rank per observable subset (no binning, no abscissa — the
+    headline), quantile envelopes, 2-D overlays, and binned tracks. Reuses `augment_sim`,
+    `real_clouds`, `compose_aug`, `mmd2`, `features`. streamfinder and icrs agree (Pal5 36/36,
+    M68 100/100; NGC3201 sky 76 vs 98 is the per-axis MAD standardization, not the frame), so the
+    verdict is frame-independent.
+  - **The control that makes the numbers readable**: the IDENTICAL check on
+    `data_agama_rnbody_ibata_m200c_v4_hydrabflow/test_multistream_333.npz` (same prior family, full
+    restricted N-body), archived as `ppc/baseline_rnbody_v4/`. MMD percentile (all/sky/pm/vlos),
+    trihedron vs rnbody: **Pal5 36/50/32/50 vs 31/42/36/57** and **NGC3201 92/76/90/96 vs
+    95/70/95/92** — the surrogate reproduces the baseline's verdict, including the long-standing
+    NGC3201 borderline result. **M68 100/100/100/98 vs 61/67/61/31** — broken by the surrogate.
+  - **M68 mechanism, measured**: not width but along-track REACH. Real quantiles inside the sims'
+    5-95 % band collapse in EVERY observable (phi1 0.00, phi2 0.11, parallax 0.32, mu_phi1 0.05,
+    mu_phi2 0.05, v_los 0.16; N-body 0.63-1.00). phi1 (p5/p50/p95): real 9.9/39.8/90.8, trihedron
+    -29.4/**-16.7**/45.7, rnbody -31.2/**-16.7**/72.9. **Two separable effects.** SHARED with the
+    N-body baseline: both put M68's attended stars at the progenitor's own phi1 (-16.73 in the Fjorm
+    frame, exactly the published progenitor position) because much of the attended sample IS the
+    surviving remnant — attended fraction within 2 deg of the progenitor is 0.24 in the one McMillan17
+    fiducial, **0.49 in rnbody v4** and 0.66 in the trihedron set, so the jump from 0.24 to ~0.5
+    happens with the FULL N-body too and is the v4 prior's potentials swinging M68's tail out of its
+    RA/Dec window, NOT the remap. SURROGATE-SPECIFIC: the remaining 0.66 vs 0.49, and — sharper —
+    **0 of 60 trihedron rows put an appreciable star fraction beyond the real 90th-pct phi1 = 87.5
+    deg, against 21.7 % of N-body rows**. `t_hat` is frozen, so the remap cannot redistribute stars
+    along the track; the N-body set reaches further only because it draws `t_end` U[2,10] and
+    `m_progenitor` freely, which one template cannot. Pal5/NGC3201 reach slightly FURTHER under the
+    remap, so the truncation is M68-specific. This is the 2026-08-28 "frozen t_hat" defect showing up
+    against real data. (An intermediate claim this session that the median offset simply "predates
+    this work" was incomplete — the clump is amplified by the prior AND by the surrogate.)
+  - **Rotation curve** (all 10^4 rows vs Ou+2024): observed inside the prior 5-95 % band at every
+    radius, best-row chi2 14.1/19 dof, 1.8 % of rows below 2x dof, prior median 12 % off — identical
+    in character to v3/v4, as it must be, since the curve is a pure function of the potential and the
+    remap never touches it. So the misspecification is entirely in the stream channel.
+  - Tests `tests/test_stream_trihedron.py` (8): exactness at the fiducial, the frozen-prior guard
+    (both directions), the v4 output contract, compositional shapes, and that the remap actually
+    responds to the potential. **Gotcha**: the template's `t_knots` are in the (kpc, km/s, Msun)
+    time unit, so a test that integrates the check orbit in the PARENT process needs
+    `agama.setUnits(length=1, velocity=1, mass=1)` — the workers get it from `_agama()`, the parent
+    does not, and without it the remap silently lands ~32 kpc off. Also fixed a 1000x typo in the
+    trihedron docstring: the agama time unit is ~0.978 Gyr, not Myr.
+  - **Not done**: the surrogate's bias across the prior was never validated against N-body truth
+    (skipped by decision), so the mass-axis error is unmeasured; no training run on this set; the
+    repair for M68 is twofold — a per-`t_end` / `m_progenitor` template grid with nearest-cell
+    selection (restores the reach, and restores those two as inference variables) AND a fiducial
+    whose M68 tail stays inside the observation window across the prior (cuts the remnant clump).
+
+- Session 2026-09-22 (Ibata+2024 orbit + DeltaTheta(phi1) spline surrogate — **the M68 failure is
+  generic to frozen stripping histories, not to the trihedron's geometry**): a second surrogate
+  forward model, built to the method of Ibata et al. (2024), "Charting the Galactic Acceleration
+  Field II" (ApJ 967, 89; arXiv:2311.17202) — the paper this project already takes the STREAMFINDER
+  phi1/phi2 frames and the 30 pc progenitor radius from. Its Section 4: *"stellar streams do not
+  precisely delineate the orbital path of their progenitors. To overcome this complication we will
+  proceed in an iterative manner, to find plausible functions DeltaTheta(phi1) [...] that correct
+  the offset between the stream and the progenitor orbit"*, and *"the DeltaTheta(phi1) is then
+  calculated independently for each observable Theta as a fourth order polynomial fit to the best
+  fit stream minus the corresponding progenitor orbit"*. So a stream is an ORBIT plus a smooth
+  correction, and the corrected observables are (ra, dec, distance modulus, mu_phi1, mu_phi2, v_los).
+  - **Degree-4 SPLINE, not a plain quartic** (user's choice, and a strict generalization): with zero
+    interior knots the two are the same object, pinned against `numpy.polyfit` to 2e-15
+    (`test_degree4_spline_without_interior_knots_is_ibatas_quartic`), and `--n-interior-knots 0` is
+    the reference setting that reproduces the paper exactly. The dataset uses 3.
+  - **New modules.** `simulators/stream_frame.py` (`project` lifted verbatim from
+    `ppc_summary_statistics` so the simulator and the diagnostics share ONE frame estimator —
+    a test pins them to 1e-12 — plus the new exact inverse `deproject` and `unwrap_to`);
+    `simulators/orbit_offset.py` (orbit track, spline fitting, generation);
+    `simulators/stream_orbit_offset.py` (the registered simulator, overriding only `_row_jobs`);
+    `simulators/frozen_locals.py` (`check_frozen_locals`, extracted from `stream_trihedron` and now
+    called by both surrogates — `local_parameter_names` reads the FIRST stream only, so a freed
+    `t_end` would silently become an inference variable the forward model ignores).
+    Scripts: `build_orbit_offset_template.py`, `create_orbit_offset_dataset.sh`,
+    `validate_surrogates_vs_nbody.py`. Config `stream_orbit_offset_mcmillan17_v4.yaml`, tests
+    `test_stream_orbit_offset.py` (15). Suite 209 -> 224, green.
+  - **Template** (same fiducial as the trihedron, `data_local/mcmillan17_mean_tend_best/`): per
+    stream, 6 degree-4 correction splines + 6 degree-4 dispersion splines fitted in **log sigma**
+    (positivity) and clamped to the sigma range actually measured, + the empirical phi1 density as a
+    quantile function sampled by inverse CDF. The published Ibata+2024 Table 3 rotation matrix is
+    baked in, so the simulator has no dependency on `scripts/`. Self-test (rebuild the stream in its
+    OWN potential; there is no exactness anchor, this model is lossy by construction): phi2 track
+    error 0.004 / 0.027 / 0.015 deg, pm <= 0.022 mas/yr, v_los <= 0.31 km/s, phi2 width ratio
+    0.861 / 0.928 / 1.018, induced |d phi1| 0.012-0.071 deg, phi1 coverage 1.0000.
+  - **Three real bugs found while building it, all worth remembering.**
+    (a) Over +-0.6 Gyr these orbits wrap several times, so the unwrapped phi1 accumulates to ~1400
+    deg while the stars are branched around the progenitor — the orbit and the stream lived on
+    different absolute scales and NO window covered anything. Fix: anchor the unwrap so the
+    present-day knot carries the progenitor's own wrapped phi1, THEN keep one wrap (+-177 deg)
+    about it, since a monotone run spanning >360 deg maps several orbit phases onto the same sky
+    position.
+    (b) Equal-count phi1 bins put nearly all the fit points inside the progenitor clump, the
+    quantile knots became near-coincident, the least-squares system went near-singular, and the
+    degree-4 fits developed excursions of ~1e290 BETWEEN the points they were fitted to (sigma_dm
+    then produced distances of 0 and 36 148 kpc). **Every median- and MAD-based check passed** —
+    that is the lesson. Fix: uniform bins, uniform interior knots, an occupancy (Schoenberg-Whitney)
+    test, an excursion guard that backs off a knot and refits, clipped evaluation at the knot span,
+    and sigma clamped to its measured range. The self-test gained a 1-99 percentile range ratio,
+    which is the statistic that would have caught it (now 0.92-1.04 everywhere).
+    (c) `window_subsample` NaNs an ENTIRE row if a single star is non-finite, so a surrogate that
+    leaves holes where the orbit cannot reach would silently delete rows at the edge of the prior —
+    exactly where its behaviour needs to stay visible. `sample_stream` therefore draws from the
+    phi1 density TRUNCATED and renormalized to the orbit's reach, and reports the missed fraction;
+    `max_phi1_miss_frac` (0.05) NaNs a row only when the orbit reaches too little of the stream.
+  - **Dataset** `data_jarvis/data_orbit_offset_mcmillan17_v4_hydrabflow/`: `test_multistream_333.npz`
+    (999 stream realizations, 20 s) + `training_data_10000.npz` (487 MB, ~100 s), 24 nice'd workers,
+    67 ms per stream. 13 NaN rows of 10 000 (0.13 %, the coverage guard); stored in-window stars
+    median 2000 (capped) / 1008 / 2000, against the trihedron's 2000 / 957 / 2000 and the v4 rnbody's
+    2000 / 480 / 1288.
+  - **RESULT — the surrogate reproduces the N-body verdict for Pal 5 and NGC 3201 and fails M68,
+    with a signature all but identical to the trihedron's.** Observation-space MMD coverage rank
+    (all/sky/pm/vlos) in the published frames, against both controls:
+    | stream | orbit+spline | trihedron | rnbody v4 (truth) |
+    |---|---|---|---|
+    | Pal5 | 44/64/34/45 | 36/50/32/50 | 31/42/36/57 |
+    | NGC3201 | 89/65/89/98 | 92/76/90/96 | 95/70/95/92 |
+    | M68 | **100/100/100/93** | **100/100/100/98** | 61/67/61/31 |
+    Fraction of real quantiles inside the sims' 5-95 % band for M68: orbit+spline
+    0.00/0.11/0.37/0.05/0.05/0.26, trihedron 0.00/0.11/0.32/0.05/0.05/0.16, rnbody
+    0.63/0.74/1.00/0.63/1.00/1.00 (phi1/phi2/parallax/mu_phi1/mu_phi2/v_los).
+    Mechanism (60 groups each through the v5 observation model, attended M68 stars, published
+    Fjorm frame; real phi1 p5/p50/p90 = 9.9/39.8/87.5): fraction within 2 deg of the progenitor
+    and fraction of rows placing >2 % of their stars past the real p90 — orbit+spline 0.67 and
+    **0.0 %**, trihedron 0.67 and **0.0 %**, rnbody v4 0.33 and 45.0 %; median phi1 -16.7 / -16.7
+    / -1.9 (the published progenitor sits at -16.73). The two surrogates agree to two decimals.
+    **The two surrogates are built on completely different constructions** — Frenet-Serret offsets
+    in Cartesian space versus spline corrections in observation space — **and they fail the same
+    stream the same way, to within a percentile or two. So the defect is not the trihedron's
+    geometry; it is generic to replaying ONE stripping history.** The along-track coordinate is
+    frozen in both (`t_hat` there, `phi1` here), so neither can redistribute stars along the track
+    and neither reaches the phi1 the real M68 occupies under the v4 prior. The corollary is that
+    trying a third surrogate construction is not the repair; restoring along-track freedom is.
+  - Frame-independence: streamfinder vs ICRS agree (Pal5 44/45, M68 100/100); NGC3201's sky rank
+    differs (65 vs 98), the same per-axis-MAD-standardization effect seen for the trihedron.
+    Rotation curve (10^4 rows vs Ou+2024): observed inside the prior 5-95 % band at every radius,
+    best chi2 14.1/19 dof, 1.8 % of rows below 2x dof, prior median 12 % off — identical to the
+    trihedron, as it must be, since the curve is a pure function of the potential.
+
+- Session 2026-09-22 (Palau23 + Gaia DR3 member catalogue, observation-space plotting, and the
+  OBSERVATIONAL-ERROR MODEL fixed — most of the "real data are out of distribution" verdict was ours,
+  not the simulator's): started as a plotting request and turned into a correction of the observation
+  model. Nothing trained; the deliverable is a catalogue, the corrected error model, and a runner.
+  - **`scripts/plot_observed_streams.py`** (standalone, numpy+matplotlib, no hydrabflow import): the
+    observed members only, in pure observation space — delta / parallax / mu_alpha* / mu_delta / v_los
+    against alpha, so NEITHER axis depends on a great-circle fit. Repeatable `--cut EXPR` over the
+    per-star columns (`ra dec parallax pmra pmdec vlos g vlos_err has_vlos pm`), scoped per stream by
+    a `<stream>:` prefix; rejected stars stay as grey circles unless `--hide-cut`; counts + per-cut
+    survivors written to a sidecar json. `--errors auto|table|real|vlos|none`. A matching
+    `fig_icrs_vs_alpha` was also added to `plot_mcmillan17_mean.py`.
+  - **`scripts/build_palau23_members.py`** builds a real-observation npz from the Palau &
+    Miralda-Escude (2023) appendix tables (`assets/gaia/{Pal5,Pal5_radvel,NGC3201,M68}.txt`, added by
+    the user). Two things it must get right: **`source_id` is a 19-digit int** — parsing the table
+    into one float array silently corrupted it (> 2**53) and cost 11 of Pal5's 15 velocities; and the
+    **`--window cut`** default drops members outside each stream's observation window (NGC3201 loses
+    99 of 170 beyond RA 140 — a genuinely separate far-arm clump with different proper motions).
+    M68's selection box was narrowed per user to `190 < alpha < 260, dec >= -8` (`--window-box`
+    overrides any of them). Velocity sources, in priority order: Palau Table B2 (Ibata+2017), Gaia DR3
+    RVS, then the Ibata+2024 STREAMFINDER atlas cross-matched by source_id then 2" position with a
+    stream-label check — **the atlas is what gives NGC3201 and M68 any velocities at all** (Palau23
+    lists none): final counts 126/71/95 stars with 17/18/8 velocities.
+  - **`--astrometry dr3`** resolves every member through `gaiadr3.dr2_neighbourhood` over the ESA TAP
+    (stdlib urllib, response cached in `assets/gaia/palau23_gaiadr3.csv`, 411/411 resolved, 5
+    ambiguous resolved by nearest angular distance, 1 two-parameter solution dropped) and carries the
+    catalogue's **per-star uncertainties** into a new `obs_error` (1,S,P,6) array. DR2-vs-DR3 agree
+    within the errors (median z 0.16-0.32, robust sigma(z) 0.5-1.3); G differs systematically because
+    Ibata's is extinction-corrected (-0.08/-0.18/-0.47 mag). Gaia DR3 RVS adds nothing here (4 of 411
+    stars, none surviving the window cuts — these members are G 16-20).
+  - **THE ERROR-MODEL BUG (the important part).** The real members looked out of distribution in
+    PARALLAX at the 91-100th MMD percentile under every forward model. It was not the sigma(G) table
+    (verified against the real DR3 errors: agreement to 10-20 %) but the MAGNITUDES it is evaluated
+    at: `sample_magnitudes` builds its KDE from the Ibata atlas members regardless of which catalogue
+    is being matched, and the Palau selection differs by ~1 mag in OPPOSITE directions per stream
+    (median G atlas 17.77/18.69/19.15 vs Palau 18.67/17.72/18.57). Simulated parallax scatter was
+    therefore 2x too narrow for Pal5 and 1.8x too wide for NGC3201 — the real data looked atypical for
+    being both too wide and too thin. Fix: **`magnitude_source: real_streams`** builds the KDE from
+    `real_streams_file`'s own `magnitudes` (default `member_table` unchanged, so nothing existing
+    moves). Parallax MMD 100/99/91 -> 82/73/78, MAD ratio 1.97/0.57/0.82 -> 1.18/0.84/0.98.
+  - **Refinement** (`sample_obs_error_empirical` + `RealAstrometricErrorModel`): draw sigma_parallax /
+    sigma_pmra / sigma_pmdec per star from the real members' own (G, sigma) pairs (nearest in G, k=5)
+    instead of the median relation — the astrometric twin of `sample_vlos_error_empirical`. Parallax
+    MMD -> 68/74/75, MAD ratio -> 1.05/0.86/1.00. Its real-data partner **`override_obs_error_with_real`**
+    puts the members' measured sigmas into the same `sigma_errors` channels the network reads; the two
+    steps are a PAIR, using either alone leaves sim and real on different error models. RA/Dec are
+    deliberately untouched (the table gives them zero noise, which is the intended convention).
+  - **Misspecification, re-measured with the corrected pipeline** (`ppc_observation_space.py`, which
+    now also accepts a FLAT training set — rows are drawn per stream into pseudo-groups and read by
+    seeking inside the uncompressed npz (`read_rows`), so 1000 clouds cost ~90 MB not 4.9 GB). On the
+    10^5 training sets, MMD percentile all/sky/pm/vlos/parallax:
+    | | Pal5 | NGC3201 | M68 |
+    |---|---|---|---|
+    | rnbody v4 | 80/60/**53**/53/68 | 100/**51**/72/98/74 | --/**65**/**56**/--/75 |
+    | spray _p1e3 | 87/59/81/67/66 | 100/63/64/100/50 | --/**100**/**95**/--/83 |
+    | spray _palau | 66/**44**/**99**/62/73 | 99/71/58/98/30 | --/99/**100**/--/92 |
+    **Parallax is clean everywhere now.** What survives: M68 is OOD for both spray sets and covered by
+    rnbody (phi1 quantile coverage 0.79 vs 0.32/0.00); `_palau`'s fixed t_end=1.5 Gyr gives phi1
+    coverage **0.00** for BOTH NGC3201 and M68 (the 2026-07-05/07-29 finding again); NGC3201's `all`
+    = 100 is carried by v_los (98-100) under every forward model, with sky and pm fine. A residual
+    +0.037..+0.049 mas parallax LOCATION offset remains in all three streams (de-shifting drops the
+    ranks to 44/43/52) — not the DR3 zero-point (wrong sign), still unexplained, data-side.
+  - **Training pipeline `scripts/train_v4_rnbody_palau23.sh`** (thin wrapper over
+    `train_v4_2modal.sh`): the rnbody v4 10^5 set + the corrected bin model (`stream_fusion_2modal`
+    with `summary_occupancy=valid`) + `stream_global_palau23_dr3_emperr` / the real twin, running
+    train -> evaluate sim (base + compositional) -> evaluate real on the new catalogue. Recommended
+    over every other training set here on the misspecification evidence above.
+  - Also: `plot_mcmillan17_mean.py` gained the ICRS-vs-alpha figure; the McMillan17 best-case
+    realization was overlaid on the new catalogue (`data_local/mcmillan17_mean_tend_best_palau23dr3`,
+    preset `stream_global_palau23_dr3`) — M68's width ratio 0.88 against this selection vs 0.75 for
+    PM25-main and 0.33 for the full STREAMFINDER arm, i.e. the "M68 too cold" verdict is largely a
+    member-selection statement.

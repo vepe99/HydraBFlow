@@ -1,0 +1,129 @@
+{
+  "source_tables": {
+    "Pal5": {
+      "members": "Pal5.txt",
+      "radvel": "Pal5_radvel.txt",
+      "n_rows": 126,
+      "n_radvel_rows": 15
+    },
+    "NGC3201": {
+      "members": "NGC3201.txt",
+      "radvel": null,
+      "n_rows": 170,
+      "n_radvel_rows": 0
+    },
+    "M68": {
+      "members": "M68.txt",
+      "radvel": null,
+      "n_rows": 115,
+      "n_radvel_rows": 0
+    }
+  },
+  "window": "cut",
+  "streams": {
+    "Pal5": {
+      "j": 0,
+      "n_members": 126,
+      "window_box": [
+        220.98008280733634,
+        250.0,
+        -13.0,
+        10.0
+      ],
+      "n_outside_window": 0,
+      "n_vlos_measured": 17,
+      "n_vlos_from_paper": 15,
+      "n_vlos_from_streamfinder": 2,
+      "n_streamfinder_matched": 13,
+      "n_streamfinder_id_matched": 13,
+      "streamfinder_vlos_sources": {
+        "10": 1,
+        "11": 1
+      },
+      "vlos_fill": -54.11588235294118,
+      "vlos_fill_sigma": 7.430822976212407,
+      "ra_range": [
+        222.5158,
+        237.1373
+      ],
+      "dec_range": [
+        -8.1333,
+        5.1591
+      ],
+      "g_range": [
+        17.1479,
+        20.1749
+      ]
+    },
+    "NGC3201": {
+      "j": 1,
+      "n_members": 71,
+      "window_box": [
+        42.29847920913508,
+        140.0,
+        -47.79545565626234,
+        20.812029301121846
+      ],
+      "n_outside_window": 99,
+      "n_vlos_measured": 18,
+      "n_vlos_from_paper": 0,
+      "n_vlos_from_streamfinder": 18,
+      "n_streamfinder_matched": 106,
+      "n_streamfinder_id_matched": 101,
+      "streamfinder_vlos_sources": {
+        "13": 18
+      },
+      "vlos_fill": 103.09944444444446,
+      "vlos_fill_sigma": 100.67010388570196,
+      "ra_range": [
+        45.1634,
+        119.2984
+      ],
+      "dec_range": [
+        -37.2963,
+        20.1024
+      ],
+      "g_range": [
+        15.6898,
+        20.5729
+      ]
+    },
+    "M68": {
+      "j": 2,
+      "n_members": 96,
+      "window_box": [
+        190.0,
+        260.0,
+        -8.0,
+        70.0
+      ],
+      "n_outside_window": 19,
+      "n_vlos_measured": 8,
+      "n_vlos_from_paper": 0,
+      "n_vlos_from_streamfinder": 8,
+      "n_streamfinder_matched": 73,
+      "n_streamfinder_id_matched": 67,
+      "streamfinder_vlos_sources": {
+        "47": 1,
+        "4": 2,
+        "23": 1,
+        "25": 2,
+        "6": 2
+      },
+      "vlos_fill": -78.4325,
+      "vlos_fill_sigma": 28.430130473671763,
+      "ra_range": [
+        192.9816,
+        254.9531
+      ],
+      "dec_range": [
+        -6.6935,
+        65.346
+      ],
+      "g_range": [
+        15.9535,
+        20.171
+      ]
+    }
+  }
+}

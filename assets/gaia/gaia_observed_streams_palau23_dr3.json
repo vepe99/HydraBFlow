@@ -1,0 +1,147 @@
+{
+  "source_tables": {
+    "Pal5": {
+      "members": "Pal5.txt",
+      "radvel": "Pal5_radvel.txt",
+      "n_rows": 126,
+      "n_radvel_rows": 15
+    },
+    "NGC3201": {
+      "members": "NGC3201.txt",
+      "radvel": null,
+      "n_rows": 170,
+      "n_radvel_rows": 0
+    },
+    "M68": {
+      "members": "M68.txt",
+      "radvel": null,
+      "n_rows": 115,
+      "n_radvel_rows": 0
+    }
+  },
+  "window": "cut",
+  "streams": {
+    "Pal5": {
+      "j": 0,
+      "n_members": 126,
+      "window_box": [
+        220.98008280733634,
+        250.0,
+        -13.0,
+        10.0
+      ],
+      "n_outside_window": 0,
+      "n_vlos_measured": 17,
+      "n_vlos_from_paper": 15,
+      "astrometry": "dr3",
+      "n_dr3_resolved": 126,
+      "n_dr3_ambiguous": 1,
+      "n_dr3_unresolved": 0,
+      "n_dr3_two_parameter_dropped": 0,
+      "n_vlos_from_gaia_rvs": 0,
+      "n_vlos_from_streamfinder": 2,
+      "n_streamfinder_matched": 13,
+      "n_streamfinder_id_matched": 13,
+      "streamfinder_vlos_sources": {
+        "10": 1,
+        "11": 1
+      },
+      "vlos_fill": -54.11588235294118,
+      "vlos_fill_sigma": 7.430822976212407,
+      "ra_range": [
+        222.51577805113982,
+        237.13729723747548
+      ],
+      "dec_range": [
+        -8.133321400314447,
+        5.159079635906235
+      ],
+      "g_range": [
+        17.130377,
+        20.130388
+      ]
+    },
+    "NGC3201": {
+      "j": 1,
+      "n_members": 71,
+      "window_box": [
+        42.29847920913508,
+        140.0,
+        -47.79545565626234,
+        20.812029301121846
+      ],
+      "n_outside_window": 99,
+      "n_vlos_measured": 18,
+      "n_vlos_from_paper": 0,
+      "astrometry": "dr3",
+      "n_dr3_resolved": 170,
+      "n_dr3_ambiguous": 4,
+      "n_dr3_unresolved": 0,
+      "n_dr3_two_parameter_dropped": 0,
+      "n_vlos_from_gaia_rvs": 0,
+      "n_vlos_from_streamfinder": 18,
+      "n_streamfinder_matched": 106,
+      "n_streamfinder_id_matched": 101,
+      "streamfinder_vlos_sources": {
+        "13": 18
+      },
+      "vlos_fill": 103.09944444444446,
+      "vlos_fill_sigma": 100.67010388570196,
+      "ra_range": [
+        45.16343492645705,
+        119.29839046791649
+      ],
+      "dec_range": [
+        -37.2962961117827,
+        20.102426661623994
+      ],
+      "g_range": [
+        15.677291,
+        20.517237
+      ]
+    },
+    "M68": {
+      "j": 2,
+      "n_members": 95,
+      "window_box": [
+        190.0,
+        260.0,
+        -8.0,
+        70.0
+      ],
+      "n_outside_window": 20,
+      "n_vlos_measured": 8,
+      "n_vlos_from_paper": 0,
+      "astrometry": "dr3",
+      "n_dr3_resolved": 115,
+      "n_dr3_ambiguous": 0,
+      "n_dr3_unresolved": 0,
+      "n_dr3_two_parameter_dropped": 1,
+      "n_vlos_from_gaia_rvs": 0,
+      "n_vlos_from_streamfinder": 8,
+      "n_streamfinder_matched": 73,
+      "n_streamfinder_id_matched": 67,
+      "streamfinder_vlos_sources": {
+        "47": 1,
+        "4": 2,
+        "23": 1,
+        "25": 2,
+        "6": 2
+      },
+      "vlos_fill": -78.4325,
+      "vlos_fill_sigma": 28.430130473671763,
+      "ra_range": [
+        192.98156954546016,
+        254.95311077759425
+      ],
+      "dec_range": [
+        -6.69349086127404,
+        65.34603254168506
+      ],
+      "g_range": [
+        15.945876,
+        20.102924
+      ]
+    }
+  }
+}

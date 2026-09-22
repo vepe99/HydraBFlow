@@ -1,0 +1,21 @@
+# Real-data counterpart of `stream_global_palau23_dr3_emperr`. The training chain draws the
+# astrometric sigmas from the real (G, sigma) distribution; here the real members simply carry their
+# OWN measured sigmas into `sigma_errors`, so the channels the network reads mean the same thing on
+# both sides. Pair the two presets — using either alone leaves sim and real on different error models.
+defaults:
+  - stream_real_global_palau23_dr3
+
+steps:
+  - sample_obs_error
+  - override_obs_error_with_real    # <- astrometric sigmas from the catalogue's obs_error
+  - override_vlos_error_with_real   # <- v_los sigma from the catalogue (already in the chain)
+  - impute_vlos
+  - log10_vcirc
+  - stream_summary_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  obs_error_columns: [parallax, mu_ra, mu_dec]

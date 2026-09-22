@@ -1,0 +1,29 @@
+# Observation model matched to `assets/gaia/gaia_observed_streams_palau23_dr3.npz` (2026-09-22):
+# the Palau & Miralda-Escude (2023) appendix member tables with Gaia DR3 astrometry, M68 selected in
+# the narrowed box 190 < alpha < 260, dec >= -8, and radial velocities from Palau's Table B2 plus the
+# Ibata+2024 STREAMFINDER atlas. Built by `scripts/build_palau23_members.py --astrometry dr3`.
+#
+# Differs from `stream_global_v5` ONLY in the numbers that follow from that catalogue: the member
+# counts (126 / 71 / 95, against v5's 129 / 195 / 195 — Palau's NGC3201 and M68 selections are much
+# smaller inside our windows) and how many of them carry a velocity (17 / 18 / 8). Everything else —
+# the magnitude-weighted v_los selection, the empirical sigma_vlos draw, M68's track-width cut — is
+# inherited unchanged.
+defaults:
+  - stream_global_v5
+
+params:
+  real_streams_file: assets/gaia/gaia_observed_streams_palau23_dr3.npz
+
+  observed_n_stars:
+    Pal5: 126
+    NGC3201: 71
+    M68: 95
+  min_star_with_vlos:
+    Pal5: 17
+    NGC3201: 18
+    M68: 8
+  summary_vlos_bins: 2
+  # The per-star uncertainties are interpolated at magnitudes drawn from this KDE, so it must come
+  # from the members being matched: the Ibata+2024 atlas default is ~1 mag off this selection (and
+  # in different directions per stream), which distorts the simulated parallax / pm scatter.
+  magnitude_source: real_streams

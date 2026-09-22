@@ -134,6 +134,27 @@ class StreamResources:
             subset = tbl_members[tbl_members["Stream"] == source_id]
             self.magnitudes[j] = np.asarray(subset["Gmag"], dtype=float)
 
+        # `magnitude_source: real_streams` instead builds the per-stream magnitude KDE from the G
+        # magnitudes stored in `real_streams_file` — the very members the observation model is being
+        # matched to. The default (`member_table`) is the Ibata+2024 atlas, which is the right source
+        # only when the real set IS that atlas: for another selection its magnitude distribution can
+        # differ by ~1 mag, and since every per-star uncertainty is interpolated at these magnitudes
+        # that propagates straight into the simulated parallax / proper-motion scatter.
+        if str(params.get("magnitude_source", "member_table")) == "real_streams":
+            real_file = params.get("real_streams_file")
+            if not real_file:
+                raise ValueError("magnitude_source=real_streams needs params.real_streams_file")
+            with np.load(real_file) as d:
+                mags = np.asarray(d["magnitudes"], dtype=float)
+                am = np.asarray(d["attention_mask"])
+                am = am[:, 0, :] if am.ndim == 3 else am
+                js = np.asarray(d["j"]).reshape(-1).astype(int)
+            for row, j in enumerate(js):
+                g = mags[row][am[row].astype(bool)]
+                g = g[np.isfinite(g) & (g > 0)]
+                if int(j) in self.stream_by_j and g.size >= 5:
+                    self.magnitudes[int(j)] = g
+
         # --- Gaia DR3 uncertainty vs magnitude table ---------------------------------------- #
         tbl_err = astro_ascii.read(
             os.path.join(data_dir, params.get("error_table", "gaia_DR3_erorr_6D.txt")),
@@ -338,6 +359,88 @@ class RealVlosModel:
                 "n_measured": jnp.asarray(self.n_measured),
             }
         return self._jax_cache
+
+
+class RealAstrometricErrorModel:
+    """Per-stream ASTROMETRIC observation errors read off the REAL member npz.
+
+    The default error model interpolates the Gaia DR3 *median* uncertainty-vs-G relation
+    (``gaia_DR3_erorr_6D.txt``) at each simulated star's magnitude. That relation is a median over
+    all of DR3, so it captures neither a given selection's magnitude distribution (see
+    ``magnitude_source``) nor the scatter of sigma at fixed G (crowding, scan coverage, colour).
+
+    When the real file carries the catalogue's own per-star uncertainties — an ``obs_error``
+    (1, S, P, 6) array, columns as ``sim_data_projected``, written by
+    ``scripts/build_palau23_members.py --astrometry dr3`` — this model instead draws (G, sigma)
+    PAIRS from the real members of the same stream, exactly as ``RealVlosModel`` does for v_los.
+
+    Arrays are padded to a common length across streams so they can be indexed by ``j`` in JAX.
+    """
+
+    def __init__(self, params: dict, columns) -> None:
+        real_file = params.get("real_streams_file")
+        if not real_file:
+            raise ValueError("sample_obs_error_empirical needs params.real_streams_file")
+        target = {str(k): int(v) for k, v in params["target_streams"].items()}
+        self.n_streams = max(target.values()) + 1
+        self.columns = list(columns)
+        with np.load(real_file) as d:
+            if "obs_error" not in d.files:
+                raise ValueError(
+                    f"{real_file} has no per-star `obs_error`; build it with "
+                    "scripts/build_palau23_members.py --astrometry dr3, or drop "
+                    "`sample_obs_error_empirical` from the chain"
+                )
+            oe = np.asarray(d["obs_error"], dtype=float)
+            oe = oe[0] if oe.ndim == 4 else oe
+            am = np.asarray(d["attention_mask"])
+            am = am[:, 0, :] if am.ndim == 3 else am
+            mag = np.asarray(d["magnitudes"], dtype=float)
+            jarr = np.asarray(d["j"]).reshape(-1).astype(int)
+
+        g_sorted, s_sorted = [[] for _ in range(self.n_streams)], [[] for _ in range(self.n_streams)]
+        for row in range(am.shape[0]):
+            j = int(jarr[row])
+            if j >= self.n_streams:
+                continue
+            mem = am[row].astype(bool)
+            g, sig = mag[row][mem], oe[row][mem][:, self.columns]
+            ok = np.isfinite(g) & (g > 0) & np.isfinite(sig).all(1) & (sig > 0).all(1)
+            order = np.argsort(g[ok])
+            g_sorted[j], s_sorted[j] = g[ok][order], sig[ok][order]
+        self.n_measured = np.array([len(a) for a in g_sorted])
+        if (self.n_measured < 5).any():
+            raise ValueError(f"{real_file}: a stream has <5 usable per-star errors "
+                             f"{self.n_measured.tolist()}")
+        length = int(self.n_measured.max())
+        self.g_meas = np.zeros((self.n_streams, length))
+        self.sigma_meas = np.zeros((self.n_streams, length, len(self.columns)))
+        for j, (g, sig) in enumerate(zip(g_sorted, s_sorted)):
+            self.g_meas[j, :len(g)] = g
+            self.g_meas[j, len(g):] = g[-1] if len(g) else 0.0
+            self.sigma_meas[j, :len(sig)] = sig
+            self.sigma_meas[j, len(sig):] = sig[-1] if len(sig) else 0.0
+        self._jax_cache: dict = {}
+
+    def jax_lookups(self):
+        if not self._jax_cache:
+            _, jnp = _jax()
+            self._jax_cache = {"g_meas": jnp.asarray(self.g_meas),
+                               "sigma_meas": jnp.asarray(self.sigma_meas),
+                               "n_measured": jnp.asarray(self.n_measured)}
+        return self._jax_cache
+
+
+_REAL_ASTROM_CACHE: dict = {}
+
+
+def _real_astrom_model(params: dict, columns) -> RealAstrometricErrorModel:
+    key = json.dumps({"real": params.get("real_streams_file"), "cols": list(columns),
+                      "target": {str(k): int(v) for k, v in params["target_streams"].items()}},
+                     sort_keys=True)
+    if key not in _REAL_ASTROM_CACHE:
+        _REAL_ASTROM_CACHE[key] = RealAstrometricErrorModel(params, columns)
+    return _REAL_ASTROM_CACHE[key]
 
 
 def _real_vlos_model(params:
@@ -679,6 +782,61 @@ def _sample_vlos_error_empirical(params, rng, context=None):
     return aug
 
 
+@register_augmentation("sample_obs_error_empirical")
+def _sample_obs_error_empirical(params, rng, context=None):
+    """Replace the ASTROMETRIC columns of ``sigma_errors`` (and their noise draw in ``obs_errors``)
+    with a draw from the REAL members' own (G, sigma) pairs of the same stream — for each simulated
+    star, one of the ``obs_error_neighbours`` real stars nearest in G, chosen at random. The v_los
+    column is untouched (``sample_vlos_error_empirical`` owns it). Run after ``sample_obs_error``
+    and before ``apply_obs_error``.
+
+    ``params.obs_error_columns`` (default parallax / mu_ra / mu_dec) names which of ``error_keys``
+    to replace; ra and dec are left alone because the default table gives them zero noise, which is
+    the intended convention (Gaia positions are exact at this scale).
+
+    Rationale (2026-09-22): the DR3 median-sigma-vs-G table gets the WIDTH of the simulated parallax
+    and proper-motion distributions only as right as its magnitude model, and it has no scatter of
+    sigma at fixed G. A catalogue that ships per-star uncertainties can supply both directly.
+    """
+    res = _resources(params)
+    names = [str(c) for c in params.get("obs_error_columns", ["parallax", "mu_ra", "mu_dec"])]
+    missing = [c for c in names if c not in res.error_keys]
+    if missing:
+        raise ValueError(f"obs_error_columns {missing} not in error_keys {res.error_keys}")
+    err_idx = [res.error_keys.index(c) for c in names]
+    # Columns of the real file's `obs_error` are those of sim_data_projected.
+    OBS_COL = {"ra": 0, "dec": 1, "parallax": 2, "mu_ra": 3, "mu_dec": 4, "v_los": 5}
+    model = _real_astrom_model(params, [OBS_COL[c] for c in names])
+    cell = _key_cell(rng)
+    jax, jnp = _jax()
+    lk = model.jax_lookups()
+    g_meas, sigma_meas, n_meas = lk["g_meas"], lk["sigma_meas"], lk["n_measured"]
+    n_nb = int(params.get("obs_error_neighbours", 5))
+    idx = jnp.asarray(err_idx)
+
+    @jax.jit
+    def _run(mags, j, subkey):
+        k1, k2 = jax.random.split(subkey)
+        g_j, s_j, n_j = g_meas[j], sigma_meas[j], n_meas[j]
+
+        def one(gm, gj, sj, nj, key):
+            pos = jnp.searchsorted(gj, gm)
+            off = jax.random.randint(key, gm.shape, -(n_nb // 2), n_nb - n_nb // 2)
+            return sj[jnp.clip(pos + off, 0, jnp.maximum(nj - 1, 0))]
+
+        sigma = jax.vmap(one)(mags, g_j, s_j, n_j, jax.random.split(k1, mags.shape[0]))
+        return sigma, sigma * jax.random.normal(k2, sigma.shape)
+
+    def aug(batch):
+        sigma_new, noise_new = _run(jnp.asarray(batch["magnitudes"]), _stream_ids_jax(batch),
+                                    _next_key(cell))
+        batch["sigma_errors"] = jnp.asarray(batch["sigma_errors"]).at[:, :, idx].set(sigma_new)
+        batch["obs_errors"] = jnp.asarray(batch["obs_errors"]).at[:, :, idx].set(noise_new)
+        return batch
+
+    return aug
+
+
 @register_augmentation("stream_track_width_cut")
 def _stream_track_width_cut(params, rng, context=None):
     """Mirror a member-selection WIDTH cut on the simulations: for each stream listed in
@@ -790,6 +948,51 @@ def _override_vlos_error_with_real(params, rng, context=None):
         vlos_error = _flat(batch["vlos_error"], n_rows)
         vlos_mask = _flat(batch["vlos_mask"], n_rows).astype(bool)
         batch["sigma_errors"] = _run(sigma, vlos_error, vlos_mask)
+        return batch
+
+    return aug
+
+
+@register_augmentation("override_obs_error_with_real")
+def _override_obs_error_with_real(params, rng, context=None):
+    """Real data only: take the ASTROMETRIC entries of ``sigma_errors`` from the catalogue's own
+    per-star uncertainties (the real npz's ``obs_error`` array) instead of the Gaia-table value.
+
+    The real-data counterpart of ``sample_obs_error_empirical``: that step makes the SIMULATED
+    sigma channels a draw from the real (G, sigma) distribution, and this one makes the REAL sigma
+    channels the actual measurements, so the two sides of `concatenate_sigma_errors` mean the same
+    thing. Pair them; using either alone leaves sim and real on different error models.
+
+    ``obs_error`` columns follow ``sim_data_projected`` (ra, dec, parallax, mu_ra, mu_dec, v_los);
+    ``params.obs_error_columns`` selects which to override (default parallax / mu_ra / mu_dec).
+    Non-finite or non-positive entries keep the table value. No-op when the file has no
+    ``obs_error`` — so a real set without per-star errors still runs, on the table model."""
+    res = _resources(params)
+    names = [str(c) for c in params.get("obs_error_columns", ["parallax", "mu_ra", "mu_dec"])]
+    missing = [c for c in names if c not in res.error_keys]
+    if missing:
+        raise ValueError(f"obs_error_columns {missing} not in error_keys {res.error_keys}")
+    OBS_COL = {"ra": 0, "dec": 1, "parallax": 2, "mu_ra": 3, "mu_dec": 4, "v_los": 5}
+    err_idx = [res.error_keys.index(c) for c in names]
+    obs_idx = [OBS_COL[c] for c in names]
+    jax, jnp = _jax()
+
+    @jax.jit
+    def _run(sigma, real_sigma):
+        for k, c in enumerate(err_idx):
+            col = real_sigma[:, :, k]
+            sigma = sigma.at[:, :, c].set(
+                jnp.where(jnp.isfinite(col) & (col > 0), col, sigma[:, :, c])
+            )
+        return sigma
+
+    def aug(batch):
+        if "obs_error" not in batch:
+            return batch
+        sigma = jnp.asarray(batch["sigma_errors"])
+        oe = jnp.asarray(batch["obs_error"])
+        oe = oe.reshape(sigma.shape[0], sigma.shape[1], -1)
+        batch["sigma_errors"] = _run(sigma, oe[:, :, jnp.asarray(obs_idx)])
         return batch
 
     return aug

@@ -30,7 +30,7 @@
     "semantic_hash": ""
   },
   "tests/test_registries.py": {
-    "mtime": 1789887570.9945817,
+    "mtime": 1789888406.317757,
     "ast_hash": "63a67722832b756baa8e106a38bbaf15",
     "semantic_hash": ""
   },
@@ -50,8 +50,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1789884197.0652015,
-    "ast_hash": "2bb39051ba8d8e3d48d131f9178c98b4",
+    "mtime": 1790082313.3055842,
+    "ast_hash": "0c7677bfa8e35410aa19791295a83546",
     "semantic_hash": ""
   },
   "README.md": {
@@ -120,13 +120,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/_app.py": {
-    "mtime": 1789111775.8524282,
-    "ast_hash": "56b37ee7621742f5ab4ff5a518b3dd9d",
+    "mtime": 1790062813.761678,
+    "ast_hash": "24cefb6503129a11455bd7bb08bb4533",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/adapter.py": {
-    "mtime": 1789475180.524361,
-    "ast_hash": "3747ccf8c1a0f53c2ca8955761611ace",
+    "mtime": 1790062813.761678,
+    "ast_hash": "f6d14499e2ec606f984d5c0b50386730",
     "semantic_hash": ""
   },
   "src/hydrabflow/pipeline/evaluate.py": {
@@ -230,13 +230,13 @@
     "semantic_hash": ""
   },
   "pyproject.toml": {
-    "mtime": 1789886671.1645484,
+    "mtime": 1789888406.3167567,
     "ast_hash": "d5d1ba473b53c98563af8ac531719f80",
     "semantic_hash": ""
   },
   "src/hydrabflow/augmentation/streams.py": {
-    "mtime": 1789653201.895391,
-    "ast_hash": "57f4f3e607ab4c0a82db2658610dccf4",
+    "mtime": 1789993521.4045117,
+    "ast_hash": "79df3d12277a9a9d11356d5487ece21d",
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/fusion.py": {
@@ -265,7 +265,7 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama.py": {
-    "mtime": 1789886768.652642,
+    "mtime": 1789888406.317757,
     "ast_hash": "109d261c79947d53bc0a22cac2335954",
     "semantic_hash": ""
   },
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama.yaml": {
-    "mtime": 1789111168.5384188,
-    "ast_hash": "c5137cb9311d594c0e673c5014ef9257",
+    "mtime": 1789979628.447545,
+    "ast_hash": "86d53696575bf16de28484d94ddae0c2",
     "semantic_hash": ""
   },
   "conf/training/stream_local.yaml": {
@@ -435,7 +435,7 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/simulators/stream_agama_rnbody.py": {
-    "mtime": 1789887017.1144388,
+    "mtime": 1789888406.317757,
     "ast_hash": "9c4a6458defdbc96bd811e61d57ac905",
     "semantic_hash": ""
   },
@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "assets/gaia/README.md": {
-    "mtime": 1783502976.2036855,
-    "ast_hash": "73e11f09ac05a3002ab04c1f65832d97",
+    "mtime": 1789992318.7395158,
+    "ast_hash": "28300a9efb9df84cded0d7c9320126d5",
     "semantic_hash": ""
   },
   "assets/gaia/apjad382dt1_mrt.txt": {
@@ -570,13 +570,13 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/augmentation/stream_summary.py": {
-    "mtime": 1789111098.7244184,
-    "ast_hash": "05eaeca16f656f5b1d895ca595d4b252",
+    "mtime": 1790062813.761678,
+    "ast_hash": "0ca62045ecac91a143a7f796e83dca75",
     "semantic_hash": ""
   },
   "tests/test_stream_summary.py": {
-    "mtime": 1789475180.526361,
-    "ast_hash": "134b92693a82e6ec95009f1f0666e7ba",
+    "mtime": 1790062813.784679,
+    "ast_hash": "1bba21079628b1dd2620a3fb65e96197",
     "semantic_hash": ""
   },
   "conf/adapter/stream_sumstats_hybrid.yaml": {
@@ -1005,18 +1005,18 @@
     "semantic_hash": ""
   },
   "src/hydrabflow/networks/masked_time_series_transformer.py": {
-    "mtime": 1789475180.524361,
-    "ast_hash": "fa48afa0e3461d43364219d764ba244e",
+    "mtime": 1790062813.761678,
+    "ast_hash": "f2cc8fa6fe6fa90b8355e0f9a39c1f2c",
     "semantic_hash": ""
   },
   "conf/augmentation/stream_global_ibata_grid_v2.yaml": {
-    "mtime": 1785246315.844701,
-    "ast_hash": "c1b876b97b3881ebadc638f8d24238f5",
+    "mtime": 1790062813.5516694,
+    "ast_hash": "d1e95507c62ae906d8e1f9dee80c12b9",
     "semantic_hash": ""
   },
   "conf/augmentation/stream_real_global_ibata_grid_v2.yaml": {
-    "mtime": 1785246138.930967,
-    "ast_hash": "5d7c32a9c9cd7cf87782aa832df92886",
+    "mtime": 1790062813.5526695,
+    "ast_hash": "33eba26eae513eb97d8b52f2284c4ade",
     "semantic_hash": ""
   },
   "conf/model/stream_fusion_ibata_grid_masked.yaml": {
@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "scripts/trihedron.py": {
-    "mtime": 1787901803.7895465,
-    "ast_hash": "bd97a4f565832ff70ed175eae2ae8ad7",
+    "mtime": 1790080960.03764,
+    "ast_hash": "f5ef39ef59d4bf33c7f60f7dd7763ea0",
     "semantic_hash": ""
   },
   "conf/simulator/stream_agama_spray_cautun_fixed_tend26.yaml": {
@@ -1110,8 +1110,8 @@
     "semantic_hash": ""
   },
   "scripts/ppc_summary_grid_coverage.py": {
-    "mtime": 1789378684.6162367,
-    "ast_hash": "3bf5881c097319fca5ed2d56ce30ec16",
+    "mtime": 1790062813.7186763,
+    "ast_hash": "e88fbb6120b5822e7d195bead64946e2",
     "semantic_hash": ""
   },
   "scripts/run_trihedron_1e6.sh": {
@@ -1255,7 +1255,7 @@
     "semantic_hash": ""
   },
   "docs/streams.md": {
-    "mtime": 1789887943.8377779,
+    "mtime": 1789888406.3047562,
     "ast_hash": "76ec8a60a926815ab1b687cd8d7ac14f",
     "semantic_hash": ""
   },
@@ -1400,8 +1400,8 @@
     "semantic_hash": ""
   },
   "conf/model/summary_network/stream_fusion_2modal_oldgrid.yaml": {
-    "mtime": 1789653201.8643897,
-    "ast_hash": "5364aab259ab87635b830948b66d9948",
+    "mtime": 1790062813.5816705,
+    "ast_hash": "36719ca198ef3024fdf3a4484e6b4eec",
     "semantic_hash": ""
   },
   "conf/model/summary_network/stream_fusion_2modal_particles.yaml": {
@@ -1465,13 +1465,223 @@
     "semantic_hash": ""
   },
   "conf/simulator/stream_gala_spray_mw22.yaml": {
-    "mtime": 1789887524.4606962,
-    "ast_hash": "42e9bbacf74b1b332f908b98134134c2",
+    "mtime": 1789979628.427544,
+    "ast_hash": "a2844077f2540b5d825e021c60d77cf6",
     "semantic_hash": ""
   },
   "conf/tuning/tuningtest_2modal_oldgrid.yaml": {
     "mtime": 1789884197.0662014,
     "ast_hash": "818ca67593eb6e8ea425386feb51b8fd",
+    "semantic_hash": ""
+  },
+  "scripts/ppc_median_tracks_prior.py": {
+    "mtime": 1790003315.268647,
+    "ast_hash": "859f5c3c8433ba6fd947e1ab37db8955",
+    "semantic_hash": ""
+  },
+  "scripts/ppc_rotation_curve_prior.py": {
+    "mtime": 1790000585.1655056,
+    "ast_hash": "5984ac2fa1474049cf15ddf67a3971c1",
+    "semantic_hash": ""
+  },
+  "scripts/q_confusion_chi2.py": {
+    "mtime": 1790062813.7186763,
+    "ast_hash": "4a8667b82e72c851687792af16cccb2b",
+    "semantic_hash": ""
+  },
+  "scripts/sensitivity_potential_params.py": {
+    "mtime": 1789979659.0589142,
+    "ast_hash": "2c00375d84a6b47e5fdb43f3afb55d46",
+    "semantic_hash": ""
+  },
+  "scripts/train_v5_2modal.sh": {
+    "mtime": 1790062813.7196763,
+    "ast_hash": "715e30f02448f7d55dd2962735a97eae",
+    "semantic_hash": ""
+  },
+  "scripts/train_v5_2modal_nodisp.sh": {
+    "mtime": 1789994733.2169685,
+    "ast_hash": "38fe66478a742d82f372377b78a7d7b5",
+    "semantic_hash": ""
+  },
+  "scripts/train_v5_2modal_oldgrid.sh": {
+    "mtime": 1790062813.7196763,
+    "ast_hash": "8fd9acbd514dc158f677359ee57e77df",
+    "semantic_hash": ""
+  },
+  "scripts/train_v5_2modal_oldgrid_nodisp.sh": {
+    "mtime": 1790062813.7346768,
+    "ast_hash": "3959778f00473ff1479776bbea95f130",
+    "semantic_hash": ""
+  },
+  "scripts/trihedron_fixed_mw22.py": {
+    "mtime": 1789993060.6401007,
+    "ast_hash": "865720f12e31e839bf476cd7950a95b7",
+    "semantic_hash": ""
+  },
+  "tests/test_obs_model_v5.py": {
+    "mtime": 1789994733.2199686,
+    "ast_hash": "3e70298255a3ca578c95566ea0ddca27",
+    "semantic_hash": ""
+  },
+  "conf/augmentation/stream_global_v5.yaml": {
+    "mtime": 1789993465.7352889,
+    "ast_hash": "b63276d801e33adc690d162a56d3ec8c",
+    "semantic_hash": ""
+  },
+  "conf/augmentation/stream_global_v5_nodisp.yaml": {
+    "mtime": 1789994733.2079682,
+    "ast_hash": "ee790f22b317425628b8e0645844f7d5",
+    "semantic_hash": ""
+  },
+  "conf/augmentation/stream_real_global_v5.yaml": {
+    "mtime": 1789992986.529139,
+    "ast_hash": "2b5117f35db6491db8c1b0722dca4981",
+    "semantic_hash": ""
+  },
+  "conf/augmentation/stream_real_global_v5_nodisp.yaml": {
+    "mtime": 1789994733.2109683,
+    "ast_hash": "d828fa225217a1f86fbd94fac6259843",
+    "semantic_hash": ""
+  },
+  "conf/model/stream_fusion_2modal_nodisp.yaml": {
+    "mtime": 1789994733.2149684,
+    "ast_hash": "ea6161c34b94ce8970941b545c8cf55d",
+    "semantic_hash": ""
+  },
+  "conf/model/summary_network/stream_fusion_2modal_nodisp.yaml": {
+    "mtime": 1789994733.2129683,
+    "ast_hash": "a5c4983d0129a53cb29486ff397a4ec9",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_gala_spray_mw22_fixed.yaml": {
+    "mtime": 1789976250.864171,
+    "ast_hash": "aa3503130ec7df38e202b15768b68261",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_gala_spray_mw22_fixed_m68new.yaml": {
+    "mtime": 1789978520.6861126,
+    "ast_hash": "14444a9c2c55e594a2b6167041a4ff36",
+    "semantic_hash": ""
+  },
+  "scripts/build_trihedron_template.py": {
+    "mtime": 1790081083.326753,
+    "ast_hash": "db5f3a23e53203ebf1e8b7ef411a2462",
+    "semantic_hash": ""
+  },
+  "scripts/corner_observation_space.py": {
+    "mtime": 1790002218.0722992,
+    "ast_hash": "744070784aa34dac975832415dcd209d",
+    "semantic_hash": ""
+  },
+  "scripts/create_trihedron_dataset.sh": {
+    "mtime": 1790081907.6121125,
+    "ast_hash": "1c7145418e0fa25a996fe9346e2270f3",
+    "semantic_hash": ""
+  },
+  "scripts/plot_mcmillan17_mean.py": {
+    "mtime": 1790079382.14212,
+    "ast_hash": "68661b8b3244f7aeb7bd4a451bbff5eb",
+    "semantic_hash": ""
+  },
+  "scripts/ppc_observation_space.py": {
+    "mtime": 1790081612.0672596,
+    "ast_hash": "af9bffe529060d2091e2a100a3767690",
+    "semantic_hash": ""
+  },
+  "scripts/scan_tend_metrics.py": {
+    "mtime": 1790075920.9975917,
+    "ast_hash": "17a6ecc1838b9fac5e7096824e2194b7",
+    "semantic_hash": ""
+  },
+  "scripts/streamfinder_frame.py": {
+    "mtime": 1790079382.1251192,
+    "ast_hash": "522d10b0dd2bc23f91ca500f2b3d39e9",
+    "semantic_hash": ""
+  },
+  "scripts/svd_nearest_streams.py": {
+    "mtime": 1790062813.7196763,
+    "ast_hash": "381a10b6837de9870ab715e7e5da8815",
+    "semantic_hash": ""
+  },
+  "scripts/svd_particles.py": {
+    "mtime": 1790062813.7196763,
+    "ast_hash": "73ac3b105a726f2379731b3291aa1177",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/stream_trihedron.py": {
+    "mtime": 1790083650.172772,
+    "ast_hash": "f16e58df590b9aea35eddb026481605f",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/trihedron.py": {
+    "mtime": 1790081121.7383451,
+    "ast_hash": "a9a6df4a235bb3aae8057ecad0f0b245",
+    "semantic_hash": ""
+  },
+  "tests/test_stream_trihedron.py": {
+    "mtime": 1790081247.3875523,
+    "ast_hash": "90d5b29544fc315d662718649c8d0bef",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_agama_rnbody_mcmillan17.yaml": {
+    "mtime": 1790067370.6723425,
+    "ast_hash": "56fac80b024113269a34033679182af8",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_agama_rnbody_mcmillan17_mean.yaml": {
+    "mtime": 1790067382.24885,
+    "ast_hash": "aebb136eac2a2c34d1354241de2d2966",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_trihedron_mcmillan17_v4.yaml": {
+    "mtime": 1790081150.7375472,
+    "ast_hash": "4caedd838fa09f37bf643e3372097cfc",
+    "semantic_hash": ""
+  },
+  "scripts/build_orbit_offset_template.py": {
+    "mtime": 1790084345.8691425,
+    "ast_hash": "3b42eabd18a71b632515748b118ac077",
+    "semantic_hash": ""
+  },
+  "scripts/create_orbit_offset_dataset.sh": {
+    "mtime": 1790084642.7540488,
+    "ast_hash": "405b3795637ff0ba3510686e239f1fed",
+    "semantic_hash": ""
+  },
+  "scripts/validate_surrogates_vs_nbody.py": {
+    "mtime": 1790084761.698836,
+    "ast_hash": "8d20496192c0b98b6d7050d5a5494813",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/frozen_locals.py": {
+    "mtime": 1790083638.2763157,
+    "ast_hash": "c231ab5bdab72d84ca6bbbacf20e01a9",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/orbit_offset.py": {
+    "mtime": 1790084314.7008972,
+    "ast_hash": "4326487fbdbc3a04be35b4ff84ed9a4e",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/stream_frame.py": {
+    "mtime": 1790083613.5173686,
+    "ast_hash": "b67a76cb710eaf29b92c5694f2ecefdd",
+    "semantic_hash": ""
+  },
+  "src/hydrabflow/simulators/stream_orbit_offset.py": {
+    "mtime": 1790084314.7769003,
+    "ast_hash": "c7f6e8d12a8f9883f12c86f18d54d900",
+    "semantic_hash": ""
+  },
+  "tests/test_stream_orbit_offset.py": {
+    "mtime": 1790084436.0117495,
+    "ast_hash": "f7e1a1a0cbe30702a84914008d11ba5a",
+    "semantic_hash": ""
+  },
+  "conf/simulator/stream_orbit_offset_mcmillan17_v4.yaml": {
+    "mtime": 1790084134.3157146,
+    "ast_hash": "a854a692c5c1444fe4a3d37aedbf2461",
     "semantic_hash": ""
   }
 }
