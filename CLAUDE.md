@@ -2539,3 +2539,74 @@ Knowledge graph at `graphify-out/`.
     preset `stream_global_palau23_dr3`) — M68's width ratio 0.88 against this selection vs 0.75 for
     PM25-main and 0.33 for the full STREAMFINDER arm, i.e. the "M68 too cold" verdict is largely a
     member-selection statement.
+
+- Session 2026-09-23 (PPC of the LEGACY spray 1e6 set against the Palau23+DR3 members with the corrected
+  error chain): `data_agama_spray_legacy_ou24_hydrabflow/ppc/palau23_dr3_emperr/` (README + 4 subdirs:
+  observation_space MMD/marginals/tracks on 300 pseudo-groups, `binned/` summary grid on the 333 set,
+  `tracks_{median,std}/` chi2 on 2000 groups). Parallax is clean in all three streams (MMD pct 69/36/94,
+  the emperr fix carries over). Pal5 covered (all 64; mu_phi1 track ~0.5 mas/yr too high in the sims,
+  real at the 0-7th pct in 7/8 bins). **NGC3201 (all 99) and M68 (sky 100) fail on the phi1 footprint**:
+  real phi1 quantiles inside the sim band 0.16 / 0.00 because the legacy `t_end = 1.5` Gyr leaves 25 % /
+  88 % of the real phi1 bins empty per row — the 2026-07-05 fabricated-stripping finding seen from the
+  member side. M68 also too cold in the pm dispersions beyond phi1 > 20 deg (P(sim<real) 0.01-0.10).
+  Summary-grid cells inside 95 %: 83/89/76 %, the M68/NGC3201 excess again the occupancy channels. So
+  the legacy set is worse than rnbody v4 (2026-09-22 table) on exactly the axis t_end controls; the
+  error model is not the limiting factor there.
+
+- Session 2026-09-23 (PPC of the p1e3 spray v4 300k set vs Palau23+DR3 members, emperr chain): 10^4-row
+  subsample (3333/stream, seed 0) of `training_data_300000.npz` -> `ppc/palau23_dr3_emperr/` (README, `run_all.sh`,
+  `make_subsample.py`; the grid-coverage script needs a grouped file, so a (3333,3,P,6) pseudo-group twin is written
+  too). MMD pct all/sky/pm/vlos/plx: Pal5 91/59/78/73/74, NGC3201 100/62/65/99/50, M68 --/100/95/--/84; phi1
+  footprint coverage 0.84/0.79/0.37 (legacy 1e6: 1.0/0.16/0.00 — freed t_end fixes NGC3201, M68 still piles up at
+  the progenitor end). Parallax clean. Pal5's residual is the mu_phi1 track (sims 0.2-0.7 mas/yr high outward);
+  NGC3201 sims too wide in phi2 (P(sim<real) 0.05-0.22) and v_los at 99; M68 MAD widths now COVERED against the
+  95-star Palau selection (phi2 P 0.24-0.91) except v_los. Grid cells inside 95 %: 81/90/89 %, excess = occupancy.
+
+- Session 2026-09-23 (B-spline tracks: fits to the observed streams, a fixed-knot B-spline PPC and
+  nearest-neighbour diagnostic across four training sets): everything under `outputs/Bsline/palau23_dr3/`.
+  - **`scripts/fit_bspline_streams.py`** (standalone numpy/scipy/matplotlib): weighted cubic LSQ B-splines
+    of phi2 / parallax / mu_phi1 / mu_phi2 / v_los (measured stars) vs phi1 for the Palau23+DR3 members in
+    the published STREAMFINDER frames, interior knots at equal-count phi1 quantiles (N//15, 1-8),
+    per-star DR3 weights (pm errors propagated through the local rotation angle — rotating the error
+    VECTOR gives near-zero signed components and chi2/dof ~1e5, a bug caught on the first run), 300-draw
+    bootstrap 68 % band; `bspline_fits.npz` (t, c, c_boot) + `summary.json`. Parallax is pure measurement
+    error (chi2/dof 0.9-1.3); proper motions carry intrinsic scatter (chi2/dof 3-14, NGC3201 mu_phi1 134);
+    v_los fits with 8-18 stars are under-constrained (M68 wiggles between its 8 points).
+  - **`scripts/ppc_bspline_nn.py`**: sims through the training observation model (`augment_sim`, up to
+    mask_vlos), real members through their preset, both in the STREAMFINDER frame; every realization
+    fitted with a cubic LSQ B-spline on a knot vector FIXED by the real members' phi1 quantiles inside the
+    real phi1 range (unit weights both sides), evaluated on 20 uniform phi1 points -> one feature vector
+    per row. A row is "usable" only if every knot span holds >=2 stars, so the usable fraction IS the
+    footprint check. PPC = real spline vs sim band (fraction inside 5-95 %, median percentile); NN =
+    k nearest rows in robust-standardized grid-value space, their parameters vs the prior, plus a
+    typicality percentile (real->nearest sim vs sim->nearest sim). `--space stream|icrs` (icrs = ra, dec,
+    parallax, mu_ra*, mu_dec, v_los vs phi1 — same abscissa, catalogue ordinates); flat training sets are
+    read by row seek (`read_rows`), grouped test sets flattened per (group, stream). Legacy rho/a/beta
+    halo keys added to the reported parameter list.
+  - **Runs**: rnbody v4 (3000/stream), spray p1e3 v4 (3000), legacy 1e6 spray (3000 and 1e5/stream,
+    k=1000), palau spray v4 (whole set, 33 150/stream, k=1000), each in both spaces.
+    Usable fractions (astrometry / v_los): rnbody 37 % / 208 rows Pal5, 85 % NGC3201, 45 % / 288 M68;
+    spray p1e3 99 / 100 / 89 % but M68 v_los 91 rows; legacy 88 / 62 / **5 %** (M68 v_los 28 of 1e5);
+    palau spray 95 / 91 / **8 %** (M68 v_los 12). Fixed t_end=1.5 Gyr kills the M68 footprint (2026-07-05
+    again); rnbody's freed t_end/mass costs Pal5 footprint instead.
+  - **Tracks agree in every set**: real splines inside the sim 5-95 % band at every grid point, EXCEPT
+    Pal5's proper motion — sims ~0.5 mas/yr HIGH in mu_phi1 (real at the 1st-2nd pct) in all four
+    datasets, three forward models, two priors; in ICRS it appears as mu_ra* 96-98th / mu_dec 87-95th
+    (stream direction ~(-RA,-Dec)). Potential/orbit-prior issue, not stripping. Changing the observable
+    space moves nothing else by more than a few percentiles.
+  - **Typicality**: Pal5 is typical of rnbody (66th pct) but atypical of every spray set (84-98th) —
+    spray tails are colder so the same offset counts for more. NGC3201 27-59 everywhere. M68's real
+    spline is CLOSER to its neighbours than sims are to each other (3-11th) — a smooth "average sim".
+  - **NN parameters** (all shifts <~1 prior sigma; this is a lean, not a posterior): m200_c sets are
+    q-flat (palau) or mildly prolate for M68 (+0.4-0.6); NGC3201/M68 want a heavier disk (Sigma_Disk
+    +0.4 to +0.9), Pal5 the opposite sign; palau spray pulls M68's log10 M200 down 1 sigma. Legacy set:
+    compact halo for all three (a_halo ~7-10 kpc, -0.7 to -1.0 sigma), heavy disk for NGC3201/M68,
+    and the only consistent OBLATE lean (q 0.92/0.87/1.0), stable from 3000 to 1e5 rows and across
+    spaces — but riding on the a-rho-Sigma degeneracy its broad prior allows.
+  - **Verdict asked for**: least misspecified = rnbody v4 (only model covering M68 in every observable
+    incl. v_los, Pal5 typical); most oblate = the legacy rho_a spray set (NN q 0.87-0.92), with the
+    caveat that the strong oblate results of this project (q~0.76-0.80) came from TRAINED summary-stat
+    models on the Ibata rho_a sets, not from this diagnostic.
+  - Skipped: per-star error weighting in the sim spline fits (augment_sim does not return the sigma
+    columns) — add if the Pal5 pm residual is to be tested against DR3 errors rather than realization
+    scatter.
