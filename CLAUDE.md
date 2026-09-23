@@ -2610,3 +2610,42 @@ Knowledge graph at `graphify-out/`.
   - Skipped: per-star error weighting in the sim spline fits (augment_sim does not return the sigma
     columns) — add if the Pal5 pm residual is to be tested against DR3 errors rather than realization
     scatter.
+- Session 2026-09-23 (B-spline PPC follow-ups: real-curve error band + z-scores, smoothing splines,
+  legacy oblate-lean check; **stream frame only from here on**, per user): all in
+  `scripts/ppc_bspline_nn.py`, outputs `outputs/Bsline/palau23_dr3/ppc_*_{z,smooth,smooth_1e4}/`.
+  - **Real-curve uncertainty ("option 2")**: `--n-boot` (300) refits the real spline on draws that
+    resample the members WITH replacement and perturb each star's ICRS table by its own DR3 sigma
+    before re-projection (so pm rotation + both spaces come for free); per grid point sigma_real, a
+    16-84 % band on the PPC figure, z = (real - sim median)/sqrt(sigma_sim^2 + sigma_real^2) (sigma_sim
+    = 1.4826 MAD of the sim grid values) with median/max |z| and the fraction of grid with |z|>2 in
+    `report.json`; sigma_real also enters the NN metric (no material effect — the sim population
+    scatter dominates). Sim fits stay UNweighted on both sides ("option 1" skipped: symmetry needs
+    `augment_sim` to return the sigma columns; expected effect small except v_los).
+  - **`--fit smoothing`** = `scipy.interpolate.make_smoothing_spline` (lambda by GCV) instead of the
+    fixed-knot LSQ; the knot-span occupancy check is kept in both modes so the usable sets are
+    identical. Two bugs found on the way, both real: (1) GCV re-selected per bootstrap draw
+    collapses to near-interpolation on resampled data (sigma_real ~2 deg in phi2) -> lambda is fixed
+    at the full-data GCV value for the refits (captured by wrapping scipy's private
+    `_compute_optimal_gcv_parameter`, since the returned BSpline does not carry it); (2) the ~1e-7 deg
+    ra/dec perturbation splits duplicated stars into near-coincident x that ill-condition the
+    natural-spline solve (values ~1e9 that pass every median/MAD check) -> phi1 rounded to 1e-4 deg
+    before merging duplicates, weights = multiplicity. Per-row fits now run under joblib
+    (`--n-jobs`, 16); ~20 ms/fit, ~15 min per 3000-row run.
+  - **Smoothness does not change any verdict** (rnbody v4 and legacy, 3000/stream): every z moves
+    <0.3 except Pal5 mu_phi1, where the smoother real curve tightens sigma_real 0.20 -> 0.13 mas/yr
+    and the tension sharpens to median z -1.8 (max 3.5, |z|>2 over 45 % of the grid; legacy -1.9).
+    v_los sigma_real becomes usable (M68 49 -> 17 km/s, NGC3201 5.9 -> 1.7). All other observables
+    |z| <= 1.4 for all streams in both sets. The Pal5 proper-motion offset (sims ~0.5 mas/yr high in
+    mu_phi1, i.e. mu_ra*/mu_dec too negative) is the ONE robust tension across four datasets, three
+    forward models, two priors and two spline estimators.
+  - **Legacy oblate lean, checked at 3000 / 1e4 (smooth, k 100/300) / 1e5 (LSQ, k 1000) rows per
+    stream**: Pal5 and NGC3201 reproduce it every time — NN median q 0.91 / 0.87-0.90, mean 0.93 +/-
+    0.015, P(q<1) 0.59-0.60 vs prior 0.50 (not NN sampling noise) — but it is a 0.3-0.45 prior-sigma
+    shift with a neighbour 16-84 % range as wide as the prior, and it rides on the compact-halo /
+    heavy-disk preference (a_halo -0.6 to -1.0 sigma, Sigma_Disk +0.6 to +0.9) of the rho-a
+    parameterization. M68 is prior-like (0.97-1.04, P(q<1) 0.49). The m200_c sets are q-flat (palau)
+    or mildly prolate for M68 (+0.5). The q~0.76-0.80 of the trained summary-stat models is NOT
+    reproduced by track medians.
+  - Gotchas re-hit: `pgrep | xargs kill` matched the calling shell (exit 144) and silently skipped
+    the relaunch that followed in the same command — kill by PID list in its own command; a 1e5-row
+    smoothing run (~8 h serial) was stopped by the user in favour of 1e4.

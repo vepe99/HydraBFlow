@@ -15,7 +15,7 @@ import argparse, json, os, sys
 os.environ.setdefault("HYDRABFLOW_NUM_GPUS", "0"); os.environ.setdefault("JAX_PLATFORMS", "cpu"); os.environ.setdefault("HYDRABFLOW_SIM_QUIET", "1")
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
-from scipy.interpolate import make_lsq_spline
+from scipy.interpolate import make_lsq_spline, make_smoothing_spline
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ppc_summary_statistics import NAMES, augment_sim  # noqa: E402
 from ppc_particle_coverage import real_clouds  # noqa: E402
@@ -42,13 +42,41 @@ def knots(x, n_int):
     return np.r_[[q[0]] * (K + 1), q[1:-1], [q[-1]] * (K + 1)]
 
 
-def spline_on_grid(x, y, t, grid, min_per_span=2):
-    """Fixed-knot cubic LSQ B-spline evaluated on ``grid``; NaN if the data under-populate a span."""
+# capture the GCV lambda scipy chooses (the returned BSpline does not carry it)
+import scipy.interpolate._bsplines as _bs  # noqa: E402
+_LAST_LAM = [None]
+_gcv = _bs._compute_optimal_gcv_parameter
+def _gcv_capture(*args, **kw):
+    _LAST_LAM[0] = _gcv(*args, **kw); return _LAST_LAM[0]
+_bs._compute_optimal_gcv_parameter = _gcv_capture
+
+FIT = "lsq"   # set from --fit: "lsq" (fixed knots) or "smoothing" (make_smoothing_spline, lambda by GCV)
+
+
+def spline_on_grid(x, y, t, grid, min_per_span=2, lam=None, return_lam=False):
+    """Cubic spline of y(x) evaluated on ``grid``; NaN if the data under-populate a knot span of ``t``.
+
+    The occupancy check uses ``t`` in BOTH modes so the usable set is identical; in ``smoothing`` mode
+    ``t`` then only defines the coverage requirement and the penalized spline picks its own smoothness.
+    """
+    nan = (np.full(len(grid), np.nan), None) if return_lam else np.full(len(grid), np.nan)
     m = np.isfinite(y) & (x >= t[0]) & (x <= t[-1])
     x, y = x[m], y[m]
     if len(x) < len(t) - K - 1 + 2 or np.any(np.histogram(x, np.unique(t))[0] < min_per_span):
-        return np.full(len(grid), np.nan)
+        return nan
     o = np.argsort(x); x, y = x[o], y[o]
+    if FIT == "smoothing":
+        xu, inv = np.unique(np.round(x, 4), return_inverse=True)   # merge near-duplicates (1e-4 deg): coincident x ill-conditions the natural-spline solve,
+        cnt = np.bincount(inv); yu = np.bincount(inv, y) / cnt      # weighted by multiplicity (bootstrap resamples)
+        if len(xu) < 6:
+            return nan
+        try:
+            _LAST_LAM[0] = lam
+            f = make_smoothing_spline(xu, yu, w=cnt.astype(float), lam=lam)  # lam=None -> GCV (captured)
+        except (ValueError, np.linalg.LinAlgError):
+            return nan
+        out = f(grid)   # the occupancy check above guarantees >=2 stars in every span, incl. the end ones
+        return (out, float(_LAST_LAM[0])) if return_lam else out
     if x[0] > t[0] or x[-1] < t[-1]:  # clamped ends must sit inside the data
         x, y = np.r_[t[0], x, t[-1]], np.r_[y[0], y, y[-1]]
     try:
@@ -67,11 +95,19 @@ def main():
     ap.add_argument("--n-sim", type=int, default=2000, help="realizations per stream")
     ap.add_argument("--n-grid", type=int, default=20); ap.add_argument("--stars-per-knot", type=int, default=25)
     ap.add_argument("--k", type=int, default=100); ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--n-boot", type=int, default=300, help="real-curve error band: star bootstrap x per-star sigma perturbation")
     ap.add_argument("--space", default="stream", choices=list(SPACES), help="observables fitted vs phi1")
+    ap.add_argument("--fit", default="lsq", choices=("lsq", "smoothing"))
+    ap.add_argument("--n-jobs", type=int, default=16, help="joblib workers for the per-row spline fits")
     ap.add_argument("--out", required=True)
-    a = ap.parse_args(); OBS = {i + 1: lab for i, lab in enumerate(SPACES[a.space])}; ASTRO = tuple(list(OBS)[:-1]); VL = list(OBS)[-1]; os.makedirs(a.out, exist_ok=True); rng = np.random.default_rng(a.seed)
+    a = ap.parse_args(); global FIT; FIT = a.fit; OBS = {i + 1: lab for i, lab in enumerate(SPACES[a.space])}; ASTRO = tuple(list(OBS)[:-1]); VL = list(OBS)[-1]; os.makedirs(a.out, exist_ok=True); rng = np.random.default_rng(a.seed)
 
     real = real_clouds(a.real, a.simulator, a.real_aug, 1000, a.seed)
+    with np.load(a.real) as d:                 # per-star sigmas (ra, dec, plx, pmra, pmdec, vlos), attended stars only
+        att = np.asarray(d["attention_mask"]); att = (att[0] if att.shape[0] == 1 else att[:, 0]) > 0
+        oe = np.asarray(d["obs_error"]).reshape(att.shape[0], att.shape[1], 6)
+        jr = np.asarray(d["j"]).reshape(-1).astype(int)
+        real_err = {int(jr[r]): oe[r][att[r]] for r in range(len(jr))}
     R_of = stream_frames("streamfinder", a.real)
     sim_raw, jj = load_sim_groups(a.sim, a.n_sim, rng)
     G = sim_raw.shape[0]
@@ -94,7 +130,7 @@ def main():
     assert np.all(jf[row_of] == jj), "row bookkeeping does not reproduce load_sim_groups' draw"
     sim, attn, vmask = augment_sim(sim_raw, jj, aug_preset=a.aug, simulator=a.simulator, seed=a.seed, upto="mask_vlos")
 
-    rep = dict(sim=a.sim, real=a.real, aug=a.aug, space=a.space, n_sim=G, n_grid=a.n_grid, k=a.k)
+    rep = dict(sim=a.sim, real=a.real, aug=a.aug, space=a.space, fit=a.fit, n_sim=G, n_grid=a.n_grid, k=a.k)
     store = {}
     for j, name in NAMES.items():
         Fr, r_vm = table(R_of[j], real[j][0], a.space), real[j][1]
@@ -103,21 +139,45 @@ def main():
         t = knots(Fr[:, 0], int(np.clip(len(Fr) // a.stars_per_knot, 1, 6)))
         tv = knots(Fr[r_vm, 0], 1 if r_vm.sum() >= 12 else 0)
         gridv = np.linspace(tv[0], tv[-1], a.n_grid)
-        real_f = {c: spline_on_grid(Fr[:, 0], Fr[:, c], t, grid) for c in ASTRO}
-        real_f[VL] = spline_on_grid(Fr[r_vm, 0], Fr[r_vm, VL], tv, gridv)
+        real_f, lam = {}, {}
+        for c in ASTRO:
+            real_f[c], lam[c] = spline_on_grid(Fr[:, 0], Fr[:, c], t, grid, return_lam=True)
+        real_f[VL], lam[VL] = spline_on_grid(Fr[r_vm, 0], Fr[r_vm, VL], tv, gridv, return_lam=True)
+        st0, er0 = np.asarray(real[j][0], float), real_err[j]
+        boots = {c: [] for c in OBS}
+        brng = np.random.default_rng(1000 + j)
+        for _ in range(a.n_boot):
+            i = brng.integers(0, len(st0), len(st0))
+            st = st0[i] + brng.normal(size=(len(i), 6)) * er0[i]
+            F = table(R_of[j], st, a.space); vm = r_vm[i]
+            for c in ASTRO:
+                boots[c].append(spline_on_grid(F[:, 0], F[:, c], t, grid, lam=lam[c]))
+            boots[VL].append(spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv, lam=lam[VL]))
+        real_sig = {c: np.nanstd(np.array(boots[c]), 0) for c in OBS}          # sigma of the real curve per grid point
+        real_lo = {c: np.nanpercentile(np.array(boots[c]), 16, 0) for c in OBS}
+        real_hi = {c: np.nanpercentile(np.array(boots[c]), 84, 0) for c in OBS}
         sim_f = {c: np.full((G, a.n_grid), np.nan) for c in OBS}
         n_att = np.zeros(G, int)
-        for g in range(G):
-            at = attn[g, j]; n_att[g] = at.sum()
-            if at.sum() < 8: continue
+        def _fit_row(g):
+            at = attn[g, j]
+            if at.sum() < 8:
+                return None
             F = table(R_of[j], sim[g, j][at].astype(float), a.space); vm = vmask[g, j][at]
-            for c in ASTRO:
-                sim_f[c][g] = spline_on_grid(F[:, 0], F[:, c], t, grid)
-            sim_f[VL][g] = spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv)
+            out = [spline_on_grid(F[:, 0], F[:, c], t, grid) for c in ASTRO]
+            out.append(spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv))
+            return out
+        from joblib import Parallel, delayed
+        rows_f = Parallel(n_jobs=a.n_jobs, batch_size=64)(delayed(_fit_row)(g) for g in range(G))
+        for g, r_ in enumerate(rows_f):
+            n_att[g] = attn[g, j].sum()
+            if r_ is not None:
+                for c, v in zip(list(ASTRO) + [VL], r_):
+                    sim_f[c][g] = v
 
         # ---- PPC: real spline vs sim band -------------------------------------------------
         out = dict(n_real=int(len(Fr)), n_real_vlos=int(r_vm.sum()), phi1_range=[float(lo), float(hi)],
-                   interior_knots=int(len(t) - 2 * (K + 1)), usable={}, inside_90={}, real_pct_median={})
+                   interior_knots=int(len(t) - 2 * (K + 1)), usable={}, inside_90={}, real_pct_median={},
+                   z_median={}, z_max={}, frac_abs_z_gt2={}, real_sigma_median={})
         fig, axes = plt.subplots(len(OBS), 1, figsize=(9, 2.8 * len(OBS)), sharex=True)
         for ax, c in zip(axes, OBS):
             S = sim_f[c]; ok = np.all(np.isfinite(S), 1); S = S[ok]; gx = gridv if c == VL else grid
@@ -130,15 +190,21 @@ def main():
                 pct = np.mean(S <= real_f[c][None], 0) * 100
                 out["inside_90"][OBS[c]] = float(np.mean((real_f[c] >= q[0]) & (real_f[c] <= q[4])))
                 out["real_pct_median"][OBS[c]] = float(np.median(pct))
-                ax.text(0.01, 0.95, f"real inside 5-95 %: {out['inside_90'][OBS[c]]:.2f}; median pct {np.median(pct):.0f}; usable sims {ok.sum()}",
+                sim_sig = 1.4826 * np.median(np.abs(S - q[2]), 0)
+                z = (real_f[c] - q[2]) / np.sqrt(sim_sig ** 2 + real_sig[c] ** 2)
+                out["z_median"][OBS[c]], out["z_max"][OBS[c]] = float(np.nanmedian(z)), float(np.nanmax(np.abs(z)))
+                out["frac_abs_z_gt2"][OBS[c]] = float(np.nanmean(np.abs(z) > 2)); out["real_sigma_median"][OBS[c]] = float(np.nanmedian(real_sig[c]))
+                ax.text(0.01, 0.95, f"real inside 5-95 %: {out['inside_90'][OBS[c]]:.2f}; median pct {np.median(pct):.0f}; usable sims {ok.sum()}\n"
+                        f"z = (real - sim med)/sqrt(sig_sim^2 + sig_real^2): median {np.nanmedian(z):+.2f}, max |z| {np.nanmax(np.abs(z)):.2f}, |z|>2 in {100 * np.nanmean(np.abs(z) > 2):.0f} % of grid",
                         transform=ax.transAxes, va="top", fontsize=8)
             sel = r_vm if c == VL else np.ones(len(Fr), bool)
             ax.scatter(Fr[sel, 0], Fr[sel, c], s=8, color="0.3", alpha=0.6, label="real members")
+            ax.fill_between(gx, real_lo[c], real_hi[c], color="C3", alpha=0.3, label="real 16-84 % (bootstrap + sigma)")
             ax.plot(gx, real_f[c], color="C3", lw=2, label="real B-spline")
             ax.set_ylabel(OBS[c])
             v = Fr[sel, c]; l_, h_ = np.percentile(v, [2, 98]); pad = 0.6 * (h_ - l_) + 1e-3; ax.set_ylim(l_ - pad, h_ + pad)
         axes[0].legend(fontsize=7, loc="lower right"); axes[-1].set_xlabel("phi1 [deg]")
-        axes[0].set_title(f"{name}: B-spline PPC, {G} sims through {a.aug} (fixed knots, real phi1 range, {a.space} observables)")
+        axes[0].set_title(f"{name}: B-spline PPC, {G} sims through {a.aug} ({a.fit} spline, real phi1 range, {a.space} observables)")
         fig.tight_layout(); fig.savefig(os.path.join(a.out, f"ppc_{name}.png"), dpi=130); plt.close(fig)
 
         # ---- NN on grid values -----------------------------------------------------------
@@ -146,7 +212,8 @@ def main():
         dist = {}
         for lab, cs in feats.items():
             X = np.concatenate([sim_f[c] for c in cs], 1); xr = np.concatenate([real_f[c] for c in cs])
-            mu = np.nanmedian(X, 0); sc = 1.4826 * np.nanmedian(np.abs(X - mu), 0) + 1e-9
+            sr = np.concatenate([real_sig[c] for c in cs])
+            mu = np.nanmedian(X, 0); sc = np.sqrt((1.4826 * np.nanmedian(np.abs(X - mu), 0)) ** 2 + np.nan_to_num(sr) ** 2) + 1e-9
             Z = (X - mu) / sc; zr = (xr - mu) / sc
             fin = np.all(np.isfinite(Z), 1)
             d = np.full(G, np.inf); d[fin] = np.sqrt(np.mean((Z[fin] - zr) ** 2, 1))
@@ -155,7 +222,8 @@ def main():
         rows = row_of[:, j]
         # typicality: real->nearest sim vs sim->nearest sim (same feature space)
         Xa = np.concatenate([sim_f[c] for c in feats["astrometry"]], 1); fin = np.all(np.isfinite(Xa), 1)
-        mu = np.nanmedian(Xa, 0); sc = 1.4826 * np.nanmedian(np.abs(Xa - mu), 0) + 1e-9; Za = ((Xa - mu) / sc)[fin]
+        sr = np.concatenate([real_sig[c] for c in ASTRO])
+        mu = np.nanmedian(Xa, 0); sc = np.sqrt((1.4826 * np.nanmedian(np.abs(Xa - mu), 0)) ** 2 + np.nan_to_num(sr) ** 2) + 1e-9; Za = ((Xa - mu) / sc)[fin]
         pick = rng.choice(len(Za), size=min(300, len(Za)), replace=False)
         D = np.sqrt(np.mean((Za[pick][:, None] - Za[None]) ** 2, -1)); D[np.arange(len(pick)), pick] = np.inf
         null_nn = D.min(1)
@@ -174,7 +242,7 @@ def main():
             print(f"  {k:36s} {pq[0]:9.3g} [{pq[1]:8.3g},{pq[2]:8.3g}]   {nq[0]:9.3g} [{nq[1]:8.3g},{nq[2]:8.3g}]  {z:+.2f}")
         rep[name] = out
         store.update({f"{name}/grid": grid, f"{name}/grid_vlos": gridv, f"{name}/knots": t, f"{name}/nn_rows": rows[nn], f"{name}/nn_dist": d[nn],
-                      **{f"{name}/real_{c}": real_f[c] for c in OBS}, **{f"{name}/sim_{c}": sim_f[c] for c in OBS}, f"{name}/rows": rows})
+                      **{f"{name}/real_{c}": real_f[c] for c in OBS}, **{f"{name}/real_sigma_{c}": real_sig[c] for c in OBS}, **{f"{name}/sim_{c}": sim_f[c] for c in OBS}, f"{name}/rows": rows})
 
         fig, axes = plt.subplots(len(OBS), 1, figsize=(9, 2.8 * len(OBS)), sharex=True)
         for ax, c in zip(axes, OBS):
