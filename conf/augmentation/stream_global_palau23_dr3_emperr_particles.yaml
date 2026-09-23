@@ -1,0 +1,28 @@
+# `stream_global_palau23_dr3_emperr` for the RAW-PARTICLE stream backbone (adapter
+# stream_2modal_particles + masked_set_transformer): the identical observation model — Palau23+DR3
+# member counts, magnitude KDE from those members, empirical astrometric + v_los sigmas,
+# magnitude-weighted v_los selection, M68 track-width cut — with `stream_summary_grid` removed,
+# since the network reads the 15-channel star cloud, not the binned grid. Pair with
+# `augmentation.params.vlos_impute=zero` (the masked backbone zeroes the unmeasured channels itself).
+defaults:
+  - stream_global_palau23_dr3_emperr
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - stream_track_width_cut
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - sample_obs_error_empirical
+  - sample_vlos_error_empirical
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

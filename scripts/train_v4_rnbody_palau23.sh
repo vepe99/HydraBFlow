@@ -32,7 +32,7 @@
 #
 # Everything is env-overridable; see scripts/train_v4_2modal.sh, which this delegates to.
 export SIM=${SIM:-stream_agama_rnbody_ibata_m200c_v4}
-export DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_rnbody_ibata_m200c_v4_hydrabflow}
+export DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_rnbody_ibata_m200c_v4_hydrabflow}
 export AUG=${AUG:-stream_global_palau23_dr3_emperr}
 export REAL_AUG=${REAL_AUG:-stream_real_global_palau23_dr3_emperr}
 export REAL=${REAL:-assets/gaia/gaia_observed_streams_palau23_dr3.npz}

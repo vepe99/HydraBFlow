@@ -1,0 +1,18 @@
+# tuningtest_2modal_oldgrid (every trial scored on the 333-group test set, then real Gaia), but the
+# real evaluation goes through the Palau23 + Gaia DR3 member catalogue and its matched error chain
+# (`stream_real_global_palau23_dr3_emperr`, whose `override_obs_error_with_real` fills the same
+# sigma channels the training chain `stream_global_palau23_dr3_emperr` draws). Runner:
+# scripts/tune_2modal_palau23.sh. The trained model is the NEW grid: augmentation inherits
+# stream_global_ibata_grid_v2 (MAD scale, occupancy channels) + summary_occupancy=valid + the
+# masked_time_series_transformer backbone of model=stream_fusion_2modal; the search space is the
+# shared stream_2modal_oldgrid.yaml (same backbone param paths).
+defaults:
+  - tuningtest_2modal_oldgrid
+study_name: tuningtest_2modal_palau23_study
+real_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=8
+  - eval.num_samples=1000
+  - preprocessing=stream_real_global_ibata_sumstats
+  - augmentation=stream_real_global_palau23_dr3_emperr
+  - data.real_data_path=assets/gaia/gaia_observed_streams_palau23_dr3.npz

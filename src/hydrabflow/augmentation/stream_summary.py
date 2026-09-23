@@ -97,6 +97,13 @@ class StreamFrames:
         )
         target = {str(k): int(v) for k, v in params["target_streams"].items()}
         n_streams = max(target.values()) + 1
+        # `summary_bin_edges`: "quantile" (default) = equal-COUNT edges of the real members, so the
+        # real occupancy is flat by construction and out of distribution for every sim;
+        # "uniform" = equal-WIDTH edges over the same phi1 span, so occupancy becomes a linear
+        # density — a physical observable both sides can share.
+        self.edge_mode = str(params.get("summary_bin_edges", "quantile")).lower()
+        if self.edge_mode not in ("quantile", "uniform"):
+            raise ValueError(f"summary_bin_edges must be 'quantile' or 'uniform', got {self.edge_mode!r}")
 
         d = np.load(real_file)
         sim = np.asarray(d["sim_data_projected"], dtype=float)
@@ -124,9 +131,13 @@ class StreamFrames:
             R_j = _np_fit_frame(s[:, ra_c], s[:, dec_c])
             phi1 = _np_phi1(R_j, s[:, ra_c], s[:, dec_c])
             self.R[j] = R_j
-            self.track_edges[j] = np.quantile(phi1, np.linspace(0, 1, k_track + 1))
             src = phi1[vmeas] if vmeas.sum() > k_vlos else phi1
-            self.vlos_edges[j] = np.quantile(src, np.linspace(0, 1, k_vlos + 1))
+            if self.edge_mode == "uniform":
+                self.track_edges[j] = np.linspace(phi1.min(), phi1.max(), k_track + 1)
+                self.vlos_edges[j] = np.linspace(src.min(), src.max(), k_vlos + 1)
+            else:
+                self.track_edges[j] = np.quantile(phi1, np.linspace(0, 1, k_track + 1))
+                self.vlos_edges[j] = np.quantile(src, np.linspace(0, 1, k_vlos + 1))
 
 
 def _stream_frames(params: dict, k_track: int, k_vlos: int, channels: dict) -> StreamFrames:
@@ -138,6 +149,7 @@ def _stream_frames(params: dict, k_track: int, k_vlos: int, channels: dict) -> S
             "kt": k_track,
             "kv": k_vlos,
             "ch": channels,
+            "edges": str(params.get("summary_bin_edges", "quantile")),
         },
         sort_keys=True,
     )

@@ -1,0 +1,35 @@
+# `stream_global_palau23_dr3_emperr` with the binned summary grid replaced by per-stream fixed-knot
+# cubic LSQ B-spline tracks (`stream_bspline_grid`): each observable fitted vs phi1 on knots at the
+# real members' phi1 quantiles, cut at the real phi1 range, evaluated on a uniform phi1 grid.
+# Layout (n, G, 9): [phi2, plx, mu_phi1, mu_phi2, vlos, valid_track, valid_vlos, j, phi1] (phi1 last).
+# Pair with model=stream_fusion_2modal_oldgrid (plain TST, time_axis=-1), adapter=stream_2modal,
+# and the real twin stream_real_global_palau23_dr3_bspline.
+defaults:
+  - stream_global_palau23_dr3_emperr
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - stream_track_width_cut
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - sample_obs_error_empirical
+  - sample_vlos_error_empirical
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_bspline_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  bspline_interior_knots: 5        # astrometric tracks: knots at the real members' phi1 quantiles
+  bspline_vlos_interior_knots: 1   # v_los: measured stars only (17/18/8 real velocities)
+  bspline_grid_points: 20          # uniform phi1 evaluation points inside the real range
+  bspline_ridge: 1.0e-3            # keeps empty knot spans finite; their values are zeroed via valid_*

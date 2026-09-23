@@ -1,0 +1,15 @@
+# Real-data twin of `stream_global_palau23_dr3_emperr_particles`: `stream_real_global_palau23_dr3_emperr`
+# without `stream_summary_grid`. Members carry their own measured sigmas (override_*_with_real).
+defaults:
+  - stream_real_global_palau23_dr3_emperr
+
+steps:
+  - sample_obs_error
+  - override_obs_error_with_real
+  - override_vlos_error_with_real
+  - impute_vlos
+  - log10_vcirc
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

@@ -59,6 +59,7 @@ params:
   real_streams_file: assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
 
   summary_scale: mad             # robust per-bin dispersion (std | mad)
+  summary_bin_edges: quantile    # quantile (equal-count real edges) | uniform (equal-width over the real span)
   summary_min_count: 3           # keep in step with the backbone's params.min_count
   summary_include_occupancy: true
   summary_occupancy: counts        # counts | valid (±1 flags) — masked backbones REQUIRE valid (see stream_summary.occupancy_encoding)

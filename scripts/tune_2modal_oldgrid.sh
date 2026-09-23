@@ -20,6 +20,7 @@ N_EPOCHS=${N_EPOCHS:-1000}
 BATCH_SIZE=${BATCH_SIZE:-1024}
 DROP_PROB=${DROP_PROB:-0.5}
 MODEL=${MODEL:-stream_fusion_2modal_oldgrid}
+AUG=${AUG:-stream_global_ibata_grid}
 PREPROC=${PREPROC:-stream_global_log10_ibata_sumstats}   # legacy ou24 set: stream_global_log10_sumstats_2modal
 STUDY=${STUDY:-}   # optional tuning.study_name override (default: the yaml's)
 TUNING=${TUNING:-stream_2modal_oldgrid}   # tuningtest_2modal_oldgrid = score on the 333 test set + real eval per trial
@@ -28,7 +29,7 @@ mkdir -p "${OUT_ROOT}"
 echo "=== [tune] GPU=${CUDA_VISIBLE_DEVICES} trials=${N_TRIALS} epochs=${N_EPOCHS} drop=${DROP_PROB} ==="
 .venv/bin/python -m hydrabflow.pipeline.tune \
   simulator="${SIM}" model="${MODEL}" composition=global adapter=stream_2modal \
-  preprocessing="${PREPROC}" augmentation=stream_global_ibata_grid \
+  preprocessing="${PREPROC}" augmentation="${AUG}" \
   ${STUDY:+tuning.study_name=${STUDY}} \
   tuning="${TUNING}" tuning.n_trials="${N_TRIALS}" tuning.n_epochs="${N_EPOCHS}" \
   model.inference_network.params.missing_modality_prob="${DROP_PROB}" \

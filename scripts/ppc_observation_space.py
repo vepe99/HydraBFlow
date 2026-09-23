@@ -117,7 +117,9 @@ def stream_frames(kind: str, real_path: str) -> dict[int, np.ndarray] | None:
         for row, j in enumerate(jj):
             st = s[0, row] if s.ndim == 4 else s[row]
             att = np.asarray(d["attention_mask"])
-            a = (att[0, row] if att.ndim == 3 else att[row]).astype(bool)
+            if att.ndim == 3:                    # (1, m, P) or (m, 1, P)
+                att = att[0] if att.shape[0] == 1 else att[:, 0]
+            a = att[row].astype(bool)
             out[int(j)] = fit_frame(st[a][:, 0], st[a][:, 1])
         return out
     else:

@@ -708,3 +708,20 @@ def test_v2_simulator_frees_the_intended_parameters(compose):
     # stream_agama.local_parameter_names, which reads the first stream only)
     assert "t_end" in sim.local_parameter_names
     assert "m_progenitor" in sim.local_parameter_names
+
+
+def test_uniform_bin_edges_are_equal_width_over_the_real_span():
+    """summary_bin_edges=uniform: equal-width phi1 edges spanning exactly the quantile edges' range."""
+    import numpy as np
+
+    from hydrabflow.augmentation.stream_summary import _stream_frames
+
+    base = dict(target_streams={"Pal5": 0, "NGC3201": 1, "M68": 2},
+                real_streams_file="assets/gaia/gaia_observed_streams_palau23_dr3.npz")
+    ch = {"ra": 0, "dec": 1, "parallax": 2, "mu_ra": 3, "mu_dec": 4, "vlos": 5}
+    q = _stream_frames(dict(base), 10, 3, ch)
+    u = _stream_frames(dict(base, summary_bin_edges="uniform"), 10, 3, ch)
+    for j in range(3):
+        assert np.allclose(u.track_edges[j][[0, -1]], q.track_edges[j][[0, -1]])
+        assert np.allclose(np.diff(u.track_edges[j]), np.diff(u.track_edges[j])[0])
+        assert not np.allclose(u.track_edges[j], q.track_edges[j])
