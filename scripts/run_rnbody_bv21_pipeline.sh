@@ -1,6 +1,12 @@
 #!/bin/bash
-# Generate a fresh 10^4-particle restricted-N-body dataset with the v4 GLOBAL priors and the
-# UPDATED (BV21/VB21) progenitor phase-space priors, then train and evaluate on it.
+# Generate a fresh 10^4-particle restricted-N-body dataset with the GLOBAL prior of the spray set
+# `data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow` (v4 globals with alpha_halo = 1.0 and
+# rho_Bulge = 9.93e10 pinned -> 7 inferred globals; conf/simulator/
+# stream_agama_rnbody_ibata_m200c_v4_bv21_p1e3prior.yaml) and the UPDATED (BV21/VB21) progenitor
+# phase-space priors, then train and evaluate on it.
+#
+# NOTE: the earlier `data_agama_rnbody_ibata_m200c_v4_bv21_hydrabflow` (test set + 2 training chunks)
+# was generated with alpha/rho_Bulge FREE — a different prior; it is not reused (new DATA_DIR).
 #
 # What differs from `data_agama_rnbody_ibata_m200c_v4_hydrabflow`: only NGC3201's and M68's observed
 # distance / v_los / proper motion, which that dataset predates (it was generated 2026-09-12, the
@@ -23,8 +29,8 @@
 # `grep Committed_AS /proc/meminfo` against CommitLimit before launching anything large.
 #
 # Run it detached; it is a multi-day job:
-#   nohup bash scripts/run_rnbody_bv21_pipeline.sh > rnbody_bv21.log 2>&1 &
-#   tail -f rnbody_bv21.log
+#   nohup bash scripts/run_rnbody_bv21_pipeline.sh > rnbody_bv21_p1e3prior.log 2>&1 &
+#   tail -f rnbody_bv21_p1e3prior.log
 #
 # Useful overrides:
 #   STAGES="test train"      generate only, fit later on the GPU box
@@ -36,9 +42,9 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-SIM=${SIM:-stream_agama_rnbody_ibata_m200c_v4_bv21}
-DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_rnbody_ibata_m200c_v4_bv21_hydrabflow}
-RUNS_DIR=${RUNS_DIR:-outputs/v4_rnbody_bv21_palau23}
+SIM=${SIM:-stream_agama_rnbody_ibata_m200c_v4_bv21_p1e3prior}
+DATA_DIR=${DATA_DIR:-data_jarvis/data_agama_rnbody_ibata_m200c_v4_bv21_p1e3prior_hydrabflow}
+RUNS_DIR=${RUNS_DIR:-outputs/v4_rnbody_bv21_p1e3prior_palau23}
 N_TRAIN=${N_TRAIN:-100000}
 N_TEST=${N_TEST:-333}
 CHUNK=${CHUNK:-1000}

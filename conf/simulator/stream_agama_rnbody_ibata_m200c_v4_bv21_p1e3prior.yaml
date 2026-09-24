@@ -1,0 +1,26 @@
+# `stream_agama_rnbody_ibata_m200c_v4_bv21` with the GLOBAL prior of the particle-spray dataset
+# `data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow` (2026-09-22).
+#
+# That dataset's resolved config (training_data_{100000,300000}.hydra / test_multistream_333.hydra)
+# differs from the bv21 rnbody globals in exactly two entries, both pinned to their pre-v2 constants
+# by `stream_agama_spray_massloss_ibata_m200c_v4.yaml`:
+#   alpha_TwoPowerTriaxial_halo   bv21 U[0.5, 2.0]          -> identity 1.0
+#   rho_Bulge                     bv21 N(9.93e10, 1e10)      -> identity 9.93e10
+# Every other global (gamma U[0,1.5], q U[0.5,1.5], log10 M200 U[11.6,12.4], ln c' N(2.56,0.272),
+# r/z/Sigma_Disk, identity p/tilt/beta, marginalized R0/U/V/W_Sun) and every non-prior potential
+# setting (m200_c halo, r_t 1000 kpc, exponential single disk, gas disks, no rotation-curve rejection,
+# Ou+2024 grid) was verified identical. The locals are also identical apart from the spray-only
+# `m_progenitor_final` (mass-loss endpoint; the restricted N-body loses mass self-consistently).
+#
+# Inferred globals: 7 (gamma, q, log10 M200, ln c', r/z/Sigma_Disk), as in the p1e3 set.
+defaults:
+  - stream_agama_rnbody_ibata_m200c_v4_bv21
+
+params:
+  priors_global:
+    alpha_TwoPowerTriaxial_halo:
+      type: identity
+      prior_parameters: [1.0]
+    rho_Bulge:
+      type: identity
+      prior_parameters: [9.93e10]

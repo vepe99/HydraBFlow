@@ -1,0 +1,20 @@
+# Pal5 local-prior test arm: identical to `stream_agama_spray_legacy_pal5` (legacy global prior,
+# Chen spray, 10^4 particles, t_end = 4 Gyr) except the Pal5 progenitor mass and radius, which take
+# the 2026-09-22 priors (see stream_agama_rnbody_mcmillan17.yaml):
+#   m_progenitor ~ N(1.39e4, 0.65e4) Msun, truncated to [1e3, inf) (the plain normal puts ~1.6 %
+#                  of draws below zero)
+#   a_progenitor = 27.34 pc
+# In the spray both enter: m sets the Jacobi radius (release scale) and the Plummer progenitor potential
+# the released stars move in, whose scale radius is a.
+defaults:
+  - stream_agama_spray_legacy_pal5
+
+params:
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: truncated_normal
+        prior_parameters: [1.39e4, 0.65e4, 1.0e3, .inf]
+      a_progenitor:
+        type: identity
+        prior_parameters: [27.34]

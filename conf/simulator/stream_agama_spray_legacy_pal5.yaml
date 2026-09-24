@@ -1,0 +1,39 @@
+# Pal5-only control for the local-prior test (2026-09-23): the LEGACY global prior (base
+# `stream_agama` priors: rho_a halo, gamma U[-2,2], a U[1,30], q U[0.5,1.5], beta = 3, one disk,
+# no rotation-curve rejection) on the Ou+2024 grid (`stream_agama_ou24`), Chen+2024 particle spray
+# at 10^4 particles, with the LEGACY Pal5 progenitor (m = 4.3e3 Msun, a = 8.43 pc, t_end = 4 Gyr).
+# Its twin `stream_agama_spray_legacy_pal5_newlocal` changes ONLY m/a, so the pair isolates the
+# local-prior effect on Pal5's observation-space misspecification.
+#
+# Pal5-only is a CLI deletion (a yaml child cannot delete an inherited dict key):
+#   ~simulator.params.target_streams.NGC3201 ~simulator.params.target_streams.M68
+# (scripts/run_pal5_local_prior_test.sh does this).
+#
+# Storage: in-window stars only (<= 2000, sentinel -999), as in v4 — see
+# stream_agama_rnbody_ibata_m200c_v4.yaml for the rationale. Window == stream_global's.
+defaults:
+  - stream_agama_ou24
+
+name: stream_agama
+params:
+  n_particles: 10000
+  spray_method: chen
+  store_window_subsample:
+    max_particles: 2000
+    pad_value: -999.0
+    observational_window:
+      Pal5:
+        ra_min: 220.98008280733634
+        ra_max: 250.0
+        dec_min: -13.0
+        dec_max: 10.0
+      NGC3201:
+        ra_min: 42.29847920913508
+        ra_max: 140.0
+        dec_min: -47.79545565626234
+        dec_max: 20.812029301121846
+      M68:
+        ra_min: 189.73694638139526
+        ra_max: 280.0
+        dec_min: -47.32109546202406
+        dec_max: 70.0

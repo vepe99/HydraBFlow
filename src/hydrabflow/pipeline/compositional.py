@@ -71,8 +71,8 @@ def prior_score_from_spec(
             is_log10 = key in log10_keys
             x_phys = 10.0**arr if is_log10 else arr
 
-            if spec["type"] == "normal":
-                mean, std = (float(p) for p in spec["prior_parameters"])
+            if spec["type"] in ("normal", "truncated_normal"):  # same score inside the support
+                mean, std = (float(p) for p in spec["prior_parameters"][:2])
                 base_score = -(x_phys - mean) / std**2
             else:  # uniform (flat inside the support)
                 base_score = ops.zeros_like(arr)

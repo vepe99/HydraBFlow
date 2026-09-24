@@ -168,16 +168,28 @@ def extended_rotation_curve(split_kpc: float | None = None):
 
 
 def sample_prior_value(spec: Mapping, n: int, rng: np.random.Generator) -> np.ndarray:
-    """Draw ``(n, 1)`` samples from one prior spec (uniform / normal / identity)."""
+    """Draw ``(n, 1)`` samples from one prior spec (uniform / normal / truncated_normal / identity).
+
+    ``truncated_normal`` takes ``[mean, std, low, high]`` and redraws out-of-support values, e.g. a
+    progenitor mass whose normal prior would otherwise put ~2 % of draws below zero.
+    """
     kind = spec["type"]
     p = list(spec["prior_parameters"])
     if kind == "uniform":
         return rng.uniform(p[0], p[1], size=(n, 1))
     if kind == "normal":
         return rng.normal(p[0], p[1], size=(n, 1))
+    if kind == "truncated_normal":
+        mean, std, low, high = (float(v) for v in p)
+        out = rng.normal(mean, std, size=(n, 1))
+        bad = (out < low) | (out > high)
+        while bad.any():
+            out[bad] = rng.normal(mean, std, size=int(bad.sum()))
+            bad = (out < low) | (out > high)
+        return out
     if kind == "identity":
         return np.full((n, 1), float(p[0]))
-    raise ValueError(f"Unknown prior type '{kind}' (expected uniform|normal|identity)")
+    raise ValueError(f"Unknown prior type '{kind}' (expected uniform|normal|truncated_normal|identity)")
 
 
 def inferred_names(priors: Mapping[str, Mapping]) -> list[str]:
