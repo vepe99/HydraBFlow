@@ -50,10 +50,13 @@ def _gcv_capture(*args, **kw):
     _LAST_LAM[0] = _gcv(*args, **kw); return _LAST_LAM[0]
 _bs._compute_optimal_gcv_parameter = _gcv_capture
 
-FIT = "lsq"   # set from --fit: "lsq" (fixed knots) or "smoothing" (make_smoothing_spline, lambda by GCV)
+FIT = "lsq"   # set from --fit: "lsq" (fixed knots), "smoothing" (make_smoothing_spline, lambda by GCV), or
+              # "pspline" = the TRAINING augmentation's penalized spline (stream_bspline_grid bspline_fit=smoothing):
+              # dense uniform knots + second-difference penalty, lambda = scipy GCV on the REAL members, fixed for the sims
+PSPLINE_KNOTS = {"track": 20, "vlos": 6}   # == bspline_smoothing_knots / bspline_smoothing_vlos_knots
 
 
-def spline_on_grid(x, y, t, grid, min_per_span=2, lam=None, return_lam=False):
+def spline_on_grid(x, y, t, grid, min_per_span=2, lam=None, return_lam=False, kind="track"):
     """Cubic spline of y(x) evaluated on ``grid``; NaN if the data under-populate a knot span of ``t``.
 
     The occupancy check uses ``t`` in BOTH modes so the usable set is identical; in ``smoothing`` mode
@@ -65,6 +68,16 @@ def spline_on_grid(x, y, t, grid, min_per_span=2, lam=None, return_lam=False):
     if len(x) < len(t) - K - 1 + 2 or np.any(np.histogram(x, np.unique(t))[0] < min_per_span):
         return nan
     o = np.argsort(x); x, y = x[o], y[o]
+    if FIT == "pspline":
+        from hydrabflow.augmentation.stream_bspline import _basis, _gcv_lambda, _second_diff_penalty, _uniform_knots
+        ts = _uniform_knots(np.array([[t[0], t[-1]]]), PSPLINE_KNOTS[kind])[0]
+        om = _second_diff_penalty(ts[None])[0]
+        if lam is None:
+            lam = _gcv_lambda(x, y, ts)
+        B = _basis(np, x, ts)
+        c = np.linalg.solve(B.T @ B + lam * om + 1e-3 * np.eye(B.shape[1]), B.T @ y)
+        out = _basis(np, grid, ts) @ c
+        return (out, float(lam)) if return_lam else out
     if FIT == "smoothing":
         xu, inv = np.unique(np.round(x, 4), return_inverse=True)   # merge near-duplicates (1e-4 deg): coincident x ill-conditions the natural-spline solve,
         cnt = np.bincount(inv); yu = np.bincount(inv, y) / cnt      # weighted by multiplicity (bootstrap resamples)
@@ -80,9 +93,10 @@ def spline_on_grid(x, y, t, grid, min_per_span=2, lam=None, return_lam=False):
     if x[0] > t[0] or x[-1] < t[-1]:  # clamped ends must sit inside the data
         x, y = np.r_[t[0], x, t[-1]], np.r_[y[0], y, y[-1]]
     try:
-        return make_lsq_spline(x, y, t, k=K)(grid)
+        out = make_lsq_spline(x, y, t, k=K)(grid)
     except (ValueError, np.linalg.LinAlgError):
-        return np.full(len(grid), np.nan)
+        return nan
+    return (out, None) if return_lam else out
 
 
 def main():
@@ -97,7 +111,8 @@ def main():
     ap.add_argument("--k", type=int, default=100); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--n-boot", type=int, default=300, help="real-curve error band: star bootstrap x per-star sigma perturbation")
     ap.add_argument("--space", default="stream", choices=list(SPACES), help="observables fitted vs phi1")
-    ap.add_argument("--fit", default="lsq", choices=("lsq", "smoothing"))
+    ap.add_argument("--fit", default="lsq", choices=("lsq", "smoothing", "pspline"))
+    ap.add_argument("--lam", type=float, default=None, help="smoothing/pspline: pin lambda for the real fit, its bootstrap AND every sim row (default: GCV on the real members)")
     ap.add_argument("--n-jobs", type=int, default=16, help="joblib workers for the per-row spline fits")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(); global FIT; FIT = a.fit; OBS = {i + 1: lab for i, lab in enumerate(SPACES[a.space])}; ASTRO = tuple(list(OBS)[:-1]); VL = list(OBS)[-1]; os.makedirs(a.out, exist_ok=True); rng = np.random.default_rng(a.seed)
@@ -105,9 +120,12 @@ def main():
     real = real_clouds(a.real, a.simulator, a.real_aug, 1000, a.seed)
     with np.load(a.real) as d:                 # per-star sigmas (ra, dec, plx, pmra, pmdec, vlos), attended stars only
         att = np.asarray(d["attention_mask"]); att = (att[0] if att.shape[0] == 1 else att[:, 0]) > 0
-        oe = np.asarray(d["obs_error"]).reshape(att.shape[0], att.shape[1], 6)
         jr = np.asarray(d["j"]).reshape(-1).astype(int)
-        real_err = {int(jr[r]): oe[r][att[r]] for r in range(len(jr))}
+        if "obs_error" in d.files:
+            oe = np.asarray(d["obs_error"]).reshape(att.shape[0], att.shape[1], 6)
+            real_err = {int(jr[r]): oe[r][att[r]] for r in range(len(jr))}
+        else:                                  # old catalogues: the sigmas the real preset's sample_obs_error drew (DR3 sigma(G) table)
+            real_err = real_clouds.sigma; print("[real] no obs_error in the catalogue: using the preset's sampled sigma_errors")
     R_of = stream_frames("streamfinder", a.real)
     sim_raw, jj = load_sim_groups(a.sim, a.n_sim, rng)
     G = sim_raw.shape[0]
@@ -130,7 +148,7 @@ def main():
     assert np.all(jf[row_of] == jj), "row bookkeeping does not reproduce load_sim_groups' draw"
     sim, attn, vmask = augment_sim(sim_raw, jj, aug_preset=a.aug, simulator=a.simulator, seed=a.seed, upto="mask_vlos")
 
-    rep = dict(sim=a.sim, real=a.real, aug=a.aug, space=a.space, fit=a.fit, n_sim=G, n_grid=a.n_grid, k=a.k)
+    rep = dict(sim=a.sim, real=a.real, aug=a.aug, space=a.space, fit=a.fit, lam=a.lam, n_sim=G, n_grid=a.n_grid, k=a.k)
     store = {}
     for j, name in NAMES.items():
         Fr, r_vm = table(R_of[j], real[j][0], a.space), real[j][1]
@@ -141,8 +159,9 @@ def main():
         gridv = np.linspace(tv[0], tv[-1], a.n_grid)
         real_f, lam = {}, {}
         for c in ASTRO:
-            real_f[c], lam[c] = spline_on_grid(Fr[:, 0], Fr[:, c], t, grid, return_lam=True)
-        real_f[VL], lam[VL] = spline_on_grid(Fr[r_vm, 0], Fr[r_vm, VL], tv, gridv, return_lam=True)
+            real_f[c], lam[c] = spline_on_grid(Fr[:, 0], Fr[:, c], t, grid, lam=a.lam, return_lam=True)
+        real_f[VL], lam[VL] = spline_on_grid(Fr[r_vm, 0], Fr[r_vm, VL], tv, gridv, lam=a.lam, return_lam=True, kind="vlos")
+        print(f"[{name}] lambda:", {OBS[c]: lam[c] for c in OBS})
         st0, er0 = np.asarray(real[j][0], float), real_err[j]
         boots = {c: [] for c in OBS}
         brng = np.random.default_rng(1000 + j)
@@ -152,7 +171,7 @@ def main():
             F = table(R_of[j], st, a.space); vm = r_vm[i]
             for c in ASTRO:
                 boots[c].append(spline_on_grid(F[:, 0], F[:, c], t, grid, lam=lam[c]))
-            boots[VL].append(spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv, lam=lam[VL]))
+            boots[VL].append(spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv, lam=lam[VL], kind="vlos"))
         real_sig = {c: np.nanstd(np.array(boots[c]), 0) for c in OBS}          # sigma of the real curve per grid point
         real_lo = {c: np.nanpercentile(np.array(boots[c]), 16, 0) for c in OBS}
         real_hi = {c: np.nanpercentile(np.array(boots[c]), 84, 0) for c in OBS}
@@ -163,8 +182,9 @@ def main():
             if at.sum() < 8:
                 return None
             F = table(R_of[j], sim[g, j][at].astype(float), a.space); vm = vmask[g, j][at]
-            out = [spline_on_grid(F[:, 0], F[:, c], t, grid) for c in ASTRO]
-            out.append(spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv))
+            fixed = FIT == "pspline" or a.lam is not None   # the augmentation applies the REAL members' lambda to every sim row
+            out = [spline_on_grid(F[:, 0], F[:, c], t, grid, lam=lam[c] if fixed else None) for c in ASTRO]
+            out.append(spline_on_grid(F[vm, 0], F[vm, VL], tv, gridv, lam=lam[VL] if fixed else None, kind="vlos"))
             return out
         from joblib import Parallel, delayed
         rows_f = Parallel(n_jobs=a.n_jobs, batch_size=64)(delayed(_fit_row)(g) for g in range(G))

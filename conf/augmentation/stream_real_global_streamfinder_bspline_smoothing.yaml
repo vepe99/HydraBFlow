@@ -1,0 +1,9 @@
+# Real-data twin of `stream_global_streamfinder_bspline_smoothing`.
+defaults:
+  - stream_real_global_streamfinder_bspline
+
+params:
+  bspline_fit: smoothing            # penalized spline: dense uniform knots + lambda * sum(d2 c)^2 / h^3
+  bspline_smoothing_knots: 20       # interior knots over the real phi1 range (astrometric tracks)
+  bspline_smoothing_vlos_knots: 6   # same for v_los (measured stars only)
+  bspline_smoothing_lambda: gcv     # scipy GCV on the real members, per (stream, observable); or a float

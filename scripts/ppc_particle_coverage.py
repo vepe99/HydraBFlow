@@ -105,10 +105,13 @@ def real_clouds(real_path, simulator, real_aug, max_particles, seed):
     for fn in build_augmentations(aug, np.random.default_rng(seed), context={}):
         rb = fn(rb)
     out = {}
+    real_clouds.sigma = {}                   # {j: (N,6) sigmas the preset sampled} -- for catalogues without obs_error
     for row in range(m):
         att = np.asarray(rb["attention_mask"])[row, 0].astype(bool)
         vm = np.asarray(rb["vlos_mask"])[row, 0].astype(bool)
         out[int(rb["j"][row, 0])] = (np.asarray(rb["sim_data_projected"])[row][att], vm[att])
+        if "sigma_errors" in rb:
+            real_clouds.sigma[int(rb["j"][row, 0])] = np.asarray(rb["sigma_errors"])[row][att]
     return out
 
 

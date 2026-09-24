@@ -2649,3 +2649,107 @@ Knowledge graph at `graphify-out/`.
   - Gotchas re-hit: `pgrep | xargs kill` matched the calling shell (exit 144) and silently skipped
     the relaunch that followed in the same command — kill by PID list in its own command; a 1e5-row
     smoothing run (~8 h serial) was stopped by the user in favour of 1e4.
+- Session 2026-09-24 (B-spline PPC of the legacy 1e6 spray set vs the ORIGINAL STREAMFINDER members with the OLD
+  observation model): `outputs/Bsline/streamfinder_legacy/` (README + `ppc_legacy_ou24_stream_{lsq,smoothing}/`,
+  real-only fits). Real = `gaia_observed_streams_6Dwitherrors_cutNGC3201.npz`, aug `stream_global`/`stream_real_global`,
+  3000 rows/stream. Two script fixes: `ppc_bspline_nn.py` falls back to the real preset's sampled `sigma_errors`
+  (exposed as `real_clouds.sigma`) when the catalogue has no `obs_error`; `spline_on_grid` honoured `return_lam`
+  only in smoothing mode, so every `--fit lsq` run since the z-band was added crashed (the palau23 lsq runs predate
+  it). Result: all tracks inside the sim 5-95 % band except M68 phi2 (0.80, median z +1.06 — the 297-star arm incl.
+  the envelope); **the Pal5 mu_phi1 tension of the Palau23+DR3 runs (z -1.9, 45 % of grid |z|>2) is absent here
+  (+0.46, 10 %)** — so it is tied to the Palau selection / emperr chain, not to the forward model alone. Typicality
+  69/47/10 pct; M68 only 115 usable rows (t_end=1.5). NN q: 0.97/0.82/0.96 (oblate lean only NGC3201), compact
+  halo + heavy disk as before.
+  **Same check with the rnbody v4 1e5 set** (only the training set changed; `outputs/Bsline/streamfinder_rnbody_v4/`):
+  M68 goes from 115 usable rows / phi2 at the band edge (z +1.06) to 1471 rows / centred (z +0.22, all |z|max < 1);
+  NGC3201 mu_phi1 z +1.34 -> +0.45; Pal5 unchanged; nothing outside the 5-95 % band anywhere. Typicality 67/46/18.
+  NN: heavier disk (+0.6 sd) for all three, Pal5 t_end 3.8 Gyr (-0.9 sd), q prior-like (0.91/1.00/1.09).
+
+- Session 2026-09-24 (B-spline PPC of the p1e3 SPRAY v4 1e5 set vs the ORIGINAL STREAMFINDER members, OLD observation
+  model — the third arm next to legacy and rnbody v4): `outputs/Bsline/streamfinder_spray_p1e3_v4/` (README with the
+  three-set table, `ppc_spray_p1e3_v4_stream_{lsq,smoothing}/`). Same members/aug/3000 rows/seed as the rnbody run, only
+  `--sim`/`--simulator` changed. Tracks: nothing outside the 5-95 % band, all |z|max <= 2.0; the legacy M68 phi2 edge is
+  gone (+0.23). Usable rows ~3000/3000 for Pal5/NGC3201 (rnbody 1681/2253), M68 1719 (rnbody 1471, legacy 115). Typicality
+  WORSE than rnbody for Pal5/NGC3201 (83/70 vs 67/46 — colder spray tails shrink the sim-to-sim scatter), M68 32 vs 18.
+  Largest tension NGC3201 phi2 z -0.64 (rnbody -0.30); its mu_phi1 flips sign (-0.18 vs +0.45/+1.34). NN: heavy disk
+  +0.5-0.6 sd everywhere, q 1.00/0.83/0.92 (NGC3201 oblate lean as legacy; rnbody 1.00), M68 t_end short (-0.48 sd).
+- Session 2026-09-24 (smoothing B-spline as a TRAINING augmentation + the spray-3e5 twin of rnbody_bspline_2modal):
+  `stream_bspline_grid` gained `bspline_fit: lsq|smoothing`. Smoothing = penalized (P-)spline on the GPU in the same
+  batched normal-equation solve: dense uniform knots (`bspline_smoothing_knots` 20, `_vlos_knots` 6) + the second-
+  difference penalty `lambda * sum(d2 c)^2 / h^3` (~ lambda * int f''^2); lambda per (stream, observable) =
+  scipy's GCV choice on the real members (`bspline_smoothing_lambda: gcv`, computed ONCE at build time — the one
+  scipy call; a float pins it). Verified the P-spline with scipy's lambda reproduces `make_smoothing_spline` to
+  0.3-15 % of the curve's scale, while a GCV grid on the P-spline itself under-smoothed badly (rejected). Valid
+  flags still use the quantile edges, so the (n,20,9) layout and the LSQ model configs are unchanged; LSQ vs
+  smoothing tracks agree to rms <=0.12 deg / mas/yr on the real members. Configs
+  `augmentation/stream_{global,real_global}_streamfinder_bspline_smoothing.yaml`; tests `tests/test_stream_bspline.py`
+  (2). Runner `outputs/Bsline/spray_p1e3_v4_smoothing_2modal/launch.sh` = rnbody_bspline_2modal's config with
+  `SIM=stream_agama_spray_massloss_ibata_m200c_v4`, the 3e5-row p1e3 set, and the smoothing twins; six spray rows
+  pushed through the full training chain (CPU) give finite (6,20,9) summaries with all bins valid. NOT launched.
+- Session 2026-09-24 (smoothing B-spline as a TRAINING observation space + runner for the 3e5 spray set):
+  `stream_bspline_grid` gained `bspline_fit: lsq|smoothing`. `smoothing` = a penalized (P-)spline that stays
+  fully in JAX on the GPU per batch: dense uniform knots over the real phi1 range (`bspline_smoothing_knots`
+  20, `_vlos_knots` 6) + the second-difference penalty `lambda * sum(d2 c)^2 / h^3` (~ `lambda * int f''^2`)
+  added to the same batched normal-equation solve; `lambda` per (stream, observable) is scipy's GCV choice for
+  the smoothing spline of the real members (`bspline_smoothing_lambda: gcv`, computed ONCE at factory time,
+  exactly the PPC's `--fit smoothing` recipe; a float pins it). Checked: the P-spline at scipy's lambda
+  reproduces scipy's `make_smoothing_spline` curve to rms 0.3-15 % of its scale on the real members; my own
+  GCV over the P-spline was unstable (near-interpolating, lambda 0.3 vs scipy 27 for Pal5 phi2) and was
+  dropped. `valid_*` flags still use the quantile edges, so the (n, G, 9) layout and the oldgrid model
+  configs are unchanged. Presets `stream_{global,real_global}_streamfinder_bspline_smoothing` (inherit the
+  LSQ twins). Tests `tests/test_stream_bspline.py` (2). Runner **`outputs/Bsline/spray_p1e3_v4_smoothing_2modal/
+  launch.sh`** = `outputs/Bsline/rnbody_bspline_2modal` with the 3e5-row p1e3 spray set
+  (`training_data_300000.npz`, 14.6 GB) and the smoothing presets; not run. Smoke: compose OK for train + real,
+  six rows of the 300k file through the full training chain -> finite (6,20,9), all bins valid.
+  **Estimator check (same session)**: `ppc_bspline_nn.py --fit pspline` reproduces the training augmentation's
+  penalized spline (uniform knots + penalty, real-GCV lambda fixed for sims) inside the PPC; on the p1e3 spray
+  3000-row streamfinder run it matches `--fit smoothing` in every verdict (typicality 83/70/32 -> 83/68/35, z
+  within 0.1, NN q within 0.05; grid-level real-curve rms / sim scatter <= 0.25 except sparse end points). The
+  check exposed and fixed a `_basis` end-point bug (grid end one ulp past the last knot -> value 0 on both sides,
+  invisible in z). Artifacts `outputs/Bsline/streamfinder_spray_p1e3_v4/ppc_spray_p1e3_v4_stream_pspline/`.
+- Session 2026-09-24 (rnbody v4 x old observation model trainings + learned-summary NN diagnostic):
+  `outputs/v4_2modal_rnbody_mlp/` (MLP 2-modal binned grid, `summary_occupancy=valid`, 1000 ep, old
+  `stream_global` chain, STREAMFINDER members; the legacy MLP recipe re-run on rnbody — NOTE the legacy
+  run predates the masked-counts fix, so this is not a byte-identical twin): sim base RMSE 0.750/calib
+  0.014, compositional 0.719/0.043 (halo-only miscalibration again: gamma 0.10, alpha 0.10); real
+  q_halo **1.13 [1.01,1.25]** (per stream 1.25/0.95/1.26), gamma 0.85, log10 M200 11.77, Sigma_Disk
+  1.26e9, MMD 2.87 p_strat 0.02, members 66/84/87 pct. `outputs/Bsline/rnbody_bspline_2modal/` = the
+  requested twin of `outputs/Bsline/legacy_bspline_2modal` (stream_fusion_2modal_oldgrid, B-spline
+  observation space, 1000 ep, batch 2048) with rnbody v4 + the OLD observation model: new presets
+  `conf/augmentation/stream_{global,real_global}_streamfinder_bspline.yaml` (grid_v2 pair with
+  `stream_summary_grid` -> `stream_bspline_grid`, knots 5/1, 20 grid pts) — running at session end.
+  **New `scripts/nn_learned_summary.py`**: N training rows through the exact training chain + the
+  trained summary net, real members through theirs, k-NN per stream in the STREAM / CURVE / fused
+  slices of the learned summary (fusion order = adapter summary_variables: sim_summary first), tables
+  vs the prior + q histograms (`eval_real/nn_learned_summary.{json,png,log}`). Gotcha: keras cannot
+  deserialize `approximator.keras` unless `build_workflow(cfg)` ran first in the process (the
+  `WrappedSummaryNetwork` class is defined lazily inside `_as_summary_network`; evaluate gets this
+  for free). **Why the MLP run reads prolate**: in the learned stream slice the 100 nearest training
+  rows to real Pal5 / M68 have q 1.09 [0.88,1.34] / 1.10 [0.84,1.25] — the OBLATE side (q<0.85) is
+  nearly absent among look-alikes, not a peak at 1.3 — while NGC3201's neighbours drop q>1.3 (0.96
+  [0.73,1.23]); the network's per-stream posteriors (1.25/0.95/1.26) are the same lean sharpened
+  beyond what the neighbours support. Look-alikes also share a heavy disk (+0.8 sd), Pal5 a short
+  t_end (3.2 Gyr, -1.2 sd), M68 a light progenitor (-0.7 sd) and low gamma. Typicality: Pal5 39 pct
+  (typical), NGC3201 85, M68 82. The CURVE slice puts the real Ou+2024 curve at the 87-94th pct for
+  all three: its neighbours have low M200 (-1 sd), large r_Disk (+1.1 sd), heavy Sigma_Disk (+0.9
+  sd) and q ~ prior — the curve is q-blind, the prolate lean is entirely the stream channel.
+  **rnbody_bspline_2modal finished** (README in the run dir): sim base 0.756/0.013, compositional 0.728/0.041
+  (halo-only miscalibration again); real q_halo **0.99 [0.84,1.19]**, per stream 1.29/0.90/1.03; gamma 0.97,
+  log10 M200 11.79, Sigma_Disk 1.26e9; MMD 2.69 p_strat 0.03, members 85/93/90. Versus the binned-grid MLP
+  sibling (q 1.13, per stream 1.25/0.95/1.26): the two summaries agree on Pal5 prolate / NGC3201 oblate and
+  disagree on M68 (1.26 vs 1.03), which is what flips the pooled q. Learned-summary NN (stream slice): Pal5
+  q 1.10 (+0.35 sd), NGC3201 0.76 (-0.88), M68 0.92 (-0.24); heavy disk everywhere; curve slice q-blind with
+  low M200 / large r_Disk / heavy disk. Both runs mildly overfit (1.16x / 1.23x), best weights restored.
+
+- Session 2026-09-24 (smoothing B-spline PPC of the rnbody v4 **bv21_p1e3prior** 1e5 set vs BOTH member catalogues):
+  `outputs/Bsline/rnbody_v4_bv21_p1e3prior/` (README + `ppc_streamfinder_stream_smoothing/` with `stream_global`, and
+  `ppc_desi_m68palau_main_stream_smoothing/` with `stream_global_v5`; 3000 rows/stream, seed 0, smoothing only per user;
+  composed via the v4 simulator yaml since no `..._bv21_p1e3prior.yaml` exists in `conf/` — same windows; priors are
+  read off the npz anyway). Every track inside the sim 5-95 % band, |z|max <= 2.1 (one Pal5 mu_phi1 point); typicality
+  63/50/19 (STREAMFINDER) vs 67/48/14 (DESI+Palau main) — indistinguishable from the plain v4 rnbody run (67/46/18), so
+  the BV21 phase-space priors move nothing the B-spline tracks measure. Palau-main M68: phi2/mu_phi2 z -0.48/-0.71
+  (was -0.01/-0.05 with the 297-star arm), 16 velocities → v_los inside 0.90. NN q prior-like everywhere
+  (0.91-1.00; Palau M68 1.12, +0.4 sd); heavy disk +0.3-0.9 sd, Pal5 t_end 3.8 Gyr (-1.0 sd) as before.
+  **Rerun at 1e4 rows/stream, k=300** (`*_1e4/`): all z/coverage reproduce to <=0.02; typicality 61/51/18 vs
+  67/42/41; NN q 0.92/1.01/1.01 (STREAMFINDER) and 0.94/0.96/1.16 (DESI+Palau) — the k=100 oblate lean was noise, the
+  Palau-main M68 prolate lean holds (+0.56 sd); heavy disk + short Pal5 t_end stable.

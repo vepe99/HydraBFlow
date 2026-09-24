@@ -1,0 +1,13 @@
+# SMOOTHING B-spline observation space (penalized spline, GCV lambda from the real members) on the OLD observation model: `stream_global_ibata_grid_v2` (stream_global
+# chain — member-table magnitudes, DR3 sigma(G) table, mean v_los impute, Ibata+2024 STREAMFINDER members
+# 129/195/297) with the binned summary grid replaced by `stream_bspline_grid` (same knots/grid as
+# `stream_global_palau23_dr3_bspline`). Pair with model=stream_fusion_2modal_oldgrid, adapter=stream_2modal
+# and the real twin `stream_real_global_streamfinder_bspline`.
+defaults:
+  - stream_global_streamfinder_bspline
+
+params:
+  bspline_fit: smoothing            # penalized spline: dense uniform knots + lambda * sum(d2 c)^2 / h^3
+  bspline_smoothing_knots: 20       # interior knots over the real phi1 range (astrometric tracks)
+  bspline_smoothing_vlos_knots: 6   # same for v_los (measured stars only)
+  bspline_smoothing_lambda: gcv     # scipy GCV on the real members, per (stream, observable); or a float

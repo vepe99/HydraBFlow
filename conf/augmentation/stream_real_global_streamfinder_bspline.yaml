@@ -1,0 +1,19 @@
+# Real-data twin of `stream_global_streamfinder_bspline`.
+defaults:
+  - stream_real_global_ibata_grid_v2
+
+steps:
+  - sample_obs_error
+  - impute_vlos
+  - log10_vcirc
+  - stream_bspline_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  bspline_interior_knots: 5
+  bspline_vlos_interior_knots: 1
+  bspline_grid_points: 20
+  bspline_ridge: 1.0e-3
