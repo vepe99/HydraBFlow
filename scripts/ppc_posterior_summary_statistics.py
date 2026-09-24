@@ -64,6 +64,10 @@ def main():
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--out", default=None, help="figure path (default: <run-dir>/"
                     "ppc_posterior_summary_statistics_<source>.png)")
+    ap.add_argument("--n-workers", type=int, default=None,
+                    help="override simulator.params.n_workers (shared-box etiquette)")
+    ap.add_argument("--n-particles", type=int, default=None,
+                    help="override simulator.params.n_particles")
     ap.add_argument("--noise", action="store_true",
                     help="apply the run's training observation model (Gaia window/subsample/DR3 "
                     "noise/vlos mask) to the re-simulated streams before binning — fair "
@@ -78,6 +82,10 @@ def main():
     from hydrabflow.simulators.stream_common import sample_prior_value
 
     cfg = OmegaConf.load(os.path.join(args.run_dir, ".hydra", "config.yaml"))
+    if args.n_workers:
+        cfg.simulator.params.n_workers = args.n_workers
+    if args.n_particles:
+        cfg.simulator.params.n_particles = args.n_particles
     sim = get_simulator(cfg.simulator)
     log10_keys = set(log10_keys_from_pipeline(build_pipeline(cfg.preprocessing)))
 
@@ -135,6 +143,8 @@ def main():
         )  # (n, m)
         flat[key] = cols.reshape(n * m, 1)
 
+    # stream index per row (draw-major), needed by simulate's in-window storage cap
+    flat["j"] = np.tile(np.array([jj for _, jj in streams], dtype=float), n).reshape(n * m, 1)
     out = sim.simulate(flat, np.random.default_rng(args.seed + 1))
     grouped = out["sim_data_projected"].reshape(n, m, -1, 6)
 

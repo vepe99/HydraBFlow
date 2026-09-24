@@ -102,12 +102,16 @@ def main():
     consts = _identity_constants(params["priors_global"])
 
     split = float(params.get("obs_r_split_kpc", float(sc.OBS_R_KPC.max())))
-    extended = str(params.get("obs_r_grid", "")) == "extended"
+    grid = str(params.get("obs_r_grid", ""))
+    extended = grid == "extended"
     if extended:
         obs_r, obs_vc, obs_sig = sc.extended_rotation_curve(split)
+    elif grid == "custom":  # explicit config table (v4: Ou et al. 2024)
+        obs_r, obs_vc, obs_sig = (np.asarray(params[k], float)
+                                  for k in ("obs_r_kpc", "obs_vc_kms", "obs_sigma_vc"))
     else:
         obs_r, obs_vc, obs_sig = sc.OBS_R_KPC, sc.OBS_VC_KMS, sc.OBS_SIGMA_VC
-    is_huang = obs_r > split
+    is_huang = (obs_r > split) if extended else np.zeros(obs_r.size, bool)
 
     target = {str(k): int(v) for k, v in params["target_streams"].items()}
     idx_to_name = {v: k for k, v in target.items()}
@@ -130,12 +134,16 @@ def main():
     groups = [("Combined", rows(global_post, 0))]
     for gi in range(stream_post[post_keys[0]].shape[0]):
         groups.append((idx_to_name.get(gi, f"stream{gi}"), rows(stream_post, gi)))
+    # curve at the per-parameter posterior MEDIAN (all saved draws), one per group
+    med_rows = [{**consts, **{k: float(np.median(global_post[k][0])) for k in post_keys}}]
+    for gi in range(stream_post[post_keys[0]].shape[0]):
+        med_rows.append({**consts, **{k: float(np.median(stream_post[k][gi])) for k in post_keys}})
 
     print("Rotation-curve PPC (Ibata/m200_c potential) | reusing saved posterior draws (NO re-sampling)")
     print(f"halo_parameterization={pot_cfg.get('halo_parameterization', 'rho_a')} | "
           f"gas_disks={pot_cfg.get('gas_disks')} thick_disk={pot_cfg.get('thick_disk')} "
           f"disk_vertical={pot_cfg.get('disk_vertical')} r_t={pot_cfg.get('halo_r_t_kpc')} kpc")
-    print(f"grid: {'extended Zhou u Huang' if extended else 'Zhou'} ({obs_r.size} radii, "
+    print(f"grid: {grid or 'Zhou'} ({obs_r.size} radii, "
           f"split {split} kpc) | {n} draws x {len(groups)} groups = {n * len(groups)} curves")
 
     agama = _agama()
@@ -150,10 +158,15 @@ def main():
                 pass
         return out
 
-    curves = {}
-    for name, group_rows in groups:
+    curves, med_curves = {}, {}
+    for (name, group_rows), mrow in zip(groups, med_rows):
         vc = vcirc_stack(group_rows)
         curves[name] = vc
+        med_curves[name] = vcirc_stack([mrow])[0]
+        fdev_m = np.nanmedian(np.abs(med_curves[name] - obs_vc) / obs_vc)
+        chi2_m = np.nansum(((med_curves[name] - obs_vc) / obs_sig) ** 2)
+        print(f"  {name:10s}: curve at posterior-median params: median |frac dev| {fdev_m:5.1%}, "
+              f"chi2 {chi2_m:.1f} / {obs_r.size} pts")
         valid = np.isfinite(vc).all(axis=1)
         med = np.nanmedian(vc, axis=0)
         lo, hi = np.nanpercentile(vc, [2.5, 97.5], axis=0)
@@ -183,7 +196,10 @@ def main():
         ax.fill_between(r, lo95[order], hi95[order], color=c, alpha=0.15, lw=0)
         ax.fill_between(r, lo68[order], hi68[order], color=c, alpha=0.30, lw=0)
         ax.plot(r, med, color=c, lw=1.8, label="PPC median")
-        for mask, marker, lbl in [(~is_huang, "o", "Zhou 2023"), (is_huang, "s", "Huang 2016")]:
+        ax.plot(r, med_curves[name][order], color=c, lw=1.4, ls="--", label="median params")
+        obs_lbl = [(~is_huang, "o", "Ou 2024" if grid == "custom" else "Zhou 2023"),
+                   (is_huang, "s", "Huang 2016")]
+        for mask, marker, lbl in obs_lbl:
             if mask.any():
                 ax.errorbar(obs_r[mask], obs_vc[mask], yerr=obs_sig[mask], fmt=marker, ms=3.5,
                             color="0.15", ecolor="0.55", elinewidth=0.8, capsize=1.5, lw=0,
