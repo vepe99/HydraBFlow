@@ -125,10 +125,12 @@ def main():
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--max-scatter", type=int, default=4000, help="sim stars drawn per panel (plot size)")
     ap.add_argument("--out", default=None, help="output dir (default: <local-run>/ppc_joint)")
-    ap.add_argument("--fit", default="pspline", choices=("pspline", "smoothing"),
+    ap.add_argument("--fit", default="aug", choices=("aug", "pspline", "smoothing"),
                     help="pspline = the TRAINING estimator (stream_bspline_grid bspline_fit=smoothing): uniform knots + "
                          "2nd-difference penalty, knot range/occupancy knots and lambda from the training real_streams_file; "
-                         "smoothing = scipy make_smoothing_spline with GCV lambda on the plotted members")
+                         "smoothing = scipy make_smoothing_spline with GCV lambda on the plotted members; "
+                         "aug = real members AND every sim through the local model's own TRAINING stream_bspline_grid "
+                         "(== ppc_bspline_nn --fit aug)")
     ap.add_argument("--lam", type=float, default=None,
                     help="pin the spline lambda (real + every sim) instead of the GCV value; output files get a _lam<value> suffix")
     ap.add_argument("--reuse", action="store_true",
@@ -231,15 +233,37 @@ def main():
     sfx = ("" if args.fit == "smoothing" else f"_{args.fit}") + ("" if args.lam is None else f"_lam{args.lam:g}")
     n_int = {"track": 5, "vlos": 1}
     report = {}
+    if args.fit == "aug":   # the training augmentation itself: frames, knots, lambda/model fixed from its real members
+        from hydrabflow.registry import AUGMENTATIONS
+        gp = aug_cfg.params
+        grid_fn = AUGMENTATIONS.get("stream_bspline_grid")(gp, np.random.default_rng(args.seed))
+        skey = gp.get("summary_key", "sim_summary")
+
+        def aug_grid(stars, att, vm, jv):
+            b = {"sim_data_projected": np.asarray(stars, np.float32), "attention_mask": np.asarray(att, np.float32)[:, None],
+                 "vlos_mask": np.asarray(vm, np.float32)[:, None], "j": np.asarray(jv, np.float32).reshape(-1, 1)}
+            return np.asarray(grid_fn(b)[skey])   # (n, G, 9): 5 obs, valid_track, valid_vlos, j, track grid
     fig, axes = plt.subplots(m, len(OBS), figsize=(4.2 * len(OBS), 3.4 * m), squeeze=False)
     for s, (name, j) in enumerate(streams):
         Fr = real_tab[name]
         report[name] = {}
+        if args.fit == "aug":
+            rst, rvm = real[j]
+            o_real = aug_grid(rst[None], np.ones((1, len(rst))), rvm[None], [j])[0]
+            o_sim = aug_grid(noisy[:, s], attn[:, s], vmask[:, s], np.full(n, j))
+            okv = np.isfinite(Fr[:, 5])
+            vgrid = np.linspace(Fr[okv, 0].min(), Fr[okv, 0].max(), o_real.shape[0])   # vlos grid = real measured range
         for c, (key, lab, col) in enumerate(OBS):
             ax = axes[s, c]
             kind = "vlos" if key == "vlos" else "track"
             okr = np.isfinite(Fr[:, col])
-            if args.fit == "pspline":   # training: knots over the reference members, their GCV lambda applied to everyone
+            if args.fit == "aug":
+                vch = 6 if key == "vlos" else 5
+                grid = vgrid if key == "vlos" else o_real[:, 8]
+                real_curve = np.where(o_real[:, vch] > 0, o_real[:, col - 1], np.nan)
+                curves = [np.where(o[:, vch] > 0, o[:, col - 1], np.nan) if a_.sum() >= 8 else np.full(len(grid), np.nan)
+                          for o, a_ in zip(o_sim, attn[:, s])]
+            elif args.fit == "pspline":   # training: knots over the reference members, their GCV lambda applied to everyone
                 Fref = ref_tab[name]
                 okf = np.isfinite(Fref[:, col])
                 t = bsp.knots(Fref[okf, 0], n_int[kind])
@@ -252,12 +276,13 @@ def main():
                 t = bsp.knots(Fr[okr, 0], n_int[kind])
                 grid = np.linspace(t[0], t[-1], 40)
                 real_curve, lam = bsp.spline_on_grid(Fr[okr, 0], Fr[okr, col], t, grid, lam=args.lam, return_lam=True, kind=kind)
-            curves = []
-            for F in sim_tab[name]:
-                if F is None:
-                    continue
-                ok = np.isfinite(F[:, col])
-                curves.append(bsp.spline_on_grid(F[ok, 0], F[ok, col], t, grid, lam=lam, kind=kind))
+            if args.fit != "aug":
+                curves = []
+                for F in sim_tab[name]:
+                    if F is None:
+                        continue
+                    ok = np.isfinite(F[:, col])
+                    curves.append(bsp.spline_on_grid(F[ok, 0], F[ok, col], t, grid, lam=lam, kind=kind))
             C = np.array(curves) if curves else np.full((1, len(grid)), np.nan)
             usable = np.isfinite(C).all(axis=1)
             C = C[usable]

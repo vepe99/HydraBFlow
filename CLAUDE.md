@@ -2863,3 +2863,44 @@ Knowledge graph at `graphify-out/`.
   300-epoch model is already converged for the real-data conclusions; the M68 sky-track and
   NGC3201 pm residuals are forward-model/potential residuals. Report page "Local Posteriors
   2000 Epochs".
+- Session 2026-09-26 (LOCAL model on PARTICLES + rotation curve — running): tests the hypothesis that
+  the B-spline local model loses `t_end` because its knots/grid sit on the REAL members' phi1 range,
+  so the simulated stream's own extent never reaches the network; the raw star cloud through the
+  legacy `stream_global` observation model (RA/Dec window, 129/195/297 attended stars) keeps the
+  in-window length. New presets `adapter/stream_2modal_particles_local` (conditions derived = the 7
+  globals, `j` dropped — channel 14 of the particles) + `model/stream_fusion_2modal_particles_local`
+  (the 2modal particle summary net: masked SetTransformer + curve TST, head null, + coupling_flow).
+  Everything else = `spray_p1e3_v4_smoothing_local_1000ep` (3e5 p1e3 spray v4 set, per-stream data
+  z-score of the locals, same ancestral real stage with `spray_p1e3_v4_smoothing_2modal/eval_real`
+  globals), plus `vlos_impute=zero`, STREAMFINDER members, batch 1024. CPU smoke (600 rows / 6
+  groups) ran all three stages. Run `outputs/Bsline/spray_p1e3_v4_particles_local/` (launch.sh ->
+  run.log, GPU 3, ~22 s/epoch, 25 GB ⇒ ~6 h for 1000 epochs). Compare per-stream t_end recovery vs
+  the B-spline runs (Pal5 r 0.59, M68 0.37, NGC3201 unconstrained, at 300 ep).
+- Session 2026-09-26 (B-spline prior-predictive check of the p1e3 **prog2026** spray v4 300k set, using the core080
+  augmentation of `tuningtest_2modal_bspline_core080_study`): `outputs/Bsline/streamfinder_spray_p1e3_v4_prog2026/
+  ppc_stream_aug_core080/` (run.sh, report.json, ppc_/nearest_ figures). `ppc_bspline_nn.py --fit aug` puts every
+  spline through the training `stream_bspline_grid` of `stream_global_streamfinder_bspline_core080` (real twin
+  `stream_real_global_streamfinder_bspline_core080`, STREAMFINDER members, old observation model). 10^4 rows/stream,
+  k=300. There is no `conf/simulator/*prog2026*` yaml, so the v4 spray yaml is used for composition (same windows;
+  priors come from the npz). Needs `OPENBLAS_NUM_THREADS=8`, otherwise it dies with `malloc(): corrupted top size`.
+  Result: the same as the p1e3 set the study tuned on, within ~0.1 z everywhere. Every track is inside the sim 90 %
+  band, all |z|max < 1.5, with one exception: Pal5 parallax is inside only 0.45 of the grid (real at the 2.6th pct,
+  unchanged from the old run, so it is observation-model side). Typicality 88/16/39 pct (old 90/18/51). M68 has 6069
+  usable rows of 10^4. k-NN leans: heavy disk (+0.6-0.8 sd) for all three, NGC3201 oblate (q 0.88, -0.43 sd).
+- Session 2026-09-26 (prog2026 core080 trial14 real-data PPCs — rotation curve + local ancestral + joint
+  PPC; `ppc_joint_posterior.py --fit aug`): (1) rotation-curve PPC (`scripts/ppc_rotation_curve_ibata.py`,
+  200 reused draws/group, Ou+2024 grid, m200_c potential) on `spray_p1e3_v4_prog2026_core080_2modal_trial14/
+  eval_real`: <=1.6 % median |frac dev| for Combined/Pal5/NGC3201/M68 (chi2 at median params 22.5/11.4/19.5/15.7
+  over 19 pts), but every group runs 5-15 km/s HIGH beyond 20 kpc (95 % band misses the 20-23.5 kpc points; pooled
+  band narrowest, covers 26 %). (2) Ancestral real-data stage of the local model
+  `spray_p1e3_v4_prog2026_core080_local` (approximator.keras = restored best weights) with trial14's 1000 pooled
+  globals -> `.../core080_local/eval_real`: t_end Pal5 2.50 [2.06,3.77] (floor), NGC3201 3.68, M68 4.06 [2.47,4.89]
+  (leans to the new 5 Gyr ceiling); masses/vr prior-like. (3) Joint PPC (40 paired draws re-simulated, 1e3
+  particles): **the B-spline must be the model's TRAINING `stream_bspline_grid`** — added `--fit aug` (now the
+  default) to `ppc_joint_posterior.py`: real members and every sim go through the local model's own augmentation
+  (from its model_dir config), reproducing the real curves of `streamfinder_spray_p1e3_v4_prog2026/
+  ppc_stream_aug_core080/ppc_*.png`; the earlier `pspline` numbers were a different estimator and are superseded.
+  With aug: Pal5 covered except parallax (inside 0.45, z -1.7, as in the prior check); NGC3201 covered (mu_phi1
+  0.60, z +0.7); **M68 phi2 bow persists** (inside 0.20, z +2.9, real ~2 deg above the posterior sims at phi1 30-70)
+  though it sat inside the (much wider) prior band. Artifacts `.../core080_local/eval_real/ppc_joint/
+  ppc_joint_bspline_aug.png` + `ppc_joint_aug.json`. Also committed the prog2026 core080 train/tune/local runners.
