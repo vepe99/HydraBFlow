@@ -1,0 +1,15 @@
+# GPU twin of the PPC outputs/Bsline/streamfinder_spray_p1e3_v4/ppc_spray_p1e3_v4_stream_pspline_core080_lamx10_m68vlosfull_deg2_knots0:
+# published STREAMFINDER (Ibata+2024 Table 3) great-circle frames; penalized spline on uniformly EXTENDED knots
+# (20 track / 6 v_los interior) fitted to the real members' central 80 % phi1 range and extrapolated linearly
+# (chord over the outer 10 % of the core) to the real range ends; lambda = 10 x scipy GCV on all real stars;
+# M68 v_los = one global quadratic over ALL its measured stars. Reproduces that PPC's real curves to float32
+# (max 0.07 km/s on M68 v_los). Real twin: stream_real_global_streamfinder_bspline_core080.
+defaults:
+  - stream_real_global_streamfinder_bspline_smoothing
+
+params:
+  summary_frame: streamfinder
+  bspline_core_frac: 0.8
+  bspline_smoothing_lambda_scale: 10.0
+  bspline_vlos_full_range: [M68]
+  bspline_models: {M68: {vlos: poly2}}

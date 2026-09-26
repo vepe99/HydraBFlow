@@ -1,0 +1,9 @@
+# Real-data twin of stream_global_m68palau (same steps as stream_real_global).
+defaults:
+  - stream_real_global
+
+params:
+  observed_n_stars:
+    M68: 195
+  min_star_with_vlos:
+    M68: 16

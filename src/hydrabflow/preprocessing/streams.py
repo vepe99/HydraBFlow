@@ -45,35 +45,61 @@ def _stream_index(data: Dataset, stream_key: str, like: np.ndarray) -> np.ndarra
 
 @register_step("per_stream_parameter_standardize")
 class PerStreamParameterStandardize(PreprocessStep):
-    """z-score each stream's local parameters with that stream's prior mean/std."""
+    """z-score each stream's local parameters with that stream's own mean/std (prior spec or fitted)."""
 
     name = "per_stream_parameter_standardize"
 
     def __init__(
         self,
-        priors: Mapping[str, Mapping[str, Mapping]],
+        priors: Mapping[str, Mapping[str, Mapping]] | None,
         target_streams: Mapping[str, int],
         keys: Iterable[str] | None = None,
         stream_key: str = "j",
+        source: str = "prior",
     ) -> None:
+        """``source``: ``prior`` (mean/std from the normal prior spec, deterministic) or ``data``
+        (per-stream empirical mean/std fitted on the train split in :meth:`fit`, saved in the
+        state; works for any prior type)."""
+        if source not in ("prior", "data"):
+            raise ValueError(f"per_stream_parameter_standardize: source must be prior|data, got {source!r}")
         self.stream_key = stream_key
-        self.keys = list(keys) if keys is not None else inferred_names(
-            next(iter(priors.values()))
-        )
+        self.source = source
+        if keys is not None:
+            self.keys = list(keys)
+        elif priors:
+            self.keys = inferred_names(next(iter(priors.values())))
+        else:
+            raise ValueError("per_stream_parameter_standardize: `keys` is required when no priors are given")
         n_streams = max(int(v) for v in target_streams.values()) + 1
         # (n_streams, n_keys) lookups indexed by the j column.
         self.mean = np.zeros((n_streams, len(self.keys)))
         self.std = np.ones((n_streams, len(self.keys)))
+        if source == "data":
+            return
         for name, j in target_streams.items():
             for i, key in enumerate(self.keys):
                 spec = priors[name][key]
                 if spec["type"] != "normal":
                     raise ValueError(
                         f"per_stream_parameter_standardize expects normal priors; "
-                        f"'{key}' of stream '{name}' is '{spec['type']}'"
+                        f"'{key}' of stream '{name}' is '{spec['type']}' (use source: data)"
                     )
                 self.mean[int(j), i] = float(spec["prior_parameters"][0])
                 self.std[int(j), i] = float(spec["prior_parameters"][1])
+
+    def fit(self, data: Dataset) -> None:
+        if self.source != "data":
+            return
+        j_all = np.asarray(data[self.stream_key]).reshape(-1).astype(int)
+        for i, key in enumerate(self.keys):
+            if key not in data:
+                continue
+            x = np.asarray(data[key], dtype=float).reshape(len(j_all), -1)
+            for j in np.unique(j_all):
+                rows = x[j_all == j]
+                self.mean[j, i] = np.nanmean(rows)
+                std = np.nanstd(rows)
+                self.std[j, i] = std if np.isfinite(std) and std > 0 else 1.0
 
     def transform(self, data: Dataset) -> Dataset:
         out = dict(data)

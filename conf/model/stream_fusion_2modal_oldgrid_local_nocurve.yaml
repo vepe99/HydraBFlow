@@ -1,0 +1,16 @@
+# stream_fusion_2modal_oldgrid_local without the curve branch: the sim_summary TST backbone alone
+# (same hyperparameters) + coupling flow. Pair with adapter=stream_streams_local.
+defaults:
+  - override summary_network: time_series_transformer
+  - override inference_network: coupling_flow
+  - _self_
+
+name: stream_fusion_2modal_oldgrid_local_nocurve
+summary_network:
+  summary_dim: 32
+  num_blocks: 3
+  num_heads: 4
+  dropout: 0.1
+  embed_dim_per_head: 8
+  params:
+    time_axis: -1

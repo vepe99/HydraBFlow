@@ -1,0 +1,12 @@
+# stream_2modal_local WITHOUT the rotation curve: locals conditioned on the stream summary + the TRUE
+# globals only. vcirc_kms stays in `drop` (kept for the augmentation chain, pruned before the net);
+# attention_mask dropped too -- with a single (non-fusion) backbone it would be routed into the gridded
+# TST (n_stars vs K bins). Pair with model=stream_fusion_2modal_oldgrid_local_nocurve.
+inference_variables: []
+summary_variables: [sim_summary]
+inference_conditions: []
+drop:
+  - sim_data_projected
+  - j
+  - vcirc_kms
+  - attention_mask

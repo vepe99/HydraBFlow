@@ -149,20 +149,24 @@ def main():
     agama = _agama()
     agama.setNumThreads(1)
 
+    # dense radii for the overlay figure (1 kpc -> just past the outermost Huang 2016 point)
+    r_dense = np.geomspace(1.0, 1.05 * sc.HUANG_R_KPC.max(), 120)
+    radii = np.concatenate([obs_r, r_dense])
+
     def vcirc_stack(group_rows):
-        out = np.full((len(group_rows), obs_r.size), np.nan)
+        out = np.full((len(group_rows), radii.size), np.nan)
         for i, p in enumerate(group_rows):
             try:
-                out[i] = _vcirc(_host_potential(agama, p, pot_cfg), obs_r)
+                out[i] = _vcirc(_host_potential(agama, p, pot_cfg), radii)
             except Exception:
                 pass
-        return out
+        return out[:, :obs_r.size], out[:, obs_r.size:]
 
-    curves, med_curves = {}, {}
+    curves, med_curves, dense = {}, {}, {}
     for (name, group_rows), mrow in zip(groups, med_rows):
-        vc = vcirc_stack(group_rows)
+        vc, dense[name] = vcirc_stack(group_rows)
         curves[name] = vc
-        med_curves[name] = vcirc_stack([mrow])[0]
+        med_curves[name] = vcirc_stack([mrow])[0][0]
         fdev_m = np.nanmedian(np.abs(med_curves[name] - obs_vc) / obs_vc)
         chi2_m = np.nansum(((med_curves[name] - obs_vc) / obs_sig) ** 2)
         print(f"  {name:10s}: curve at posterior-median params: median |frac dev| {fdev_m:5.1%}, "
@@ -176,11 +180,13 @@ def main():
               f"median |frac dev| {fdev:5.1%} | 95% band covers {cover:5.1%} of obs points")
 
     import matplotlib
+    import matplotlib.ticker
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    colors = {"Combined": "k", "Pal5": "#d7191c", "NGC3201": "#2c7bb6", "M68": "#fdae61"}
+    # same palette as evaluate_real's global-vs-streams corner: RdYlBu_r over [pooled, streams in j order]
+    colors = dict(zip([g for g, _ in groups], plt.cm.RdYlBu_r(np.linspace(0, 1, len(groups)))))
     fig, axes = plt.subplots(1, len(groups), figsize=(4.2 * len(groups), 4.2),
                              sharex=True, sharey=True)
     if len(groups) == 1:
@@ -217,6 +223,45 @@ def main():
     out = args.out or os.path.join(args.run_dir, "ppc_rotation_curve.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
     print(f"\nSaved {out}")
+
+    # Overlay figure: one broken r-axis, linear 1-R_BREAK kpc | log R_BREAK-100 kpc, all groups
+    # together, the run's own observed curve plus Huang et al. (2016) out to ~100 kpc.
+    r_break = 30.0
+    fig, (axl, axr) = plt.subplots(1, 2, figsize=(8.5, 5.8), sharey=True,
+                                   gridspec_kw={"wspace": 0, "width_ratios": [1.3, 1]})
+    own_lbl = "Ou 2024" if grid == "custom" else "Zhou 2023"
+    own = ~is_huang
+    for ax in (axl, axr):
+        for name, _ in groups:
+            vc, c = dense[name], colors.get(name, "purple")
+            lo, hi = np.nanpercentile(vc, [16, 84], axis=0)
+            ax.fill_between(r_dense, lo, hi, color=c, alpha=0.25, lw=0)
+            ax.plot(r_dense, np.nanmedian(vc, axis=0), color=c, lw=1.6, label=f"{'Global' if name == 'Combined' else name} (median, 68%)")
+        ax.errorbar(obs_r[own], obs_vc[own], yerr=obs_sig[own], fmt="o", ms=3.5, color="0.1",
+                    ecolor="0.45", elinewidth=0.8, capsize=1.5, lw=0, label=own_lbl, zorder=5)
+        hu = sc.HUANG_R_KPC > 25.0  # Huang 2016 only beyond 25 kpc
+        ax.errorbar(sc.HUANG_R_KPC[hu], sc.HUANG_VC_KMS[hu], yerr=sc.HUANG_SIGMA_VC[hu], fmt="s", ms=3.5,
+                    mfc="white", color="0.3", ecolor="0.6", elinewidth=0.8, capsize=1.5, lw=0,
+                    label="Huang 2016", zorder=4)
+        ax.grid(alpha=0.2)
+    axl.set_xlim(1.0, r_break)
+    axr.set_xscale("log")
+    axr.set_xlim(r_break, r_dense.max())
+    axr.set_xticks([40, 50, 70, 100])
+    axr.set_xticks([], minor=True)
+    axr.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    axl.spines["right"].set_visible(False)
+    axl.axvline(r_break, color="0.4", ls="--", lw=1, clip_on=False, zorder=6)  # linear|log join
+    axr.spines["left"].set_visible(False)
+    axr.tick_params(axis="y", which="both", left=False)
+    axl.set_xlabel("r [kpc] (linear)")
+    axr.set_xlabel("r [kpc] (log)")
+    axl.set_ylabel(r"$v_\mathrm{circ}$ [km/s]")
+    axl.legend(fontsize=8, loc="lower center", framealpha=0.9, ncol=2)
+    fig.suptitle(f"Rotation-curve PPC ({n} posterior draws/group)")
+    out2 = os.path.splitext(out)[0] + "_overlay.png"
+    fig.savefig(out2, dpi=150, bbox_inches="tight")
+    print(f"Saved {out2}")
 
 
 if __name__ == "__main__":

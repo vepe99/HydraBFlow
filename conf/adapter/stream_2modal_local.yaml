@@ -1,0 +1,15 @@
+# Local-level twin of stream_2modal: infer each stream's LOCAL parameters conditioned on the stream
+# B-spline/grid summary, the rotation curve (fusion backbones) and the TRUE global parameters.
+# `inference_conditions: []` = derive from the simulator at composition=local (globals + context
+# keys); `j` is in `drop`, so fill_adapter_from_simulator leaves it out of the conditions -- it is
+# already channel -2 of sim_summary. Pair with composition=local, model=stream_fusion_2modal_oldgrid_local,
+# preprocessing=stream_local_log10_sumstats_2modal.
+inference_variables: []
+summary_variables:
+  - sim_summary
+  - vcirc_kms
+inference_conditions: []
+drop:
+  - sim_data_projected
+  - j
+attention_mask_key: attention_mask

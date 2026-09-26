@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 GPU=${GPU:-auto}
 if [ "${GPU}" = "auto" ]; then eval "$(.venv/bin/autocvd -l -e -n 1)"; else export CUDA_VISIBLE_DEVICES="${GPU}"; fi
-export XLA_PYTHON_CLIENT_PREALLOCATE=false
+export XLA_PYTHON_CLIENT_PREALLOCATE=${XLA_PYTHON_CLIENT_PREALLOCATE:-false}   # caller may set true to grab the card up front
 
 SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_palau}
 DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_palau_hydrabflow}

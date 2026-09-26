@@ -114,6 +114,15 @@ class StreamFrames:
         vm = vm[:, 0, :] if vm.ndim == 3 else vm  # (rows, P)
         jarr = np.asarray(d["j"]).reshape(-1).astype(int)  # (rows,)
 
+        # `summary_frame`: "fit" (default) = a great circle fitted to the real members; "streamfinder" = the
+        # PUBLISHED Ibata+2024 Table 3 frame, which does not move with the member catalogue
+        frame_mode = str(params.get("summary_frame", "fit")).lower()
+        if frame_mode not in ("fit", "streamfinder"):
+            raise ValueError(f"summary_frame must be 'fit' or 'streamfinder', got {frame_mode!r}")
+        if frame_mode == "streamfinder":
+            from hydrabflow.simulators.stream_frame import frames as _published
+            pub = _published(names=tuple(target))
+        name_of = {v: k for k, v in target.items()}
         ra_c, dec_c = channels["ra"], channels["dec"]
         self.R = np.repeat(np.eye(3)[None], n_streams, axis=0)
         self.track_edges = np.repeat(np.linspace(-1, 1, k_track + 1)[None], n_streams, axis=0)
@@ -128,7 +137,7 @@ class StreamFrames:
                 continue
             s = sim[row][mem]
             vmeas = (vm[row].astype(bool) & mem)[mem]
-            R_j = _np_fit_frame(s[:, ra_c], s[:, dec_c])
+            R_j = pub[name_of[j]] if frame_mode == "streamfinder" else _np_fit_frame(s[:, ra_c], s[:, dec_c])
             phi1 = _np_phi1(R_j, s[:, ra_c], s[:, dec_c])
             self.R[j] = R_j
             src = phi1[vmeas] if vmeas.sum() > k_vlos else phi1
@@ -150,6 +159,7 @@ def _stream_frames(params: dict, k_track: int, k_vlos: int, channels: dict) -> S
             "kv": k_vlos,
             "ch": channels,
             "edges": str(params.get("summary_bin_edges", "quantile")),
+            "frame": str(params.get("summary_frame", "fit")),
         },
         sort_keys=True,
     )

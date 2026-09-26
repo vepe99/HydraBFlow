@@ -2753,3 +2753,113 @@ Knowledge graph at `graphify-out/`.
   **Rerun at 1e4 rows/stream, k=300** (`*_1e4/`): all z/coverage reproduce to <=0.02; typicality 61/51/18 vs
   67/42/41; NN q 0.92/1.01/1.01 (STREAMFINDER) and 0.94/0.96/1.16 (DESI+Palau) — the k=100 oblate lean was noise, the
   Palau-main M68 prolate lean holds (+0.56 sd); heavy disk + short Pal5 t_end stable.
+- Session 2026-09-24 (LOCAL-level model on the smoothing-B-spline 2-modal stack — per-stream
+  locals conditioned on the true globals; coupling flow; training launched): the local twin of
+  `outputs/Bsline/spray_p1e3_v4_smoothing_2modal` (same 3e5-row p1e3 spray v4 set, same
+  `stream_*_streamfinder_bspline_smoothing` augmentation, same STREAMFINDER members). Infers each
+  stream's 6 locals `[m_progenitor, t_end, vr, r, mu_ra_cosdec, mu_dec]` from the stream B-spline +
+  the Ou+2024 curve (the two `stream_fusion_2modal_oldgrid` TST backbones, `head: null`, ALWAYS
+  observed — no modality dropout, the curve is just an extra constraint on the globals) + the 7 TRUE
+  globals as `inference_conditions` (log10 space for Sigma/r/z_Disk, standardized by BayesFlow).
+  Inference net = `coupling_flow` (user choice; bayesflow 2.0.13's `ancestral_sample` is
+  network-agnostic — `BasicWorkflow.ancestral_sample` → `inference_network.sample`, verified in
+  `approximators/continuous_approximator.py:356-455` — and `build_workflow` falls back to
+  `BasicWorkflow` for non-diffusion nets, which HAS it; `CompositionalWorkflow` merely inherits it).
+  Three gaps closed: (1) `per_stream_parameter_standardize` gained `source: prior|data` — `data`
+  fits each stream's empirical mean/std of the locals on the train split (`fit`), saved in
+  `preprocessing_state.npz` and replayed/inverted at eval (needed: v4 `m_progenitor`/`t_end` are
+  UNIFORM and the prior mode rejects them; `priors: null` allowed in data mode); (2)
+  `fill_adapter_from_simulator` now filters derived `inference_conditions` by `adapter.drop`, so at
+  composition=local the 2-modal adapter gets the 7 globals WITHOUT `j` (already channel -2 of
+  sim_summary; `drop` runs before `concatenate` in `build_adapter`, so `j` would KeyError); (3)
+  `training.standardize=[inference_variables,inference_conditions,summary_variables]` (the local
+  targets are already per-stream z-scored, so the first is a near-identity). Presets:
+  `adapter/stream_2modal_local`, `preprocessing/stream_local_log10_sumstats_2modal` +
+  `stream_real_local_log10`, `model/stream_fusion_2modal_oldgrid_local`. Runner
+  `scripts/train_local_2modal.sh` (train → `_evaluate_local` on the 333 grouped set = flatten,
+  condition on true globals, invert per stream via `j`, per-stream `Pal5_/NGC3201_/M68_
+  {recovery,calibration_ecdf,coverage,z_score_contraction}.png` + `_metrics.json` in physical
+  units; optional `[3/3]` real-data ancestral stage when `GLOBAL_RUN_DIR` is set, e.g.
+  `.../spray_p1e3_v4_smoothing_2modal/eval_real_5k` whose `posterior.npz` holds the 7 globals
+  `(1,5000,1)` in log10 space — evaluate_real.py:194-220 already does the ancestral call).
+  Launcher `outputs/Bsline/spray_p1e3_v4_smoothing_local/launch.sh` (300 epochs, batch 2048, seed
+  2026, GPU 6 via autocvd; `run.log`). CPU smoke on a 600-row/6-group slice verified the whole
+  chain (state table = 3 streams x 6 keys, posterior back in physical units). Tests: data-fit
+  round-trip + state reload, local adapter derivation drops `j` (test_streams.py; 50 green).
+  **Results** (`eval_sim_333`, 993 member rows, 1000 draws; training val_loss 8.46 -> 6.23, convergence
+  clean, final/best 1.0002): per-stream nRMSE (by prior std) / calibration error Pal5 **0.67 / 0.012**,
+  NGC3201 **0.88 / 0.014**, M68 **0.89 / 0.015** — every rank ECDF inside the 95 % band for all 6 locals
+  x 3 streams. What the track+curve+globals actually constrain: Pal5 proper motions (r 0.95/0.96),
+  distance (0.73), t_end partly (0.59); NGC3201 distance only (0.83; pm r 0.29/0.55); M68 distance and
+  mu_ra (0.70), mu_dec 0.51, t_end 0.37. **m_progenitor and vr sit at the prior for every stream** (r <=
+  0.39 / <= 0.35): the 0.06-0.21 km/s vr priors are far below anything a B-spline track resolves, and
+  the spray tail is mass-blind here. So a global posterior pushed through `ancestral_sample` will mostly
+  re-emit the local priors for mass/vr and tighten distances + Pal5 pm. Report gallery published as an
+  artifact ("Local Stream Posteriors").
+  **Real-data ancestral stage run** (`.../spray_p1e3_v4_smoothing_local/eval_real`, globals = 1000 pooled
+  compositional draws from `spray_p1e3_v4_smoothing_2modal/eval_real/posterior.npz`, one local draw each,
+  17 s on GPU 6; per-stream `posterior_pairs_obs{0,1,2}.png` = Pal5/NGC3201/M68 in physical units):
+  astrometry tightens AND shifts vs the priors — Pal5 d 20.43 (-0.9σ), mu_dec -2.705 (-0.9σ); NGC3201
+  d 4.679 (**-1.3σ**), mu_dec -1.972 (-0.6σ); M68 d 10.51 (+1.1σ), mu_ra **-2.702 (+1.5σ)**. t_end: Pal5
+  2.48 [2.14, 3.06] (short, at the prior floor — cf. the 2026-09-22 McMillan17 scan recommending 2.5-3),
+  M68 **8.6 [6.3, 9.6]** (long, cf. the 2026-07-16 "M68's lever is stripping age ~8 Gyr" probe), NGC3201
+  flat 3.3 [2.4, 4.6]. m_progenitor prior-like (mild low-mass pull for Pal5 2.8e4 and NGC3201 1.35e5);
+  vr = prior everywhere. Gallery artifact updated with a real-data section.
+  **Joint PPC** (`scripts/ppc_joint_posterior.py`, new; `eval_real/ppc_joint/{ppc_joint_scatter,
+  ppc_joint_bspline}.png` + `ppc_joint.json`): 40 PAIRED (global k, local k | global k) draws
+  re-simulated (spray, 1e3 particles, 24 workers, ~4 min), training observation model, STREAMFINDER
+  frames; scatter of attended stars + smoothing-B-spline tracks (real-fit GCV lambda held fixed for
+  the sims) with band coverage and median z. Parallax / pm / v_los tracks consistent for all three
+  streams (inside 0.55-0.97, |z_med| <= 0.5) EXCEPT the two familiar residuals: **M68 phi2 bows
+  ~+2 deg above the sims at phi1 30-70** (inside 0.35, z +1.7; STREAMFINDER arm also wider than any
+  realization) and **NGC3201 mu_phi1 above the sims** (inside 0.45, z +1.5; sim phi2 tails wider than
+  the members). Both persist with the inferred locals, so they are not phase-space/age
+  misfits — they are the forward-model/potential residuals of 2026-07-29 / 2026-09-21.
+  **Observation-space corners** (same script, `--reuse` skips the re-simulation; `ppc_joint_corner{5d,6d}_
+  <stream>.png`): 5-D (phi1, phi2, plx, mu_phi1, mu_phi2; all attended stars) and 6-D (+ v_los; stars
+  with a MEASURED v_los on both sides) — sims as 68/95 % density contours, Gaia members scattered on
+  top. Pal5: members inside the contours in every pair. NGC3201: members occupy phi1 -105..-35 while
+  the sims fill the whole window -120..-20 (the footprint/occupancy mismatch of 2026-09-14). M68 6-D:
+  the sims' measured-v_los stars split into the progenitor clump at (phi1 -17, phi2 -12) and the arm;
+  the members have no clump (the catalogue starts ~23 deg from the cluster, 2026-09-22) — a
+  member-selection effect, not a dynamics one.
+  **1000-epoch rerun** (`outputs/Bsline/spray_p1e3_v4_smoothing_local_1000ep/`, launch.sh: train 3.0 h,
+  val_loss 5.98 vs 6.23 at 300 ep, final/best 1.00005 → eval_sim_333 → eval_real ancestral with the
+  2modal `eval_real` globals): sim per-stream nRMSE/calib Pal5 0.652/0.017, NGC3201 0.869/0.013, M68
+  0.837/0.013 (300 ep: 0.670/0.012, 0.881/0.014, 0.889/0.015) — M68 distance/pm gain the most
+  (d 0.77→0.70, mu_dec 0.92→0.77), mass/vr still at the prior. Real posteriors agree with the 300-ep
+  run to <0.5 sigma of their own widths: Pal5 t_end 2.30 [2.10,2.71] (was 2.48), M68 t_end **9.1
+  [7.5,9.7]** (was 8.6, now pressing the 10 Gyr prior ceiling), distances/pm shifts unchanged
+  (Pal5 d 20.35, NGC3201 d 4.666 = -1.6σ, M68 mu_ra -2.689 = +2.1σ). Report page "Local Posteriors
+  1000 Epochs".
+  **Joint PPC on the 1000-ep run** (`..._1000ep/eval_real/ppc_joint/`, same script/settings): Pal5
+  improves everywhere (phi2 inside 0.85→0.95, v_los 0.65→0.82, parallax z -0.4→+0.1); NGC3201 same
+  verdict (mu_phi1 inside 0.35, z +1.6 — the persistent pm offset); **M68 phi2 bow WORSENS** (inside
+  0.35→0.25, z_med +1.7→+2.5) — the longer-trained model pushes M68's t_end to the 10 Gyr ceiling and
+  the resulting arms sit further below the real track at phi1 30-70; mu_phi2 slightly better (-1.4→
+  -1.2). So the M68 sky-track residual is not absorbed by the locals at any training length: it
+  grows as the fit tightens, i.e. it is a forward-model/potential residual.
+  **M68 age literature check** (web, 2026-09-25; user asked whether an M68 age estimate exists):
+  two different "ages". (1) STELLAR age of NGC 4590 = 12-13 Gyr (VandenBerg+2013 12.0; Alcaino+1990
+  13±2-3; recent UVIT/CMD fits 12.5-13.0) — irrelevant to `t_end`. (2) STREAM age / accretion time
+  (our `t_end`): **Palau & Miralda-Escudé 2025 (arXiv:2508.21408, MNRAS 545) infer 3.04
+  (-0.29/+5.63) Gyr with the posterior bounded by the UPPER prior edge (~8.7 Gyr)** — older ages
+  make their model stream too wide (frequency dispersion) so the likelihood plateaus; initial mass
+  1.25e5 Msun, mass-loss 0.496±0.030 Msun/Myr/arm. Palau & Miralda-Escudé 2019 (arXiv:1905.01193):
+  accreted "about 3 Gyr ago or more". Palau, Wang, Han+2026 (arXiv:2608.15334, DESI) do NOT
+  re-fit it: they FIX T = 3.04 Gyr (and note the observed section is ~1/4 of the stream length).
+  CORRECTION to the 2026-07-28 entry: the 3.04 (+5.63/-0.29) value is PM25's, not the 2026 paper's.
+  Our ancestral M68 t_end (8.6-9.1 Gyr, at the 10 Gyr ceiling) sits inside PM25's flat upper
+  tail, i.e. is not excluded by the literature but is where their likelihood carries no
+  information — and where our own PPC says the sky track gets worse.
+  **2000-epoch rerun** (`outputs/Bsline/spray_p1e3_v4_smoothing_local_2000ep/`, 6.0 h, val_loss 5.96 vs
+  5.98/6.23 at 1000/300 ep, converged, no overfit; + eval_sim, eval_real ancestral, joint PPC): sim
+  nRMSE/calib Pal5 0.640/0.021, NGC3201 0.864/0.016, M68 0.819/0.013 — accuracy gains are now
+  marginal (~0.01-0.02 per doubling) while Pal5's calibration error drifts up (0.012→0.017→0.021,
+  still inside the 95 % band). Real posteriors stable across 300/1000/2000: M68 t_end 9.1
+  [7.9, 9.8] (ceiling), Pal5 t_end 2.3, NGC3201 3.7; NGC3201 d 4.664 (-1.7σ), M68 mu_ra -2.702
+  (+1.5σ). PPC identical in character: Pal5 fully covered (phi2 inside 1.00), NGC3201 mu_phi1
+  z +1.7, M68 phi2 z +2.3 / inside 0.28. **Verdict: training length is not the lever** — the
+  300-epoch model is already converged for the real-data conclusions; the M68 sky-track and
+  NGC3201 pm residuals are forward-model/potential residuals. Report page "Local Posteriors
+  2000 Epochs".

@@ -1,0 +1,22 @@
+# tuningtest_2modal_oldgrid (every trial scored on the 333-group test set, then real Gaia) for the
+# SMOOTHING B-spline 2-modal model of outputs/Bsline/spray_p1e3_v4_smoothing_2modal/launch.sh: the real
+# evaluation goes through that run's real chain (stream_real_global_log10 +
+# stream_real_global_streamfinder_bspline_smoothing, STREAMFINDER members). eval.batch_size starts at 32;
+# tune.py halves it per evaluate subprocess on GPU OOM. Search space = stream_2modal_oldgrid.yaml.
+# Runner: outputs/Bsline/spray_p1e3_v4_smoothing_2modal/tune.sh
+defaults:
+  - tuningtest_2modal_oldgrid
+study_name: tuningtest_2modal_bspline_smoothing_study
+test_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=32
+  - eval.num_samples=1000
+  - data.n_simulations=333
+  - eval.test_dataset_name=test_multistream_333.npz
+real_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=32
+  - eval.num_samples=1000
+  - preprocessing=stream_real_global_log10
+  - augmentation=stream_real_global_streamfinder_bspline_smoothing
+  - data.real_data_path=assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

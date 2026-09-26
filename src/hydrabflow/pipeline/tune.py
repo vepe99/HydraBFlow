@@ -182,11 +182,34 @@ def _cli_overrides() -> list[str]:
 
 
 def _evaluate_subprocess(cfg, trial, trial_dir, extra, out_dir) -> None:
-    cmd = [sys.executable, "-m", "hydrabflow.pipeline.evaluate", *_cli_overrides(), *extra,
-           *(f"++{k}={v}" for k, v in trial.params.items()),
-           f"model_dir={trial_dir}", f"hydra.run.dir={out_dir}"]
-    log.info("Trial %d: %s", trial.number, " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    """Run `evaluate` in a fresh process; on GPU OOM halve `eval.batch_size` and rerun (min 1).
+
+    A subprocess per attempt, not an in-process retry: the failed attempt's device memory stays
+    pinned inside the process that raised, so only a new process actually frees it.
+    """
+    extra = list(extra)
+    bs = int(cfg.eval.batch_size)
+    for o in extra:
+        if o.lstrip("+").startswith("eval.batch_size="):
+            bs = int(o.split("=", 1)[1])
+    while True:
+        cmd = [sys.executable, "-m", "hydrabflow.pipeline.evaluate", *_cli_overrides(), *extra,
+               *(f"++{k}={v}" for k, v in trial.params.items()),
+               f"eval.batch_size={bs}", f"model_dir={trial_dir}", f"hydra.run.dir={out_dir}"]
+        log.info("Trial %d: %s", trial.number, " ".join(cmd))
+        # The tuner process already holds the card, so a preallocating child would OOM at import.
+        env = {**os.environ, "XLA_PYTHON_CLIENT_PREALLOCATE": "false"}
+        proc = subprocess.run(cmd, stderr=subprocess.PIPE, text=True, env=env)
+        if proc.stderr:
+            sys.stderr.write(proc.stderr)
+        if proc.returncode == 0:
+            return
+        if bs > 1 and is_oom_error(RuntimeError(proc.stderr or "")):
+            log.warning("Trial %d: evaluate OOM at eval.batch_size=%d; retrying at %d.",
+                        trial.number, bs, bs // 2)
+            bs //= 2
+            continue
+        raise subprocess.CalledProcessError(proc.returncode, cmd, stderr=proc.stderr)
 
 
 def _score_on_test_set(cfg, trial, trial_dir):

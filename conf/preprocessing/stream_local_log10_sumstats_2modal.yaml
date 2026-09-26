@@ -1,0 +1,31 @@
+# Local-level twin of stream_global_log10_sumstats_2modal: the same NaN drop / curve trim / split /
+# log10 of the disk globals (the globals are conditions here and must stay in the global model's
+# native log10 space, so a global posterior.npz can be fed to ancestral_sample unchanged), plus a
+# per-stream z-score of the LOCAL parameters with each stream's own empirical mean/std, fitted on
+# the train split (source: data -- the v4 m_progenitor/t_end priors are uniform) and saved in
+# preprocessing_state.npz; evaluate inverts it per stream (needs `j` in the batch).
+defaults:
+  - stream_global_log10_sumstats_2modal
+  - _self_
+
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+  - name: per_stream_parameter_standardize
+    source: data
+    priors: null
+    target_streams: ${simulator.params.target_streams}
+    keys: ${adapter.inference_variables}

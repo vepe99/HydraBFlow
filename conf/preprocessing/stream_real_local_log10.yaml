@@ -1,0 +1,19 @@
+# Real-data twin of stream_local_log10_sumstats_2modal: stream_real_global_log10 plus the per-stream
+# local-parameter standardization (state LOADED from the training run, nothing fitted here) so the
+# ancestral local posterior samples can be mapped back to physical units per stream.
+steps:
+  - name: attach_observed_vcirc
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: log10_transform
+    keys:
+      - rho_TwoPowerTriaxial_halo
+      - a_TwoPowerTriaxial_halo
+      - Sigma_Disk
+      - r_Disk
+      - z_Disk
+  - name: per_stream_parameter_standardize
+    source: data
+    priors: null
+    target_streams: ${simulator.params.target_streams}
+    keys: ${adapter.inference_variables}

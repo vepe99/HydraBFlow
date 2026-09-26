@@ -1,0 +1,12 @@
+# Local-level model: the stream_fusion_2modal_oldgrid summary net (TST over the stream summary +
+# TST over the rotation curve, head: null) with a NORMALIZING FLOW (bf.networks.CouplingFlow, affine,
+# depth 6) as the inference network -- no modality dropout: the curve is always observed, an extra
+# constraint on the globals the local parameters are conditioned on. bayesflow's ancestral_sample is
+# network-agnostic (BasicWorkflow.ancestral_sample -> inference_network.sample), so the real-data
+# local evaluation (globals drawn from a saved global posterior) works with the flow.
+defaults:
+  - stream_fusion_2modal_oldgrid
+  - override inference_network: coupling_flow
+  - _self_
+
+name: stream_fusion_2modal_oldgrid_local

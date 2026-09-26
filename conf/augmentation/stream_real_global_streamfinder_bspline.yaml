@@ -17,3 +17,8 @@ params:
   bspline_vlos_interior_knots: 1
   bspline_grid_points: 20
   bspline_ridge: 1.0e-3
+  bspline_model_selection: none     # none | cv: per (stream, observable) spline vs global poly1/2/3 by CV on the real members
+  bspline_model_candidates: [poly1, poly2, poly3, spline]
+  bspline_cv_folds: 10
+  bspline_cv_repeats: 5
+  bspline_models: {}                # explicit pins, win over cv: {M68: {vlos: poly1}}

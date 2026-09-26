@@ -1,0 +1,9 @@
+# Smoothing B-spline observation space with the per-(stream, observable) model CHOSEN on the real members:
+# repeated 10-fold CV x5 over {global line, quadratic, cubic, P-spline} + the 1-SE rule (simplest model within one
+# standard error of the best held-out MSE). Deterministic, recomputed identically by the sim and real twins.
+# On the STREAMFINDER members it picks e.g. M68 v_los = line (CV mse 396 vs 968 for the P-spline).
+defaults:
+  - stream_global_streamfinder_bspline_smoothing
+
+params:
+  bspline_model_selection: cv

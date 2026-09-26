@@ -59,3 +59,48 @@ def test_pspline_with_gcv_lambda_matches_scipy_smoothing_spline():
     psp = _np_basis(grid, t) @ np.linalg.solve(B.T @ B + lam * om + 1e-3 * np.eye(B.shape[1]), B.T @ y)
     assert np.sqrt(np.mean((psp - make_smoothing_spline(x, y, lam=lam)(grid)) ** 2)) < 0.03
     assert lam > _gcv_lambda(x, np.sin(3 * x) + rng.normal(0, 0.02, x.size), t)   # wigglier data -> smaller λ
+
+
+def test_pinned_polynomial_model_is_an_exact_polynomial_fit():
+    """bspline_models pins M68 v_los to a global line: the grid values ARE the LSQ line of the real members."""
+    from hydrabflow.augmentation.stream_bspline import _np_project, _stream_frames
+    from hydrabflow.augmentation.stream_summary import _DEFAULT_CHANNELS
+
+    p = _params(bspline_fit="smoothing", bspline_models={"M68": {"vlos": "poly1"}})
+    out = np.asarray(AUGMENTATIONS.get("stream_bspline_grid")(p, np.random.default_rng(0))(dict(_real_batch()))["sim_summary"])
+    base = np.asarray(AUGMENTATIONS.get("stream_bspline_grid")(_params(bspline_fit="smoothing"), np.random.default_rng(0))(dict(_real_batch()))["sim_summary"])
+    assert np.array_equal(out[:2], base[:2]) and np.array_equal(out[2, :, :4], base[2, :, :4])   # only M68 v_los moved
+    d = np.load(REAL)
+    fr = _stream_frames(p, 6, 2, dict(_DEFAULT_CHANNELS))
+    m = (d["attention_mask"].reshape(3, -1)[2] > 0) & (d["vlos_mask"].reshape(3, -1)[2] > 0)
+    x, *_, v = _np_project(fr.R[2], np.asarray(d["sim_data_projected"]).reshape(3, -1, 6)[2][m], dict(_DEFAULT_CHANNELS))
+    line = np.polyval(np.polyfit(x, v, 1), np.linspace(x.min(), x.max(), 20))   # v_los grid = its own phi1 range
+    ok = out[2, :, 6] > 0
+    assert np.max(np.abs(out[2, ok, 4] - line[ok])) < 0.05         # km/s (float32 + 1e-3 ridge)
+
+
+def test_cv_selection_prefers_simple_models_for_sparse_vlos():
+    from hydrabflow.augmentation.stream_bspline import _select_model, _uniform_knots, _second_diff_penalty
+    rng = np.random.default_rng(3)
+    x = np.sort(rng.uniform(0, 80, 29)); t = _uniform_knots(np.array([[0.0, 80.0]]), 6)[0]
+    pen = 5.0 * _second_diff_penalty(t[None])[0]
+    lin = _select_model(x, -110 + 0.9 * x + rng.normal(0, 15, x.size), t, pen, 1e-3, 10, 5, 0, ["poly1", "poly2", "poly3", "spline"])[0]
+    xs = np.sort(rng.uniform(0, 80, 400))
+    wig = _select_model(xs, np.sin(xs / 5) + rng.normal(0, 0.05, xs.size), t, pen, 1e-3, 10, 3, 0, ["poly1", "poly2", "poly3", "spline"])[0]
+    assert lin == "poly1" and wig == "spline"
+
+
+def test_core_mode_streamfinder_frame_and_full_range_quadratic():
+    """core080 preset params: finite layout; M68 v_los == the LSQ quadratic of ALL its measured stars in the
+    published Fjorm frame; tracks with the core differ from the full-range fit only near the ends."""
+    from hydrabflow.simulators.stream_frame import frames, project
+    p = _params(bspline_fit="smoothing", summary_frame="streamfinder", bspline_core_frac=0.8,
+                bspline_smoothing_lambda_scale=10.0, bspline_vlos_full_range=["M68"], bspline_models={"M68": {"vlos": "poly2"}})
+    out = np.asarray(AUGMENTATIONS.get("stream_bspline_grid")(p, np.random.default_rng(0))(dict(_real_batch()))["sim_summary"])
+    assert out.shape == (3, 20, 9) and np.all(np.isfinite(out))
+    d = np.load(REAL)
+    st = np.asarray(d["sim_data_projected"]).reshape(3, -1, 6)[2]
+    m = (d["attention_mask"].reshape(3, -1)[2] > 0) & (d["vlos_mask"].reshape(3, -1)[2] > 0)
+    phi1 = project(frames(("M68",))["M68"], st[m, 0], st[m, 1], st[m, 3], st[m, 4])[0]
+    quad = np.polyval(np.polyfit(phi1, st[m, 5], 2), np.linspace(phi1.min(), phi1.max(), 20))
+    assert np.max(np.abs(out[2, :, 4] - quad)) < 0.05              # km/s

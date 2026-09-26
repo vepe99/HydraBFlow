@@ -1,0 +1,9 @@
+# Local-level model on particles: the stream_fusion_2modal_particles summary net (masked
+# SetTransformer over the stars + TST over the rotation curve, head: null) with the CouplingFlow of
+# stream_fusion_2modal_oldgrid_local. Pair with augmentation.params.vlos_impute=zero.
+defaults:
+  - override summary_network: stream_fusion_2modal_particles
+  - override inference_network: coupling_flow
+  - _self_
+
+name: stream_fusion_2modal_particles_local

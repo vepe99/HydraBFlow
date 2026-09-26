@@ -103,6 +103,42 @@ def test_per_stream_parameter_standardize_roundtrip():
     np.testing.assert_allclose(phys["v"][1], -5.0)
 
 
+def test_per_stream_parameter_standardize_fits_data_per_stream():
+    from hydrabflow.preprocessing.streams import PerStreamParameterStandardize
+
+    rng = np.random.default_rng(0)
+    j = np.repeat([[0.0], [1.0]], 500, axis=0)
+    v = np.where(j == 0, rng.normal(10.0, 2.0, j.shape), rng.uniform(2.0, 10.0, j.shape))
+    data = {"v": v, "j": j}
+    step = PerStreamParameterStandardize(None, {"s0": 0, "s1": 1}, keys=["v"], source="data")
+    step.fit(data)
+    out = step.transform(dict(data))
+    for s in (0, 1):
+        rows = out["v"][j == s]
+        np.testing.assert_allclose(rows.mean(), 0.0, atol=1e-10)
+        np.testing.assert_allclose(rows.std(), 1.0, atol=1e-10)
+    np.testing.assert_allclose(step.inverse_transform(out)["v"], v)
+
+    fresh = PerStreamParameterStandardize(None, {"s0": 0, "s1": 1}, keys=["v"], source="data")
+    fresh.load_state(step.state())
+    np.testing.assert_allclose(fresh.transform(dict(data))["v"], out["v"])
+
+
+def test_local_adapter_derivation_drops_j_from_conditions(compose):
+    cfg = compose(
+        [
+            "simulator=stream_agama_spray_massloss_ibata_m200c_v4",
+            "composition=local",
+            "adapter=stream_2modal_local",
+        ]
+    )
+    conds = list(cfg.adapter.inference_conditions)
+    assert "j" not in conds and len(conds) == 7
+    assert list(cfg.adapter.inference_variables) == [
+        "m_progenitor", "t_end", "vr", "r", "mu_ra_cosdec", "mu_dec",
+    ]
+
+
 def test_stream_observation_stats_fit_and_state_roundtrip():
     from hydrabflow.preprocessing.streams import StreamObservationStats
 

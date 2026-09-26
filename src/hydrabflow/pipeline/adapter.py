@@ -50,7 +50,7 @@ def fill_adapter_from_simulator(cfg) -> None:
     """
     from hydrabflow.registry import get_simulator
 
-    inference, summary, conditions, _ = _lists(cfg.adapter)
+    inference, summary, conditions, drop = _lists(cfg.adapter)
     # An empty list means "derive it"; `[none]` means "genuinely none" -- the two-modality stream
     # adapter needs that, because its only would-be condition (the stream index j) is already a
     # channel of the sim_summary observable and must not become a condition group of its own.
@@ -83,6 +83,9 @@ def fill_adapter_from_simulator(cfg) -> None:
         cfg.adapter.inference_variables = list(inference_variables)
     if needs_summary:
         cfg.adapter.summary_variables = list(simulator.observable_keys)
+    # A derived condition the adapter also `drop`s (e.g. the stream index j, already a channel of
+    # sim_summary) must not be concatenated: `drop` runs first in build_adapter.
+    inference_conditions = [k for k in inference_conditions if k not in drop]
     if needs_conditions and inference_conditions:
         cfg.adapter.inference_conditions = list(inference_conditions)
 

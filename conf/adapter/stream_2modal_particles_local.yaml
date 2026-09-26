@@ -1,0 +1,14 @@
+# Local-level twin of stream_2modal_particles: infer each stream's LOCAL parameters from the raw
+# star cloud (stream_global window + observation model, so the in-window stream LENGTH is visible,
+# unlike the B-spline evaluated on the real members' phi1 range) + the rotation curve + the TRUE
+# globals. `inference_conditions: []` = derive from the simulator (globals); `j` is in `drop`, so it
+# is left out of the conditions -- it is channel 14 of the particles. Pair with composition=local,
+# model=stream_fusion_2modal_particles_local, preprocessing=stream_local_log10_sumstats_2modal.
+inference_variables: []
+summary_variables:
+  - sim_data_projected
+  - vcirc_kms
+inference_conditions: []
+drop:
+  - j
+attention_mask_key: attention_mask

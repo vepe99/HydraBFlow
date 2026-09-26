@@ -1,0 +1,16 @@
+# tuningtest_2modal_bspline_smoothing for the CORE080 B-spline 2-modal model of
+# scripts/train_bspline_core080_2modal.sh: every trial is trained, scored on the 333-group test set
+# (eval_sim/), then evaluated on real Gaia through that run's real chain (stream_real_global_log10 +
+# stream_real_global_streamfinder_bspline_core080, STREAMFINDER members). eval.batch_size starts at 32;
+# tune.py halves it per evaluate subprocess on GPU OOM. Search space = stream_2modal_oldgrid.yaml.
+# Runner: scripts/tune_bspline_core080_2modal.sh
+defaults:
+  - tuningtest_2modal_bspline_smoothing
+study_name: tuningtest_2modal_bspline_core080_study
+real_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=32
+  - eval.num_samples=1000
+  - preprocessing=stream_real_global_log10
+  - augmentation=stream_real_global_streamfinder_bspline_core080
+  - data.real_data_path=assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
