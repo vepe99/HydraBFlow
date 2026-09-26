@@ -1,0 +1,57 @@
+# v4 spray + mass loss (stream_agama_spray_massloss_ibata_m200c_v4) with the 2026-09-22 progenitor
+# table (the same masses/radii as stream_agama_rnbody_mcmillan17.yaml) and every t_end capped at 5 Gyr.
+#
+# Per user (2026-09-26):
+#   * a_progenitor (Plummer scale radius, pc) fixed per stream: Pal5 27.34, NGC3201 4.75, M68 5.91
+#     (was 30 pc for all three).
+#   * m_progenitor_final (present-day mass the linear mass loss ends at): Pal5 1.39e4, NGC3201 1.49e5,
+#     M68 1.23e5 (was the B&H18 values 1.34e4 / 1.93e5 / 1.28e5).
+#   * The initial-mass prior m_progenitor gets the final mass as its LOWER bound when that mass lies
+#     inside the old prior (initial >= final): Pal5 U[1.34e4,7e4] -> U[1.39e4,7e4], NGC3201
+#     U[1e5,3.5e5] -> U[1.49e5,3.5e5]. M68's 1.23e5 is below its old floor 1.28e5, so its prior stays
+#     U[1.28e5,5.46e5].
+#   * t_end ~ U[2,5] Gyr for all three streams (Pal5/M68 were U[2,10]; NGC3201 was already U[2,5]).
+defaults:
+  - stream_agama_spray_massloss_ibata_m200c_v4
+
+params:
+  priors_local:
+    Pal5:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.39e4, 7.0e4]
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.39e4]
+      a_progenitor:
+        type: identity
+        prior_parameters: [27.34]
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 5.0]
+    NGC3201:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.49e5, 3.5e5]
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.49e5]
+      a_progenitor:
+        type: identity
+        prior_parameters: [4.75]
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 5.0]
+    M68:
+      m_progenitor:
+        type: uniform
+        prior_parameters: [1.28e5, 5.46e5]   # unchanged: the final mass 1.23e5 is below this floor
+      m_progenitor_final:
+        type: identity
+        prior_parameters: [1.23e5]
+      a_progenitor:
+        type: identity
+        prior_parameters: [5.91]
+      t_end:
+        type: uniform
+        prior_parameters: [2.0, 5.0]
