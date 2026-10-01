@@ -1,0 +1,23 @@
+# tuningtest_2modal_bspline_core080 on the rc38 3e5 set with the Jiao26 rotation curve
+# (scripts/train_bspline_core080_rc38_jiao26.sh): every trial is trained, scored on the 333-group test set
+# (eval_sim/), then evaluated on real Gaia with the rc38 real preprocessing (stream_real_global). Both
+# evaluations sample the compositional posterior at compositional_bridge_d1 = 1.0 (objectives = base
+# metrics, which d1 does not touch). Runner: scripts/tune_bspline_core080_rc38_jiao26.sh
+defaults:
+  - tuningtest_2modal_bspline_core080
+study_name: tuningtest_2modal_bspline_core080_rc38_jiao26_study
+test_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=32
+  - eval.num_samples=1000
+  - eval.sample_kwargs.compositional_bridge_d1=1.0
+  - data.n_simulations=333
+  - eval.test_dataset_name=test_multistream_333.npz
+real_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=32
+  - eval.num_samples=1000
+  - eval.sample_kwargs.compositional_bridge_d1=1.0
+  - preprocessing=stream_real_global
+  - augmentation=stream_real_global_streamfinder_bspline_core080
+  - data.real_data_path=assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz

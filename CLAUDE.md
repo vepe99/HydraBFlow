@@ -3070,3 +3070,36 @@ Knowledge graph at `graphify-out/`.
   floored 8314 (2.77 %), streams 100260/99979/99761, `vcirc_kms` (3e5, 37, 1), + `.hydra` snapshot.
   Test set `<rc38 dir>/test_multistream_333.npz` (seed 7, chunk 111, 100 workers, 36 s; log
   `logs/rc38_test.log`): (333, 3, 2000, 6) float32, 4 all-NaN members of 999 (4 groups), 16 floored groups.
+- Session 2026-10-01 (B-spline PPC of the rc38 3e5 set with the trial-14 core080 training spline):
+  `outputs/Bsline/streamfinder_spray_p1e3_v4_prog2026_rc38/ppc_stream_aug_core080/` (run.sh = the prog2026
+  recipe with `--sim`/`--simulator` swapped; `--fit aug`, STREAMFINDER members, 10^4 rows/stream, k=300; the
+  rc38 globals added to `ppc_bspline_nn.py`'s GLOBALS). Real curves identical to the prog2026 run (sanity OK).
+  Every track inside the sim 90 % band, |z|max <= 1.9, except Pal5 parallax again (inside 0.45, real at the 2.5th pct,
+  observation-model side). Versus prog2026: Pal5 phi2 z 0.68 -> 1.16, NGC3201 v_los 0.90 -> 1.46, mu_phi2 0.61 -> 0.93;
+  typicality 87/0.3/35 pct (prog2026 88/16/39; NGC3201's real spline is closer to its neighbours than sims are to each
+  other). M68 usable rows 3947 of 10^4 (prog2026 6069). k-NN lean, all three streams: heavier Galaxy, log10 M200
+  +0.75-0.82 sd and log10_Mstar +0.75-0.99 sd (the low-v_c(R0) prior of the 2026-09-30 diagnostics showing up);
+  q prior-like (0.92-0.95, -0.05 to -0.27 sd); disk scale lengths/f_thick unconstrained.
+  Rotation-curve prior PPC + k-NN on the same rc38 set (`<rc38 dir>/ppc/rotation_curve/`;
+  `ppc_rotation_curve_prior.py` gained `--k` = rows with the smallest chi2 to the observed curve, a prior-vs-NN table
+  and `rotation_curve_nearest_params.png`; it also no longer loads `sim_data_projected` just to skip it). Observed
+  rc37 curve inside the prior 5-95 % band at every radius, but the prior median sits ~40 km/s low (190 vs 230 at
+  R<13 kpc, P(sim<obs) 0.80-0.84; 16-84 % misses 3 of the 4 innermost points). chi2 is error-dominated: rc37 sigmas
+  are 0.4-1 km/s at 7-15 kpc, so best row 163/37 dof and 0 % within 2 sigma at all radii even though the 10 best rows
+  trace the curve by eye. chi2 driven by sigma_z (-0.76), log10_Mstar (-0.69), log10 M200 (-0.63). NN (k=300): log10_Mstar
+  10.82 (+1.20 sd), gamma 1.02 (+0.63 sd), M200 at the prior median, q prior-like (1.04), sigma_z 86 vs prior 49
+  (observable, obs 71) — the curve wants a heavier stellar disc at fixed halo mass.
+- Session 2026-10-01 (rc38 x Jiao26 rotation curve): `scripts/rotation_curve_ood.py` (typicality test:
+  chi2 observed->nearest training row vs training curve+training noise->nearest row, + k-NN parameters).
+  On the rc38 300k set the rc37 curve is OUT of distribution (163 vs median 35 / p99 55; its own quartic
+  self-fit is 75/32 dof — 0.4-1 km/s errors below the curve's wiggles); the Jiao26 curve is IN (14.4,
+  43-45th pct). Both pull the same way: log10_Mstar +1.2/+1.4 sd, gamma +0.6/+0.7, q prior-like.
+  New `conf/simulator/stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_jiao26.yaml` (rc38 +
+  the 19 Jiao26 radii/v_c/sigma) and dataset `data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_jiao26_hydrabflow/`
+  (training_data_300000.npz + test_multistream_333.npz = the rc38 sets with vcirc_kms recomputed per row
+  with AGAMA by `recompute_vcirc_grid.py`; check on the old grid exact to 0.0, 0 NaN curves, every other
+  array byte-identical, AGAMA vs cubic interpolation from rc37 <= 0.0013 km/s). Runner
+  `scripts/train_bspline_core080_rc38_jiao26.sh` (rc38 launch.sh with SIM/DATA_DIR swapped). Not trained.
+  Own-support twin: `scripts/train_spline_ownsupport_rc38_jiao26.sh` = the jiao26 runner with
+  AUG/REAL_AUG = `stream_{global,real_global}_streamfinder_spline_ownsupport` (augmentation only, backbones trained
+  end to end, NOT frozen IMM); `train_bspline_core080_prog2026.sh` now takes AUG/REAL_AUG env overrides. Not trained.

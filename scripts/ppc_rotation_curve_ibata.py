@@ -37,6 +37,7 @@ import numpy as np
 _POT_CFG_KEYS = [
     "halo_r_t_kpc", "gas_disks", "thick_disk", "disk_vertical", "bulge_density_norm",
     "halo_parameterization", "halo_H0_kms_mpc", "halo_Delta_mass", "halo_Delta_c",
+    "disk_model", "agama_vertical_sign", "z_thin_kpc", "z_thick_kpc", "M_disk_floor",
 ]
 
 
@@ -88,6 +89,8 @@ def main():
                     help="posterior draws per group reused from the saved posterior (no re-sampling)")
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--obs-label", default=None,
+                    help="legend name of the observed curve (default: Ou et al. 2024 for a custom grid)")
     ap.add_argument("--baryons", action="store_true",
                     help="compute the baryon-only and halo-only curves with AGAMA if not cached (else plot them only when cached)")
     args = ap.parse_args()
@@ -100,8 +103,21 @@ def main():
     cfg = OmegaConf.load(os.path.join(args.run_dir, ".hydra", "config.yaml"))
     params = OmegaConf.to_container(cfg.simulator.params, resolve=True)
 
-    pot_cfg = _build_pot_cfg(params)
+    # The simulator's own pot_cfg (disk_model, agama_vertical_sign, ... as in data generation).
+    from hydrabflow.registry import get_simulator
+    pot_cfg = get_simulator(cfg.simulator)._pot_cfg
     consts = _identity_constants(params["priors_global"])
+    # Nuisance globals (params.marginalize, e.g. R0_Sun): varied per training row but never inferred,
+    # so absent from the posterior -> drawn from their prior for every reused draw.
+    nuis = {k: params["priors_global"][k] for k in params.get("marginalize") or []}
+    nrng = np.random.default_rng(args.seed + 1)
+
+    def nuisance():
+        out = {}
+        for k, spec in nuis.items():
+            a, b = (float(v) for v in spec["prior_parameters"])
+            out[k] = {"normal": nrng.normal, "uniform": nrng.uniform}[str(spec["type"])](a, b)
+        return out
 
     split = float(params.get("obs_r_split_kpc", float(sc.OBS_R_KPC.max())))
     grid = str(params.get("obs_r_grid", ""))
@@ -131,7 +147,8 @@ def main():
     idx = rng.choice(n_draws, size=n, replace=False)  # reuse saved draws, no network
 
     def rows(post, group):
-        return [{**consts, **{k: float(post[k][group, i]) for k in post_keys}} for i in idx]
+        return [{**consts, **nuisance(), **{k: float(post[k][group, i]) for k in post_keys}}
+                for i in idx]
 
     groups = [("Combined", rows(global_post, 0))]
     for gi in range(stream_post[post_keys[0]].shape[0]):
@@ -144,7 +161,9 @@ def main():
     print("Rotation-curve PPC (Ibata/m200_c potential) | reusing saved posterior draws (NO re-sampling)")
     print(f"halo_parameterization={pot_cfg.get('halo_parameterization', 'rho_a')} | "
           f"gas_disks={pot_cfg.get('gas_disks')} thick_disk={pot_cfg.get('thick_disk')} "
-          f"disk_vertical={pot_cfg.get('disk_vertical')} r_t={pot_cfg.get('halo_r_t_kpc')} kpc")
+          f"disk_vertical={pot_cfg.get('disk_vertical')} r_t={pot_cfg.get('halo_r_t_kpc')} kpc | "
+          f"disk_model={pot_cfg.get('disk_model')} sign={pot_cfg.get('agama_vertical_sign')} | "
+          f"nuisance from prior: {list(nuis)}")
     print(f"grid: {grid or 'Zhou'} ({obs_r.size} radii, "
           f"split {split} kpc) | {n} draws x {len(groups)} groups = {n * len(groups)} curves")
 
@@ -247,7 +266,7 @@ def main():
         ax.fill_between(r, lo68[order], hi68[order], color=c, alpha=0.30, lw=0)
         ax.plot(r, med, color=c, lw=1.8, label="PPC median")
         ax.plot(r, med_curves[name][order], color=c, lw=1.4, ls="--", label="median params")
-        obs_lbl = [(~is_huang, "o", "Ou 2024" if grid == "custom" else "Zhou 2023"),
+        obs_lbl = [(~is_huang, "o", (args.obs_label or "Ou et al. 2024") if grid == "custom" else "Zhou 2023"),
                    (is_huang, "s", "Huang 2016")]
         for mask, marker, lbl in obs_lbl:
             if mask.any():
@@ -272,7 +291,7 @@ def main():
     k = 1.5  # overlay scale factor: fonts, lines, markers
     plt.rcParams.update({"font.size": 10 * k})
     lab = {"Combined": "Global"}
-    own_lbl = "Ou et al. 2024" if grid == "custom" else "Zhou et al. 2023"
+    own_lbl = (args.obs_label or "Ou et al. 2024") if grid == "custom" else "Zhou et al. 2023"
     own = ~is_huang
     hu = sc.HUANG_R_KPC > r_break  # Huang 2016 only beyond the linear|log join
     ebar = dict(elinewidth=0.8 * k, capsize=1.5 * k, lw=0, ms=3.5 * k)

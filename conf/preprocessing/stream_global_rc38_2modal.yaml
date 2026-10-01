@@ -1,0 +1,13 @@
+# rc38 twin of stream_global_log10_sumstats_2modal: NO log10_transform step. Every rc38 global is
+# already sampled in log space (log10_M200, log10_Mstar, ln_R_d_*, ln_f_thick, ln_cvprime), and
+# eval.prior_score=diffused (required by the moster_conditional log10_Mstar) refuses log10-preprocessed
+# keys. drop_nan pinned to the npz-resident observables of the 2-modality adapter. Real twin: stream_real_global.
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}

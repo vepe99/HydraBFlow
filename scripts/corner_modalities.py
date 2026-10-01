@@ -2,11 +2,11 @@
 
     python scripts/corner_modalities.py <run_dir>
 
-<run_dir> holds `eval_real/` (compositional posterior.npz + preprocessing_state via train/),
+<run_dir> holds `<real>/` (2nd arg, default eval_real) (compositional posterior.npz + preprocessing_state via train/),
 `eval_real_only_sim_summary/` (single_stream_posterior.npz with the curve masked) and
 `eval_real_only_vcirc_kms/` (single_stream_posterior.npz with the streams masked -> curve only;
 identical for the 3 members, member 0 used). Chains are mapped to physical units through the
-run's fitted preprocessing. Writes <run_dir>/corner_modalities.png.
+run's fitted preprocessing. Writes <run_dir>/<real>/corner_modalities.png.
 """
 
 from __future__ import annotations
@@ -24,13 +24,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 
-def main(run_dir: str) -> str:
+def main(run_dir: str, real: str = "eval_real") -> str:
     from hydrabflow.registry import build_pipeline, get_simulator
     from omegaconf import OmegaConf
 
-    cfg = OmegaConf.create(yaml.safe_load(open(os.path.join(run_dir, "eval_real/.hydra/config.yaml"))))
+    cfg = OmegaConf.create(yaml.safe_load(open(os.path.join(run_dir, f"{real}/.hydra/config.yaml"))))
     # saved .hydra configs are pre-fill (inference_variables derive from the simulator at runtime)
-    names = list(np.load(os.path.join(run_dir, "eval_real/posterior.npz")).files)
+    names = list(np.load(os.path.join(run_dir, f"{real}/posterior.npz")).files)
     pipeline = build_pipeline(cfg.preprocessing)
     pipeline.load(os.path.join(run_dir, "train/preprocessing_state.npz"))
     stream_names = {int(v): str(k) for k, v in get_simulator(cfg.simulator).target_streams.items()}
@@ -39,9 +39,9 @@ def main(run_dir: str) -> str:
         d = pipeline.inverse_transform({k: np.asarray(npz[k]) for k in names})
         return d
 
-    comp = phys(np.load(os.path.join(run_dir, "eval_real/posterior.npz")))
-    streams = phys(np.load(os.path.join(run_dir, "eval_real_only_sim_summary/single_stream_posterior.npz")))
-    curve = phys(np.load(os.path.join(run_dir, "eval_real_only_vcirc_kms/single_stream_posterior.npz")))
+    comp = phys(np.load(os.path.join(run_dir, f"{real}/posterior.npz")))
+    streams = phys(np.load(os.path.join(run_dir, f"{real}_only_sim_summary/single_stream_posterior.npz")))
+    curve = phys(np.load(os.path.join(run_dir, f"{real}_only_vcirc_kms/single_stream_posterior.npz")))
     j = np.load(cfg.data.real_data_path)["j"].reshape(-1).astype(int)
 
     stack = lambda d, i: np.column_stack([np.asarray(d[k])[i].reshape(-1) for k in names])  # noqa: E731
@@ -64,7 +64,7 @@ def main(run_dir: str) -> str:
         )
     fig.legend(handles=[Line2D([0], [0], color=c, label=lab) for (lab, _), c in zip(chains, colors)],
                loc="upper right", fontsize=12, frameon=False)
-    out = os.path.join(run_dir, "corner_modalities.png")
+    out = os.path.join(run_dir, real, "corner_modalities.png")
     fig.savefig(out, dpi=130, bbox_inches="tight")
     for label, data in chains:
         q = np.percentile(data, [16, 50, 84], axis=0)
@@ -74,4 +74,4 @@ def main(run_dir: str) -> str:
 
 
 if __name__ == "__main__":
-    print(main(sys.argv[1]))
+    print(main(*sys.argv[1:3]))

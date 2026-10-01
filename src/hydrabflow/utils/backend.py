@@ -57,3 +57,11 @@ def set_backend(backend: str = DEFAULT_BACKEND) -> str:
 # Side effects on import (order matters: both must run before any jax/keras import).
 ACTIVE_GPUS = limit_gpus()
 ACTIVE_BACKEND = set_backend()
+
+# Opt-in: create the JAX GPU client now, so XLA_PYTHON_CLIENT_PREALLOCATE=true claims the card
+# before Hydra/data loading (otherwise the GPU looks free for minutes and someone else grabs it).
+if os.environ.get("HYDRABFLOW_EARLY_GPU_INIT") == "1":
+    import jax
+
+    jax.device_put(0.0).block_until_ready()  # first allocation is what triggers the preallocation
+    _log.info("Early JAX init: %s", jax.devices())

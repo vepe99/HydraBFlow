@@ -45,7 +45,7 @@ def run(cfg):
     conditions = {k: grouped[k] for k in condition_keys(cfg) if k in grouped}
     prior_score = build_prior_score(
         cfg, get_simulator(cfg.simulator), log10_keys=log10_keys, param_order=param_names,
-        seed=int(cfg.seed),
+        seed=int(cfg.seed), approximator=workflow.approximator,
     )
     conditions = apply_mask_plan(workflow, cfg, conditions, m)
     targets = pipeline.inverse_transform({k: np.asarray(test_data[k]) for k in param_names})

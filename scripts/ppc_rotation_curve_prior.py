@@ -26,6 +26,7 @@ def main():
     ap.add_argument("--simulator", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--r-min", type=float, default=0.0, help="ignore radii below this [kpc]")
+    ap.add_argument("--k", type=int, default=300, help="nearest rows (smallest chi2 to the observed curve)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
@@ -63,9 +64,9 @@ def main():
     globs = {}
     nrow = int(np.asarray(ds["j"]).shape[0]) if "j" in ds.files else n
     for k in ds.files:
-        a = np.asarray(ds[k])
         if k in ("sim_data_projected", "vcirc_kms", "j") or k.endswith("_derived"):
             continue
+        a = np.asarray(ds[k])
         if a.ndim == 2 and a.shape == (nrow, 1) and np.ptp(a) > 0:
             globs[k] = a[:, 0][ok]
     order = np.argsort(chi2)
@@ -84,6 +85,16 @@ def main():
         "spearman_logchi2_vs_param": {k: round(float(spearmanr(v, np.log(chi2)).statistic), 3)
                                       for k, v in globs.items()},
     }
+    # k-NN: the rows closest to the observed curve in chi2 (= error-weighted Euclidean) distance
+    nn = order[: args.k]
+    rep["nn"] = {"k": int(len(nn)), "chi2_median": float(np.median(chi2[nn])), "params": {}}
+    print(f"k-NN (k={len(nn)}, chi2 median {np.median(chi2[nn]):.1f}/{dof} dof)")
+    print(f"  {'param':36s} {'prior med [16,84]':>30s} {'k-NN med [16,84]':>30s}  shift/prior_sd")
+    for k, v in globs.items():
+        pq, nq = np.percentile(v, [50, 16, 84]), np.percentile(v[nn], [50, 16, 84])
+        sh = (nq[0] - pq[0]) / v.std()
+        rep["nn"]["params"][k] = {"prior": pq.tolist(), "nn": nq.tolist(), "shift_sd": round(float(sh), 3)}
+        print(f"  {k:36s} {pq[0]:10.4g} [{pq[1]:8.4g},{pq[2]:8.4g}]  {nq[0]:10.4g} [{nq[1]:8.4g},{nq[2]:8.4g}]  {sh:+.2f}")
     json.dump(rep, open(os.path.join(args.out, "rotation_curve_prior.json"), "w"), indent=1)
 
     import matplotlib
@@ -120,6 +131,20 @@ def main():
     ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, "rotation_curve_prior.png"), dpi=130)
+
+    nc = 4
+    nr = -(-len(globs) // nc)
+    fig, axs = plt.subplots(nr, nc, figsize=(4 * nc, 3 * nr), squeeze=False)
+    for ax, (k, v) in zip(axs.flat, globs.items()):
+        b = np.linspace(*np.percentile(v, [0.5, 99.5]), 40)
+        ax.hist(v, bins=b, density=True, color="0.7", label="prior")
+        ax.hist(v[nn], bins=b, density=True, histtype="step", lw=1.8, color="C3", label=f"{len(nn)} NN")
+        ax.set_title(f"{k}  ({rep['nn']['params'][k]['shift_sd']:+.2f} sd)", fontsize=9)
+    for ax in list(axs.flat)[len(globs):]:
+        ax.axis("off")
+    axs.flat[0].legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(os.path.join(args.out, "rotation_curve_nearest_params.png"), dpi=120)
 
     print(json.dumps({k: v for k, v in rep.items() if k not in ("radii_kpc",)}, indent=1))
 

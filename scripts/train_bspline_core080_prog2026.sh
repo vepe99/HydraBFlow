@@ -28,8 +28,8 @@ export PY=${PY:-.venv/bin/python} AUTOCVD=${AUTOCVD:-.venv/bin/autocvd} GPU=${GP
 SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026} \
 DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_hydrabflow} N_TRAIN=${N_TRAIN:-300000} \
 MODEL=stream_fusion_2modal_oldgrid ADAPTER=stream_2modal \
-PREPROC=stream_global_log10_sumstats_2modal REAL_PREPROC=stream_real_global_log10 \
-AUG=stream_global_streamfinder_bspline_core080 REAL_AUG=stream_real_global_streamfinder_bspline_core080 \
+PREPROC=${PREPROC:-stream_global_log10_sumstats_2modal} REAL_PREPROC=${REAL_PREPROC:-stream_real_global_log10} \
+AUG=${AUG:-stream_global_streamfinder_bspline_core080} REAL_AUG=${REAL_AUG:-stream_real_global_streamfinder_bspline_core080} \
 N_EPOCHS=${N_EPOCHS:-1000} BATCH_SIZE=${BATCH_SIZE:-4096} DROP_PROB=${DROP_PROB:-0.5} RUNS_DIR="${RUNS_DIR}" \
 EXTRA="${TUNED} ${EXTRA:-}" \
 bash scripts/train_v4_2modal.sh 2>&1 | tee "${RUNS_DIR}/run.log"

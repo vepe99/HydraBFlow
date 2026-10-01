@@ -1,0 +1,12 @@
+# rc38 with the Jiao26 rotation curve (assets/rotation_curve_custom_v4.csv, 19 radii 6.6-25.5 kpc)
+# in place of the rc37 37-radius table, whose 0.4-1 km/s errors made the observed curve out of distribution
+# (2026-10-01). Everything else is rc38 verbatim. Datasets: vcirc_kms recomputed with AGAMA per row by
+# scripts/recompute_vcirc_grid.py from the rc38 sets (streams are not re-simulated).
+defaults:
+  - stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38
+
+params:
+  obs_r_grid: custom
+  obs_r_kpc: [6.6, 7.78, 8.21, 9.41, 10.43, 11.43, 12.43, 13.41, 14.4, 15.42, 16.44, 17.45, 18.48, 19.45, 20.41, 21.28, 22.01, 23.41, 25.53]
+  obs_vc_kms: [236.43, 239.82, 237.2, 233.16, 234.61, 232, 232.8, 229.43, 224.2, 221.68, 219.74, 215.42, 212.79, 203.57, 195.44, 196.68, 187.96, 188.32, 175.07]
+  obs_sigma_vc: [2.69, 3.53, 6.31, 2.99, 4.39, 3.01, 4.54, 4.7, 3.22, 2.56, 4.87, 5.03, 8.38, 5.66, 5.75, 6.49, 9.18, 11.89, 16.86]

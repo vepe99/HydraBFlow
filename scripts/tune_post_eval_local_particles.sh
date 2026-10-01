@@ -24,7 +24,7 @@ for name in ${TRIALS}; do
   OVR=$(.venv/bin/python -c "import json,sys;print(' '.join(f'++{k}={v}' for k,v in json.load(open(sys.argv[1])).items()))" "${t}/params.json")
   echo "=== $(date +%F_%T) evaluating ${t} on GPU ${CUDA_VISIBLE_DEVICES} ==="
   .venv/bin/python -m hydrabflow.pipeline.evaluate \
-    simulator=stream_agama_spray_massloss_ibata_m200c_v4_prog2026 \
+    simulator="${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026}" \
     model=stream_fusion_2modal_particles_local composition=local adapter=stream_2modal_particles_local \
     preprocessing=stream_local_log10_sumstats_2modal augmentation=stream_global \
     augmentation.params.vlos_impute=zero augmentation.params.resources_dir=assets/gaia \

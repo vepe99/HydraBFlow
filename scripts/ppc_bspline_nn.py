@@ -21,7 +21,7 @@ from ppc_summary_statistics import NAMES, augment_sim  # noqa: E402
 from ppc_particle_coverage import real_clouds  # noqa: E402
 from ppc_observation_space import load_sim_groups, stream_frames, to_obs  # noqa: E402
 from nearest_training_streams import GLOBALS as _G, LOCALS  # noqa: E402
-GLOBALS = _G + ["rho_TwoPowerTriaxial_halo", "a_TwoPowerTriaxial_halo", "beta_TwoPowerTriaxial_halo"]  # + legacy halo keys
+GLOBALS = _G + ["rho_TwoPowerTriaxial_halo", "a_TwoPowerTriaxial_halo", "beta_TwoPowerTriaxial_halo"] + ["log10_Mstar", "ln_R_d_thin", "ln_R_d_thick", "ln_f_thick"]  # + legacy halo keys + rc38 disk keys
 
 SPACES = {"stream": ["phi2 [deg]", "parallax [mas]", "mu_phi1 [mas/yr]", "mu_phi2 [mas/yr]", "v_los [km/s]"],
           "icrs": ["ra [deg]", "dec [deg]", "parallax [mas]", "mu_ra* [mas/yr]", "mu_dec [mas/yr]", "v_los [km/s]"]}
