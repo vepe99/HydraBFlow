@@ -1,0 +1,8 @@
+# Rotation-curve-only coupling-flow posterior with trial 14's vcirc backbone: information-maximising summary
+# net (summary_network_weights.npz) to be frozen inside the 2-modal diffusion model later.
+defaults:
+  - override summary_network: imm_vcirc_ownsupport
+  - override inference_network: coupling_flow
+  - _self_
+
+name: imm_summarynet_vcirc_ownsupport

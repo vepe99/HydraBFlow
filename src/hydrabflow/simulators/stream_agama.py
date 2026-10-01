@@ -274,14 +274,16 @@ def _solar_frame(agama, pot_host, p: Mapping[str, float]) -> tuple[float, float,
     )
 
 
-def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None):
+def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None,
+                    halo: bool = True):
     """Assemble the Milky Way host potential from one parameter row.
 
     Legacy model (``pot_cfg=None``): fixed bulge + two-power triaxial halo (untruncated) + one
     isothermal (sech^2) exponential-radial disk. Ibata model (``pot_cfg`` from the Ibata sim
     config): additionally truncates the halo at ``halo_r_t_kpc`` (1000 kpc), adds the fixed HI &
     H2 gas disks, adds a free thick stellar disk, and (optionally) switches the stellar disks to an
-    exponential vertical profile — see ``new_constrains.md``.
+    exponential vertical profile — see ``new_constrains.md``. ``halo=False`` drops the dark
+    halo (baryons only: bulge, gas, stellar disks).
     """
     cfg = _resolve_pot_cfg(pot_cfg)
     hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
@@ -294,7 +296,9 @@ def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = Non
     components = [bulge]
     if cfg["gas_disks"]:
         components += [GAS_HI_PARAMS, GAS_H2_PARAMS]
-    if str(cfg["halo_parameterization"]) == "m200_c":
+    if not halo:
+        pass
+    elif str(cfg["halo_parameterization"]) == "m200_c":
         components.append(_halo_params_m200c(agama, p, cfg))
     else:
         components.append(_halo_params(p, float(cfg["halo_r_t_kpc"])))

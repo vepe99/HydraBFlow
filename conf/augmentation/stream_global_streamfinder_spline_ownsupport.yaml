@@ -1,0 +1,37 @@
+# Old observation model (stream_global chain, STREAMFINDER members 129/195/297, DR3 sigma(G) table, random
+# v_los subset) with `stream_spline_ownsupport` in place of `stream_bspline_grid`: each observable fitted on the
+# realization's OWN central 85 % phi1 range (tracks = penalized spline, lambda = s * N_real * L_real^3;
+# parallax = line; v_los = quadratic over the measured stars), evaluated on 20 real-member phi1 values.
+# The observational_window step is a no-op on stored sets (storage already kept only in-window stars), so the
+# stars reaching the fit are just the observed-count subsample. Training twin of scripts/ppc_stream_splines.py.
+# Same (n, 20, 9) sim_summary layout as the B-spline presets -> model=stream_fusion_2modal_oldgrid applies.
+# Real twin: stream_real_global_streamfinder_spline_ownsupport.
+defaults:
+  - stream_global_streamfinder_bspline
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - stream_spline_ownsupport
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  summary_frame: streamfinder
+  spline_core_frac: 0.85
+  spline_knots: 20            # interior knots of the track P-spline over each row's core
+  spline_s_track: 1.0e-4      # dimensionless: lambda = s * N_real * L_real^3 (phi2, mu_phi1, mu_phi2)
+  spline_parallax_deg: 1
+  spline_vlos_deg: 2
+  spline_min_stars: 8

@@ -1,0 +1,8 @@
+# Streams-only (own-support spline) coupling-flow posterior: trains an information-maximising summary net
+# (summary_network_weights.npz) to be frozen inside the 2-modal diffusion model later.
+defaults:
+  - override summary_network: imm_streams_ownsupport
+  - override inference_network: coupling_flow
+  - _self_
+
+name: imm_summarynet_streams_ownsupport

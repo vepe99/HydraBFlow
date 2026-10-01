@@ -1,0 +1,8 @@
+# vcirc_kms backbone of the trial-14 own-support 2-modal model, standalone (same architecture, so its
+# weights can be loaded into that fusion backbone and frozen).
+type: time_series_transformer
+summary_dim: 32
+num_blocks: 5
+num_heads: 4
+dropout: 0.25
+embed_dim_per_head: 8

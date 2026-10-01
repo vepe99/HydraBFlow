@@ -1,0 +1,35 @@
+# Optuna search space for the LOCAL particle model (model=stream_fusion_2modal_particles_local,
+# adapter=stream_2modal_particles_local, composition=local): the two fusion summary backbones — the masked
+# SetTransformer over the star cloud and the TimeSeriesTransformer over the rotation curve. The coupling flow
+# stays at the preset. Objectives = RMSE + calibration of the per-stream z-scored locals on the val split
+# (the local evaluate writes per-stream metrics, not the base_metrics.json the test-set mode reads).
+# Runner: scripts/tune_local_particles_prog2026.sh.
+study_name: stream_2modal_particles_local_study
+storage_dir: ${data.data_dir}/tuning
+n_trials: 50
+n_epochs: 300
+directions: [minimize, minimize]
+
+search_space:
+  # --- sim_data_projected: masked SetTransformer over the stars ---
+  model.summary_network.params.backbones.sim_data_projected.summary_dim:
+    { type: int, low: 16, high: 64, step: 2 }
+  model.summary_network.params.backbones.sim_data_projected.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.sim_data_projected.num_heads:
+    { type: int, low: 2, high: 8 }
+  model.summary_network.params.backbones.sim_data_projected.embed_dim_per_head:
+    { type: int, low: 4, high: 16 }
+  model.summary_network.params.backbones.sim_data_projected.dropout:
+    { type: float, low: 0.0, high: 0.3, step: 0.05 }
+  # --- vcirc_kms: TimeSeriesTransformer over the Ou+2024 curve (19 radii) ---
+  model.summary_network.params.backbones.vcirc_kms.summary_dim:
+    { type: int, low: 32, high: 96, step: 2 }
+  model.summary_network.params.backbones.vcirc_kms.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.vcirc_kms.num_heads:
+    { type: int, low: 2, high: 8 }
+  model.summary_network.params.backbones.vcirc_kms.embed_dim_per_head:
+    { type: int, low: 4, high: 16 }
+  model.summary_network.params.backbones.vcirc_kms.dropout:
+    { type: float, low: 0.0, high: 0.3, step: 0.05 }

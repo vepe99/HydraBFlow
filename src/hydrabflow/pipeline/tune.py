@@ -27,7 +27,7 @@ import numpy as np
 
 from hydrabflow.pipeline import artifacts, io
 from hydrabflow.pipeline._app import make_cli
-from hydrabflow.pipeline.adapter import select_adapter_keys
+from hydrabflow.pipeline.adapter import composition_level, select_adapter_keys
 from hydrabflow.pipeline.workflow import build_workflow
 from hydrabflow.registry import build_augmentations, build_pipeline
 from hydrabflow.utils.oom import is_oom_error, run_with_oom_backoff
@@ -129,7 +129,8 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
         pipeline.save(os.path.join(trial_dir, PREPROCESSING_STATE))  # evaluate loads it from model_dir
         rmse_mean, cal_mean = _score_on_test_set(cfg, trial, trial_dir)
     else:
-        rmse_mean, cal_mean = _score_on_val(cfg, workflow, val_data, param_names, trial_dir)
+        rmse_mean, cal_mean = _score_on_val(cfg, workflow, val_data, param_names, trial_dir,
+                                            trial, pipeline)
 
     # A trial that diverged from the start has no finite best weights, so its RMSE is NaN. Return a
     # finite worst case instead, so the trial completes and the sampler learns to avoid that region.
@@ -146,8 +147,15 @@ def _objective(trial, base_cfg, train_data, val_data, param_names, augmentations
     return rmse_mean, cal_mean
 
 
-def _score_on_val(cfg, workflow, val_data, param_names, trial_dir):
+def _score_on_val(cfg, workflow, val_data, param_names, trial_dir, trial=None, pipeline=None):
     from bayesflow.diagnostics import metrics as bf_metrics
+
+    def _scores(est, targ):
+        rmse = bf_metrics.root_mean_squared_error(
+            estimates=est, targets=targ, variable_keys=param_names)["values"]
+        cal = bf_metrics.calibration_error(
+            estimates=est, targets=targ, variable_keys=param_names)["values"]
+        return float(np.mean(rmse)), float(np.mean(cal))
 
     # The sampling step can OOM too (batch_size * num_samples rows through the integrator).
     posterior = run_with_oom_backoff(
@@ -159,15 +167,47 @@ def _score_on_val(cfg, workflow, val_data, param_names, trial_dir):
         int(cfg.eval.batch_size),
         logger=log,
     )
-    rmse_mean = float(np.mean(bf_metrics.root_mean_squared_error(
-        estimates=posterior, targets=val_data, variable_keys=param_names)["values"]))
-    cal_mean = float(np.mean(bf_metrics.calibration_error(
-        estimates=posterior, targets=val_data, variable_keys=param_names)["values"]))
-    # The val split carries ground truth, so the evaluate stage's diagnostics apply here too.
+    if composition_level(cfg) != "local" or "j" not in val_data:
+        rmse_mean, cal_mean = _scores(posterior, val_data)
+        # The val split carries ground truth, so the evaluate stage's diagnostics apply here too.
+        if bool(cfg.tuning.save_artifacts):
+            artifacts.save_posterior(posterior, trial_dir)
+            artifacts.run_diagnostics(cfg, posterior, val_data, param_names, trial_dir)
+        return rmse_mean, cal_mean
+
+    # Local level: each stream has its own locals, so score every stream on its own rows (in the
+    # per-stream standardized space the network works in) and optimize the mean over streams.
+    from hydrabflow.pipeline.evaluate import stream_names
+
+    j = np.asarray(val_data["j"])
+    stream_ids = j.reshape(-1).astype(int)
+    per_stream = {}
+    for stream, name in sorted(stream_names(cfg, stream_ids).items()):
+        rows = stream_ids == stream
+        if not rows.any():
+            continue
+        est = {k: np.asarray(posterior[k])[rows] for k in param_names}
+        targ = {k: np.asarray(val_data[k])[rows] for k in param_names}
+        per_stream[name] = _scores(est, targ)
+        if trial is not None:
+            trial.set_user_attr(f"{name}_rmse", per_stream[name][0])
+            trial.set_user_attr(f"{name}_calibration_error", per_stream[name][1])
+        # Physical-unit diagnostics as the local evaluate writes them (<stream>_metrics.json, ...).
+        if bool(cfg.tuning.save_artifacts) and pipeline is not None:
+            artifacts.run_diagnostics(
+                cfg,
+                pipeline.inverse_transform({**est, "j": j[rows]}),
+                pipeline.inverse_transform({**targ, "j": j[rows]}),
+                param_names, trial_dir, prefix=f"{name}_",
+            )
+    log.info("Per-stream val (rmse, calibration): %s", per_stream)
     if bool(cfg.tuning.save_artifacts):
         artifacts.save_posterior(posterior, trial_dir)
-        artifacts.run_diagnostics(cfg, posterior, val_data, param_names, trial_dir)
-    return rmse_mean, cal_mean
+        with open(os.path.join(trial_dir, "per_stream_scores.json"), "w") as f:
+            json.dump({n: {"rmse": r, "calibration_error": c} for n, (r, c) in per_stream.items()},
+                      f, indent=2)
+    return (float(np.mean([r for r, _ in per_stream.values()])),
+            float(np.mean([c for _, c in per_stream.values()])))
 
 
 def _cli_overrides() -> list[str]:

@@ -2904,3 +2904,127 @@ Knowledge graph at `graphify-out/`.
   0.60, z +0.7); **M68 phi2 bow persists** (inside 0.20, z +2.9, real ~2 deg above the posterior sims at phi1 30-70)
   though it sat inside the (much wider) prior band. Artifacts `.../core080_local/eval_real/ppc_joint/
   ppc_joint_bspline_aug.png` + `ppc_joint_aug.json`. Also committed the prog2026 core080 train/tune/local runners.
+- Session 2026-09-26/27 (prog2026 global + local runs): scripts `train_bspline_core080_prog2026.sh` (global,
+  hyperparameters of trial 14 of `tuningtest_2modal_bspline_core080_study` read from its params.json, drop prob 0.5),
+  `tune_bspline_core080_prog2026.sh` (same study on the prog2026 set, `..._prog2026_study`),
+  `train_local_core080_prog2026.sh` (B-spline local) and `train_local_particles_prog2026.sh` (particle local, legacy
+  `stream_global` + masked SetTransformer, 1000 ep). Both local models evaluated on real Gaia by ancestral sampling
+  from `outputs/Bsline/spray_p1e3_v4_prog2026_core080_2modal_trial14/eval_real/posterior.npz`. Sim (333, normalized
+  RMSE for m/t_end): the particles carry t_end (Pal5 0.42 / NGC3201 0.19 / M68 0.68, versus 0.88/0.98/0.97 for the
+  B-spline) and some mass (0.72/0.86/0.70, versus ~0.97-0.99). This confirms the 2026-09-26 hypothesis that the
+  real-range B-spline hides the stream length. On REAL data the particle posteriors rail at the edges of the prior
+  support: NGC3201 t_end 1.99 [1.95,2.02] at the 2 Gyr floor, masses at or below their floors (M68 1.13e5, BELOW its
+  U[1.28e5,5.46e5] prior), i.e. extrapolation (the particle channel is OOD on real data, as in every earlier
+  generation). The B-spline local stays inside the prior (t_end 2.5/3.7/4.1). Gotcha: autocvd picked GPU 3 at the
+  same moment the prog2026 tuning worker (preallocate=true) claimed it → OOM before epoch 1; pin GPU= when tuning
+  runs.
+  **Joint PPC of the particle local model** (`.../spray_p1e3_v4_prog2026_particles_local/eval_real/ppc_joint/`, 40
+  paired draws; `ppc_joint_posterior.py` gained `--grid-aug`, which borrows a B-spline preset's `stream_bspline_grid`
+  as the spline ruler when the model's own training chain has none; here core080, so the tracks are comparable with
+  the B-spline local PPC; sims go through the particle model's own `stream_global` chain). Fraction of the phi2 track
+  inside the sim band, particles vs B-spline local: Pal5 **0.00** (z +2.8) vs 0.75, NGC3201 1.00 vs 1.00, M68
+  **0.90** vs 0.20 (z +1.1 vs +2.9). The particle posterior's longer Pal5 age (t_end 3.8 vs 2.5 Gyr) gives arms that
+  bend too far: the trailing arm sits ~1.4 deg below the members at phi1 -20 and the leading arm overshoots. M68's
+  sky track is fixed, but its mu_phi1 coverage drops (0.55 vs 1.00), and v_los (0.60) plus mu_phi2 (0.55) stay
+  marginal. Net: neither local model reproduces all three streams.
+- Session 2026-09-30 (interpax C2 cubic-spline PPC, no observation model): `scripts/ppc_interpax_spline.py`
+  (interpax>=0.3.15 now in pyproject + uv.lock). One
+  vector-valued natural cubic spline phi1 -> (phi2, plx, mu_phi1, mu_phi2, v_los) per realization, 5 knots at
+  its own phi1 quantiles, weighted LSQ on the spline-of-identity basis (v_los rows = measured stars only),
+  STREAMFINDER frames; sims = stored in-window stars (storage window already applied), 1/d, randomly
+  subsampled to 129/195/297 stars and 69/37/29 v_los; real curve +- 300-draw star bootstrap. 1000 rows/stream
+  of the prog2026_ou24vc 300k set (rows with fewer stored stars than the real count skipped: 1/50/33 %
+  for Pal5/NGC3201/M68). Output `outputs/interpax_spline/prog2026_ou24vc/`. Every phi2/pm/v_los track inside
+  the sim 5-95 % band on >=0.85 of the 20 real-phi1 grid points, |z| <= 2.8; parallax "outside" is only the
+  noise-free sim band being ~0.001-0.02 mas wide (with the real bootstrap sigma |z|med 0.5-0.8).
+  **Rerun with Gaia DR3 noise** (default `--noise`: the training `stream_global` steps sample_magnitudes ->
+  sample_obs_error -> apply_obs_error on the subsampled stars, still no window/count cut;
+  `outputs/interpax_spline/prog2026_ou24vc_noise/`): parallax becomes consistent (inside 0.75/0.85/0.95,
+  |z|med 0.4-0.6); every other number moves < 0.05 (the table's ra/dec errors are sub-mas and v_los errors
+  small vs the sim track scatter).
+  **4 knots** (`--n-knots 4`, new flag; `.../prog2026_ou24vc_noise_4knots/`): same verdict — changes <= 0.05 in
+  "inside" except Pal5 phi2 0.90->0.95 and Pal5 parallax 0.75->0.55 (the smoother real curve still dips to
+  -0.03 mas at phi1 -8, |z|med -0.69, max 1.3); M68 v_los loses its end wiggles. Knots remain the only
+  smoothness lever; a curvature penalty (A + lam*Omega) was proposed, not implemented.
+  **interpax dropped** (removed from pyproject/uv.lock + uninstalled); script renamed
+  `scripts/ppc_joint_bspline.py` = the old `ppc_bspline_nn --fit lsq` recipe (cubic LSQ B-spline, clamped knot
+  vector at the REAL members' phi1 quantiles, stars outside the real range dropped, >=2 stars per span) but ONE
+  B-spline (scipy `BSpline`, coefficients (n_coef, 5)) for all five observables; v_los column weighted by the
+  measured mask, rejected if <2 measured stars in a span or cond(B) > 1e4 (sparse bootstrap resamples blew up
+  to 1e9 without it). Old knot rule (clip(N//25,1,6) interior: 5/6/6) leaves the v_los column usable in only
+  9 % (NGC3201) / 1 % (M68) of rows — 29-37 velocities cannot populate 7-8 shared spans — so use
+  `--n-interior 2` (`outputs/joint_bspline/prog2026_ou24vc_noise_2interior/`): usable astrometry 100/100/99 %,
+  v_los 100/97/65 %; all observables inside the band on >= 0.90 of the grid except Pal5 parallax 0.75, |z| <= 2.6.
+  **Evaluation restricted to where data exist** (same session): each spline column is NaN outside the
+  [min, max] phi1 of the stars it was fitted to (v_los: the measured ones), for real AND sims, and grid points
+  reached by < `--min-sim-cov` (0.5) of the sims are dropped from both. Fixes the M68 v_los end hook (real
+  measured v_los span phi1 12-94 deg while the all-member knots span -5..100 -> the curve extrapolated to -308
+  km/s at -5). 2-interior rerun: every observable inside the band on all scored points except Pal5 parallax 0.72
+  and Pal5 v_los 0.94; |z| <= 2.6. Scored points 18/18/17 (M68 v_los 14); the 0.5 cut trims the tails
+  (Pal5 phi1 -14..8 of -20..12, M68 v_los 17..79).
+  **Back to per-observable fits** (same session, user decision): `scripts/ppc_stream_splines.py` (imports the
+  helpers of ppc_joint_bspline). phi2/plx/mu_phi1/mu_phi2 = cubic LSQ B-spline with `--n-interior` (2) knots at
+  the realization's OWN phi1 quantiles, v_los = 2nd-order polynomial over the measured stars; every curve lives on
+  its own [min, max] phi1 (no clamp to the real range, no window cut beyond storage). Figure draws all 1000 sim
+  curves on their own support (no median/bands). `outputs/stream_splines/prog2026_ou24vc_noise/`: 0 failed fits;
+  inside the sim 5-95 % on all scored points except Pal5 parallax 0.67, NGC3201 parallax 0.90 / mu_phi2 0.95;
+  |z| <= 2.6. The real parallax splines hook at their ends (NGC3201 drops to <0.1 mas past -40 deg, Pal5 rises past
+  +8): 2 interior knots on noise-dominated parallax, end spans with few stars.
+  **Strong smoothing** (`--fit smoothing`, now the default): astrometric columns = scipy `make_smoothing_spline`
+  with lambda = s * N_real * L_real^3 (dimensionless s; same lambda for real, bootstrap and every sim of the stream),
+  `--s-track 1e-4` (phi2, mu_phi1, mu_phi2), `--s-parallax 1e-2` (-> near-linear). Scaling scipy's GCV lambda was
+  tried and dropped: GCV hits its upper bound (lambda == N) for most columns, so "x100 GCV" meant different
+  stiffness per stream (Pal5 phi2 over-smoothed, NGC3201/M68 parallax still wiggling). Scan of s on the real members:
+  scratchpad only. `outputs/stream_splines/prog2026_ou24vc_noise_smooth/`: wiggles and end hooks gone; inside the sim
+  5-95 % everywhere except Pal5 parallax 0.67 (real is a straight line rising ~0.2 mas over the stream vs the sims'
+  flat 1/d ~0.05), M68 parallax 0.89, M68 mu_phi1 0.94; |z| <= 2.3.
+  **Parallax as a polynomial** (`--plx-deg`, default 2; -1 = the smoothing spline): real parallax inside / z_med
+  Pal5/NGC3201/M68 — spline s=1e-2 0.67/0.89 for Pal5/M68 (NGC3201 1.00); deg 2 0.50/1.00/1.00 (Pal5 real parabola
+  -0.03..0.18 mas); deg 1 0.72/1.00/0.89. Deg 1 is the straightest and the best for Pal5; the real Pal5 slope
+  (~0.2 mas over 30 deg, vs flat 1/d ~0.05 in every sim) survives every estimator -> data-side, not the fit.
+  Comparison: `outputs/stream_splines/parallax_fit_comparison.png`, runs `..._noise_smooth_plxdeg{1,2}/`.
+  **`--core-frac 0.85`** (per stream sample, real or sim, after subsampling: fit and draw each curve only on the
+  central phi1 range holding 85 % of that sample's stars; runs `..._noise_smooth_core85_plxdeg{-1,1,2}/`, parallax
+  comparison `outputs/stream_splines/parallax_fit_comparison_core85.png`). Removes Pal5's leading-end
+  large-parallax stars, so the real Pal5 slope drops from ~0.2 to ~0.08 mas over the core — but the real line
+  then sits BELOW the sims (~0.00 vs 0.05 mas; inside 0.50 for spline and deg 1, z_med -0.9), i.e. the residual is
+  a parallax offset, same sign/size as the known +0.04-0.05 mas sim-minus-real location offset (2026-09-22); deg 2
+  reads 0.94 only because the parabola bends into the band at the ends. NGC3201/M68 parallax inside 0.92-1.00 in
+  every variant; all other observables inside 1.00 with core 85 %, |z| <= 2.0.
+  **PPC defaults** now `--core-frac 0.85 --plx-deg 1` (tracks smoothing s=1e-4, v_los deg 2).
+  **Training twin `stream_spline_ownsupport`** (`augmentation/stream_spline_ownsupport.py`, JAX): per row after the
+  observed-count subsample (no phi1 cut; the window step is a no-op on stored sets), core = own central 85 % phi1;
+  tracks = P-spline on uniformly extended knots over the core (20 interior, penalty lambda*D2'D2/h^3 with
+  lambda = 1e-4*N_real*L_real^3), parallax = line, v_los = quadratic over measured core stars; evaluated on 20
+  equal-count real-member phi1 values inside the real core; invalid (value 0, flag -1) outside the row's own
+  support. Same (n,20,9) layout as stream_bspline_grid. Reproduces the PPC's scipy curves on the real members to
+  <=1 % of each curve's sd. Presets `stream_{global,real_global}_streamfinder_spline_ownsupport`; projection moved to
+  `stream_bspline.frame_observables` (pure refactor, bspline tests green); tests `tests/test_stream_spline_ownsupport.py`.
+  Runner `scripts/train_spline_ownsupport_ou24vc.sh` (trial 14 tuned_params.json of
+  `outputs/Bsline/spray_p1e3_v4_prog2026_ou24vc_core080_2modal_trial14`, prog2026 ou24vc 3e5, oldgrid model, drop 0.5,
+  batch 4096, 1000 ep). CPU smoke (2000 rows, 1 epoch) passed train/eval sim/eval real; full run launched by the user
+  2026-09-30 on GPU 5 -> `outputs/Bsline/spray_p1e3_v4_prog2026_ou24vc_ownsupport_2modal_trial14/`.
+- Session 2026-09-30 (streams-only IMM summary net on the own-support spline — RUNNING): CouplingFlow posterior on
+  `sim_summary` alone (no modality dropout) to get an information-maximising stream summary net, to be frozen later
+  (with a curve-only twin) inside the 2-modal diffusion model. `model=imm_streams_ownsupport` (plain TST = trial 14's
+  sim_summary backbone: summary_dim 44, 6 blocks, 7 heads x 7, dropout 0 — same architecture as the fusion backbone so
+  `summary_network_weights.npz` loads into it), `adapter=stream_streams_only`, new
+  `augmentation=stream_global_streamfinder_spline_ownsupport_streams_only` (ownsupport chain minus the vcirc steps),
+  `preprocessing=stream_global_log10_sumstats_2modal`, prog2026 ou24vc 3e5 set, 1000 ep, batch 4096, seed 2026.
+  Runner `scripts/train_imm_streams_ownsupport.sh` (train -> eval_sim_333 base_* recovery/coverage/calibration; no
+  real eval, since evaluate_real at global needs compositional_sample). GPU smoke passed. Full run on GPU 5 (autocvd), ~12 s/epoch
+  (~3.3 h): `outputs/Bsline/imm_streams_ownsupport/{run.log,train,eval_sim_333}`.
+  Curve-only twin: same runner with `ARM=vcirc` (`model=imm_vcirc_ownsupport` = trial 14's vcirc backbone: summary_dim
+  32, 5 blocks, 4 heads x 8, dropout 0.25; `adapter=stream_vcirc_only`, `augmentation=stream_global_vcirc_only`).
+  GPU smoke passed; full run on GPU 4, ~3 s/epoch -> `outputs/Bsline/imm_vcirc_ownsupport/`.
+  **Frozen-IMM diffusion model** (2026-10-01): `MaskedFusionNetwork` gained `params.frozen_weights: {key: npz}`
+  (loads a backbone from an IMM run's `summary_network_weights.npz` at build, `trainable=False`, always
+  `training=False`; test `tests/test_fusion_frozen.py`). Runner `scripts/train_frozen_imm_ownsupport_2modal.sh`
+  (= train_spline_ownsupport_ou24vc.sh + both backbones frozen, drop 0.5) ->
+  `outputs/Bsline/spray_p1e3_v4_prog2026_ou24vc_ownsupport_2modal_trial14_frozenimm/` (convergence clean). Sim:
+  base RMSE 0.530 / calib 0.018, comp 0.515 / 0.027 — identical to the end-to-end trial14 run (0.531/0.016,
+  0.516/0.027). vcirc IMM alone: base 0.668/0.016. Real Gaia: q_halo **0.97 [0.86,1.08]** (end-to-end: 0.67
+  [0.62,0.75]), gamma 1.18, log10 M200 11.78, Sigma_Disk 8.7e8; MMD 2.70 p_strat 0.035 (end-to-end 2.44/0.055). Same
+  sim performance but the real q moves by ~3 sigma between the two => the oblate q of the end-to-end model is not
+  robust to how the summary net is trained. Gotcha: editing a bash script while it runs breaks the running copy
+  (the streams IMM eval stage died with `AUG: unbound variable`; rerun separately).

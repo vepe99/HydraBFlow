@@ -1,0 +1,22 @@
+# Real-data twin of `stream_global_streamfinder_spline_ownsupport`.
+defaults:
+  - stream_real_global_streamfinder_bspline
+
+steps:
+  - sample_obs_error
+  - impute_vlos
+  - log10_vcirc
+  - stream_spline_ownsupport
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  summary_frame: streamfinder
+  spline_core_frac: 0.85
+  spline_knots: 20
+  spline_s_track: 1.0e-4
+  spline_parallax_deg: 1
+  spline_vlos_deg: 2
+  spline_min_stars: 8

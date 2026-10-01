@@ -1,0 +1,21 @@
+# stream_global_streamfinder_spline_ownsupport minus the rotation-curve steps (vcirc_kms is dropped by the
+# streams-only adapter, so add_noise_to_vcirc / log10_vcirc would KeyError). Pair with model=imm_streams_ownsupport,
+# adapter=stream_streams_only.
+defaults:
+  - stream_global_streamfinder_spline_ownsupport
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - stream_spline_ownsupport
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index

@@ -1,0 +1,10 @@
+# sim_summary backbone of the trial-14 own-support 2-modal model, standalone (same architecture, so its
+# weights can be loaded into that fusion backbone and frozen).
+type: time_series_transformer
+summary_dim: 44
+num_blocks: 6
+num_heads: 7
+dropout: 0.0
+embed_dim_per_head: 7
+params:
+  time_axis: -1

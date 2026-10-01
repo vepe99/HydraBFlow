@@ -86,6 +86,23 @@ def _second_diff_penalty(t: np.ndarray) -> np.ndarray:
     return (D.T @ D)[None] / h[:, None, None] ** 3
 
 
+def frame_observables(jnp, Rj, sim, ch):
+    """(n,P,6) ICRS stars, (n,3,3) per-row frame rotations -> phi1, phi2 [deg], mu_phi1, mu_phi2 [mas/yr], each (n,P)."""
+    rar, decr = jnp.radians(sim[..., ch["ra"]]), jnp.radians(sim[..., ch["dec"]])
+    n_vec = jnp.stack([jnp.cos(decr) * jnp.cos(rar), jnp.cos(decr) * jnp.sin(rar), jnp.sin(decr)], -1)
+    npr = jnp.einsum("nij,npj->npi", Rj, n_vec)
+    phi1 = jnp.degrees(jnp.arctan2(npr[..., 1], npr[..., 0]))
+    phi2 = jnp.degrees(jnp.arcsin(jnp.clip(npr[..., 2], -1.0, 1.0)))
+    e = jnp.stack([-jnp.sin(rar), jnp.cos(rar), jnp.zeros_like(rar)], -1)
+    m = jnp.stack([-jnp.sin(decr) * jnp.cos(rar), -jnp.sin(decr) * jnp.sin(rar), jnp.cos(decr)], -1)
+    v = sim[..., ch["mu_ra"]][..., None] * e + sim[..., ch["mu_dec"]][..., None] * m
+    vpr = jnp.einsum("nij,npj->npi", Rj, v)
+    p1, p2 = jnp.radians(phi1), jnp.radians(phi2)
+    ep = jnp.stack([-jnp.sin(p1), jnp.cos(p1), jnp.zeros_like(p1)], -1)
+    mp = jnp.stack([-jnp.sin(p2) * jnp.cos(p1), -jnp.sin(p2) * jnp.sin(p1), jnp.cos(p2)], -1)
+    return phi1, phi2, jnp.sum(vpr * ep, -1), jnp.sum(vpr * mp, -1)
+
+
 def _np_basis(x, t):
     import jax.numpy as jnp
     return np.asarray(_basis(jnp, jnp.asarray(x), jnp.asarray(t)))
@@ -235,8 +252,7 @@ def _stream_bspline_grid(params, rng, context=None):
     min_count = int(params.get("summary_min_count", 3))
     channels = dict(_DEFAULT_CHANNELS)
     channels.update({k: int(v) for k, v in (params.get("summary_channels", {}) or {}).items() if k in channels})
-    ra_c, dec_c = channels["ra"], channels["dec"]
-    par_c, mura_c, mudec_c, vlos_c = channels["parallax"], channels["mu_ra"], channels["mu_dec"], channels["vlos"]
+    par_c, vlos_c = channels["parallax"], channels["vlos"]
 
     # k_track = interior + 1 quantile edges of the real members -> the knot vector, ends = real φ1 range
     frames = _stream_frames(params, n_int + 1, n_int_v + 1, channels)
@@ -337,21 +353,7 @@ def _stream_bspline_grid(params, rng, context=None):
 
     @jax.jit
     def _run(sim, attn, vmask, j):
-        ra, dec = sim[..., ra_c], sim[..., dec_c]
-        rar, decr = jnp.radians(ra), jnp.radians(dec)
-        n_vec = jnp.stack([jnp.cos(decr) * jnp.cos(rar), jnp.cos(decr) * jnp.sin(rar), jnp.sin(decr)], -1)
-        Rj = R_all[j]
-        npr = jnp.einsum("nij,npj->npi", Rj, n_vec)
-        phi1 = jnp.degrees(jnp.arctan2(npr[..., 1], npr[..., 0]))
-        phi2 = jnp.degrees(jnp.arcsin(jnp.clip(npr[..., 2], -1.0, 1.0)))
-        e = jnp.stack([-jnp.sin(rar), jnp.cos(rar), jnp.zeros_like(rar)], -1)
-        m = jnp.stack([-jnp.sin(decr) * jnp.cos(rar), -jnp.sin(decr) * jnp.sin(rar), jnp.cos(decr)], -1)
-        v = sim[..., mura_c][..., None] * e + sim[..., mudec_c][..., None] * m
-        vpr = jnp.einsum("nij,npj->npi", Rj, v)
-        p1, p2 = jnp.radians(phi1), jnp.radians(phi2)
-        ep = jnp.stack([-jnp.sin(p1), jnp.cos(p1), jnp.zeros_like(p1)], -1)
-        mp = jnp.stack([-jnp.sin(p2) * jnp.cos(p1), -jnp.sin(p2) * jnp.sin(p1), jnp.cos(p2)], -1)
-        mu_phi1, mu_phi2 = jnp.sum(vpr * ep, -1), jnp.sum(vpr * mp, -1)
+        phi1, phi2, mu_phi1, mu_phi2 = frame_observables(jnp, R_all[j], sim, channels)
 
         t, tv, edges, vedges = t_all[j], tv_all[j], edges_all[j], vedges_all[j]
         pen, penv = pen_all[j], penv_all[j]                             # (n, 4, nb, nb), (n, 1, nbv, nbv)

@@ -9,12 +9,12 @@
 #
 # Run:    bash scripts/train_bspline_core080_prog2026.sh
 #         TRIAL=6 GPU=3 bash scripts/train_bspline_core080_prog2026.sh
-# Knobs:  TRIAL (14) N_EPOCHS (1000) BATCH_SIZE (4096) DROP_PROB (0.5) N_TRAIN (300000) RUNS_DIR GPU (auto)
+# Knobs:  STUDY_DIR SIM DATA_DIR TRIAL (14) N_EPOCHS (1000) BATCH_SIZE (4096) DROP_PROB (0.5) N_TRAIN (300000) RUNS_DIR GPU (auto)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 TRIAL=${TRIAL:-14}
-STUDY_DIR=data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow/tuning/tuningtest_2modal_bspline_core080_study
+STUDY_DIR=${STUDY_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_hydrabflow/tuning/tuningtest_2modal_bspline_core080_study}
 PARAMS=${STUDY_DIR}/trials/trial_$(printf %04d "${TRIAL}")/params.json
 RUNS_DIR=${RUNS_DIR:-outputs/Bsline/spray_p1e3_v4_prog2026_core080_2modal_trial${TRIAL}}
 mkdir -p "${RUNS_DIR}"
@@ -25,8 +25,8 @@ TUNED=$(.venv/bin/python -c "import json,sys;print(' '.join(f'++{k}={v}' for k,v
 
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-8} OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS:-8}
 export PY=${PY:-.venv/bin/python} AUTOCVD=${AUTOCVD:-.venv/bin/autocvd} GPU=${GPU:-auto}
-SIM=stream_agama_spray_massloss_ibata_m200c_v4_prog2026 \
-DATA_DIR=data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_hydrabflow N_TRAIN=${N_TRAIN:-300000} \
+SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026} \
+DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_hydrabflow} N_TRAIN=${N_TRAIN:-300000} \
 MODEL=stream_fusion_2modal_oldgrid ADAPTER=stream_2modal \
 PREPROC=stream_global_log10_sumstats_2modal REAL_PREPROC=stream_real_global_log10 \
 AUG=stream_global_streamfinder_bspline_core080 REAL_AUG=stream_real_global_streamfinder_bspline_core080 \

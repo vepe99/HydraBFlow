@@ -34,6 +34,7 @@ os.environ.setdefault("HYDRABFLOW_SIM_QUIET", "1")
 
 import numpy as np  # noqa: E402
 
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ppc_bspline_nn as bsp  # noqa: E402
 from ppc_particle_coverage import real_clouds, to_frame  # noqa: E402
@@ -46,8 +47,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OBS = [("phi2", "phi2 [deg]", 1), ("parallax", "parallax [mas]", 2), ("mu_phi1", "mu_phi1 [mas/yr]", 3),
-       ("mu_phi2", "mu_phi2 [mas/yr]", 4), ("vlos", "v_los [km/s]", 5)]
+OBS = [("phi2", r"$\phi_2$ [deg]", 1), ("parallax", r"$\varpi$ [mas]", 2), ("mu_phi1", r"$\mu_{\phi_1}$ [mas/yr]", 3),
+       ("mu_phi2", r"$\mu_{\phi_2}$ [mas/yr]", 4), ("vlos", r"$v_{\rm los}$ [km/s]", 5)]
+# stream colours of real_global_vs_streams_corner (RdYlBu_r over [Global, Pal5, NGC3201, M68])
+STREAM_COLOR = dict(zip(["Pal5", "NGC3201", "M68"], plt.cm.RdYlBu_r(np.linspace(0, 1, 4))[1:]))
 
 
 def _post(path):
@@ -72,15 +75,22 @@ def resimulate(args, cfg, sim, log10_keys):
     n_draws = next(iter(gpost.values())).shape[1]
     lshape = next(iter(lpost.values())).shape           # (1, m, n_parent, 1)
     assert lshape[1] == m and lshape[2] == n_draws, f"local posterior {lshape} does not pair with {n_draws} global draws"
-    n = min(args.n_samples, n_draws)
     rng = np.random.default_rng(args.seed)
-    idx = rng.choice(n_draws, size=n, replace=False)
+    if args.median:   # one row at the per-parameter posterior medians (marginals, not a joint mode)
+        gpost = {k: np.median(v, axis=1, keepdims=True) for k, v in gpost.items()}
+        lpost = {k: np.median(v, axis=2, keepdims=True) for k, v in lpost.items()}
+        n, idx = 1, np.array([0])
+    else:
+        n = min(args.n_samples, n_draws)
+        idx = rng.choice(n_draws, size=n, replace=False)
 
     flat = {}
     for key, spec in sim._priors_global.items():
         if key in gpost:
             flat[key] = np.repeat(gpost[key][0, idx].reshape(n, 1), m, axis=0)
         elif spec["type"] == "identity":
+            flat[key] = np.full((n * m, 1), float(spec["prior_parameters"][0]))
+        elif args.median and spec["type"] == "normal":   # marginalized nuisance at its prior mean
             flat[key] = np.full((n * m, 1), float(spec["prior_parameters"][0]))
         else:                                             # marginalized nuisance (solar frame): prior
             flat[key] = np.repeat(sample_prior_value(spec, n, rng), m, axis=0)
@@ -133,6 +143,14 @@ def main():
                          "(== ppc_bspline_nn --fit aug)")
     ap.add_argument("--lam", type=float, default=None,
                     help="pin the spline lambda (real + every sim) instead of the GCV value; output files get a _lam<value> suffix")
+    ap.add_argument("--grid-aug", default=None,
+                    help="augmentation preset whose stream_bspline_grid params define the spline ruler (and the "
+                         "reference members) when the local model's own training chain has none, e.g. a particle model")
+    ap.add_argument("--train-config", default=None,
+                    help="config.yaml carrying the local model's TRAINING augmentation (default: <model_dir>/.hydra/config.yaml; "
+                         "tuning trials keep none, pass e.g. <trial>/eval_sim_333/.hydra/config.yaml)")
+    ap.add_argument("--median", action="store_true",
+                    help="simulate ONE row at the posterior medians (globals + per-stream locals) instead of --n-samples draws")
     ap.add_argument("--reuse", action="store_true",
                     help="reuse <out>/ppc_joint_streams.npz from a previous run instead of re-simulating")
     args = ap.parse_args()
@@ -162,7 +180,7 @@ def main():
     n, m = grouped.shape[:2]
 
     # TRAINING observation model of the local model (its model_dir's config), up to mask_vlos.
-    train_cfg = OmegaConf.load(os.path.join(_abs(str(cfg.model_dir)), ".hydra", "config.yaml"))
+    train_cfg = OmegaConf.load(args.train_config or os.path.join(_abs(str(cfg.model_dir)), ".hydra", "config.yaml"))
     aug_cfg = OmegaConf.create(OmegaConf.to_container(train_cfg.augmentation, resolve=True))
     jgrid = np.tile(np.array([jj for _, jj in streams], dtype=float), (n, 1))
     noisy, attn, vmask = augment_sim(grouped, jgrid, seed=args.seed, aug_cfg=aug_cfg)
@@ -170,7 +188,11 @@ def main():
     real = real_clouds(real_path, args.simulator_preset, args.real_aug, 100000, args.seed)
     frames = streamfinder_frames()
     # pspline: knots + lambda come from the members the training augmentation was built on
-    ref_path = _abs(str(aug_cfg.params.real_streams_file))
+    gp = aug_cfg.params
+    if args.grid_aug:   # particle models: borrow a B-spline preset as the common ruler for sims and members
+        from ppc_particle_coverage import compose_aug
+        gp = OmegaConf.create(OmegaConf.to_container(compose_aug(args.simulator_preset, args.grid_aug).params, resolve=True))
+    ref_path = _abs(str(gp.real_streams_file))
     ref = real if ref_path == real_path else real_clouds(ref_path, args.simulator_preset, args.real_aug, 100000, args.seed)
 
     # ---------- per stream: project sims + real into the published frame ----------
@@ -208,7 +230,7 @@ def main():
             pick = np.flatnonzero(ok)
             if len(pick) > args.max_scatter:
                 pick = rng.choice(pick, args.max_scatter, replace=False)
-            ax.scatter(Fs[pick, 0], Fs[pick, col], s=4, c="#8fa6ff", alpha=0.35, lw=0, label=f"sim ({n} joint draws)")
+            ax.scatter(Fs[pick, 0], Fs[pick, col], s=4, color=STREAM_COLOR[name], alpha=0.35, lw=0, label=f"sim ({n} joint draws)")
             okr = np.isfinite(Fr[:, col])
             ax.scatter(Fr[okr, 0], Fr[okr, col], s=9, c="#1d2230", alpha=0.9, lw=0, label="Gaia members")
             lo, hi = np.nanpercentile(np.r_[Fs[ok, col], Fr[okr, col]], [1, 99])
@@ -217,13 +239,12 @@ def main():
             ax.set_xlim(*np.nanpercentile(Fr[:, 0], [0, 100]) + np.array([-3, 3]))
             ax.set_ylabel(lab if c == 0 or True else "")
             if s == m - 1:
-                ax.set_xlabel("phi1 [deg]")
+                ax.set_xlabel(r"$\phi_1$ [deg]")
             if c == 0:
                 ax.set_title(f"{name}", loc="left", fontweight="bold")
             if s == 0 and c == len(OBS) - 1:
                 ax.legend(fontsize=8, loc="upper right")
-            ax.grid(alpha=0.25)
-    fig.suptitle("Joint posterior-predictive check: re-simulated streams (training observation model) vs Gaia members, STREAMFINDER frames", y=1.0)
+            ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, "ppc_joint_scatter.png"), dpi=130, bbox_inches="tight")
     plt.close(fig)
@@ -235,7 +256,6 @@ def main():
     report = {}
     if args.fit == "aug":   # the training augmentation itself: frames, knots, lambda/model fixed from its real members
         from hydrabflow.registry import AUGMENTATIONS
-        gp = aug_cfg.params
         grid_fn = AUGMENTATIONS.get("stream_bspline_grid")(gp, np.random.default_rng(args.seed))
         skey = gp.get("summary_key", "sim_summary")
 
@@ -286,12 +306,12 @@ def main():
             C = np.array(curves) if curves else np.full((1, len(grid)), np.nan)
             usable = np.isfinite(C).all(axis=1)
             C = C[usable]
-            for cv in C:
-                ax.plot(grid, cv, color="#8fa6ff", alpha=0.25, lw=0.8)
+            for cv in (C if len(C) <= 50 else []):   # past ~50 draws the band says it better
+                ax.plot(grid, cv, color=STREAM_COLOR[name], alpha=0.25, lw=0.8)
             if len(C):
                 q5, q50, q95 = np.nanpercentile(C, [5, 50, 95], axis=0)
-                ax.fill_between(grid, q5, q95, color="#1f3a93", alpha=0.18, lw=0, label="sim 5-95 %")
-                ax.plot(grid, q50, color="#1f3a93", lw=1.4, label="sim median")
+                ax.fill_between(grid, q5, q95, color=STREAM_COLOR[name], alpha=0.3, lw=0, label="sim 5-95 %")
+                ax.plot(grid, q50, color=STREAM_COLOR[name], lw=1.4, label="sim median")
                 sig = 1.4826 * np.nanmedian(np.abs(C - q50), axis=0)
                 z = (real_curve - q50) / np.where(sig > 0, sig, np.nan)
                 inside = float(np.mean((real_curve >= q5) & (real_curve <= q95)))
@@ -306,13 +326,12 @@ def main():
                 ax.set_ylim(lo - pad, hi + pad)
             ax.set_ylabel(lab)
             if s == m - 1:
-                ax.set_xlabel("phi1 [deg]")
+                ax.set_xlabel(r"$\phi_1$ [deg]")
             if c == 0:
                 ax.text(0.02, 0.95, name, transform=ax.transAxes, fontweight="bold", va="top")
             if s == 0 and c == len(OBS) - 1:
                 ax.legend(fontsize=8, loc="upper right")
-            ax.grid(alpha=0.25)
-    fig.suptitle(f"Joint posterior-predictive check: {args.fit} B-spline tracks of re-simulated streams vs the Gaia members' track", y=1.0)
+            ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, f"ppc_joint_bspline{sfx}.png"), dpi=130, bbox_inches="tight")
     plt.close(fig)
@@ -320,7 +339,7 @@ def main():
     # ---------- figures 3/4: observation-space corner plots, 5-D (all stars) and 6-D (measured v_los) ----------
     import corner
 
-    labels6 = ["phi1 [deg]", "phi2 [deg]", "parallax [mas]", "mu_phi1 [mas/yr]", "mu_phi2 [mas/yr]", "v_los [km/s]"]
+    labels6 = [r"$\phi_1$ [deg]", r"$\phi_2$ [deg]", r"$\varpi$ [mas]", r"$\mu_{\phi_1}$ [mas/yr]", r"$\mu_{\phi_2}$ [mas/yr]", r"$v_{\rm los}$ [km/s]"]
     for s, (name, j) in enumerate(streams):
         Fs = np.concatenate([F for F in sim_tab[name] if F is not None], axis=0)
         Fr = real_tab[name]
@@ -333,7 +352,7 @@ def main():
                 X = X[rng.choice(len(X), 60000, replace=False)]
             both = np.concatenate([X, Y], axis=0)
             rng_ = [tuple(np.nanpercentile(both[:, k], [0.5, 99.5]) + np.array([-1, 1]) * 0.08 * np.ptp(np.nanpercentile(both[:, k], [0.5, 99.5]))) for k in range(dim)]
-            fig = corner.corner(X, labels=labels6[:dim], range=rng_, color="#1f3a93", bins=40,
+            fig = corner.corner(X, labels=labels6[:dim], range=rng_, color=STREAM_COLOR[name], bins=40,
                                 levels=(0.68, 0.95), plot_datapoints=False, plot_density=True,
                                 fill_contours=True, smooth=1.0, hist_kwargs=dict(density=True, lw=1.4))
             # corner pins data points at zorder=-1 (under the filled contours), so scatter the members by hand
@@ -342,9 +361,6 @@ def main():
                 axs[r, r].hist(Y[:, r], bins=40, range=rng_[r], density=True, histtype="step", color="#1d2230", lw=1.4)
                 for c in range(r):
                     axs[r, c].plot(Y[:, c], Y[:, r], "o", ms=3.4, color="#1d2230", alpha=0.9, zorder=10, mew=0)
-            fig.suptitle(f"{name}: simulated stars from {n} joint posterior draws (blue, 68/95 %) vs Gaia members (black)"
-                         + (f"  --  {len(Y)} members / {len(X)} sim stars with measured v_los" if dim == 6 else
-                            f"  --  {len(Y)} members / {len(X)} sim stars"), y=1.01, fontsize=11)
             fig.savefig(os.path.join(args.out, f"ppc_joint_corner{tag}_{name}.png"), dpi=110, bbox_inches="tight")
             plt.close(fig)
     print("corner plots written")

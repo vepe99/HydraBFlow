@@ -190,6 +190,14 @@ def _evaluate_compositional_global(cfg):
     return {"base": base_posterior, "compositional": posterior}
 
 
+def stream_names(cfg, stream_ids) -> dict[int, str]:
+    """``{j: stream name}`` from the simulator's ``target_streams`` (``stream_<j>`` otherwise)."""
+    target_streams = getattr(get_simulator(cfg.simulator), "target_streams", None)
+    if target_streams:
+        return {int(v): str(k) for k, v in target_streams.items()}
+    return {int(s): f"stream_{int(s)}" for s in np.unique(stream_ids)}
+
+
 def _evaluate_local(cfg):
     """Local-level evaluation: per-member sampling conditioned on the true globals."""
     seed_everything(cfg.seed)
@@ -224,14 +232,8 @@ def _evaluate_local(cfg):
     artifacts.save_posterior({k: v for k, v in posterior.items() if k != "j"}, run_dir)
 
     # Diagnostics per stream (each stream has its own local-parameter scales).
-    target_streams = getattr(get_simulator(cfg.simulator), "target_streams", None)
     stream_ids = np.asarray(flat["j"]).reshape(-1).astype(int)
-    names = (
-        {int(v): str(k) for k, v in target_streams.items()}
-        if target_streams
-        else {int(s): f"stream_{int(s)}" for s in np.unique(stream_ids)}
-    )
-    for stream, name in sorted(names.items()):
+    for stream, name in sorted(stream_names(cfg, stream_ids).items()):
         rows = stream_ids == stream
         if not rows.any():
             continue

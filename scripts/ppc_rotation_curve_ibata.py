@@ -88,6 +88,8 @@ def main():
                     help="posterior draws per group reused from the saved posterior (no re-sampling)")
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--baryons", action="store_true",
+                    help="compute the baryon-only and halo-only curves with AGAMA if not cached (else plot them only when cached)")
     args = ap.parse_args()
 
     from omegaconf import OmegaConf
@@ -149,8 +151,8 @@ def main():
     agama = _agama()
     agama.setNumThreads(1)
 
-    # dense radii for the overlay figure (1 kpc -> just past the outermost Huang 2016 point)
-    r_dense = np.geomspace(1.0, 1.05 * sc.HUANG_R_KPC.max(), 120)
+    # dense radii for the overlay figure (0.1 kpc -> just past the outermost Huang 2016 point)
+    r_dense = np.geomspace(0.1, 1.05 * sc.HUANG_R_KPC.max(), 120)
     radii = np.concatenate([obs_r, r_dense])
 
     def vcirc_stack(group_rows):
@@ -163,10 +165,52 @@ def main():
         return out[:, :obs_r.size], out[:, obs_r.size:]
 
     curves, med_curves, dense = {}, {}, {}
-    for (name, group_rows), mrow in zip(groups, med_rows):
-        vc, dense[name] = vcirc_stack(group_rows)
-        curves[name] = vc
-        med_curves[name] = vcirc_stack([mrow])[0][0]
+    cache = os.path.join(args.run_dir, f"ppc_rotation_curve_curves_n{n}_s{args.seed}.npz")
+    if os.path.exists(cache):  # replot without recomputing the potentials
+        z = np.load(cache)
+        assert np.allclose(z["r_obs"], obs_r) and np.allclose(z["r_dense"], r_dense), "stale cache"
+        for name, _ in groups:
+            curves[name], dense[name], med_curves[name] = (z[f"{name}_obs"], z[f"{name}_dense"],
+                                                           z[f"{name}_median_params"])
+        print(f"Loaded curves from {cache}")
+    else:
+        for (name, group_rows), mrow in zip(groups, med_rows):
+            curves[name], dense[name] = vcirc_stack(group_rows)
+            med_curves[name] = vcirc_stack([mrow])[0][0]
+        np.savez(cache, r_obs=obs_r, r_dense=r_dense, vc_obs=obs_vc, sigma_obs=obs_sig,
+                 **{f"{k}_obs": v for k, v in curves.items()},
+                 **{f"{k}_dense": v for k, v in dense.items()},
+                 **{f"{k}_median_params": v for k, v in med_curves.items()})
+        print(f"Saved curves to {cache}")
+    # Decomposition of the global posterior's curve: baryons only (bulge + gas + stellar disk,
+    # no halo) and dark halo only. Cached like the full curves; --baryons computes missing ones.
+    from hydrabflow.simulators.stream_agama import _halo_params_m200c, _halo_params, _resolve_pot_cfg
+
+    rcfg = _resolve_pot_cfg(pot_cfg)
+
+    def halo_pot(row):
+        if str(rcfg["halo_parameterization"]) == "m200_c":
+            return agama.Potential(_halo_params_m200c(agama, row, rcfg))
+        return agama.Potential(_halo_params(row, float(rcfg["halo_r_t_kpc"])))
+
+    parts = {}
+    for part, build in [("baryons", lambda row: _host_potential(agama, row, pot_cfg, halo=False)),
+                        ("halo", halo_pot)]:
+        pcache = os.path.join(args.run_dir, f"ppc_rotation_curve_{part}_n{n}_s{args.seed}.npz")
+        if os.path.exists(pcache):
+            z = np.load(pcache)
+            assert np.allclose(z["r_dense"], r_dense), "stale cache"
+            parts[part] = z["Combined_dense"]
+            print(f"Loaded {part} curves from {pcache}")
+        elif args.baryons:
+            vc = np.full((n, r_dense.size), np.nan)
+            for i, row in enumerate(groups[0][1]):
+                vc[i] = _vcirc(build(row), r_dense)
+            np.savez(pcache, r_dense=r_dense, Combined_dense=vc)
+            parts[part] = vc
+            print(f"Saved {part} curves to {pcache}")
+    for name, _ in groups:
+        vc = curves[name]
         fdev_m = np.nanmedian(np.abs(med_curves[name] - obs_vc) / obs_vc)
         chi2_m = np.nansum(((med_curves[name] - obs_vc) / obs_sig) ** 2)
         print(f"  {name:10s}: curve at posterior-median params: median |frac dev| {fdev_m:5.1%}, "
@@ -214,11 +258,9 @@ def main():
             ax.axvline(split, color="0.7", ls=":", lw=1)
         ax.set_title(name)
         ax.set_xlabel("r [kpc]")
-        ax.grid(alpha=0.2)
+        ax.set_ylim(top=250)
     axes[0].set_ylabel(r"$v_\mathrm{circ}$ [km/s]")
     axes[0].legend(fontsize=7, loc="upper right")
-    fig.suptitle(f"Rotation-curve PPC (Ibata/m200_c potential; {n} draws/group, reused posterior)",
-                 y=1.02)
     fig.tight_layout()
     out = args.out or os.path.join(args.run_dir, "ppc_rotation_curve.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
@@ -227,41 +269,53 @@ def main():
     # Overlay figure: one broken r-axis, linear 1-R_BREAK kpc | log R_BREAK-100 kpc, all groups
     # together, the run's own observed curve plus Huang et al. (2016) out to ~100 kpc.
     r_break = 30.0
-    fig, (axl, axr) = plt.subplots(1, 2, figsize=(8.5, 5.8), sharey=True,
-                                   gridspec_kw={"wspace": 0, "width_ratios": [1.3, 1]})
-    own_lbl = "Ou 2024" if grid == "custom" else "Zhou 2023"
+    k = 1.5  # overlay scale factor: fonts, lines, markers
+    plt.rcParams.update({"font.size": 10 * k})
+    lab = {"Combined": "Global"}
+    own_lbl = "Ou et al. 2024" if grid == "custom" else "Zhou et al. 2023"
     own = ~is_huang
-    for ax in (axl, axr):
-        for name, _ in groups:
-            vc, c = dense[name], colors.get(name, "purple")
-            lo, hi = np.nanpercentile(vc, [16, 84], axis=0)
-            ax.fill_between(r_dense, lo, hi, color=c, alpha=0.25, lw=0)
-            ax.plot(r_dense, np.nanmedian(vc, axis=0), color=c, lw=1.6, label=f"{'Global' if name == 'Combined' else name} (median, 68%)")
-        ax.errorbar(obs_r[own], obs_vc[own], yerr=obs_sig[own], fmt="o", ms=3.5, color="0.1",
-                    ecolor="0.45", elinewidth=0.8, capsize=1.5, lw=0, label=own_lbl, zorder=5)
-        hu = sc.HUANG_R_KPC > 25.0  # Huang 2016 only beyond 25 kpc
-        ax.errorbar(sc.HUANG_R_KPC[hu], sc.HUANG_VC_KMS[hu], yerr=sc.HUANG_SIGMA_VC[hu], fmt="s", ms=3.5,
-                    mfc="white", color="0.3", ecolor="0.6", elinewidth=0.8, capsize=1.5, lw=0,
-                    label="Huang 2016", zorder=4)
-        ax.grid(alpha=0.2)
-    axl.set_xlim(1.0, r_break)
-    axr.set_xscale("log")
-    axr.set_xlim(r_break, r_dense.max())
-    axr.set_xticks([40, 50, 70, 100])
-    axr.set_xticks([], minor=True)
-    axr.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    axl.spines["right"].set_visible(False)
-    axl.axvline(r_break, color="0.4", ls="--", lw=1, clip_on=False, zorder=6)  # linear|log join
-    axr.spines["left"].set_visible(False)
-    axr.tick_params(axis="y", which="both", left=False)
-    axl.set_xlabel("r [kpc] (linear)")
-    axr.set_xlabel("r [kpc] (log)")
-    axl.set_ylabel(r"$v_\mathrm{circ}$ [km/s]")
-    axl.legend(fontsize=8, loc="lower center", framealpha=0.9, ncol=2)
-    fig.suptitle(f"Rotation-curve PPC ({n} posterior draws/group)")
-    out2 = os.path.splitext(out)[0] + "_overlay.png"
-    fig.savefig(out2, dpi=150, bbox_inches="tight")
-    print(f"Saved {out2}")
+    hu = sc.HUANG_R_KPC > r_break  # Huang 2016 only beyond the linear|log join
+    ebar = dict(elinewidth=0.8 * k, capsize=1.5 * k, lw=0, ms=3.5 * k)
+    for names, suffix in [([g for g, _ in groups], ""), (["Combined"], "_global")]:
+        fig, (axl, axr) = plt.subplots(1, 2, figsize=(13, 5.8), sharey=True,
+                                       gridspec_kw={"wspace": 0, "width_ratios": [1.3, 1]})
+        single = len(names) == 1
+        for ax in (axl, axr):
+            bands = [(n_, dense[n_], colors.get(n_, "purple"), lab.get(n_, n_)) for n_ in names]
+            if single:  # the global posterior's baryon-only and halo-only curves
+                for part, c_, lbl in [("baryons", "0.35", "Baryons"), ("halo", "0.6", "Dark halo")]:
+                    if part in parts:
+                        bands.append((part, parts[part], c_, lbl))
+            for name, vc, c, label in bands:
+                lo, hi = np.nanpercentile(vc, [16, 84], axis=0)
+                if single:  # single group: also show the 95% band
+                    lo95, hi95 = np.nanpercentile(vc, [2.5, 97.5], axis=0)
+                    ax.fill_between(r_dense, lo95, hi95, color=c, alpha=0.12, lw=0)
+                ax.fill_between(r_dense, lo, hi, color=c, alpha=0.25, lw=0)
+                ax.plot(r_dense, np.nanmedian(vc, axis=0), color=c, lw=1.6 * k,
+                        ls={"baryons": "--", "halo": ":"}.get(name, "-"), label=label)
+            ax.errorbar(obs_r[own], obs_vc[own], yerr=obs_sig[own], fmt="o", color="0.1",
+                        ecolor="0.45", label=own_lbl, zorder=5, **ebar)
+            ax.errorbar(sc.HUANG_R_KPC[hu], sc.HUANG_VC_KMS[hu], yerr=sc.HUANG_SIGMA_VC[hu],
+                        fmt="s", mfc="white", color="0.3", ecolor="0.6", label="Huang et al. 2016",
+                        zorder=4, **ebar)
+        axl.set_xlim(0.1, r_break)
+        axl.set_ylim(top=250)
+        axr.set_xscale("log")
+        axr.set_xlim(r_break, r_dense.max())
+        axr.set_xticks([40, 50, 70, 100])
+        axr.set_xticks([], minor=True)
+        axr.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        axl.spines["right"].set_visible(False)
+        axl.axvline(r_break, color="0.4", ls="--", lw=k, clip_on=False, zorder=6)  # linear|log join
+        axr.spines["left"].set_visible(False)
+        axr.tick_params(axis="y", which="both", left=False)
+        fig.supxlabel("$R$ [kpc]", y=0.0)
+        axl.set_ylabel(r"$V_c$ [km/s]")
+        axl.legend(fontsize=8 * k, loc="lower center", framealpha=0.9, ncol=2)
+        out2 = os.path.splitext(out)[0] + f"_overlay{suffix}.png"
+        fig.savefig(out2, dpi=150, bbox_inches="tight")
+        print(f"Saved {out2}")
 
 
 if __name__ == "__main__":

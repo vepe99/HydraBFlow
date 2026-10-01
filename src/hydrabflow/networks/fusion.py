@@ -17,6 +17,12 @@ Selected via ``model/summary_network``::
         sim_data_projected: {type: set_transformer, summary_dim: 32, num_blocks: 2, ...}
         vcirc_kms: {type: time_series_transformer, summary_dim: 32, ...}
       head: {widths: [64, 64], output_dim: 32}  # optional
+      frozen_weights:                           # optional: {key: summary_network_weights.npz}
+        vcirc_kms: outputs/<imm run>/train/summary_network_weights.npz
+
+``frozen_weights`` loads a backbone's weights from a pretrained (e.g. information-maximising)
+run's ``summary_network_weights.npz`` at build time and freezes it: excluded from the optimizer
+and always called with ``training=False`` (no dropout). The architecture must match that run's.
 
 Each backbone spec is a full ``SummaryNetworkConfig`` (missing fields take that schema's
 defaults) resolved through the summary-network registry, so custom architectures work as
@@ -28,6 +34,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import keras
+import numpy as np
 from keras import ops
 
 from bayesflow.networks.summary.summary_network import SummaryNetwork
@@ -46,12 +53,17 @@ class MaskedFusionNetwork(SummaryNetwork):
         backbones: Mapping[str, keras.Layer],
         head: keras.Layer | None = None,
         mask_backbone: str | None = None,
+        frozen_weights: Mapping[str, str] | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.backbones = backbones
         self.head = head
         self.mask_backbone = mask_backbone
+        self.frozen_weights = dict(frozen_weights or {})
+        unknown = set(self.frozen_weights) - set(backbones)
+        if unknown:
+            raise ValueError(f"frozen_weights keys {sorted(unknown)} are not backbones {sorted(backbones)}")
         self._ordered_keys = sorted(self.backbones.keys())
 
     def build(self, inputs_shape: Mapping[str, Shape]):
@@ -62,6 +74,10 @@ class MaskedFusionNetwork(SummaryNetwork):
             shape = inputs_shape[k]
             if not self.backbones[k].built:
                 self.backbones[k].build(shape)
+            if k in self.frozen_weights:
+                with np.load(self.frozen_weights[k]) as f:
+                    self.backbones[k].set_weights([f[n] for n in f.files])
+                self.backbones[k].trainable = False
             output_shapes.append(self.backbones[k].compute_output_shape(shape))
         if self.head is not None and not self.head.built:
             fused = (*output_shapes[0][:-1], sum(s[-1] for s in output_shapes))
@@ -90,7 +106,8 @@ class MaskedFusionNetwork(SummaryNetwork):
     ) -> Tensor:
         outputs = [
             self.backbones[k](
-                inputs[k], training=training, **self._backbone_kwargs(k, attention_mask)
+                inputs[k], training=training and k not in self.frozen_weights,
+                **self._backbone_kwargs(k, attention_mask),
             )
             for k in self._ordered_keys
         ]
@@ -115,7 +132,9 @@ class MaskedFusionNetwork(SummaryNetwork):
         for k in self._ordered_keys:
             backbone = self.backbones[k]
             extra = self._backbone_kwargs(k, attention_mask)
-            if isinstance(backbone, SummaryNetwork):
+            if k in self.frozen_weights:
+                metrics["outputs"].append(backbone(inputs[k], training=False, **extra))
+            elif isinstance(backbone, SummaryNetwork):
                 metrics_k = backbone.compute_metrics(inputs[k], stage=stage, **extra)
                 metrics["outputs"].append(metrics_k["outputs"])
                 if "loss" in metrics_k:
@@ -139,6 +158,7 @@ class MaskedFusionNetwork(SummaryNetwork):
             "backbones": self.backbones,
             "head": self.head,
             "mask_backbone": self.mask_backbone,
+            "frozen_weights": self.frozen_weights,
         }
         return base_config | serialize(config)
 
@@ -193,6 +213,7 @@ def _fusion(cfg):
         backbones=backbones,
         head=head,
         mask_backbone=params.get("mask_backbone"),
+        frozen_weights=params.get("frozen_weights"),
     )
 
 
