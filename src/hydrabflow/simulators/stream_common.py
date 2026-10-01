@@ -167,11 +167,47 @@ def extended_rotation_curve(split_kpc: float | None = None):
     return r[order], vc[order], sig[order]
 
 
-def sample_prior_value(spec: Mapping, n: int, rng: np.random.Generator) -> np.ndarray:
-    """Draw ``(n, 1)`` samples from one prior spec (uniform / normal / truncated_normal / identity).
+# Moster, Naab & White (2013) stellar-to-halo mass relation (their eq. 2, z = 0 values). The exponents
+# carry a ``_moster`` suffix so they cannot be confused with the halo's inner slope ``gamma``.
+MOSTER13 = dict(N=0.0351, l1=11.59, beta_moster=1.376, gamma_moster=0.608)
+
+
+def mu_moster(log10_m, N=MOSTER13["N"], l1=MOSTER13["l1"], beta_moster=MOSTER13["beta_moster"],
+              gamma_moster=MOSTER13["gamma_moster"], xp=np):
+    """Mean log10 stellar mass at log10 halo mass ``log10_m`` = l (Moster et al. 2013, eq. 2):
+
+        mu(l) = l + log10[ 2N / ((10^(l - l1))^(-beta) + (10^(l - l1))^gamma) ]
+
+    ``xp`` is the array namespace (``numpy`` or ``jax.numpy``), so the same formula serves the
+    sampler and the JAX prior score.
+
+    NOTE: our ``log10_M200`` is the HALO-ONLY mass inside r200 (200 rho_crit), while Moster's M_v is
+    a total (dark + baryonic) virial mass. The ~5 % difference is negligible next to the 0.2 dex
+    scatter of the relation, so M200 is used as is.
+    """
+    x = 10.0 ** (log10_m - l1)
+    return log10_m + xp.log10(2.0 * N / (x ** (-beta_moster) + x ** gamma_moster))
+
+
+def moster_params(spec: Mapping) -> dict:
+    """The Moster constants of a ``moster_conditional`` spec (the published values by default)."""
+    out = dict(MOSTER13)
+    out.update({k: float(v) for k, v in dict(spec.get("moster") or {}).items()})
+    return out
+
+
+def sample_prior_value(
+    spec: Mapping, n: int, rng: np.random.Generator, drawn: Mapping[str, np.ndarray] | None = None
+) -> np.ndarray:
+    """Draw ``(n, 1)`` samples from one prior spec
+    (uniform / normal / truncated_normal / identity / moster_conditional).
 
     ``truncated_normal`` takes ``[mean, std, low, high]`` and redraws out-of-support values, e.g. a
     progenitor mass whose normal prior would otherwise put ~2 % of draws below zero.
+
+    ``moster_conditional`` takes ``[scatter]`` and draws ``N(mu_moster(x), scatter^2)`` where ``x`` is
+    the already-drawn parameter named by ``condition_on`` (passed in ``drawn``); the Moster constants
+    come from the optional ``moster`` sub-mapping. No truncation.
     """
     kind = spec["type"]
     p = list(spec["prior_parameters"])
@@ -189,7 +225,19 @@ def sample_prior_value(spec: Mapping, n: int, rng: np.random.Generator) -> np.nd
         return out
     if kind == "identity":
         return np.full((n, 1), float(p[0]))
-    raise ValueError(f"Unknown prior type '{kind}' (expected uniform|normal|truncated_normal|identity)")
+    if kind == "moster_conditional":
+        cond = str(spec["condition_on"])
+        if drawn is None or cond not in drawn:
+            raise ValueError(
+                f"moster_conditional conditions on {cond!r}, which has not been drawn yet: it must "
+                "come earlier in priors_global (config order is the draw order)"
+            )
+        mu = mu_moster(np.asarray(drawn[cond], dtype=float).reshape(n, 1), **moster_params(spec))
+        return mu + float(p[0]) * rng.normal(size=(n, 1))
+    raise ValueError(
+        f"Unknown prior type '{kind}' "
+        "(expected uniform|normal|truncated_normal|identity|moster_conditional)"
+    )
 
 
 def inferred_names(priors: Mapping[str, Mapping]) -> list[str]:
@@ -233,7 +281,7 @@ def sample_stream_prior(
     local parameters. Every returned array has shape ``(n, 1)``."""
     out: Dict[str, np.ndarray] = {}
     for key, spec in priors_global.items():
-        out[key] = sample_prior_value(spec, n, rng)
+        out[key] = sample_prior_value(spec, n, rng, drawn=out)
 
     stream_by_j = {j: name for name, j in target_streams.items()}
     js = rng.choice(sorted(stream_by_j), size=n)
@@ -263,7 +311,7 @@ def sample_stream_prior_shared_global(
     """
     out: Dict[str, np.ndarray] = {}
     for key, spec in priors_global.items():
-        out[key] = sample_prior_value(spec, n, rng)
+        out[key] = sample_prior_value(spec, n, rng, drawn=out)
 
     stream_by_j = {j: name for name, j in target_streams.items()}
     js = np.array(sorted(stream_by_j))

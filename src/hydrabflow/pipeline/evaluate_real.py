@@ -159,6 +159,7 @@ def _evaluate_real_compositional(cfg, level: str, run_dir: str):
             log10_keys=log10_keys,
             param_order=list(cfg.adapter.inference_variables),
             seed=int(cfg.seed),
+            approximator=workflow.approximator,
         )
         conditions = apply_mask_plan(workflow, cfg, conditions, m)
         log.info("Compositional (global) sampling on the observed group of %d members", m)

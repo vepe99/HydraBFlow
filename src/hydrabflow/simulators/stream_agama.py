@@ -107,6 +107,18 @@ _DEFAULT_POT_CFG = dict(
     halo_H0_kms_mpc=70.4,           # McMillan (2017) cosmology, used only by the m200_c conversion
     halo_Delta_mass=200.0,          # M200 overdensity (x rho_crit)
     halo_Delta_c=94.0,              # c_v' concentration overdensity (x rho_crit, McMillan)
+    # Stellar-disk model. "legacy" = one disk from (Sigma_Disk, r_Disk, z_Disk) [+ the optional
+    # r_thick_Disk/... thick disk]; "moster_thin_thick" = thin + thick exponential disks whose total
+    # mass follows the Moster+2013 stellar mass minus the fixed bulge (see _disk_params_moster).
+    disk_model="legacy",
+    # AGAMA's Disk convention (potential_disk.cpp): scaleHeight h > 0 -> exponential
+    # exp(-|z|/h)/(2h); h < 0 -> isothermal sech^2(z/2|h|)/(4|h|). "legacy" keeps the historical,
+    # INVERTED signs (disk_vertical=exponential passed -h, i.e. sech^2; the HI/H2 gas disks passed
+    # +h, i.e. exponential) so older datasets stay reproducible; "correct" gives what the names say.
+    agama_vertical_sign="legacy",
+    z_thin_kpc=0.3,                 # moster_thin_thick: fixed thin-disk scale height
+    z_thick_kpc=0.9,                # moster_thin_thick: fixed thick-disk scale height
+    M_disk_floor=1e9,               # moster_thin_thick: deterministic floor on the disk mass [Msun]
 )
 
 
@@ -115,6 +127,98 @@ def _resolve_pot_cfg(pot_cfg: Mapping | None) -> dict:
     if pot_cfg:
         cfg.update(pot_cfg)
     return cfg
+
+
+def _stellar_hsign(cfg: Mapping) -> float:
+    """Sign of the stellar-disk ``scaleHeight`` passed to AGAMA for ``cfg['disk_vertical']``."""
+    exponential = cfg["disk_vertical"] == "exponential"
+    if cfg.get("agama_vertical_sign", "legacy") == "correct":
+        return 1.0 if exponential else -1.0  # h > 0 exponential, h < 0 sech^2
+    return -1.0 if exponential else 1.0      # legacy (inverted) mapping, kept for old datasets
+
+
+def _gas_disks(cfg: Mapping) -> list:
+    """The fixed McMillan (2017) HI and H2 gas disks. McMillan's gas disks are isothermal (sech^2),
+    which in AGAMA is a NEGATIVE scaleHeight; the legacy tables carry positive values (exponential),
+    kept under ``agama_vertical_sign=legacy``."""
+    if cfg.get("agama_vertical_sign", "legacy") != "correct":
+        return [GAS_HI_PARAMS, GAS_H2_PARAMS]
+    return [{**g, "scaleHeight": -abs(g["scaleHeight"])} for g in (GAS_HI_PARAMS, GAS_H2_PARAMS)]
+
+
+_BULGE_MASS_CACHE: dict = {}
+
+
+def _bulge_mass(agama, density_norm: float) -> float:
+    """Total mass of the fixed McMillan (2017) bulge (``BULGE_PARAMS``, the axisymmetric
+    Bissantz & Gerhard 2002 approximation) at ``density_norm``, from AGAMA's ``totalMass``;
+    cached per process. 9.93e10 Msun/kpc^3 gives ~8.96e9 Msun."""
+    key = float(density_norm)
+    if key not in _BULGE_MASS_CACHE:
+        _BULGE_MASS_CACHE[key] = float(
+            agama.Potential(**{**BULGE_PARAMS, "densityNorm": key}).totalMass()
+        )
+    return _BULGE_MASS_CACHE[key]
+
+
+def thick_thin_ratio(f_thick, R0, R_thin, R_thick, z_thin, z_thick, z_sun=None) -> float:
+    """``k = Sigma_thick / Sigma_thin`` such that rho_thick / rho_thin = ``f_thick`` at (R0, z_sun),
+    for exponential disks rho_i = Sigma_i/(2 z_i) exp(-|z|/z_i - R/R_i) (McMillan 2017, Sec. 2.2)."""
+    z_sun = Z_SUN_KPC if z_sun is None else z_sun
+    return float(
+        f_thick * (z_thick / z_thin)
+        * np.exp(R0 / R_thick - R0 / R_thin + z_sun / z_thick - z_sun / z_thin)
+    )
+
+
+def _disk_params_moster(agama, p: Mapping[str, float], cfg: Mapping) -> tuple[list, dict]:
+    """Thin + thick exponential stellar disks from the rc38 parameterization.
+
+    Sampled: ``log10_Mstar`` (total stellar mass, Moster-conditional on M200), ``ln_R_d_thin``,
+    ``ln_R_d_thick``, ``ln_f_thick`` (thick/thin density ratio at the Sun). Everything else is
+    derived:
+
+        M_bulge = totalMass(fixed bulge)
+        M_disk  = max(10^log10_Mstar - M_bulge, M_disk_floor)   # deterministic floor, NOT a rejection
+        k       = f_thick (z_thick/z_thin) exp(R0/R_thick - R0/R_thin + z_sun/z_thick - z_sun/z_thin)
+        Sigma_thin  = M_disk / [2 pi (R_thin^2 + k R_thick^2)],   Sigma_thick = k Sigma_thin
+
+    ``f_thick`` is defined at the Sun's position, so the Sigmas depend on this row's (nuisance)
+    ``R0_Sun`` — intended. Returns ``([thin, thick] Disk dicts, {name_derived: value})``.
+    """
+    R0 = float(p.get("R0_Sun", R0_KPC))
+    z_thin, z_thick = float(cfg["z_thin_kpc"]), float(cfg["z_thick_kpc"])
+    R_thin = float(np.exp(p["ln_R_d_thin"]))
+    R_thick = float(np.exp(p["ln_R_d_thick"]))
+    f_thick = float(np.exp(p["ln_f_thick"]))
+    M_bulge = _bulge_mass(agama, float(p.get("rho_Bulge", cfg["bulge_density_norm"])))
+    M_raw = 10.0 ** float(p["log10_Mstar"]) - M_bulge
+    floor = float(cfg["M_disk_floor"])
+    floored = bool(M_raw < floor)
+    M_disk = max(M_raw, floor)
+    k = thick_thin_ratio(f_thick, R0, R_thin, R_thick, z_thin, z_thick)
+    Sigma_thin = M_disk / (2.0 * np.pi * (R_thin**2 + k * R_thick**2))
+    Sigma_thick = k * Sigma_thin
+    hsign = _stellar_hsign(cfg)
+    disks = [
+        dict(type="Disk", surfaceDensity=Sigma_thin, scaleRadius=R_thin,
+             scaleHeight=hsign * z_thin, sersicIndex=1, innerCutoffRadius=0),
+        dict(type="Disk", surfaceDensity=Sigma_thick, scaleRadius=R_thick,
+             scaleHeight=hsign * z_thick, sersicIndex=1, innerCutoffRadius=0),
+    ]
+    derived = {
+        "M_bulge_derived": M_bulge,
+        "M_disk_derived": M_disk,
+        "M_thin_derived": 2.0 * np.pi * Sigma_thin * R_thin**2,
+        "M_thick_derived": 2.0 * np.pi * Sigma_thick * R_thick**2,
+        "Sigma_thin_derived": Sigma_thin,
+        "Sigma_thick_derived": Sigma_thick,
+        "R_d_thin_derived": R_thin,
+        "R_d_thick_derived": R_thick,
+        "f_thick_derived": f_thick,
+        "disk_mass_floored_derived": floored,
+    }
+    return disks, derived
 
 
 def _thin_disk_params(p: Mapping[str, float], hsign: float) -> dict:
@@ -286,7 +390,7 @@ def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = Non
     halo (baryons only: bulge, gas, stellar disks).
     """
     cfg = _resolve_pot_cfg(pot_cfg)
-    hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
+    hsign = _stellar_hsign(cfg)
     # The bulge amplitude is normally a fixed config scalar. A config MAY instead declare a prior on
     # `rho_Bulge`, in which case it is read per row: the bulge-disc trade-off at R ~ 5-8 kpc feeds
     # straight into Sigma_Disk / r_Disk, and pinning all five bulge parameters forces the halo cusp
@@ -295,28 +399,32 @@ def _host_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = Non
     bulge = {**BULGE_PARAMS, "densityNorm": bulge_norm}
     components = [bulge]
     if cfg["gas_disks"]:
-        components += [GAS_HI_PARAMS, GAS_H2_PARAMS]
+        components += _gas_disks(cfg)
     if not halo:
         pass
     elif str(cfg["halo_parameterization"]) == "m200_c":
         components.append(_halo_params_m200c(agama, p, cfg))
     else:
         components.append(_halo_params(p, float(cfg["halo_r_t_kpc"])))
-    components.append(_thin_disk_params(p, hsign))
-    if cfg["thick_disk"]:
-        components.append(_thick_disk_params(p, hsign))
+    components += _stellar_disks(agama, p, cfg, hsign)
     return agama.Potential(*components)
+
+
+def _stellar_disks(agama, p: Mapping[str, float], cfg: Mapping, hsign: float) -> list:
+    """The stellar-disk component dicts for ``cfg['disk_model']``."""
+    if str(cfg.get("disk_model", "legacy")) == "moster_thin_thick":
+        return _disk_params_moster(agama, p, cfg)[0]
+    disks = [_thin_disk_params(p, hsign)]
+    if cfg["thick_disk"]:
+        disks.append(_thick_disk_params(p, hsign))
+    return disks
 
 
 def _stellar_disk_potential(agama, p: Mapping[str, float], pot_cfg: Mapping | None = None):
     """The stellar-disk component(s) alone (thin [+ thick]) — the ``disk_pot`` for the vertical
     stellar-density observable rho(z), so gas/halo do not contaminate the stellar profile."""
     cfg = _resolve_pot_cfg(pot_cfg)
-    hsign = -1.0 if cfg["disk_vertical"] == "exponential" else 1.0
-    disks = [_thin_disk_params(p, hsign)]
-    if cfg["thick_disk"]:
-        disks.append(_thick_disk_params(p, hsign))
-    return agama.Potential(*disks)
+    return agama.Potential(*_stellar_disks(agama, p, cfg, _stellar_hsign(cfg)))
 
 
 
@@ -689,21 +797,36 @@ def _simulate_one(
     # When the halo is parameterized by (M200, c_v'), also return the (densityNorm, scaleRadius)
     # actually handed to AGAMA for this row, so they can be stored in the dataset for traceability
     # (they are NOT inferred — the identity-prior rho/a stay fixed constants). None otherwise.
-    halo_derived = _m200c_derived(agama, p, pot_cfg)
+    halo_derived = _m200c_derived(agama, p, pot_cfg, pot_host=pot_host, frame=frame)
     return xv, _vcirc(pot_host, obs_r), anc, halo_derived, None, frame
 
 
-def _m200c_derived(agama, p: Mapping[str, float], pot_cfg: Mapping | None) -> Dict[str, float] | None:
-    """Per-row potential-level diagnostics for the ``m200_c`` halo: the ``(densityNorm,
-    scaleRadius)`` AGAMA actually received, under the ``*_derived`` names ``simulate`` stores.
-    ``None`` for the ``rho_a`` parameterization (nothing to derive)."""
-    if str(_resolve_pot_cfg(pot_cfg)["halo_parameterization"]) != "m200_c":
-        return None
-    h = _halo_params_m200c(agama, p, pot_cfg)
-    return {
-        "rho_TwoPowerTriaxial_halo_derived": float(h["densityNorm"]),
-        "a_TwoPowerTriaxial_halo_derived": float(h["scaleRadius"]),
-    }
+def _m200c_derived(
+    agama, p: Mapping[str, float], pot_cfg: Mapping | None, pot_host=None, frame=None,
+) -> Dict[str, float] | None:
+    """Per-row potential-level diagnostics under the ``*_derived`` names ``simulate`` stores.
+
+    * ``m200_c`` halo: the ``(densityNorm, scaleRadius)`` AGAMA actually received.
+    * ``disk_model=moster_thin_thick``: the derived disk quantities of :func:`_disk_params_moster`
+      (masses, Sigmas, scale lengths, f_thick, the floored flag) plus, given ``pot_host``,
+      ``M50_derived`` = M(<50 kpc) and ``vc_R0_derived`` = v_c at the row's R0 (from ``frame``).
+
+    ``None`` when there is nothing to derive (legacy rho_a + legacy disk), so older configs store
+    exactly what they always did.
+    """
+    cfg = _resolve_pot_cfg(pot_cfg)
+    out: Dict[str, float] = {}
+    if str(cfg["halo_parameterization"]) == "m200_c":
+        h = _halo_params_m200c(agama, p, cfg)
+        out["rho_TwoPowerTriaxial_halo_derived"] = float(h["densityNorm"])
+        out["a_TwoPowerTriaxial_halo_derived"] = float(h["scaleRadius"])
+    if str(cfg.get("disk_model", "legacy")) == "moster_thin_thick":
+        out.update(_disk_params_moster(agama, p, cfg)[1])
+        if pot_host is not None:
+            R0 = float(frame[0]) if frame is not None else float(p.get("R0_Sun", R0_KPC))
+            out["M50_derived"] = float(pot_host.enclosedMass(50.0))
+            out["vc_R0_derived"] = float(vcirc_from_potential(pot_host, R0)[0])
+    return out or None
 
 
 @register_simulator("stream_agama")
@@ -849,6 +972,11 @@ class AgamaStreamSimulator(BaseSimulator):
             halo_H0_kms_mpc=float(self.params.get("halo_H0_kms_mpc", 70.4)),
             halo_Delta_mass=float(self.params.get("halo_Delta_mass", 200.0)),
             halo_Delta_c=float(self.params.get("halo_Delta_c", 94.0)),
+            disk_model=str(self.params.get("disk_model", "legacy")),
+            agama_vertical_sign=str(self.params.get("agama_vertical_sign", "legacy")),
+            z_thin_kpc=float(self.params.get("z_thin_kpc", 0.3)),
+            z_thick_kpc=float(self.params.get("z_thick_kpc", 0.9)),
+            M_disk_floor=float(self.params.get("M_disk_floor", 1e9)),
         )
 
     @property
@@ -1151,7 +1279,9 @@ class AgamaStreamSimulator(BaseSimulator):
         derived_list = [r[3] for r in results]
         if derived_list[0]:
             for key in derived_list[0]:
-                out[key] = np.asarray([d[key] for d in derived_list], dtype=float).reshape(n, 1)
+                vals = [d[key] for d in derived_list]
+                dtype = bool if isinstance(vals[0], (bool, np.bool_)) else float
+                out[key] = np.asarray(vals, dtype=dtype).reshape(n, 1)
         # Restricted N-body only: the present-day bound mass of the remnant. ``m_progenitor`` is the
         # mass at t = -t_end, so this is the quantity that should match the observed cluster mass —
         # a diagnostic (and a potential constraint), never an inferred parameter, so the adapter

@@ -161,7 +161,7 @@ def _evaluate_compositional_global(cfg):
     conditions = {k: grouped[k] for k in condition_keys(cfg) if k in grouped}
     prior_score = build_prior_score(
         cfg, get_simulator(cfg.simulator), log10_keys=log10_keys, param_order=param_names,
-        seed=int(cfg.seed),
+        seed=int(cfg.seed), approximator=workflow.approximator,
     )
 
     # Mask the group-level observables out of the per-member items and carry them in their own

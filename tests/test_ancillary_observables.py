@@ -131,7 +131,8 @@ def test_legacy_config_has_no_ancillary_observables():
         halo_r_t_kpc=float("inf"), gas_disks=False, thick_disk=False, disk_vertical="isothermal",
         bulge_density_norm=BULGE_PARAMS["densityNorm"],
         halo_parameterization="rho_a", halo_H0_kms_mpc=70.4, halo_Delta_mass=200.0,
-        halo_Delta_c=94.0,
+        halo_Delta_c=94.0, disk_model="legacy", agama_vertical_sign="legacy",
+        z_thin_kpc=0.3, z_thick_kpc=0.9, M_disk_floor=1e9,
     )
     out = sim.simulate(sim.sample_prior(2, np.random.default_rng(0)), np.random.default_rng(1))
     assert set(out) == {"sim_data_carthesian", "sim_data_projected", "vcirc_kms"}

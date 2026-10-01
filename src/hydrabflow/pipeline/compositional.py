@@ -63,6 +63,12 @@ def prior_score_from_spec(
     from keras import ops
 
     ln10 = math.log(10.0)
+    conditional = [k for k, v in prior_spec.items() if v["type"] == "moster_conditional"]
+    if conditional:
+        raise NotImplementedError(
+            f"prior_score_from_spec handles independent uniform/normal priors only; {conditional} "
+            "are moster_conditional (coupled to M200). Use eval.prior_score=diffused."
+        )
 
     def score(x: Dict[str, np.ndarray], time=None) -> Dict[str, np.ndarray]:
         out = {}
@@ -254,14 +260,29 @@ def prior_score_from_kde_jax(
     return score
 
 
-def build_prior_score(cfg, simulator, log10_keys, param_order, seed: int = 0):
-    """Select the compositional prior score from ``cfg.eval.prior_score`` (``spec``|``kde``).
+def build_prior_score(cfg, simulator, log10_keys, param_order, seed: int = 0, approximator=None):
+    """Select the compositional prior score from ``cfg.eval.prior_score`` (``spec``|``kde``|``diffused``).
+
+    ``diffused`` = the exact score of the prior at the current diffusion time
+    (``pipeline.diffused_prior``); it needs the trained ``approximator`` (its standardizer and noise
+    schedule) and supports normal / uniform / moster_conditional priors with no log10 preprocessing.
 
     When ``prior_score=kde``, ``cfg.eval.prior_kde_impl`` chooses between the hand-rolled
     diagonal-bandwidth estimator (``diagonal``, default) and the ``jax.scipy.stats.gaussian_kde``
     full-covariance estimator (``jax``).
     """
     mode = str(getattr(getattr(cfg, "eval", None), "prior_score", "spec") or "spec")
+    if mode == "diffused":
+        from hydrabflow.pipeline.diffused_prior import prior_score_from_diffused
+
+        if approximator is None:
+            raise ValueError("eval.prior_score=diffused needs the trained approximator")
+        if log10_keys:
+            raise NotImplementedError(
+                f"eval.prior_score=diffused does not support log10-preprocessed parameters "
+                f"({list(log10_keys)}); sample them in log space in the simulator instead"
+            )
+        return prior_score_from_diffused(simulator.prior_spec_global, param_order, approximator)
     if mode == "kde":
         samples = str(getattr(cfg.eval, "prior_kde_samples", "") or "")
         if not samples:

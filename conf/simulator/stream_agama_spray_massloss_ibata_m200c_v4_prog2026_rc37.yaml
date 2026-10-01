@@ -1,0 +1,16 @@
+# stream_agama_spray_massloss_ibata_m200c_v4_prog2026 on a NEW rotation-curve grid (user, 2026-09-30):
+# 37 radii, 6.27-27.31 kpc, copy with both error columns in `assets/rotation_curve_custom_rc37.csv`.
+# Everything else (potential, priors, 2026-09-22 progenitor table, t_end U[2,5], storage cap) is
+# inherited unchanged, so rows with the same seed/chunking have bit-identical streams and differ only
+# in `vcirc_kms`, which is now `(n, 37, 1)` (was 19 radii of Ou+2024). A different observable: models
+# trained on the 19-radius sets cannot be evaluated on this grid or vice versa.
+# obs_sigma_vc = mean of the table's two 1-sigma columns (add_noise_to_vcirc is symmetric).
+# `mask_vcirc_radii r_min=5.5` keeps all 37 bins.
+defaults:
+  - stream_agama_spray_massloss_ibata_m200c_v4_prog2026
+
+params:
+  obs_r_grid: custom
+  obs_r_kpc:    [6.27, 6.78, 7.28, 7.86, 8.19, 8.71, 9.23, 9.72, 10.24, 10.74, 11.23, 11.73, 12.23, 12.73, 13.22, 13.72, 14.22, 14.73, 15.24, 15.72, 16.24, 16.77, 17.21, 17.77, 18.23, 18.73, 19.22, 19.71, 20.22, 20.72, 21.22, 21.72, 22.27, 22.71, 23.40, 25.02, 27.31]
+  obs_vc_kms:   [231.07, 230.93, 232.87, 234.14, 232.83, 231.27, 230.47, 229.16, 229.37, 227.95, 227.09, 227.15, 226.90, 225.61, 224.95, 222.79, 222.13, 220.08, 218.25, 221.16, 218.30, 217.07, 219.56, 215.49, 214.62, 210.89, 208.48, 205.97, 202.97, 195.16, 200.20, 201.11, 196.79, 218.65, 192.49, 191.48, 172.98]
+  obs_sigma_vc: [1.140, 0.970, 0.960, 0.625, 0.555, 0.600, 0.450, 0.485, 0.375, 0.435, 0.450, 0.400, 0.400, 0.585, 0.675, 0.605, 0.840, 0.770, 0.965, 1.150, 2.025, 1.370, 1.745, 2.030, 1.915, 1.370, 1.925, 1.375, 1.900, 2.285, 2.145, 3.265, 5.535, 16.235, 4.525, 8.010, 16.445]

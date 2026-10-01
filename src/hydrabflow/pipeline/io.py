@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+import zipfile
 from typing import Callable, Dict
 
 import numpy as np
@@ -101,11 +102,61 @@ def run_chunked(
         set_row_tick(None)
         bar.close()
 
-    chunks = [load_chunk(os.path.join(chunk_dir, f"chunk_{i:05d}.npz")) for i in range(len(starts))]
-    keys = chunks[0].keys() if chunks else []
-    save_dataset(out_path, {k: np.concatenate([c[k] for c in chunks], axis=0) for k in keys})
+    paths = [os.path.join(chunk_dir, f"chunk_{i:05d}.npz") for i in range(len(starts))]
+    concatenate_npz_streaming(out_path, paths)
     shutil.rmtree(chunk_dir, ignore_errors=True)
     return out_path
+
+
+def _npz_member_header(zf: zipfile.ZipFile, name: str):
+    """(shape, dtype) of one ``.npy`` member of an ``.npz`` without reading its data."""
+    with zf.open(name) as f:
+        version = np.lib.format.read_magic(f)
+        read = (np.lib.format.read_array_header_1_0 if version == (1, 0)
+                else np.lib.format.read_array_header_2_0)
+        shape, _, dtype = read(f)
+    return shape, dtype
+
+
+def concatenate_npz_streaming(out_path: str, paths: list) -> None:
+    """Concatenate ``.npz`` files along axis 0 into ``out_path`` one key and one file at a time.
+
+    The result is the same uncompressed archive ``np.savez`` writes, but the peak memory is a
+    single chunk's array rather than every chunk plus the concatenated copy (~2x the dataset,
+    which does not fit the box's commit limit for the multi-GB stream sets).
+    """
+    if not paths:
+        save_dataset(out_path, {})
+        return
+    zfs = [zipfile.ZipFile(p) for p in paths]
+    try:
+        names = zfs[0].namelist()
+        headers = {n: [_npz_member_header(z, n) for z in zfs] for n in names}
+        os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+        tmp = out_path + ".tmp"
+        with zipfile.ZipFile(tmp, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as out:
+            for name in names:
+                shapes = [h[0] for h in headers[name]]
+                dtype = headers[name][0][1]
+                if any(s[1:] != shapes[0][1:] for s in shapes) or any(
+                        h[1] != dtype for h in headers[name]) or dtype.hasobject:
+                    raise ValueError(f"cannot stream-concatenate {name}: mismatched/object chunks")
+                header = {"descr": np.lib.format.dtype_to_descr(dtype), "fortran_order": False,
+                          "shape": (sum(s[0] for s in shapes),) + tuple(shapes[0][1:])}
+                with out.open(name, "w", force_zip64=True) as f:
+                    np.lib.format.write_array_header_2_0(f, header)
+                    for z in zfs:
+                        with z.open(name) as src:
+                            arr = np.lib.format.read_array(src, allow_pickle=False)
+                        f.write(np.ascontiguousarray(arr).data)
+                        del arr
+        os.replace(tmp, out_path)
+    finally:
+        for z in zfs:
+            z.close()
+    with zipfile.ZipFile(out_path) as z:
+        n = _npz_member_header(z, names[0])[0][0]
+    log.info("Saved dataset (%d rows, keys=%s) -> %s", n, [m[:-4] for m in names], out_path)
 
 
 def load_chunk(path: str) -> Dataset:

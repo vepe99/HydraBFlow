@@ -158,7 +158,7 @@ class EvalConfig:
     misspecification_num_null: int = 200
     # Compositional prior score (composition=global). "spec" = analytic simulator prior spec;
     # "kde" = Gaussian KDE fit on the training draws in the network's native (log10) space.
-    prior_score: str = "spec"
+    prior_score: str = "spec"  # spec | kde | diffused (see pipeline.compositional.build_prior_score)
     prior_kde_samples: str = ""
     prior_kde_max_points: int = 4096
     prior_kde_bandwidth: float = 0.0

@@ -3028,3 +3028,45 @@ Knowledge graph at `graphify-out/`.
   sim performance but the real q moves by ~3 sigma between the two => the oblate q of the end-to-end model is not
   robust to how the summary net is trained. Gotcha: editing a bash script while it runs breaks the running copy
   (the streams IMM eval stage died with `AUG: unbound variable`; rerun separately).
+
+- Session 2026-09-30/10-01 (rc37 rotation-curve grid, streaming npz assembly, rc38 prior + its
+  3e5 training / 333 test sets): (1) `conf/simulator/..._v4_prog2026_rc37.yaml` = prog2026 on a user-supplied 37-radius
+  rotation curve (6.27-27.31 kpc, `assets/rotation_curve_custom_rc37.csv`, sigma = mean of the two
+  error columns); runner `scripts/create_spray_v4_p1e3_prog2026_rc37_dataset.sh` (1e6 rows; left for
+  the user). (2) `io.run_chunked` now assembles chunks STREAMING (`concatenate_npz_streaming`, one
+  chunk in memory, same npz format) — the in-memory concat needed ~2x the dataset and had already
+  crashed the 300k run once. Verified: re-simulating chunk 0 of prog2026 300k (seed 2026, chunk 1000)
+  is bit-identical, so chunks are deterministic and independent of n_workers.
+  (3) **AGAMA Disk sign convention (verified in potential_disk.cpp:182-185): scaleHeight h > 0 =
+  EXPONENTIAL, h < 0 = sech^2.** Every earlier config had it inverted: `disk_vertical: exponential`
+  passed -z (=> sech^2) and `GAS_HI/H2_PARAMS` pass +h (=> exponential; McMillan17.ini has -0.085/
+  -0.045). Kept for old datasets; the fix is `agama_vertical_sign: correct` (default legacy).
+  (4) rc38 (`..._v4_prog2026_rc38.yaml`, standalone because Hydra can't delete inherited keys):
+  8 inferred globals gamma, q, log10_M200 U[11.5,12.5], ln_cvprime, log10_Mstar ~ N(mu_moster(M200),
+  0.2) (new prior type `moster_conditional`, config order = draw order), ln_R_d_thin/thick, ln_f_thick;
+  `disk_model: moster_thin_thick` derives M_bulge (Agama totalMass, 8.96e9), M_disk = max(M* - M_bulge,
+  1e9) (floor, no rejection), thin/thick Sigmas from f_thick at (R0_Sun, z_sun); many `*_derived`
+  columns incl. bool `disk_mass_floored_derived`, `M50_derived`, `vc_R0_derived`. New
+  `pipeline/diffused_prior.py`: exact/semi-analytic score of the DIFFUSED prior (Gaussian closed form,
+  uniform via log_ndtr, (M200, M*) block by local Gauss-Legendre quadrature resolving sigma_min=1e-4,
+  float32-safe), `eval.prior_score=diffused` wires it into compositional sampling (returns score_z/std;
+  BayesFlow multiplies by std). Tests `test_diffused_prior.py` (IS Monte Carlo with antithetic pairs
+  at sigma 1e-4..0.99992, Tweedie, histogram marginal, float32) + `test_rc38_potential.py`; 263 green.
+  jarvis has NO GPUs (no /dev/nvidia*), so all JAX checks ran on CPU. **Diagnostics (20k potentials,
+  `scripts/prior_diagnostics_rc38.py` -> `<rc38 dir>/diagnostics/`) STOPPED generation**: floor 6.05 %,
+  M* < M_bulge 4.3 % (as expected), but v_c(R0) < 180 km/s in 42 % of draws (99 % at log10 M200
+  11.5-11.6; median reaches the observed 233 only at M200 ~ 12.35-12.5); p5/p50/p95 131/189/273. Driven
+  by M* (corr 0.88) and M200 (0.78): Moster gives 3.4e10 at 1e12 vs McMillan's 5.5e10 (MW sits
+  +0.14 dex above the relation at its own M200). Smoke (1000 rows, 48 workers): 22.1 rows/s vs rc37
+  18.7; 4 all-NaN rows (0.4 %), each = ONE NaN star turning the whole `sky_projection` NaN (the known
+  all-or-nothing agama bug, not rc38-specific). **User then set log10_M200 U[11.6, 12.4]** (first
+  asked U[11.8,12.5], changed before it ran; the 11.5-12.5 diagnostics/smoke are archived under
+  `<rc38 dir>/superseded_M200_11.5_12.5/`). Re-run: floored 2.9 %, M* < M_bulge 1.8 %, v_c(R0) < 180 still
+  40 % (94 % at 11.6-11.7, 5 % at 12.3-12.4; the range cut both ends), smoke unchanged (22.7 rows/s,
+  4 NaN rows / 1000, 0 empty). Generation launched knowingly with this prior:
+  `scripts/create_rc38_dataset.sh` -> `<rc38 dir>/training_data_300000.npz` (seed 2026, chunk 1000,
+  10^3 particles, log `logs/rc38_train.log`, ~37 rows/s at 100 workers). **DONE 2026-10-01 02:57**
+  (2 h 10 min, one attempt, streaming assembly OK): 300000 rows, 14.7 GB, 748 all-NaN rows (0.25 %),
+  floored 8314 (2.77 %), streams 100260/99979/99761, `vcirc_kms` (3e5, 37, 1), + `.hydra` snapshot.
+  Test set `<rc38 dir>/test_multistream_333.npz` (seed 7, chunk 111, 100 workers, 36 s; log
+  `logs/rc38_test.log`): (333, 3, 2000, 6) float32, 4 all-NaN members of 999 (4 groups), 16 floored groups.

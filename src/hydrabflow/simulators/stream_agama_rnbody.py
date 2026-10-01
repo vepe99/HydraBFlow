@@ -267,7 +267,7 @@ def _simulate_one_rnbody(
     frame = _solar_frame(agama, pot_host, p)
     vcirc = _vcirc(pot_host, obs_r)
     anc = _ancillary_observables(agama, pot_host, p, pot_cfg, ancillary, r0=frame[0])
-    halo_derived = _m200c_derived(agama, p, pot_cfg)
+    halo_derived = _m200c_derived(agama, p, pot_cfg, pot_host=pot_host, frame=frame)
 
     try:
         l0, b0, pml0, pmb0 = agama.transformCelestialCoords(
