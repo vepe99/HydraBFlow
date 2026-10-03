@@ -1,0 +1,7 @@
+# tuningtest_2modal_bspline_core080_rc38_eilers19 with a 1 % systematic added in quadrature to the Eilers+2019 errors
+# (simulator stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19_sys1: the training noise and the
+# real-data curve errors both read its obs_sigma_vc). Same dataset, search space, scoring and real-data evaluation.
+# Runner: scripts/tune_bspline_core080_rc38_eilers19_sys1.sh
+defaults:
+  - tuningtest_2modal_bspline_core080_rc38_eilers19
+study_name: tuningtest_2modal_bspline_core080_rc38_eilers19_sys1_study

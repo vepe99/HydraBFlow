@@ -4,11 +4,30 @@
 # as scripts/train_local_particles_prog2026.sh does ([2/3]), into <trial>/eval_sim_333/.
 #   bash scripts/tune_post_eval_local_particles.sh                 # every finished, not-yet-evaluated trial
 #   TRIALS="trial_0003 trial_0007" GPU=5 bash scripts/tune_post_eval_local_particles.sh
+#   PRESET=rc38_jiao26 bash scripts/tune_post_eval_local_particles.sh   # study of tune_local_particles_rc38_jiao26.sh
+#   PRESET=rc38_eilers19 bash scripts/tune_post_eval_local_particles.sh # study of tune_local_particles_rc38_eilers19.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 GPU=${GPU:-auto}
 export XLA_PYTHON_CLIENT_PREALLOCATE=false OMP_NUM_THREADS=${OMP_NUM_THREADS:-8} OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS:-8}
 
+if [ "${PRESET:-}" = "rc38_jiao26" ]; then
+  SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_jiao26}
+  DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_jiao26_hydrabflow}
+  STUDY=${STUDY:-stream_2modal_particles_local_rc38_jiao26_study}
+elif [ "${PRESET:-}" = "rc38_eilers19" ]; then
+  SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19}
+  DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_eilers19_hydrabflow}
+  STUDY=${STUDY:-stream_2modal_particles_local_rc38_eilers19_study}
+elif [ "${PRESET:-}" = "rc38_eilers19_sys3" ]; then
+  SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19_sys3}
+  DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_eilers19_hydrabflow}
+  STUDY=${STUDY:-stream_2modal_particles_local_rc38_eilers19_sys3_study}
+elif [ "${PRESET:-}" = "rc38_eilers19_sys1" ]; then
+  SIM=${SIM:-stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19_sys1}
+  DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_eilers19_hydrabflow}
+  STUDY=${STUDY:-stream_2modal_particles_local_rc38_eilers19_sys1_study}
+fi
 DATA_DIR=${DATA_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_hydrabflow}
 STUDY=${STUDY:-stream_2modal_particles_local_study}
 TRIALS_DIR=${DATA_DIR}/tuning/${STUDY}/trials

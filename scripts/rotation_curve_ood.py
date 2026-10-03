@@ -25,7 +25,16 @@ ap.add_argument("--k", type=int, default=300, help="nearest rows (smallest chi2)
 ap.add_argument("--out", required=True)
 a = ap.parse_args()
 
-P = yaml.safe_load(open(f"conf/simulator/{a.simulator}.yaml"))["params"]
+def _params(name):  # follow same-group `defaults:` inheritance (child keys win)
+    y = yaml.safe_load(open(f"conf/simulator/{name}.yaml"))
+    out = {}
+    for d in y.get("defaults") or []:
+        if isinstance(d, str) and d != "_self_":
+            out.update(_params(d))
+    return {**out, **(y.get("params") or {})}
+
+
+P = _params(a.simulator)
 r_sim = np.array(P["obs_r_kpc"], float)
 ds = np.load(a.sim)
 vc_sim = ds["vcirc_kms"]

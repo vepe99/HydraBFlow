@@ -1,0 +1,10 @@
+# rc38 x Eilers19 with a 3 % systematic error added in quadrature to the quoted (statistical) Eilers+2019 errors:
+# obs_sigma_vc = sqrt(sigma_stat^2 + (0.03 v_c)^2). With the quoted errors alone (0.4-3 km/s inside 21 kpc) the observed
+# curve is out of distribution for the rc38 prior (outputs: <dataset>/ppc/rotation_curve/). The stored vcirc_kms are
+# noise-free; the training noise (add_noise_to_vcirc) and the real-data sigma both read obs_sigma_vc, so this needs no
+# new dataset: same data dir as stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19.
+defaults:
+  - stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19
+
+params:
+  obs_sigma_vc: [7.067, 7.062, 7.076, 7.033, 6.999, 6.956, 6.905, 6.87, 6.819, 6.794, 6.783, 6.753, 6.735, 6.727, 6.681, 6.642, 6.645, 6.549, 6.558, 6.562, 6.578, 6.591, 6.621, 6.53, 6.697, 6.697, 6.497, 6.782, 6.66, 6.602, 6.713, 6.823, 8.563, 15.198, 24.165, 24.053, 18.481, 8.675]

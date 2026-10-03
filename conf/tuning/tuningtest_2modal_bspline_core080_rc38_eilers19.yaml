@@ -1,0 +1,7 @@
+# tuningtest_2modal_bspline_core080_rc38_jiao26 with the Eilers et al. (2019) rotation curve in place of Jiao26
+# (simulator stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19, 38 radii; the real-data
+# evaluation attaches the Eilers curve through fill_stream_grid_from_simulator). Same search space, scoring and
+# real-data evaluation. Runner: scripts/tune_bspline_core080_rc38_eilers19.sh
+defaults:
+  - tuningtest_2modal_bspline_core080_rc38_jiao26
+study_name: tuningtest_2modal_bspline_core080_rc38_eilers19_study

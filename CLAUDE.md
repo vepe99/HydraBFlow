@@ -3103,3 +3103,65 @@ Knowledge graph at `graphify-out/`.
   Own-support twin: `scripts/train_spline_ownsupport_rc38_jiao26.sh` = the jiao26 runner with
   AUG/REAL_AUG = `stream_{global,real_global}_streamfinder_spline_ownsupport` (augmentation only, backbones trained
   end to end, NOT frozen IMM); `train_bspline_core080_prog2026.sh` now takes AUG/REAL_AUG env overrides. Not trained.
+- Session 2026-10-02/03 (rc38 x Jiao26 tuning check-ins + joint PPC global trial 27 x local trial 1): global study
+  `tuningtest_2modal_bspline_core080_rc38_jiao26_study` (39 complete at last check): Pareto-best = trial 25 (val RMSE
+  0.694 / calib 0.0073; real q 1.30 prolate, MMD p_strat 0.01). Across trials real-data q spans 0.86-1.32 for
+  sim-tied models; oblate trials (11, 18, 30, 32...) are exactly the ones whose pooled gamma piles at the 1.5 edge, and
+  NGC3201/M68 pile gamma up per stream in EVERY trial (Pal5 never). Trial 27 = most interior gamma (0.92 [0.37,1.31]),
+  q 1.08. Local study `stream_2modal_particles_local_rc38_jiao26_study`: Pareto-best = trial 1 (0.738 / 0.0036).
+  Joint PPC `outputs/Bsline/rc38_jiao26_ppc_global27_local1/` (run.sh: ancestral local eval from trial 27's
+  posterior.npz, then ppc_joint_posterior.py with --grid-aug core080 ruler, 40 draws): local posteriors rail at prior
+  edges again (NGC3201 t_end 1.97 below the U[2,5] floor + mass at floor; M68 t_end 4.85 at ceiling, mass at floor).
+  Tracks: Pal5 phi2 inside 0.25 (sims' arms ~1 deg too high/curved at phi1<-10) and v_los 0.25; NGC3201 mu_phi1
+  inside 0.30 z +2.5 (the persistent pm offset); M68 phi2 bow z +1.2 (inside 0.65, better than the B-spline local's
+  0.20) but mu_phi2 0.50 / v_los 0.55.
+  Same PPC with global trial 32 (oblate q 0.92; `outputs/Bsline/rc38_jiao26_ppc_global32_local1/`): locals unchanged
+  (same edge-railing); NGC3201 fully covered except mu_phi1 (inside 0.50, z +1.7; was 0.30/+2.5), phi2 0.60->1.00;
+  M68 phi2 worse (0.65->0.45, z +1.4); Pal5 unchanged-poor (phi2 0.30, v_los 0.25, parallax z -2.2).
+- Session 2026-10-03 (WHY the real data are flagged OOD while the prior-predictive checks pass — rc38 x Jiao26 global
+  trials): the summary-space MMD/Mahalanobis flag is driven by the ROTATION-CURVE slice of the fused summary, not the
+  streams. Leave-one-out-fair Mahalanobis per slice: curve 96-99.4th pct in all 5 trials checked (25/27/32/11/14),
+  stream slice NGC3201 11-54, Pal5 84-98, M68 45-96. The curve summary is copied into every member's fused vector, so
+  one atypical curve flags all three members at once. Cause = SHAPE: the Jiao26 curve declines 4.46 km/s/kpc over
+  12-26 kpc (57.7 km/s, 25 %); only 59 of 300 000 rc38 noise-free curves decline that steeply (median -0.03, 0.1 %
+  -3.63); the joint (inner, outer slope) is at the 99.7th pct. Generic data-space checks miss it because the outer
+  sigmas (6-17 km/s) dilute a coherent trend across 19 noisy bins: chi2 to nearest row 72nd pct, full noisy-vector
+  Mahalanobis 78th pct, per-radius bands all inside; the trained summary concentrates on the trend. Ruled out
+  (measured with trial 27's net): real/sim pipeline mismatch (identical network input, max|diff| 0; real curve via the
+  SIM path still 99.7th pct) and "real curve smoother than the noisy sims" (noise-free sims are typical, 15th pct;
+  real + training noise stays OOD). The prior's steepest decliners have log10 M* 11.27 (prior median 10.51) and higher
+  gamma (Spearman -0.52 / -0.34 with slope) -> the same pull that rails gamma at 1.5 in the posteriors. Test-statistic
+  caveat: per_member_scores ranks an out-of-sample point against IN-sample reference distances (held-out sims land at
+  a median ~63rd pct, 5 % >= 98 instead of 2 %), and the MMD null draws its trios from inside the reference (same
+  direction) -> mildly anti-conservative, not the main effect. Scratch scripts: curve_noise_test.py / ood_calib.py
+  (session scratchpad, not committed).
+  Follow-up: Eilers+2019 curve linearly interpolated onto the 19 Jiao26 radii (25.53 kpc clamped to Eilers' 24.82
+  value). Data space: outer slope 12-26 kpc -2.82 km/s/kpc (0.4 % of rc38 prior curves as steep, vs 0.02 % for
+  Jiao26), joint-slope pct 99.2 (Jiao26 99.99), best chi2 8.2/19. Learned curve slice (LOO-fair pct, trials
+  27/25/32/11/14): Jiao26 97-99, Eilers 82-92, Eilers with its noisy r>21 kpc points replaced by a weighted linear fit
+  of 12-21 kpc 67-79 -> Eilers is NOT out of distribution; the flag is specific to Jiao26's steep outer decline.
+- Session 2026-10-03 (rc38 x Eilers19 dataset): `conf/simulator/stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19.yaml`
+  (38 Eilers+2019 radii 5.27-24.82 kpc, sigma = mean of the asymmetric errors; asset `assets/rotation_curve_eilers19.csv`)
+  + dataset `data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_eilers19_hydrabflow/`
+  (training_data_300000 + test_multistream_333 = the rc38 x Jiao26 sets with vcirc_kms recomputed by AGAMA, 0 NaN).
+  Tuning: `conf/tuning/tuningtest_2modal_bspline_core080_rc38_eilers19.yaml`, `scripts/tune_bspline_core080_rc38_eilers19.sh`,
+  `scripts/tune_local_particles_rc38_eilers19.sh`, `PRESET=rc38_eilers19` in tune_post_eval_local_particles.sh.
+  `rotation_curve_ood.py` now follows `defaults:` inheritance of simulator yamls. PPC (`<dataset>/ppc/rotation_curve/`):
+  with the QUOTED Eilers errors (0.4-3 km/s inside 21 kpc) the observed curve is OUT of distribution (observed->nearest
+  chi2 87 vs noisy-sim median 35, 99.6th pct; best row 87/37 dof) - residual wiggles of +-2-3 sigma at 11.7-13.7 kpc and a
+  coherent -2.8 sigma run at 19.7-20.8 kpc that smooth axisymmetric potentials cannot follow. A systematic floor added in
+  quadrature fixes it: 1 km/s -> 96th pct, 1.5 -> 74, 2 -> 38, 3 -> 4 (too generous); 1 % of v_c -> 33. Stored vcirc is
+  noise-free (noise added at training from obs_sigma_vc), so a floor needs NO dataset regeneration. Floor not yet applied.
+  3 % systematic variant: `conf/simulator/..._rc38_eilers19_sys3.yaml` (obs_sigma_vc = sqrt(sigma_stat^2 + (0.03 v_c)^2),
+  ~7 km/s inside 21 kpc; same dataset). Typicality (`scripts/ppc_rotation_curve_sysfloor.py`, figure
+  `<dataset>/ppc/rotation_curve_sys3/sysfloor_comparison.png`): quoted 99.4th pct (OOD), +1 % 29.7, +2 km/s 38.5,
+  +3 % 0.0 (observed chi2 8.5 vs noisy-sim 1st pct 18.9: closer than any sim -> no OOD risk, but over-generous; the
+  curve's constraining power is diluted). Runners `scripts/tune_bspline_core080_rc38_eilers19_sys3.sh` +
+  `scripts/tune_local_particles_rc38_eilers19_sys3.sh` (studies *_rc38_eilers19_sys3_study; post-eval
+  PRESET=rc38_eilers19_sys3). Verified the composed tuning config feeds the 3 % sigma to add_noise_to_vcirc. Not launched.
+  NOTE `rotation_curve_ood.py` tests only the upper tail (labels a 0th-pct curve "IN distribution").
+  1 % systematic variant (calibrated choice, observed curve at the ~30th pct): `conf/simulator/..._rc38_eilers19_sys1.yaml`
+  (obs_sigma_vc = sqrt(sigma_stat^2 + (0.01 v_c)^2), ~2.6-3 km/s inside 21 kpc), `conf/tuning/tuningtest_2modal_bspline_core080_rc38_eilers19_sys1.yaml`,
+  runners `scripts/tune_bspline_core080_rc38_eilers19_sys1.sh` + `scripts/tune_local_particles_rc38_eilers19_sys1.sh`
+  (studies *_rc38_eilers19_sys1_study under <dataset>/tuning/, worker logs under outputs/Bsline/spray_p1e3_v4_prog2026_rc38_eilers19_sys1_*),
+  post-eval PRESET=rc38_eilers19_sys1. Same dataset as sys3; separate studies/folders. Not launched.

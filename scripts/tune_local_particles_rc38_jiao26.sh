@@ -6,8 +6,7 @@
 # preprocessing's log10 keys are absent from that list, so they stay in the rc38 global model's native space).
 # Study + trials: <DATA_DIR>/tuning/stream_2modal_particles_local_rc38_jiao26_study/ (launch again on another
 # GPU to add a worker). Test-set re-eval of finished trials:
-#   SIM=stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_jiao26 DATA_DIR=<DATA_DIR> \
-#   STUDY=stream_2modal_particles_local_rc38_jiao26_study bash scripts/tune_post_eval_local_particles.sh
+#   PRESET=rc38_jiao26 bash scripts/tune_post_eval_local_particles.sh
 #   bash scripts/tune_local_particles_rc38_jiao26.sh            # autocvd waits for a FREE GPU
 #   GPU=6 N_TRIALS=10 bash scripts/tune_local_particles_rc38_jiao26.sh
 # Knobs (passed through): N_TRIALS (25) N_EPOCHS (300) BATCH_SIZE (1024) N_TRAIN (300000) GPU OUT_ROOT EXTRA
