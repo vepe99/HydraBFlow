@@ -5,9 +5,7 @@
 # Training noise = symmetrized observational errors (0.16 km^2 s^-2 pc^-1, 0.026 mas/yr, 0.21e12 Msun);
 # real eval attaches the observed values (2.00, -6.379, 1.17e12).
 #   [0/3] scripts/add_pot_scalars.py on the training + 333 test set (CPU, appends the key in place; skipped
-#         if present)  [1/3] train  [2/3] evaluate sim  [3/3] evaluate real (pooled + per-stream with curve+scalars)
-#   [4/4] real-data posteriors per modality: streams only (eval_real_only_sim_summary/) and curve + pot_scalars only
-#         (eval_real_only_vcirc_kms/), then scripts/corner_modalities.py -> eval_real/corner_modalities.png
+#         if present)  [1/3] train  [2/3] evaluate sim  [3/3] evaluate real
 # Hyperparameters: trial 31 of the sys3 core080 study = Optuna Pareto front (val RMSE 0.702, calib 0.0094) with the
 # best real-data MMD p_strat on the front (0.045). Front = 1/3/14/31; trial 24 = least misspecified (p 0.195) but off-front.
 # Run:    bash scripts/train_potscalars_rc38_eilers19_sys3.sh          (GPU=<id> to pin; default autocvd)
@@ -23,18 +21,21 @@ for f in test_multistream_333 training_data_${N_TRAIN:-300000}; do
     nice .venv/bin/python scripts/add_pot_scalars.py "${DATA_DIR}/${f}.npz" --n-workers "${N_WORKERS:-32}"
 done
 
-RUNS_DIR=${RUNS_DIR:-outputs/Bsline/rc38_eilers19_sys3_potscalars_trial${TRIAL}}
-SIM=stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19_sys3
 TRIAL=${TRIAL} STUDY_DIR=${STUDY_DIR:-data/data_jarvis/data_agama_spray_massloss_ibata_m200c_v4_p1e3_prog2026_rc38_eilers19_hydrabflow/tuning/tuningtest_2modal_bspline_core080_rc38_eilers19_sys3_study} \
-SIM=${SIM} DATA_DIR=${DATA_DIR} \
+SIM=stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19_sys3 DATA_DIR=${DATA_DIR} \
 MODEL=stream_fusion_2modal_oldgrid_potscalars ADAPTER=stream_2modal_potscalars \
 PREPROC=stream_global_rc38_2modal_potscalars REAL_PREPROC=stream_real_global_potscalars \
 AUG=stream_global_streamfinder_bspline_core080_potscalars REAL_AUG=stream_real_global_streamfinder_bspline_core080 \
 EXTRA="eval.prior_score=diffused ${EXTRA:-}" N_EPOCHS=${N_EPOCHS:-1000} \
-RUNS_DIR=${RUNS_DIR} \
+RUNS_DIR=${RUNS_DIR:-outputs/Bsline/rc38_eilers19_sys3_potscalars_trial${TRIAL}} \
 bash scripts/train_bspline_core080_prog2026.sh
 
-# [4/4] one modality at a time (the curve modality carries pot_scalars). GPU: backend autocvd picks a free one.
+# [4/4] real-data posteriors one modality at a time (the curve modality carries pot_scalars): streams only
+# (eval_real_only_sim_summary/) and curve + pot_scalars only (eval_real_only_vcirc_kms/), then
+# scripts/corner_modalities.py -> eval_real/corner_modalities.png. GPU: the backend's autocvd picks a free one.
+# (Appended AFTER the original script bytes on purpose: a run started from the earlier version resumes here.)
+RUNS_DIR=${RUNS_DIR:-outputs/Bsline/rc38_eilers19_sys3_potscalars_trial${TRIAL}}
+SIM=stream_agama_spray_massloss_ibata_m200c_v4_prog2026_rc38_eilers19_sys3
 TUNED=$(.venv/bin/python -c "import json,sys;print(' '.join(f'++{k}={v}' for k,v in json.load(open(sys.argv[1])).items()))" "${RUNS_DIR}/tuned_params.json")
 for G in sim_summary vcirc_kms; do
   echo "=== [4/4] EVALUATE REAL, only ${G} observed -> ${RUNS_DIR}/eval_real_only_${G} ==="
