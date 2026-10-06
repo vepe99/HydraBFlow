@@ -1,12 +1,14 @@
 """Corner overlay of the three information sources behind the pooled compositional posterior.
 
-    python scripts/corner_modalities.py <run_dir>
+    python scripts/corner_modalities.py <run_dir> [real] [reference.json]
 
 <run_dir> holds `<real>/` (2nd arg, default eval_real) (compositional posterior.npz + preprocessing_state via train/),
 `eval_real_only_sim_summary/` (single_stream_posterior.npz with the curve masked) and
 `eval_real_only_vcirc_kms/` (single_stream_posterior.npz with the streams masked -> curve only;
 identical for the 3 members, member 0 used). Chains are mapped to physical units through the
-run's fitted preprocessing. Writes <run_dir>/<real>/corner_modalities.png.
+run's fitted preprocessing. Writes <run_dir>/<real>/corner_modalities.png. An optional reference.json
+({"values": {param: value}}, e.g. McMillan 2017 in the same parameters) is drawn as truth lines and each
+chain's percentile of it is printed.
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 
-def main(run_dir: str, real: str = "eval_real") -> str:
+def main(run_dir: str, real: str = "eval_real", reference: str | None = None) -> str:
     from hydrabflow.registry import build_pipeline, get_simulator
     from omegaconf import OmegaConf
 
@@ -53,7 +55,10 @@ def main(run_dir: str, real: str = "eval_real") -> str:
     lo, hi = np.nanpercentile(all_data, 0.5, axis=0), np.nanpercentile(all_data, 99.5, axis=0)
     pad = 0.05 * np.where(hi > lo, hi - lo, 1.0)
     ranges = list(zip(lo - pad, hi + pad))
-    colors = list(plt.cm.RdYlBu_r(np.linspace(0.75, 1.0, len(j)))) + ["tab:green", "black"]
+    # the colors of evaluate_real's real_global_vs_streams_corner: RdYlBu_r over [Global, streams...]
+    # (Global = the dark-blue end); the curve-only chain gets a teal-green that sits apart from that map
+    cmap = plt.cm.RdYlBu_r(np.linspace(0, 1, len(j) + 1))
+    colors = list(cmap[1:]) + ["#1b9e77", cmap[0]]
     fig = None
     for (label, data), c in zip(chains, colors):
         fig = corner.corner(
@@ -62,7 +67,18 @@ def main(run_dir: str, real: str = "eval_real") -> str:
             levels=(0.68, 0.95), hist_kwargs={"density": True, "lw": 2.0 if label.startswith("Comp") else 1.2},
             contour_kwargs={"linewidths": 2.0 if label.startswith("Comp") else 1.0},
         )
-    fig.legend(handles=[Line2D([0], [0], color=c, label=lab) for (lab, _), c in zip(chains, colors)],
+    handles = [Line2D([0], [0], color=c, label=lab) for (lab, _), c in zip(chains, colors)]
+    if reference:
+        import json
+        ref = json.load(open(reference))["values"]
+        truths = [ref.get(n) for n in names]
+        corner.overplot_lines(fig, truths, color="0.25", ls="--", lw=1.2)
+        corner.overplot_points(fig, [truths], marker="*", color="0.25", ms=9)
+        handles.append(Line2D([0], [0], color="0.25", ls="--", marker="*", label="McMillan (2017)"))
+        for label, data in chains:
+            print(f"{label}: percentile of the reference", {n.split("_TwoPower")[0]: round(float((data[:, i] < truths[i]).mean() * 100), 1)
+                                                            for i, n in enumerate(names) if truths[i] is not None})
+    fig.legend(handles=handles,
                loc="upper right", fontsize=12, frameon=False)
     out = os.path.join(run_dir, real, "corner_modalities.png")
     fig.savefig(out, dpi=130, bbox_inches="tight")
@@ -74,4 +90,4 @@ def main(run_dir: str, real: str = "eval_real") -> str:
 
 
 if __name__ == "__main__":
-    print(main(*sys.argv[1:3]))
+    print(main(*sys.argv[1:4]))
