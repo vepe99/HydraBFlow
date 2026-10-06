@@ -1,0 +1,16 @@
+# tuningtest_2modal_bspline_core080_rc38_eilers19_sys3 with pot_scalars = [K_z, mu_l, M200] in the curve branch
+# (model=stream_fusion_2modal_oldgrid_potscalars). Same search space and scoring. Every trial also evaluates the real
+# data one modality at a time (streams only / curve + pot_scalars only) and writes eval_real/corner_modalities.png.
+# Runner: scripts/tune_potscalars_rc38_eilers19_sys3.sh
+defaults:
+  - tuningtest_2modal_bspline_core080_rc38_eilers19_sys3
+study_name: tuningtest_2modal_bspline_core080_rc38_eilers19_sys3_potscalars_study
+real_eval_overrides:
+  - eval=stream_compositional_masked
+  - eval.batch_size=32
+  - eval.num_samples=1000
+  - eval.sample_kwargs.compositional_bridge_d1=1.0
+  - preprocessing=stream_real_global_potscalars
+  - augmentation=stream_real_global_streamfinder_bspline_core080
+  - data.real_data_path=assets/gaia/gaia_observed_streams_6Dwitherrors_cutNGC3201.npz
+real_eval_modalities: [sim_summary, vcirc_kms]

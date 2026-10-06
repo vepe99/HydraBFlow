@@ -252,6 +252,27 @@ def _evaluate_subprocess(cfg, trial, trial_dir, extra, out_dir) -> None:
         raise subprocess.CalledProcessError(proc.returncode, cmd, stderr=proc.stderr)
 
 
+def _evaluate_modalities(cfg, trial, trial_dir) -> None:
+    """Real-data posteriors with one modality observed at a time + the corner overlay.
+
+    Diagnostics only: a failure is logged and never fails the trial.
+    """
+    groups = list(cfg.tuning.get("real_eval_modalities") or [])
+    if not groups:
+        return
+    try:
+        for g in groups:
+            _evaluate_subprocess(
+                cfg, trial, trial_dir,
+                [*cfg.tuning.real_eval_overrides, f"eval.observed_groups=[{g}]"],
+                os.path.join(trial_dir, f"eval_real_only_{g}"),
+            )
+        script = os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "corner_modalities.py")
+        subprocess.run([sys.executable, os.path.abspath(script), trial_dir, "eval_real"], check=True)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Trial %d: per-modality real evaluation failed: %s", trial.number, exc)
+
+
 def _score_on_test_set(cfg, trial, trial_dir):
     """Objectives from the `evaluate` stage on the test set (+ optional real-data evaluate)."""
     sim_dir = os.path.join(trial_dir, "eval_sim")
@@ -262,6 +283,7 @@ def _score_on_test_set(cfg, trial, trial_dir):
             [*cfg.tuning.real_eval_overrides, f"eval.misspecification_reference={sim_dir}"],
             os.path.join(trial_dir, "eval_real"),
         )
+        _evaluate_modalities(cfg, trial, trial_dir)
     # composition=global writes base_metrics.json (per-member); composition=none metrics.json
     for name in ("base_metrics.json", "metrics.json"):
         path = os.path.join(sim_dir, name)

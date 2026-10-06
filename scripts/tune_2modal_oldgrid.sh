@@ -28,7 +28,7 @@ OUT_ROOT=${OUT_ROOT:-outputs/${TUNING/stream_/tuning_}}
 mkdir -p "${OUT_ROOT}"
 echo "=== [tune] GPU=${CUDA_VISIBLE_DEVICES} trials=${N_TRIALS} epochs=${N_EPOCHS} drop=${DROP_PROB} ==="
 .venv/bin/python -m hydrabflow.pipeline.tune \
-  simulator="${SIM}" model="${MODEL}" composition=global adapter=stream_2modal \
+  simulator="${SIM}" model="${MODEL}" composition=global adapter="${ADAPTER:-stream_2modal}" \
   preprocessing="${PREPROC}" augmentation="${AUG}" \
   ${STUDY:+tuning.study_name=${STUDY}} \
   tuning="${TUNING}" tuning.n_trials="${N_TRIALS}" tuning.n_epochs="${N_EPOCHS}" \

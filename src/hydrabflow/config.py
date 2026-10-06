@@ -192,6 +192,9 @@ class TuningConfig:
     test_eval_overrides: Optional[List[str]] = None
     # If also set, a second `evaluate` (real data) runs into <trial>/eval_real before the next trial.
     real_eval_overrides: Optional[List[str]] = None
+    #: modality groups to evaluate ALONE on real data per trial (eval.observed_groups=[g] ->
+    #: <trial>/eval_real_only_<g>/), then scripts/corner_modalities.py; needs real_eval_overrides
+    real_eval_modalities: List[str] = field(default_factory=list)
 
 
 @dataclass

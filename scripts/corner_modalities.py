@@ -2,7 +2,7 @@
 
     python scripts/corner_modalities.py <run_dir> [real] [reference.json]
 
-<run_dir> holds `<real>/` (2nd arg, default eval_real) (compositional posterior.npz + preprocessing_state via train/),
+<run_dir> holds `<real>/` (2nd arg, default eval_real) (compositional posterior.npz + preprocessing_state via train/ or, for a tuning trial, <run_dir> itself),
 `eval_real_only_sim_summary/` (single_stream_posterior.npz with the curve masked) and
 `eval_real_only_vcirc_kms/` (single_stream_posterior.npz with the streams masked -> curve only;
 identical for the 3 members, member 0 used). Chains are mapped to physical units through the
@@ -34,7 +34,10 @@ def main(run_dir: str, real: str = "eval_real", reference: str | None = None) ->
     # saved .hydra configs are pre-fill (inference_variables derive from the simulator at runtime)
     names = list(np.load(os.path.join(run_dir, f"{real}/posterior.npz")).files)
     pipeline = build_pipeline(cfg.preprocessing)
-    pipeline.load(os.path.join(run_dir, "train/preprocessing_state.npz"))
+    state = os.path.join(run_dir, "train/preprocessing_state.npz")
+    if not os.path.exists(state):  # an Optuna trial dir holds it directly
+        state = os.path.join(run_dir, "preprocessing_state.npz")
+    pipeline.load(state)
     stream_names = {int(v): str(k) for k, v in get_simulator(cfg.simulator).target_streams.items()}
 
     def phys(npz):
