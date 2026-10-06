@@ -1,0 +1,29 @@
+# core080 B-spline chain + observational noise on pot_scalars (n, 3) = [K_z, mu_l, M200/1e12]
+# (scripts/add_pot_scalars.py). Errors = the symmetrized observational ones: K_z 0.16 km^2 s^-2 pc^-1,
+# mu_l(Sgr A*) 0.026 mas/yr, M200 0.21e12 Msun. add_noise_to_sigma_z is reused (sigma broadcasts per column).
+# Real twin: stream_real_global_streamfinder_bspline_core080 (real values carry no noise, as for vcirc).
+defaults:
+  - stream_global_streamfinder_bspline_core080
+
+steps:
+  - convert_distance_to_parallax
+  - observational_window
+  - observed_n_stars
+  - compact_to_attended
+  - contaminate_members
+  - sample_magnitudes
+  - sample_obs_error
+  - apply_obs_error
+  - mask_vlos
+  - add_noise_to_vcirc
+  - log10_vcirc
+  - add_noise_to_sigma_z
+  - stream_bspline_grid
+  - concatenate_sigma_errors
+  - concatenate_magnitudes
+  - concatenate_vlos_mask
+  - concatenate_stream_index
+
+params:
+  sigma_z_key: pot_scalars
+  sigma_z_err: [0.16, 0.026, 0.21]

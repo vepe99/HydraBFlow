@@ -1,0 +1,11 @@
+# stream_global_rc38_2modal + pot_scalars (scripts/add_pot_scalars.py) in drop_nan.
+steps:
+  - name: drop_nan
+    keys:
+      - sim_data_projected
+      - vcirc_kms
+      - pot_scalars
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: train_val_split
+    validation_fraction: ${training.validation_fraction}

@@ -1,0 +1,12 @@
+# stream_fusion_2modal_oldgrid + an MLP after the rotation-curve summary that also takes
+# pot_scalars = [K_z, mu_l(Sgr A*), M200/1e12] (scripts/add_pot_scalars.py). The post MLP's output width
+# equals vcirc_kms.summary_dim, so it stays ONE modality for grouped_diffusion / eval masking.
+defaults:
+  - stream_fusion_2modal_oldgrid
+  - _self_
+
+params:
+  post:
+    vcirc_kms:
+      inputs: [pot_scalars]
+      widths: [64, 64]

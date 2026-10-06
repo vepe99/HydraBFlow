@@ -1,0 +1,9 @@
+# stream_real_global + the observed pot_scalars = [K_z 2.00 km^2 s^-2 pc^-1, mu_l(Sgr A*) -6.379 mas/yr,
+# M200 1.17e12 Msun].
+steps:
+  - name: attach_observed_vcirc
+  - name: mask_vcirc_radii
+    r_min: 5.5
+  - name: attach_observed_sigma_z
+    sigma_z_key: pot_scalars
+    value: [2.00, -6.379, 1.17]

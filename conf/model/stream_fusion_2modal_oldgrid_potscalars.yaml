@@ -1,0 +1,9 @@
+# stream_fusion_2modal_oldgrid with the curve branch extended by pot_scalars (see the summary_network yaml).
+# Pair with adapter=stream_2modal_potscalars, augmentation=stream_global_streamfinder_bspline_core080_potscalars,
+# preprocessing=stream_global_rc38_2modal_potscalars / stream_real_global_potscalars.
+defaults:
+  - stream_fusion_2modal_oldgrid
+  - override summary_network: stream_fusion_2modal_oldgrid_potscalars
+  - _self_
+
+name: stream_fusion_2modal_oldgrid_potscalars

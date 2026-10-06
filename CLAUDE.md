@@ -3165,3 +3165,68 @@ Knowledge graph at `graphify-out/`.
   runners `scripts/tune_bspline_core080_rc38_eilers19_sys1.sh` + `scripts/tune_local_particles_rc38_eilers19_sys1.sh`
   (studies *_rc38_eilers19_sys1_study under <dataset>/tuning/, worker logs under outputs/Bsline/spray_p1e3_v4_prog2026_rc38_eilers19_sys1_*),
   post-eval PRESET=rc38_eilers19_sys1. Same dataset as sys3; separate studies/folders. Not launched.
+- Session 2026-10-03 (rc38 x Eilers19 sys3: global trial 2 rotation-curve PPC; local particle study test-set eval +
+  ancestral + joint PPC): `ppc_rotation_curve_ibata.py` (halo-only decomposition loop now try/except like the full
+  curves; one pooled draw is rejected by agama) on global trial 2 `eval_real`: <=1.2 % median |frac dev|, chi2 10-16/38
+  with the 3 %-inflated sigma, but every group 5-15 km/s HIGH vs Eilers beyond ~19 kpc. Local study
+  `stream_2modal_particles_local_rc38_eilers19_sys3_study`: only trials 7/14/15 finished (22 weights only); 333 test
+  set mean nRMSE/calib 0.757/0.013, 0.762/0.016, 0.783/0.013 -> trial 7. `outputs/Bsline/rc38_eilers19_sys3_ppc_global2/`
+  (run.sh, LOCAL_TRIAL=trial_0007): local posteriors again rail/extrapolate on real data (NGC3201 t_end 1.97 < 2 floor,
+  mass 1.42e5 < 1.49e5 floor, d 4.53 = -4.7 sigma; M68 mass 8.5e4 << 1.28e5 floor, d 10.1 = -3 sigma). Joint PPC: Pal5
+  parallax z -2.3 (known), NGC3201 mu_phi1 inside 0.45 z -1.8, M68 phi2 bow inside 0.15 z +4.1 (worst yet).
+- Session 2026-10-04 (rc38 x Eilers19 sys3: best non-misspecified global + all finished local trials + joint PPC):
+  `outputs/Bsline/rc38_eilers19_sys3_ppc_best/` (README, parametrised `run.sh` GLOBAL_TRIAL/LOCAL_TRIAL). Global trial 2
+  is the only one of 16 not MMD-flagged (p_strat 0.08, members 91/85/92 pct; 15/4/5 borderline). Local: 7 more trials
+  evaluated on the 333 set; best = 41 (nRMSE 0.744 vs trial 7 0.757). Joint PPC global 2 x local 41: Pal5 phi2 inside
+  0.00 z -3.9 (Pal5 pm/vr pulled -1.2/-2.5 sd, arms rotated), NGC3201 fine (t_end at floor), M68 bow z +2.7 and M68 mass
+  below its prior floor. With local 7 Pal5 was fully covered -> test-set nRMSE rank does not predict real-data PPC.
+  Follow-up with the borderline globals 5 and 15 (x locals 41 and 7, ancestral on CPU — another user held GPUs 0/1/2/4):
+  the LOCAL trial decides the PPC, the global hardly matters (local 41: Pal5 phi2 inside 0.00 for all globals; local 7:
+  1.00, but NGC3201 d -4.5 sd and M68 mass below its prior floor). M68 phi2 bow (inside 0.15-0.25) in every pair.
+  Global 5 x PRIOR-drawn locals (placeholder local posterior.npz -> ppc_joint_posterior.py falls back to the prior):
+  every track better than with any trained local model (Pal5 phi2 1.00/z 0.0, M68 phi2 0.85/z +1.3 vs 0.15-0.25,
+  NGC3201 >= 0.90 except mu_phi1 0.65 / vlos 0.50). The local particle models degrade the real-data PPC; all 10 trained
+  locals extrapolate (NGC3201 t_end < 2 Gyr floor in 9/10, M68 mass < floor in 6/10; least bad: 48, 42).
+- Session 2026-10-05 (rc38 x Eilers19 sys3 check-in; README in `outputs/Bsline/rc38_eilers19_sys3_ppc_best/`): new best
+  global = **trial 24** (MMD p_strat 0.195, the least misspecified so far; comp 0.679/0.013; real q 0.87 [0.78,1.01]).
+  New best local on the 333 set = trial 79 (0.716), but its real-data joint PPC is poor (Pal5 v_los inside 0.10).
+  Best real-data pair = global 24 x local 65 (mean inside 0.79). All locals still extrapolate past their priors
+  (NGC3201 t_end at the floor, M68 mass below the floor). BUG fixed in `ppc_joint_posterior.py`: global posteriors leak
+  to gamma >= 2 (outside the U[0,1.5] prior, 0.6-6 % of draws), which makes the m200_c halo scale radius non-positive
+  and crashes agama. The script now pairs only draws with gamma < 2.
+- Session 2026-10-05 (local MMD of the sys3 particle study; own-support spline LOCAL model): `mmd_local_per_stream.py`
+  over all 17 evaluated local particle trials (`rc38_eilers19_sys3_ppc_best/run_mmd_local.sh` -> `mmd_local/`) and the
+  prog2026 `stream_2modal_particles_local_study` trial 6: the real stream particles are OOD in EVERY trial (stream-slice
+  p ~ 0, 100th pct; Pal5 passes MMD only in 44/75/79/7), curve slice in distribution. New runner
+  `scripts/train_local_ownsupport_rc38_eilers19_sys3.sh` (local model on `stream_spline_ownsupport` + curve, 2 TSTs with
+  global trial 24's backbone sizes, coupling flow, 300 ep; train -> eval sim -> ancestral real from global trial 24 ->
+  MMD -> joint PPC) -> `outputs/Bsline/spray_p1e3_v4_prog2026_rc38_eilers19_sys3_ownsupport_local/` (README). Test
+  nRMSE 0.634/0.898/0.901 (worse than particles 0.716 mean) but real MMD NOT rejected for any stream (p 0.32-0.53; NGC3201/
+  M68 Mahalanobis 98-99th pct) and no local rails at a prior edge. PPC: Pal5 phi2 0.95, NGC3201 mu_phi1 0.10 (z +2.4),
+  M68 phi2 bow 0.00 (z +3.0) -- the two familiar residuals survive. `ppc_joint_posterior.py --fit aug` now handles the
+  own-support step (picks it from the training steps; scores only grid points covered by >= half the draws).
+  Gotcha: `JAX_PLATFORMS=cuda` alone breaks jax.debug.callback (needs `cuda,cpu`).
+
+- Session 2026-10-06 (pot_scalars = [K_z, mu_l, M200] appended to the curve branch; prior-predictive checks):
+  `scripts/add_pot_scalars.py` appends `pot_scalars` (n,3) = [K_z(R0_Sun, z=1.1 kpc) km^2 s^-2 pc^-1, mu_l(Sgr A*) =
+  -(v_c(R0)+V_Sun)/R0 mas/yr, TOTAL M200/1e12 (all components, 200 rho_crit, H0 70.4)] IN PLACE to an npz (zipfile
+  append, nothing else rewritten; idempotent). Done for the rc38 x Eilers19 training (300k, 6 min at 32 workers, 0 NaN)
+  and 333 test sets. Checks: mu_l == the simulator's vc_R0_derived exactly; McMillan17 gives K_z 2.00, mu_l -6.30,
+  M200 1.37e12. Network: `MaskedFusionNetwork` gained `params.post: {vcirc_kms: {inputs: [pot_scalars], widths}}` =
+  Dense(summary_dim)(MLP(concat(TST(vcirc), pot_scalars))) -- same width, so it stays ONE modality for grouped_diffusion
+  and the masked compositional eval (curve item carries the scalars). Training noise = observed errors (0.16, 0.026,
+  0.21) via `add_noise_to_sigma_z` (sigma may now be a list); real data via `attach_observed_sigma_z` (value may be a
+  list: 2.00, -6.379, 1.17). Presets `*_potscalars` (adapter, aug, preproc train/real, model). Runner
+  `scripts/train_potscalars_rc38_eilers19_sys3.sh` (step 0 = add_pot_scalars, skips if present; trial 31 of the sys3
+  core080 study = Optuna Pareto front with the best real MMD p on the front; front = 1/3/14/31). CPU smoke (999 rows,
+  1 epoch) passed train, sim eval (mask plan 3 x sim_summary + 1 x vcirc_kms) and real eval. Tests in
+  test_fusion_frozen.py. GPU training NOT run (user launches).
+  **Prior-predictive** (`scripts/ppc_pot_scalars_prior.py`, `<dataset>/ppc/pot_scalars_sys3/`): observed inside the
+  prior for all three; K_z P(sim<obs) 0.80 (9.5 % of rows within 1 sigma), mu_l 0.15 (1.0 %), M200 0.54 (20 %).
+  Likelihood-weighted ESS: curve 309, scalars 989, joint 12 of 300k (independence would give ~1 => curve and scalars
+  agree; the curve-weighted prior predicts K_z 2.32, mu_l -6.22 [-6.30,-6.13], M200 0.91 -- within ~1-1.8 sigma). The
+  joint occupies ~1/25000 of the prior (mu_l is the bottleneck, ESS 5420 alone) and wants log10 M* 10.78 (+0.9 sd),
+  gamma 1.15 (toward the 1.5 edge), V_Sun 15.8 (marginalized nuisance, prior 12.2), sigma_z ~80 (obs 71+-6, unused).
+  Streams (`ppc/streams_bspline_core080/`, = rc38 run): all tracks inside the sim 90 % band except Pal5 parallax (0.45),
+  |z|max <= 1.9; NN pull log10 M200 +0.75-0.82 sd and log10 M* +0.75-0.99 sd for all three streams (curve+scalars put
+  M200 slightly LOW, 11.92 -- the one mild disagreement). Rotation curve sys3: see 2026-10-03.

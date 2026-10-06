@@ -1,0 +1,9 @@
+# stream_2modal + pot_scalars, which the fusion's vcirc_kms `post` MLP consumes (same modality as the curve).
+defaults:
+  - stream_2modal
+  - _self_
+
+summary_variables:
+  - sim_summary
+  - vcirc_kms
+  - pot_scalars

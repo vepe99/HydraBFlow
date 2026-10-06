@@ -265,14 +265,15 @@ class AttachObservedSigmaZ(PreprocessStep):
         from hydrabflow.simulators.stream_common import SIGMA_Z_OBS_MSUN_PC2
 
         self.sigma_z_key = sigma_z_key
-        self.value = float(value if value is not None else SIGMA_Z_OBS_MSUN_PC2)
+        # a list attaches a vector per row, e.g. pot_scalars (n, 3)
+        self.value = np.atleast_1d(np.asarray(value if value is not None else SIGMA_Z_OBS_MSUN_PC2, dtype=float))
 
     def transform(self, data: Dataset) -> Dataset:
         if self.sigma_z_key in data:
             return data
         out = dict(data)
         n = len(next(iter(data.values())))
-        out[self.sigma_z_key] = np.full((n, 1), self.value, dtype=float)
+        out[self.sigma_z_key] = np.tile(self.value, (n, 1))
         return out
 
 

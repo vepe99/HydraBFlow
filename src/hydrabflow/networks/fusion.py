@@ -19,10 +19,20 @@ Selected via ``model/summary_network``::
       head: {widths: [64, 64], output_dim: 32}  # optional
       frozen_weights:                           # optional: {key: summary_network_weights.npz}
         vcirc_kms: outputs/<imm run>/train/summary_network_weights.npz
+      warm_weights:                             # optional: same, but the backbone stays trainable
+        sim_summary: <dir>/sim_summary_weights.npz
+      post:                                     # optional: per-backbone MLP on [summary, extra inputs]
+        vcirc_kms: {inputs: [pot_scalars], widths: [64, 64]}
+
+``post`` turns a backbone's output into ``Dense(summary_dim)(MLP(concat(backbone(x), *extras)))``:
+extra (rank-2) input keys that have no backbone of their own join that branch, so its width -- and
+therefore the grouped-diffusion modality slice -- is unchanged and dropping the modality drops them
+too. The post MLP is always trainable (``frozen_weights`` freezes only the backbone).
 
 ``frozen_weights`` loads a backbone's weights from a pretrained (e.g. information-maximising)
 run's ``summary_network_weights.npz`` at build time and freezes it: excluded from the optimizer
-and always called with ``training=False`` (no dropout). The architecture must match that run's.
+and always called with ``training=False`` (no dropout). ``warm_weights`` loads the same way but keeps
+the backbone trainable (warm start / fine-tuning). The architecture must match that run's.
 
 Each backbone spec is a full ``SummaryNetworkConfig`` (missing fields take that schema's
 defaults) resolved through the summary-network registry, so custom architectures work as
@@ -54,6 +64,9 @@ class MaskedFusionNetwork(SummaryNetwork):
         head: keras.Layer | None = None,
         mask_backbone: str | None = None,
         frozen_weights: Mapping[str, str] | None = None,
+        warm_weights: Mapping[str, str] | None = None,
+        post: Mapping[str, keras.Layer] | None = None,
+        post_inputs: Mapping[str, list] | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -61,9 +74,12 @@ class MaskedFusionNetwork(SummaryNetwork):
         self.head = head
         self.mask_backbone = mask_backbone
         self.frozen_weights = dict(frozen_weights or {})
-        unknown = set(self.frozen_weights) - set(backbones)
+        self.warm_weights = dict(warm_weights or {})
+        self.post = dict(post or {})
+        self.post_inputs = {k: list(v) for k, v in (post_inputs or {}).items()}
+        unknown = (set(self.frozen_weights) | set(self.warm_weights)) - set(backbones)
         if unknown:
-            raise ValueError(f"frozen_weights keys {sorted(unknown)} are not backbones {sorted(backbones)}")
+            raise ValueError(f"frozen_weights/warm_weights keys {sorted(unknown)} are not backbones {sorted(backbones)}")
         self._ordered_keys = sorted(self.backbones.keys())
 
     def build(self, inputs_shape: Mapping[str, Shape]):
@@ -74,11 +90,16 @@ class MaskedFusionNetwork(SummaryNetwork):
             shape = inputs_shape[k]
             if not self.backbones[k].built:
                 self.backbones[k].build(shape)
-            if k in self.frozen_weights:
-                with np.load(self.frozen_weights[k]) as f:
+            path = self.frozen_weights.get(k) or self.warm_weights.get(k)
+            if path:
+                with np.load(path) as f:
                     self.backbones[k].set_weights([f[n] for n in f.files])
-                self.backbones[k].trainable = False
-            output_shapes.append(self.backbones[k].compute_output_shape(shape))
+                self.backbones[k].trainable = k not in self.frozen_weights
+            out_shape = self.backbones[k].compute_output_shape(shape)
+            if k in self.post and not self.post[k].built:
+                extra = sum(inputs_shape[e][-1] for e in self.post_inputs[k])
+                self.post[k].build((*out_shape[:-1], out_shape[-1] + extra))
+            output_shapes.append(out_shape)
         if self.head is not None and not self.head.built:
             fused = (*output_shapes[0][:-1], sum(s[-1] for s in output_shapes))
             self.head.build(fused)
@@ -93,6 +114,12 @@ class MaskedFusionNetwork(SummaryNetwork):
             out = self.head.compute_output_shape(out)
         return out
 
+    def _post(self, key: str, out: Tensor, inputs: Mapping[str, Tensor], training: bool) -> Tensor:
+        if key not in self.post:
+            return out
+        extras = [ops.cast(inputs[e], out.dtype) for e in self.post_inputs[key]]
+        return self.post[key](ops.concatenate([out, *extras], axis=-1), training=training)
+
     def _backbone_kwargs(self, key: str, attention_mask: Tensor | None) -> dict:
         if attention_mask is not None and key == self.mask_backbone:
             return {"attention_mask": attention_mask}
@@ -105,10 +132,10 @@ class MaskedFusionNetwork(SummaryNetwork):
         training: bool = False,
     ) -> Tensor:
         outputs = [
-            self.backbones[k](
+            self._post(k, self.backbones[k](
                 inputs[k], training=training and k not in self.frozen_weights,
                 **self._backbone_kwargs(k, attention_mask),
-            )
+            ), inputs, training)
             for k in self._ordered_keys
         ]
         fused = ops.concatenate(outputs, axis=-1)
@@ -133,14 +160,15 @@ class MaskedFusionNetwork(SummaryNetwork):
             backbone = self.backbones[k]
             extra = self._backbone_kwargs(k, attention_mask)
             if k in self.frozen_weights:
-                metrics["outputs"].append(backbone(inputs[k], training=False, **extra))
+                out = backbone(inputs[k], training=False, **extra)
             elif isinstance(backbone, SummaryNetwork):
                 metrics_k = backbone.compute_metrics(inputs[k], stage=stage, **extra)
-                metrics["outputs"].append(metrics_k["outputs"])
+                out = metrics_k["outputs"]
                 if "loss" in metrics_k:
                     metrics["loss"].append(metrics_k["loss"])
             else:
-                metrics["outputs"].append(backbone(inputs[k], training=is_training, **extra))
+                out = backbone(inputs[k], training=is_training, **extra)
+            metrics["outputs"].append(self._post(k, out, inputs, is_training))
 
         if metrics["loss"]:
             metrics["loss"] = ops.sum(metrics["loss"])
@@ -159,6 +187,9 @@ class MaskedFusionNetwork(SummaryNetwork):
             "head": self.head,
             "mask_backbone": self.mask_backbone,
             "frozen_weights": self.frozen_weights,
+            "warm_weights": self.warm_weights,
+            "post": self.post,
+            "post_inputs": self.post_inputs,
         }
         return base_config | serialize(config)
 
@@ -187,11 +218,23 @@ def _fusion(cfg):
             "{<observable key>: {type: <summary net>, ...}, ...}"
         )
 
-    backbones = {}
+    backbones, dims = {}, {}
     for key, spec in backbone_specs.items():
         # Overlay the spec on the schema so unspecified fields keep their defaults.
         merged = OmegaConf.merge(OmegaConf.structured(SummaryNetworkConfig), spec or {})
         backbones[key] = build_summary_network(merged)
+        dims[key] = int(merged.summary_dim)
+
+    post, post_inputs = {}, {}
+    for key, spec in (params.get("post") or {}).items():
+        if key not in backbones:
+            raise ValueError(f"post key {key!r} is not a backbone {sorted(backbones)}")
+        post_inputs[key] = list(spec["inputs"])
+        # output width == the backbone's summary_dim, so grouped_diffusion's group sizes still hold
+        post[key] = keras.Sequential([
+            bf.networks.MLP(widths=[int(w) for w in spec.get("widths", [64, 64])]),
+            keras.layers.Dense(units=dims[key]),
+        ])
 
     head = None
     head_spec = params.get("head")
@@ -214,6 +257,9 @@ def _fusion(cfg):
         head=head,
         mask_backbone=params.get("mask_backbone"),
         frozen_weights=params.get("frozen_weights"),
+        warm_weights=params.get("warm_weights"),
+        post=post,
+        post_inputs=post_inputs,
     )
 
 

@@ -1240,7 +1240,8 @@ def _add_noise_to_sigma_z(params, rng, context=None):
     from hydrabflow.simulators.stream_common import SIGMA_Z_ERR_MSUN_PC2
 
     key = str(params.get("sigma_z_key", "sigma_z"))
-    sigma = float(params.get("sigma_z_err", SIGMA_Z_ERR_MSUN_PC2))
+    # a list broadcasts per column, e.g. pot_scalars (n, 3) = [K_z, mu_l, M200] errors
+    sigma = np.asarray(params.get("sigma_z_err", SIGMA_Z_ERR_MSUN_PC2), dtype=np.float32)
     cell = _key_cell(rng)
     jax, jnp = _jax()
 
