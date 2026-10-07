@@ -224,7 +224,10 @@ def main():
         elif args.baryons:
             vc = np.full((n, r_dense.size), np.nan)
             for i, row in enumerate(groups[0][1]):
-                vc[i] = _vcirc(build(row), r_dense)
+                try:  # same guard as vcirc_stack: a draw agama rejects stays NaN
+                    vc[i] = _vcirc(build(row), r_dense)
+                except Exception:
+                    pass
             np.savez(pcache, r_dense=r_dense, Combined_dense=vc)
             parts[part] = vc
             print(f"Saved {part} curves to {pcache}")

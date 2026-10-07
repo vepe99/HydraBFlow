@@ -81,8 +81,14 @@ def resimulate(args, cfg, sim, log10_keys):
         lpost = {k: np.median(v, axis=2, keepdims=True) for k, v in lpost.items()}
         n, idx = 1, np.array([0])
     else:
-        n = min(args.n_samples, n_draws)
-        idx = rng.choice(n_draws, size=n, replace=False)
+        # gamma >= 2 makes the m200_c halo scale radius r200/[c (2-gamma)] non-positive -> agama refuses it;
+        # posteriors leak past the prior edge (gamma U[0,1.5]), so pair only physically valid draws
+        g = gpost.get("gamma_TwoPowerTriaxial_halo")
+        ok = np.flatnonzero(g[0].ravel() < 2.0) if g is not None else np.arange(n_draws)
+        if ok.size < n_draws:
+            print(f"dropping {n_draws - ok.size}/{n_draws} global draws with gamma >= 2 (no valid halo)")
+        n = min(args.n_samples, ok.size)
+        idx = rng.choice(ok, size=n, replace=False)
 
     flat = {}
     for key, spec in sim._priors_global.items():
@@ -256,7 +262,8 @@ def main():
     report = {}
     if args.fit == "aug":   # the training augmentation itself: frames, knots, lambda/model fixed from its real members
         from hydrabflow.registry import AUGMENTATIONS
-        grid_fn = AUGMENTATIONS.get("stream_bspline_grid")(gp, np.random.default_rng(args.seed))
+        own = "stream_spline_ownsupport" in list(aug_cfg.get("steps", []))   # same (n, G, 9) layout as the B-spline
+        grid_fn = AUGMENTATIONS.get("stream_spline_ownsupport" if own else "stream_bspline_grid")(gp, np.random.default_rng(args.seed))
         skey = gp.get("summary_key", "sim_summary")
 
         def aug_grid(stars, att, vm, jv):
@@ -272,7 +279,7 @@ def main():
             o_real = aug_grid(rst[None], np.ones((1, len(rst))), rvm[None], [j])[0]
             o_sim = aug_grid(noisy[:, s], attn[:, s], vmask[:, s], np.full(n, j))
             okv = np.isfinite(Fr[:, 5])
-            vgrid = np.linspace(Fr[okv, 0].min(), Fr[okv, 0].max(), o_real.shape[0])   # vlos grid = real measured range
+            vgrid = o_real[:, 8] if own else np.linspace(Fr[okv, 0].min(), Fr[okv, 0].max(), o_real.shape[0])   # vlos grid
         for c, (key, lab, col) in enumerate(OBS):
             ax = axes[s, c]
             kind = "vlos" if key == "vlos" else "track"
@@ -304,8 +311,11 @@ def main():
                     ok = np.isfinite(F[:, col])
                     curves.append(bsp.spline_on_grid(F[ok, 0], F[ok, col], t, grid, lam=lam, kind=kind))
             C = np.array(curves) if curves else np.full((1, len(grid)), np.nan)
-            usable = np.isfinite(C).all(axis=1)
+            # own-support curves are NaN outside each realization's own core: keep draws with any valid point and
+            # score only grid points that >= half of them (and the real curve) cover
+            usable = np.isfinite(C).any(axis=1) if args.fit == "aug" and own else np.isfinite(C).all(axis=1)
             C = C[usable]
+            keep = (np.isfinite(C).mean(0) >= 0.5) & np.isfinite(real_curve) if len(C) else np.zeros(len(grid), bool)
             for cv in (C if len(C) <= 50 else []):   # past ~50 draws the band says it better
                 ax.plot(grid, cv, color=STREAM_COLOR[name], alpha=0.25, lw=0.8)
             if len(C):
@@ -314,8 +324,10 @@ def main():
                 ax.plot(grid, q50, color=STREAM_COLOR[name], lw=1.4, label="sim median")
                 sig = 1.4826 * np.nanmedian(np.abs(C - q50), axis=0)
                 z = (real_curve - q50) / np.where(sig > 0, sig, np.nan)
-                inside = float(np.mean((real_curve >= q5) & (real_curve <= q95)))
-                report[name][key] = dict(n_usable=int(len(C)), inside_5_95=inside,
+                z = np.where(keep, z, np.nan) if args.fit == "aug" and own else z
+                inside = float(np.mean(((real_curve >= q5) & (real_curve <= q95))[keep])) if args.fit == "aug" and own \
+                    else float(np.mean((real_curve >= q5) & (real_curve <= q95)))
+                report[name][key] = dict(n_usable=int(len(C)), inside_5_95=inside, n_points=int(keep.sum()),
                                          median_z=float(np.nanmedian(z)), max_abs_z=float(np.nanmax(np.abs(z))))
                 ax.set_title(f"inside {inside:.2f}  z_med {np.nanmedian(z):+.2f}  ({len(C)} sims)", fontsize=9)
             ax.plot(grid, real_curve, color="#1d2230", lw=2.0, label="Gaia members")
