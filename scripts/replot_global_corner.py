@@ -14,6 +14,7 @@ stream colours) -- the pieces the masked compositional posterior pools.
 
 import argparse
 import os
+import re
 
 import corner
 import matplotlib
@@ -116,6 +117,69 @@ def kde_1d(x, grid, bound=None):
     return np.where((grid >= lo) & (grid <= hi), y, 0.0)
 
 
+def rc_inset(fig, axes, cache, chains, fs, r_break=30.0):
+    """Rotation-curve PPC (median + 68 % band per posterior) in the empty upper-right triangle, broken R axis:
+    linear to r_break, log beyond (as ppc_rotation_curve_ibata.py's overlay), with the observed curves."""
+    from hydrabflow.simulators import stream_common as sc
+
+    z = np.load(cache)
+    K = axes.shape[0]
+    a, b, c = axes[0, 3].get_position(), axes[0, K - 1].get_position(), axes[2, 0].get_position()
+    x0, x1 = a.x0 + 0.45 * a.width, b.x1
+    y0, y1 = c.y0 + 0.75 * c.height, a.y1
+    xm = x0 + 0.57 * (x1 - x0)
+    axl, axr = fig.add_axes([x0, y0, xm - x0, y1 - y0]), fig.add_axes([xm, y0, x1 - xm, y1 - y0])
+    key = {"Compositional": "Combined", "Circular velocity": "Curve"}
+    r = z["r_dense"]
+    for ax in (axl, axr):
+        for name, _, col, _ in chains:
+            vc = z[f"{key.get(name, name.split(' ')[0])}_dense"]
+            lo, hi = np.nanpercentile(vc, [16, 84], axis=0)
+            ax.fill_between(r, lo, hi, color=col, alpha=0.25, lw=0)
+            ax.plot(r, np.nanmedian(vc, axis=0), color=col, lw=2.5 if name == "Compositional" else 1.5, label=name)
+        eb = dict(elinewidth=1.0, capsize=2, lw=0, ms=5)
+        ax.errorbar(z["r_obs"], z["vc_obs"], yerr=z["sigma_obs"], fmt="o", color="0.1", ecolor="0.45",
+                    label="Ou et al. 2024", zorder=5, **eb)
+        hu = sc.HUANG_R_KPC > r_break
+        ax.errorbar(sc.HUANG_R_KPC[hu], sc.HUANG_VC_KMS[hu], yerr=sc.HUANG_SIGMA_VC[hu], fmt="s", mfc="white",
+                    color="0.3", ecolor="0.6", label="Huang et al. 2016", zorder=4, **eb)
+        ax.tick_params(labelsize=0.75 * fs)
+    axl.set_xlim(0.1, r_break)
+    for ax in (axl, axr):  # empty band at the bottom holds the legend
+        ax.set_ylim(100, 255)
+    axl.set_yticks(range(100, 251, 50))
+    axr.set_xscale("log")
+    axr.set_xlim(r_break, r.max())
+    axr.set_xticks([50, 100])
+    # unlabelled minor ticks: evenly spaced on the linear side, log-spaced past the break
+    axl.xaxis.set_minor_locator(plt.matplotlib.ticker.MultipleLocator(2))
+    axr.xaxis.set_minor_locator(plt.matplotlib.ticker.LogLocator(subs=np.arange(2, 10)))
+    axr.xaxis.set_minor_formatter(plt.matplotlib.ticker.NullFormatter())
+    for ax in (axl, axr):
+        ax.tick_params(axis="x", which="major", length=9, width=1.2)
+        ax.tick_params(axis="x", which="minor", length=5, width=1.0)
+    axr.xaxis.set_major_formatter(plt.matplotlib.ticker.ScalarFormatter())
+    axl.spines[["right", "top"]].set_visible(False)
+    axr.spines[["left", "top", "right"]].set_visible(False)
+    axl.set_zorder(axr.get_zorder() + 1)  # the legend spills into the right half
+    axl.patch.set_visible(False)
+    axr.tick_params(axis="y", which="both", left=False, labelleft=False)
+    axl.set_ylabel(r"$V_c$ [km/s]", fontsize=fs)
+    axl.set_xlabel(r"$R$ [kpc]", fontsize=fs, x=(x1 - x0) / (2 * (xm - x0)))
+    # single-modality posteriors left of the linear|log break, compositional + data right of it
+    h, lbl = axl.get_legend_handles_labels()
+    right = [i for i, n in enumerate(lbl) if n == "Compositional" or "et al." in n]
+    left = [i for i in range(len(lbl)) if i not in right]
+    kw = dict(fontsize=0.75 * fs, frameon=False, borderaxespad=0.2)
+    legs = [axl.legend([h[i] for i in left], [lbl[i] for i in left], loc="lower left",
+                       bbox_to_anchor=(0.12, 0), **kw),
+            axr.legend([h[i] for i in right], [lbl[i] for i in right], loc="lower left",
+                       bbox_to_anchor=(-0.12, 0), **kw)]
+    for leg in legs:
+        for ln in leg.get_lines():
+            ln.set_linewidth(4.0)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir")
@@ -137,6 +201,11 @@ def main():
     ap.add_argument("--halo-agama", nargs="?", const="log", choices=["log", "linear"],
                     help="show the halo scaleRadius/densityNorm AGAMA receives (log10 axes, or 'linear') "
                          "instead of log10 M200, ln c_v'")
+    ap.add_argument("--no-units", action="store_true", help="drop the physical units from the axis labels")
+    ap.add_argument("--fontsize", type=float, default=16, help="axis-label size; ticks and legend scale with it")
+    ap.add_argument("--rc-inset", default=None,
+                    help="ppc_rotation_curve_curves_*.npz cache (ppc_rotation_curve_ibata.py --single-stream "
+                         "--curve-only): draw the rotation-curve PPC in the empty upper-right corner; it carries the legend")
     args = ap.parse_args()
     global _RUN_DIR
     _RUN_DIR = args.run_dir
@@ -144,29 +213,31 @@ def main():
         i = [k for k, _, _ in PARAMS].index("log10_M200_TwoPowerTriaxial_halo")
         PARAMS[i:i + 2] = HALO_PARAMS if args.halo_agama == "log" else [
             ("r_h", r"$r_h\ [{\rm kpc}]$", False), ("rho_h", r"$\rho_h\ [M_\odot\,{\rm kpc^{-3}}]$", False)]
+    if args.no_units:
+        PARAMS[:] = [(k, re.sub(r"\\ \[.*\]\$$", "$", lab), lg) for k, lab, lg in PARAMS]
     bounds = prior_bounds(args.run_dir)
 
     glob = np.load(os.path.join(args.run_dir, "posterior.npz"))
     single = np.load(os.path.join(args.run_dir, "single_stream_posterior.npz"))
     colors = list(plt.cm.RdYlBu_r(np.linspace(0, 1, 1 + len(STREAMS))))
     # (label, samples, colour, linestyle)
-    chains = [] if args.no_global else [("Global", stack(glob, 0), colors[0], "-")]
+    chains = [] if args.no_global else [("Compositional", stack(glob, 0), colors[0], "-")]
     if not args.no_joint:
         chains += [(s, stack(single, i), colors[1 + i], "-") for i, s in enumerate(STREAMS)]
     if args.stream_only:
         so = np.load(os.path.join(args.stream_only, "single_stream_posterior.npz"))
-        chains += [(f"{s} (stream only)", stack(so, i), colors[1 + i], ":") for i, s in enumerate(STREAMS)]
+        chains += [(s if args.no_joint else f"{s} (stream only)", stack(so, i), colors[1 + i], ":") for i, s in enumerate(STREAMS)]
     if args.curve_only:
         co = np.load(os.path.join(args.curve_only, "single_stream_posterior.npz"))
-        chains.append(("Rotation curve only", stack(co, 0), "black", "--"))
+        chains.append(("Circular velocity", stack(co, 0), "black", "--"))
     if args.modalities_style:
-        chains = [(n, d, "#984ea3" if n.startswith("Rotation") else c, "-") for n, d, c, _ in chains]
+        chains = [(n, d, "#984ea3" if n == "Circular velocity" else c, "-") for n, d, c, _ in chains]
         if not args.no_global:
             chains = chains[1:] + chains[:1]  # Global drawn on top
     if args.palette == "okabe-ito":  # Okabe & Ito (2008); Global black so the pooled result reads first
-        pal = {"Pal5": "#E69F00", "NGC3201": "#0072B2", "M68": "#CC79A7", "Rotation": "#009E73", "Global": "black"}
+        pal = {"Pal5": "#E69F00", "NGC3201": "#0072B2", "M68": "#CC79A7", "Circular": "#009E73", "Compositional": "black"}
         chains = [(n, d, next((v for k, v in pal.items() if n.startswith(k)), c), ls) for n, d, c, ls in chains]
-    thick = lambda n, a, b: {} if not args.modalities_style else {a: b if n == "Global" else 1.0}  # noqa: E731
+    thick = lambda n, a, b: {} if not args.modalities_style else {a: b if n == "Compositional" else 1.0}  # noqa: E731
 
     all_data = np.vstack([c[1] for c in chains])
     lo, hi = np.nanpercentile(all_data, [0.5, 99.5], axis=0)
@@ -195,7 +266,7 @@ def main():
         kw.update(sh)
         fig = corner.corner(
             data, fig=fig, labels=[p[1] for p in PARAMS], range=ranges,
-            color=c, bins=40, label_kwargs={"fontsize": 16},
+            color=c, bins=40, max_n_ticks=4, label_kwargs={"fontsize": args.fontsize},
             smooth=1.0, levels=(0.68, 0.95), **kw,
         )
         if args.shaded:
@@ -207,7 +278,7 @@ def main():
             ax, x, top = axes[i, i], np.linspace(lo_i, hi_i, 400), 0.0
             for name, data, c, ls in chains:
                 y = kde_1d(data[:, i], x, bounds[i])
-                ax.plot(x, y, color=c, ls=ls, lw=2.0 if name == "Global" else 1.2)
+                ax.plot(x, y, color=c, ls=ls, lw=2.0 if name == "Compositional" else 1.2)
                 top = max(top, y.max())
             ax.set_ylim(0, 1.1 * top)
     if args.prior_bounds:
@@ -218,10 +289,32 @@ def main():
                     axes[r, i].axvline(v, **line)  # column i: x = parameter i
                 for col in range(i):
                     axes[i, col].axhline(v, **line)  # row i: y = parameter i
+    # large-valued axes (rho_h, Sigma_D): fold the 1e8/1e9 multiplier into the label instead of the corner offset text
+    from matplotlib.ticker import FuncFormatter
+    for i, (lo_i, hi_i) in enumerate(ranges):
+        e = int(np.floor(np.log10(max(abs(lo_i), abs(hi_i)))))
+        if abs(e) < 3:
+            continue
+        fmt = FuncFormatter(lambda v, _, s=10.0**e: f"{v / s:g}")
+        lab = (PARAMS[i][1][:-1] + rf"\,/\,10^{{{e}}}$" if args.no_units
+               else PARAMS[i][1].replace(r"\ [", rf"\ [10^{{{e}}}\,", 1))
+        axes[K - 1, i].xaxis.set_major_formatter(fmt)
+        axes[K - 1, i].set_xlabel(lab, fontsize=args.fontsize)
+        if i > 0:
+            axes[i, 0].yaxis.set_major_formatter(fmt)
+            axes[i, 0].set_ylabel(lab, fontsize=args.fontsize)
+    for ax in fig.axes:
+        ax.tick_params(labelsize=0.75 * args.fontsize)
+    for r in range(1, K):  # horizontal y ticks: rotated ones collide with the larger labels
+        axes[r, 0].tick_params(axis="y", labelrotation=0)
+        axes[r, 0].yaxis.set_label_coords(-0.45, 0.5)
     handles = [Line2D([0], [0], color=c, ls=ls, label=n) for n, _, c, ls in chains]
     if args.prior_bounds:
         handles.append(Line2D([0], [0], color="0.4", ls="--", label="Prior bounds"))
-    fig.legend(handles=handles, loc="upper right", fontsize=14, frameon=False)
+    if args.rc_inset:
+        rc_inset(fig, axes, args.rc_inset, chains, args.fontsize)
+    else:
+        fig.legend(handles=handles, loc="upper right", fontsize=0.9 * args.fontsize, frameon=False)
     path = os.path.join(args.run_dir, args.out)
     fig.savefig(path, dpi=130, bbox_inches="tight")
     print(path)

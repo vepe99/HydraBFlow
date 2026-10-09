@@ -37,7 +37,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run-dir", required=True)
     ap.add_argument("--n-samples", type=int, default=0, help="0 = all draws")
+    ap.add_argument("--recompute", action="store_true", help="ignore a saved total_m200.npz")
     args = ap.parse_args()
+    cache = os.path.join(args.run_dir, "total_m200.npz")
+    if os.path.exists(cache) and not args.recompute:
+        plot(dict(np.load(cache)), args.run_dir)
+        return
 
     from omegaconf import OmegaConf
 
@@ -67,7 +72,7 @@ def main():
         out["R200_halo"][i], out["M200_halo"][i] = r200_of(
             agama.Potential(_halo_params_m200c(agama, row, pot_cfg)), rho_t)
     out["M200_halo_param"] = 10.0 ** post["log10_M200_TwoPowerTriaxial_halo"][0, :n]
-    np.savez(os.path.join(args.run_dir, "total_m200.npz"), **out)
+    np.savez(cache, **out)
 
     dev = np.nanmax(np.abs(out["M200_halo"] / out["M200_halo_param"] - 1))
     print(f"{n} draws | halo-only check: max |M200_halo/param - 1| = {dev:.2e}")
@@ -77,29 +82,38 @@ def main():
     frac = out["M200_total"] / out["M200_halo_param"] - 1
     print(f"  baryons add {np.median(frac):.1%} to M200 (median)")
 
+    plot(out, args.run_dir)
+
+
+def plot(out, run_dir):
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, (ax_m, ax_r) = plt.subplots(1, 2, figsize=(10, 4))
+    plt.rcParams.update({"font.size": 20})
+    fig, (ax_m, ax_r) = plt.subplots(1, 2, figsize=(12, 6))
     for ax, key, xl in [(ax_m, "M200", r"$M_{200}$ [$10^{12}\,M_\odot$]"),
                         (ax_r, "R200", r"$R_{200}$ [kpc]")]:
-        scale = 1e12 if key == "M200" else 1.0
-        tot, halo = out[f"{key}_total"] / scale, out[f"{key}_halo"] / scale
-        bins = np.linspace(*np.nanpercentile(np.r_[tot, halo], [0.5, 99.5]), 60)
-        ax.hist(halo, bins, histtype="step", color="0.5", lw=1.5, label="dark halo only")
-        ax.hist(tot, bins, color="C0", alpha=0.6, label="total potential")
-        med = np.nanmedian(tot)
-        ax.axvline(med, color="C0", ls="--", lw=1)
-        ax.set_title(f"total: {med:.3g}" + (r"$\times10^{12}\,M_\odot$" if key == "M200" else " kpc"))
+        tot = out[f"{key}_total"] / (1e12 if key == "M200" else 1.0)
+        bins = np.linspace(*np.nanpercentile(tot, [0.5, 99.5]), 50)
+        ax.hist(tot, bins, density=True, color=plt.cm.RdYlBu_r(0.0), alpha=0.4)  # compositional blue
+        from scipy.stats import gaussian_kde
+        x = np.linspace(bins[0], bins[-1], 400)
+        ax.plot(x, gaussian_kde(tot[np.isfinite(tot)])(x), color=plt.cm.RdYlBu_r(0.0), lw=2.5)
+        lo, med, hi = np.nanpercentile(tot, [16, 50, 84])
+        ax.axvline(med, color="k", lw=2)
+        for v in (lo, hi):
+            ax.axvline(v, color="k", ls="--", lw=1.5)
         ax.set_xlabel(xl)
-    ax_m.set_ylabel("posterior draws")
-    ax_m.legend(fontsize=8)
+        ax.set_box_aspect(1)
+        ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(4))
+    ax_m.set_ylabel("Normalized counts")
     fig.tight_layout()
-    png = os.path.join(args.run_dir, "total_m200.png")
-    fig.savefig(png, dpi=150)
-    print(f"Saved {png}")
+    for ext in ("png", "pdf"):
+        path = os.path.join(run_dir, f"total_m200.{ext}")
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        print(f"Saved {path}")
 
 
 if __name__ == "__main__":

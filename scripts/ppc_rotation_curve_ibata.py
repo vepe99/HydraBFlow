@@ -93,6 +93,11 @@ def main():
                     help="legend name of the observed curve (default: Ou et al. 2024 for a custom grid)")
     ap.add_argument("--baryons", action="store_true",
                     help="compute the baryon-only and halo-only curves with AGAMA if not cached (else plot them only when cached)")
+    ap.add_argument("--single-stream", default=None,
+                    help="per-stream posterior npz to use instead of <run-dir>/single_stream_posterior.npz "
+                         "(e.g. the eval.observed_groups=[sim_summary] stream-only run)")
+    ap.add_argument("--curve-only", default=None,
+                    help="curve-only posterior npz (eval.observed_groups=[vcirc_kms]); adds a 'Curve' group")
     args = ap.parse_args()
 
     from omegaconf import OmegaConf
@@ -137,7 +142,7 @@ def main():
     log10_keys = _log10_keys(OmegaConf.to_container(cfg, resolve=True))
     global_post = _load_posterior(os.path.join(args.run_dir, "posterior.npz"), log10_keys)
     stream_post = _load_posterior(
-        os.path.join(args.run_dir, "single_stream_posterior.npz"), log10_keys
+        args.single_stream or os.path.join(args.run_dir, "single_stream_posterior.npz"), log10_keys
     )
     post_keys = list(global_post.keys())
 
@@ -153,10 +158,15 @@ def main():
     groups = [("Combined", rows(global_post, 0))]
     for gi in range(stream_post[post_keys[0]].shape[0]):
         groups.append((idx_to_name.get(gi, f"stream{gi}"), rows(stream_post, gi)))
+    if args.curve_only:
+        curve_post = _load_posterior(args.curve_only, log10_keys)
+        groups.append(("Curve", rows(curve_post, 0)))
     # curve at the per-parameter posterior MEDIAN (all saved draws), one per group
     med_rows = [{**consts, **{k: float(np.median(global_post[k][0])) for k in post_keys}}]
     for gi in range(stream_post[post_keys[0]].shape[0]):
         med_rows.append({**consts, **{k: float(np.median(stream_post[k][gi])) for k in post_keys}})
+    if args.curve_only:
+        med_rows.append({**consts, **{k: float(np.median(curve_post[k][0])) for k in post_keys}})
 
     print("Rotation-curve PPC (Ibata/m200_c potential) | reusing saved posterior draws (NO re-sampling)")
     print(f"halo_parameterization={pot_cfg.get('halo_parameterization', 'rho_a')} | "
@@ -184,7 +194,8 @@ def main():
         return out[:, :obs_r.size], out[:, obs_r.size:]
 
     curves, med_curves, dense = {}, {}, {}
-    cache = os.path.join(args.run_dir, f"ppc_rotation_curve_curves_n{n}_s{args.seed}.npz")
+    cache = os.path.join(args.run_dir, f"ppc_rotation_curve_curves_n{n}_s{args.seed}"
+                         f"{'_streamonly' if args.single_stream else ''}{'_curve' if args.curve_only else ''}.npz")
     if os.path.exists(cache):  # replot without recomputing the potentials
         z = np.load(cache)
         assert np.allclose(z["r_obs"], obs_r) and np.allclose(z["r_dense"], r_dense), "stale cache"
@@ -252,7 +263,8 @@ def main():
     import matplotlib.pyplot as plt
 
     # same palette as evaluate_real's global-vs-streams corner: RdYlBu_r over [pooled, streams in j order]
-    colors = dict(zip([g for g, _ in groups], plt.cm.RdYlBu_r(np.linspace(0, 1, len(groups)))))
+    sg = [g for g, _ in groups if g != "Curve"]
+    colors = {**dict(zip(sg, plt.cm.RdYlBu_r(np.linspace(0, 1, len(sg))))), "Curve": "#984ea3"}
     fig, axes = plt.subplots(1, len(groups), figsize=(4.2 * len(groups), 4.2),
                              sharex=True, sharey=True)
     if len(groups) == 1:

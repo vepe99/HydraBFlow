@@ -259,7 +259,7 @@ def main():
     bsp.FIT = args.fit
     sfx = ("" if args.fit == "smoothing" else f"_{args.fit}") + ("" if args.lam is None else f"_lam{args.lam:g}")
     n_int = {"track": 5, "vlos": 1}
-    report = {}
+    report, saved = {}, {}
     if args.fit == "aug":   # the training augmentation itself: frames, knots, lambda/model fixed from its real members
         from hydrabflow.registry import AUGMENTATIONS
         own = "stream_spline_ownsupport" in list(aug_cfg.get("steps", []))   # same (n, G, 9) layout as the B-spline
@@ -274,6 +274,9 @@ def main():
     for s, (name, j) in enumerate(streams):
         Fr = real_tab[name]
         report[name] = {}
+        Fs = np.concatenate([F for F in sim_tab[name] if F is not None], axis=0)
+        saved[f"{name}__sims"] = Fs[rng.choice(len(Fs), min(len(Fs), 20000), replace=False)]   # (k, 6) frame stars
+        saved[f"{name}__members"] = Fr
         if args.fit == "aug":
             rst, rvm = real[j]
             o_real = aug_grid(rst[None], np.ones((1, len(rst))), rvm[None], [j])[0]
@@ -330,6 +333,9 @@ def main():
                 report[name][key] = dict(n_usable=int(len(C)), inside_5_95=inside, n_points=int(keep.sum()),
                                          median_z=float(np.nanmedian(z)), max_abs_z=float(np.nanmax(np.abs(z))))
                 ax.set_title(f"inside {inside:.2f}  z_med {np.nanmedian(z):+.2f}  ({len(C)} sims)", fontsize=9)
+                tag = f"{name}__{key}__"
+                saved.update({tag + "grid": grid, tag + "real": real_curve, tag + "q5": q5, tag + "q50": q50,
+                              tag + "q95": q95, tag + "keep": keep, tag + "stars": Fr[okr][:, [0, col]]})
             ax.plot(grid, real_curve, color="#1d2230", lw=2.0, label="Gaia members")
             ax.scatter(Fr[okr, 0], Fr[okr, col], s=5, c="#1d2230", alpha=0.35, lw=0)
             if len(C):
@@ -347,6 +353,7 @@ def main():
     fig.tight_layout()
     fig.savefig(os.path.join(args.out, f"ppc_joint_bspline{sfx}.png"), dpi=130, bbox_inches="tight")
     plt.close(fig)
+    np.savez(os.path.join(args.out, f"ppc_joint_curves{sfx}.npz"), **saved)   # bands for paper figures
 
     # ---------- figures 3/4: observation-space corner plots, 5-D (all stars) and 6-D (measured v_los) ----------
     import corner
