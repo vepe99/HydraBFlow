@@ -1,0 +1,34 @@
+# Optuna search space for the LOCAL B-spline model (model=stream_fusion_2modal_oldgrid_local, coupling flow,
+# augmentation=stream_global_streamfinder_bspline_core080, composition=local): the sim_summary TST + the coupling flow. The
+# vcirc_kms TST is pinned to global trial 14 of tuningtest_2modal_bspline_core080_prog2026_study and
+# warm-started from its weights (the runner passes both), so its architecture must not be searched.
+# Objectives = RMSE + calibration of the per-stream z-scored locals on the val split.
+# Runner: scripts/tune_local_bspline_prog2026.sh.
+study_name: stream_2modal_bspline_local_study
+storage_dir: ${data.data_dir}/tuning
+n_trials: 25
+n_epochs: 500
+directions: [minimize, minimize]
+
+search_space:
+  model.summary_network.params.backbones.sim_summary.summary_dim:
+    { type: int, low: 16, high: 64, step: 2 }
+  model.summary_network.params.backbones.sim_summary.num_blocks:
+    { type: int, low: 2, high: 6 }
+  model.summary_network.params.backbones.sim_summary.num_heads:
+    { type: int, low: 2, high: 8 }
+  model.summary_network.params.backbones.sim_summary.embed_dim_per_head:
+    { type: int, low: 4, high: 16 }
+  model.summary_network.params.backbones.sim_summary.dropout:
+    { type: float, low: 0.0, high: 0.3, step: 0.05 }
+  # --- normalizing flow (bf.networks.CouplingFlow) ---
+  model.inference_network.params.depth:
+    { type: int, low: 4, high: 10 }
+  model.inference_network.params.transform:
+    { type: categorical, choices: [affine, spline] }
+  model.inference_network.mlp_width:
+    { type: int, low: 64, high: 256, step: 32 }
+  model.inference_network.mlp_depth:
+    { type: int, low: 2, high: 5 }
+  model.inference_network.dropout:
+    { type: float, low: 0.0, high: 0.2, step: 0.05 }

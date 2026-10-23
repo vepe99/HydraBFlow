@@ -39,6 +39,7 @@ def main():
     ap.add_argument("--real-run", required=True, help="a real-data local eval run of this model (its .hydra config)")
     ap.add_argument("--sim-run", default=None, help="sim-eval run whose config builds the reference (default <model-dir>/eval_sim_333)")
     ap.add_argument("--num-null", type=int, default=300); ap.add_argument("--seed", type=int, default=2026)
+    ap.add_argument("--num-null-bf", type=int, default=100, help="bf default bootstrap null size")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(); os.makedirs(a.out, exist_ok=True)
 
@@ -95,10 +96,28 @@ def main():
             report[name][sl] = {"mmd": mmd, "null_95": float(np.quantile(null, 0.95)), "p_value": float((null >= mmd).mean()),
                                 "mahalanobis": d, "reference_median": dmed, "percentile": pct, "n_reference": int(len(ref))}
             t = report[name][sl]
+            t["bf_default"] = bf_default_test(x, ref, a.num_null_bf, a.seed,
+                                              os.path.join(a.out, f"mmd_hypothesis_test_bfdefault_{name}_{sl}"))
             print(f"{name:8s} {sl:20s} {mmd:7.3f} {t['null_95']:7.3f} {t['p_value']:7.3f} {d:6.2f} {dmed:7.2f} {pct:8.1f}")
     json.dump(report, open(os.path.join(a.out, "mmd_local_per_stream.json"), "w"), indent=1)
     print("wrote", os.path.join(a.out, "mmd_local_per_stream.json"))
     plot(report, dists, os.path.join(a.out, "mmd_local_per_stream.png"))
+
+
+def bf_default_test(x, ref, num_null, seed, out):
+    """BayesFlow's default MMD test (as scripts/plot_mmd_bf_default.py): uniform bootstrap null from the
+    reference, bf's mmd_hypothesis_test figure -> <out>.{png,pdf}."""
+    import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
+    from bayesflow.diagnostics.metrics import bootstrap_comparison
+    from bayesflow.diagnostics.plots import mmd_hypothesis_test
+    from bayesflow.metrics.functional import maximum_mean_discrepancy
+    np.random.seed(seed)  # bootstrap_comparison draws with the global numpy RNG
+    mmd, null = bootstrap_comparison(x, ref, maximum_mean_discrepancy, num_null_samples=num_null)
+    fig = mmd_hypothesis_test(mmd_null=null, mmd_observed=mmd)
+    for ext in ("png", "pdf"):
+        fig.savefig(f"{out}.{ext}", bbox_inches="tight")
+    plt.close(fig)
+    return {"mmd": float(mmd), "p_value": float((null >= mmd).mean()), "num_null": num_null}
 
 
 def plot(report, dists, path):

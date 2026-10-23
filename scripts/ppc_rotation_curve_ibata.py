@@ -82,6 +82,23 @@ def _load_posterior(path, log10_keys=()):
     return out
 
 
+_W = {}
+
+
+def _vc_init(pot_cfg, radii):
+    from hydrabflow.simulators.stream_agama import _agama
+    _W.update(agama=_agama(), pot_cfg=pot_cfg, radii=radii)
+    _W["agama"].setNumThreads(1)
+
+
+def _vc_one(p):
+    from hydrabflow.simulators.stream_agama import _host_potential, _vcirc
+    try:
+        return _vcirc(_host_potential(_W["agama"], p, _W["pot_cfg"]), _W["radii"])
+    except Exception:  # gamma >= 2 leaks crash agama
+        return np.full(_W["radii"].size, np.nan)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run-dir", required=True, help="evaluate_real composition=global run dir")
@@ -184,13 +201,11 @@ def main():
     r_dense = np.geomspace(0.1, 1.05 * sc.HUANG_R_KPC.max(), 120)
     radii = np.concatenate([obs_r, r_dense])
 
+    from multiprocessing import Pool
+    pool = Pool(int(os.environ.get("PPC_WORKERS", 32)), _vc_init, (pot_cfg, radii))
+
     def vcirc_stack(group_rows):
-        out = np.full((len(group_rows), radii.size), np.nan)
-        for i, p in enumerate(group_rows):
-            try:
-                out[i] = _vcirc(_host_potential(agama, p, pot_cfg), radii)
-            except Exception:
-                pass
+        out = np.array(pool.map(_vc_one, group_rows, chunksize=100))
         return out[:, :obs_r.size], out[:, obs_r.size:]
 
     curves, med_curves, dense = {}, {}, {}

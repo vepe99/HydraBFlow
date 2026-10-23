@@ -157,6 +157,9 @@ def main():
                          "tuning trials keep none, pass e.g. <trial>/eval_sim_333/.hydra/config.yaml)")
     ap.add_argument("--median", action="store_true",
                     help="simulate ONE row at the posterior medians (globals + per-stream locals) instead of --n-samples draws")
+    ap.add_argument("--mark-grid", action="store_true",
+                    help="mark the phi1 points where the B-spline is evaluated (vertical lines + circles on the "
+                         "Gaia curve); writes ppc_joint_bspline<sfx>_grid.png")
     ap.add_argument("--reuse", action="store_true",
                     help="reuse <out>/ppc_joint_streams.npz from a previous run instead of re-simulating")
     args = ap.parse_args()
@@ -257,7 +260,7 @@ def main():
 
     # ---------- figure 2: smoothing B-spline tracks ----------
     bsp.FIT = args.fit
-    sfx = ("" if args.fit == "smoothing" else f"_{args.fit}") + ("" if args.lam is None else f"_lam{args.lam:g}")
+    sfx = ("" if args.fit == "smoothing" else f"_{args.fit}") + ("" if args.lam is None else f"_lam{args.lam:g}") + ("_grid" if args.mark_grid else "")
     n_int = {"track": 5, "vlos": 1}
     report, saved = {}, {}
     if args.fit == "aug":   # the training augmentation itself: frames, knots, lambda/model fixed from its real members
@@ -337,6 +340,11 @@ def main():
                 saved.update({tag + "grid": grid, tag + "real": real_curve, tag + "q5": q5, tag + "q50": q50,
                               tag + "q95": q95, tag + "keep": keep, tag + "stars": Fr[okr][:, [0, col]]})
             ax.plot(grid, real_curve, color="#1d2230", lw=2.0, label="Gaia members")
+            if args.mark_grid:
+                for g in grid:
+                    ax.axvline(g, color="grey", lw=0.6, ls=":", alpha=0.7, zorder=0)
+                ax.plot(grid, real_curve, "o", ms=5, mfc="white", mec="#1d2230", mew=1.3, zorder=5,
+                        label=f"evaluation points ({len(grid)})")
             ax.scatter(Fr[okr, 0], Fr[okr, col], s=5, c="#1d2230", alpha=0.35, lw=0)
             if len(C):
                 lo, hi = np.nanpercentile(np.r_[C.ravel(), real_curve], [0.5, 99.5])

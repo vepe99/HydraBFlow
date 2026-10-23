@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from enclosed_mass_profile import sample_prior  # noqa: E402
 from plot_calibration_ecdf import LABEL, RECOVERY_COLOR, STREAM_COLOR, STREAMS, save  # noqa: E402
 from ppc_rotation_curve_ibata import _log10_keys  # noqa: E402
+from bayesflow.diagnostics.metrics import calibration_error  # noqa: E402
 
 M = len(STREAMS)
 
@@ -58,6 +59,7 @@ def scores(post, truth, sd, rng):
                   "cov68": float(np.mean((y >= lo68) & (y <= hi68))),
                   "cov95": float(np.mean((y >= lo95) & (y <= hi95))),
                   "contraction": float(np.median(1 - z.var(axis=1))),
+                  "cal_err": float(calibration_error(x[..., None], truth[k][:, None])["values"][0]),
                   "crps": float(per[k].mean())}
     keys = list(post)
     es = energy(np.stack([post[k] / sd[k] for k in keys], -1), np.stack([truth[k] / sd[k] for k in keys], -1), rng)
@@ -82,11 +84,12 @@ def latex_table(res, names, keys, path):
     unit = {"r_Disk": " [dex]", "z_Disk": " [dex]", "Sigma_Disk": " [dex]"}
     nc = len(names)
     rows = []
-    for met, title, f in (("bias_raw", "Bias", "{:+.3f}"), ("rmse_raw", "RMSE", "{:.3f}"), ("crps_raw", "CRPS", "{:.3f}")):
+    for met, title, f in (("bias_raw", "Bias", "{:+.3f}"), ("rmse_raw", "RMSE", "{:.3f}"), ("crps_raw", "CRPS", "{:.3f}"),
+                          ("cal_err", "Calibration error", "{:.3f}"), ("contraction", "Posterior contraction", "{:.2f}")):
         rows += [r"\hline", rf"\multicolumn{{{nc + 1}}}{{l}}{{\textit{{{title}}}}} \\"]
         for k in keys:
             v = [f.format(res[nm][k][met]) for nm in names]
-            score = [abs(float(t)) for t in v]
+            score = [-float(t) if met == "contraction" else abs(float(t)) for t in v]  # contraction: higher is better
             cells = [rf"\textbf{{{t}}}" if sc == min(score) else t for t, sc in zip(v, score)]
             rows.append(f"{LABEL.get(k, k)}{unit.get(k, '')} & " + " & ".join(cells) + r" \\")
     heads = " & ".join(n.replace(" alone", "").replace("pooled", "compositional") for n in names)
@@ -94,7 +97,10 @@ def latex_table(res, names, keys, path):
         r"\begin{table}", r"\centering",
         r"\caption{Bias (median over the simulated test datasets of posterior mean $-$ truth) and RMSE of the "
         r"posterior mean, and mean CRPS (continuous ranked probability score, a strictly proper score of the whole "
-        r"marginal posterior; lower is better), for each single-stream posterior and the compositional posterior. "
+        r"marginal posterior; lower is better), calibration error (median over credibility levels of the absolute "
+        r"difference between nominal and empirical coverage; lower is better) and posterior contraction "
+        r"($1-\sigma^2_{\rm post}/\sigma^2_{\rm prior}$, median over datasets; higher is better), "
+        r"for each single-stream posterior and the compositional posterior. "
         r"$r_D$, $z_D$ and "
         r"$\Sigma_D$ are in $\log_{10}$ (dex). Best value per parameter in bold.}",
         r"\label{tab:bias_rmse}",
@@ -195,7 +201,7 @@ def main():
 
     plt.rcParams.update({"font.family": "serif", "mathtext.fontset": "dejavuserif"})
     col = {**{f"{s} alone": STREAM_COLOR[s] for s in STREAMS}, "pooled": RECOVERY_COLOR["compositional"]}
-    lab = {nm: nm.replace(" alone", " (single stream)").replace("pooled", "compositional") for nm in names}
+    lab = {nm: nm.replace(" alone", "").replace("pooled", "compositional") for nm in names}
     _, z, lo, hi = simultaneous_ecdf_bands(n)
     fig, ax = plt.subplots(figsize=(5.2, 4.6))
     ax.fill_between(z, lo, hi, color="grey", alpha=0.25, lw=0, label="95 % band")
@@ -213,7 +219,7 @@ def main():
     head = "| posterior | " + " | ".join(LABEL.get(k, k).strip("$") for k in cols) + " |"
     lines = []
     for met, fmt in (("bias", "{:+.2f}"), ("rmse", "{:.2f}"), ("cov68", "{:.2f}"), ("cov95", "{:.2f}"),
-                     ("contraction", "{:.2f}"), ("crps", "{:.3f}")):
+                     ("contraction", "{:.2f}"), ("cal_err", "{:.3f}"), ("crps", "{:.3f}")):
         lines += [f"\n**{met}**\n", head, "|" + "---|" * (len(cols) + 1)]
         lines += ["| " + name + " | " + " | ".join(fmt.format(res[name][k][met]) for k in cols) + " |" for name in posts]
     lines += ["\n**energy score (all parameters jointly, prior-std units)**\n", "| posterior | ES |", "|---|---|"]
