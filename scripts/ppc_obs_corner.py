@@ -23,7 +23,7 @@ from plot_loo_ppc import density_levels  # noqa: E402
 LINE_WIDTH = 2.4
 
 LABELS = [r"$\alpha$ [deg]", r"$\delta$ [deg]", r"$\pi$ [mas]", r"$\mu_{\alpha*}$ [mas/yr]",
-          r"$\mu_\delta$ [mas/yr]", r"$v_{\rm los}$ [km/s]"]
+          r"$\mu_\delta$ [mas/yr]", r"$V_R$ [km/s]"]
 
 
 def main():
@@ -153,6 +153,7 @@ def main():
         fig.legend(hc, lc,
                    loc="upper right", bbox_to_anchor=(0.9, 0.86), fontsize=a.fontsize * 1.15 if a.fontsize else 13, frameon=False)
         fig.subplots_adjust(hspace=0.06, wspace=0.06)
+        fig.align_ylabels(axs[:, 0])   # one column of y labels, like the x labels
         p = os.path.join(a.out, f"ppc_corner_{'contours_' if a.contours else ''}{'6d_' if a.dim == 6 else ''}{name}.pdf")
         fig.savefig(p, dpi=200, bbox_inches="tight"); fig.savefig(p[:-4] + ".png", dpi=100, bbox_inches="tight")
         plt.close(fig)

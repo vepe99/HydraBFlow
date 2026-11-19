@@ -39,7 +39,9 @@ obs = np.load(a.obs)["summaries"]
 mmd_obs, null = bootstrap_comparison(obs, ref, maximum_mean_discrepancy, num_null_samples=a.num_null)
 pval = float((null >= mmd_obs).mean())
 
-fig = mmd_hypothesis_test(mmd_null=null, mmd_observed=mmd_obs)
+fig = mmd_hypothesis_test(mmd_null=null, mmd_observed=mmd_obs, alpha_color="#7f7f7f")  # grey: orange ~ NGC3201
+for sp in fig.axes[0].spines.values():  # closed frame (bf despines top/right)
+    sp.set_visible(True)
 for ext in ("png", "pdf"):
     fig.savefig(f"{a.out}.{ext}", bbox_inches="tight")
 res = {"mmd_observed": float(mmd_obs), "p_value": pval, "num_null": a.num_null, "seed": a.seed,

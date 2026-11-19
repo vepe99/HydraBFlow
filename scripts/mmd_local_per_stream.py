@@ -113,6 +113,7 @@ def bf_default_test(x, ref, num_null, seed, out):
     from bayesflow.metrics.functional import maximum_mean_discrepancy
     np.random.seed(seed)  # bootstrap_comparison draws with the global numpy RNG
     mmd, null = bootstrap_comparison(x, ref, maximum_mean_discrepancy, num_null_samples=num_null)
+    np.savez(f"{out}.npz", mmd_observed=mmd, mmd_null=null)  # lets paper plots redraw the panel (plot_local_corner --mmd)
     fig = mmd_hypothesis_test(mmd_null=null, mmd_observed=mmd)
     for ext in ("png", "pdf"):
         fig.savefig(f"{out}.{ext}", bbox_inches="tight")
