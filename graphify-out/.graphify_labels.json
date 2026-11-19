@@ -248,5 +248,15 @@
   "246": "tune_local_particles_rc38_jiao26.sh",
   "247": "_keep_first_k_random_jax",
   "248": "test_compose_v2_presets",
-  "249": "test_uniform_bin_edges_are_equal_width_over_the_real_span"
+  "249": "test_uniform_bin_edges_are_equal_width_over_the_real_span",
+  "250": "MultimodalSimulator",
+  "251": "main",
+  "252": "MaskVcircRadii",
+  "253": "activate.ps1",
+  "254": "test_masked_backbone_refuses_count_encoding_under_standardization",
+  "255": "decisions_log.md",
+  "256": "_add_noise_to_rho_z",
+  "257": "_vlos_impute",
+  "258": "test_v2_simulator_frees_the_intended_parameters",
+  "259": "activate_this.py"
 }

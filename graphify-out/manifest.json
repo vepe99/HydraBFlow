@@ -50,8 +50,8 @@
     "semantic_hash": "1acfc5e3ff91c92373909c5c11f55769"
   },
   "CLAUDE.md": {
-    "mtime": 1791279711.5618546,
-    "ast_hash": "ac024fbe10a543b1ee8d564b28f06de4",
+    "mtime": 1795080557.195322,
+    "ast_hash": "30e4b83045a7e20d84990fe6ca04ba96",
     "semantic_hash": ""
   },
   "README.md": {
@@ -1940,8 +1940,8 @@
     "semantic_hash": ""
   },
   "scripts/ppc_joint_posterior.py": {
-    "mtime": 1791446891.4766564,
-    "ast_hash": "5e161535ac32ef8c8ca57ad3084cf0f1",
+    "mtime": 1792611882.0476832,
+    "ast_hash": "10400309fa13d8fc66f7ee2851c18d5f",
     "semantic_hash": ""
   },
   "scripts/create_spray_v4_p1e3_prog2026_dataset.sh": {
@@ -2110,8 +2110,8 @@
     "semantic_hash": ""
   },
   "scripts/mmd_local_per_stream.py": {
-    "mtime": 1792572448.1085129,
-    "ast_hash": "edd9faa5eea0ed58ace893f5b798c0b4",
+    "mtime": 1793092114.3059802,
+    "ast_hash": "2619881c403052af9bf321fa214f5878",
     "semantic_hash": ""
   },
   "scripts/plot_bspline_phi2_row.py": {
@@ -2120,8 +2120,8 @@
     "semantic_hash": ""
   },
   "scripts/plot_calibration_ecdf.py": {
-    "mtime": 1792400785.292855,
-    "ast_hash": "c7b4707351be2196d3911b718df1326e",
+    "mtime": 1792669835.690197,
+    "ast_hash": "3eceb6602cd2464e81b08f2c34ec7ce2",
     "semantic_hash": ""
   },
   "scripts/plot_loo_ppc.py": {
@@ -2130,8 +2130,8 @@
     "semantic_hash": ""
   },
   "scripts/plot_mmd_bf_default.py": {
-    "mtime": 1791985107.4213064,
-    "ast_hash": "b71f26eacfbc39fdd1f834120e6b33e5",
+    "mtime": 1793093249.8135543,
+    "ast_hash": "a82757381ee340627dcc2fda54209384",
     "semantic_hash": ""
   },
   "scripts/plot_plan_comparison.py": {
@@ -2165,8 +2165,8 @@
     "semantic_hash": ""
   },
   "scripts/ppc_obs_corner.py": {
-    "mtime": 1792403640.6202312,
-    "ast_hash": "330fbc05d634b0339b0e99f571205b03",
+    "mtime": 1793093646.3841274,
+    "ast_hash": "43c24e5d73205fdde31d021c3c02235e",
     "semantic_hash": ""
   },
   "scripts/ppc_pot_scalars_prior.py": {
@@ -2300,8 +2300,8 @@
     "semantic_hash": ""
   },
   "scripts/tune_local_bspline_prog2026.sh": {
-    "mtime": 1792572738.6026666,
-    "ast_hash": "f4de484d9d8da707dc4a5446dd562ea9",
+    "mtime": 1792573345.51086,
+    "ast_hash": "4a4c891d231762ebc021d8ce888efa4e",
     "semantic_hash": ""
   },
   "scripts/tune_local_particles_prog2026.sh": {
@@ -2450,8 +2450,8 @@
     "semantic_hash": ""
   },
   "conf/tuning/stream_2modal_bspline_local.yaml": {
-    "mtime": 1792572422.1283123,
-    "ast_hash": "51498e9fd76b1aaf257a39901a557050",
+    "mtime": 1792573345.50286,
+    "ast_hash": "8d7e39de1aaca09870c859d044fd4d04",
     "semantic_hash": ""
   },
   "conf/tuning/stream_2modal_particles_local.yaml": {
@@ -2482,6 +2482,186 @@
   "conf/tuning/tuningtest_2modal_bspline_core080_rc38_jiao26.yaml": {
     "mtime": 1790860054.6621964,
     "ast_hash": "a8a596fc46afb309c5685014bb407afc",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/activate.ps1": {
+    "mtime": 1795081509.2815416,
+    "ast_hash": "cb709b114fd0587654781a9cfa1692e1",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/activate_this.py": {
+    "mtime": 1795081509.2855415,
+    "ast_hash": "6ab3faa27d927423a55559d71659bcd4",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/anesthesia": {
+    "mtime": 1795081526.0016508,
+    "ast_hash": "8fc48ee57c8a047a8ecd40085ec071b2",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/autocvd": {
+    "mtime": 1795081525.8176496,
+    "ast_hash": "d2e185e584c4501bb63ffe47e7264ae6",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/cygdb": {
+    "mtime": 1795081533.677701,
+    "ast_hash": "ca1b43a528d16bd414c0938eb446e134",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/cython": {
+    "mtime": 1795081533.6857011,
+    "ast_hash": "fce1ea0689fb7e3bd956791217f5df54",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/cythonize": {
+    "mtime": 1795081533.681701,
+    "ast_hash": "1b5fdecb93b3c5590715c4a5a165175a",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/f2py": {
+    "mtime": 1795081536.133717,
+    "ast_hash": "c2a0decadbf5674d13050db3ba0c43fd",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/fits2bitmap": {
+    "mtime": 1795081537.5457263,
+    "ast_hash": "707efced47b86c22b157a4b5adb29fcb",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/fitscheck": {
+    "mtime": 1795081537.5577264,
+    "ast_hash": "a8e326514f97e9a14f05bc92ade3d7fa",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/fitsdiff": {
+    "mtime": 1795081537.541726,
+    "ast_hash": "57d23798f7daf4a8b2e9ca8bd0ccb196",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/fitsheader": {
+    "mtime": 1795081537.5537262,
+    "ast_hash": "28dcca34beb2909e4031194120f02264",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/fitsinfo": {
+    "mtime": 1795081537.541726,
+    "ast_hash": "0707f358ee57b5ac4a37d155d2a7e8b1",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/fonttools": {
+    "mtime": 1795081534.0737035,
+    "ast_hash": "95ec33f759359997d4f36e8d9c7d7915",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/idna": {
+    "mtime": 1795081526.009651,
+    "ast_hash": "ff31881881092f8588bb3110d8f5812b",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/jaxns-cli": {
+    "mtime": 1795081527.881663,
+    "ast_hash": "e233685c5309c1d47b9ed40b2101ba00",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/markdown-it": {
+    "mtime": 1795081528.0576642,
+    "ast_hash": "6dbd5894f0533e87973fcea1c01ea035",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/normalizer": {
+    "mtime": 1795081526.641655,
+    "ast_hash": "7a07e0fa232ab8a654e646baa78872bd",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/numpy-config": {
+    "mtime": 1795081536.1297169,
+    "ast_hash": "48712e09bbfbd042b79dc19cc8a3540c",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/optype": {
+    "mtime": 1795081527.5816612,
+    "ast_hash": "92dff80b574d070ce719a2450c87ebbc",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/pyftmerge": {
+    "mtime": 1795081534.0777035,
+    "ast_hash": "e8a2584004bf35ae8b063953f0a01f24",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/pyftsubset": {
+    "mtime": 1795081534.0817037,
+    "ast_hash": "1f86ec95e2fc428753f22c9c265184b1",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/pygmentize": {
+    "mtime": 1795081533.9577029,
+    "ast_hash": "8bb3600216e1e52588480c7cf54bb518",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/quaxed-make-stubs": {
+    "mtime": 1795081526.7336557,
+    "ast_hash": "39ed021113b2cf2dd8cf4a1e7d375b7b",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/samp_hub": {
+    "mtime": 1795081537.5377262,
+    "ast_hash": "f7f6828318132d2f8cd42cd5ac79d103",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/showtable": {
+    "mtime": 1795081537.5617263,
+    "ast_hash": "8fb5552bbc94a8f7cbd6680111591fd8",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/showtable-astropy": {
+    "mtime": 1795081537.5497262,
+    "ast_hash": "3c78ed4ef5db0634638219b0a1f2f543",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/tqdm": {
+    "mtime": 1795081526.917657,
+    "ast_hash": "dc22b94cc3f91968634e6ee43c13ff4d",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/ttx": {
+    "mtime": 1795081534.0737035,
+    "ast_hash": "c9e9a29a048540077cdbc0288096e764",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/typer": {
+    "mtime": 1795081526.8456564,
+    "ast_hash": "b045b179a21c1b45bdd4a80fbaed142b",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/volint": {
+    "mtime": 1795081537.5537262,
+    "ast_hash": "83f1a8bfc8bdc258056de466bb44be43",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/wcslint": {
+    "mtime": 1795081537.5497262,
+    "ast_hash": "7879788d60e2351c2295f01424c25d5b",
+    "semantic_hash": ""
+  },
+  ".venv-galax/bin/wheel": {
+    "mtime": 1795083084.6998336,
+    "ast_hash": "be82722745c68810cc4fcdb21bc875bb",
+    "semantic_hash": ""
+  },
+  "scripts/pal5_galax_ns.py": {
+    "mtime": 1795087068.742884,
+    "ast_hash": "4017b11f04abafa9856a87bbe1414cc2",
+    "semantic_hash": ""
+  },
+  "scripts/plot_local_corner.py": {
+    "mtime": 1793094935.4040911,
+    "ast_hash": "382846d9bdbd32a7eb55bea3af655da6",
+    "semantic_hash": ""
+  },
+  "docs/decisions_log.md": {
+    "mtime": 1795080517.611064,
+    "ast_hash": "fbf31865be493e2d3c721d9a7509ebb9",
     "semantic_hash": ""
   }
 }
