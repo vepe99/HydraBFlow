@@ -156,7 +156,8 @@ Knowledge graph at `graphify-out/`.
   `graphify explain "<concept>"`) — a scoped subgraph, far smaller than `GRAPH_REPORT.md` or grep.
 - `graphify-out/wiki/index.md`, if present, beats raw source browsing for navigation.
 - Read `GRAPH_REPORT.md` only for broad architecture review.
-- After changing code, run `graphify update .` (AST-only, no API cost).
+- Do NOT run `graphify update .` (or any graph rebuild) on your own after changing code — the user
+  decides when to refresh the graph and asks for it explicitly. `graphify-out/` may be committed.
 
 ## Decisions Log
 
